@@ -12,6 +12,7 @@ use std::pin::Pin;
 pub use blake3;
 pub use solana_sdk::signer::keypair::Keypair;
 pub use solana_sdk::signature::{Signature as SolanaSignature};
+pub use solana_sdk::pubkey::Pubkey;
 pub use rand;
 pub use sha2;
 
@@ -437,11 +438,11 @@ impl SymmetricEncryption {
         plaintext: &[u8],
         associated_data: Option<&[u8]>,
     ) -> Result<Vec<u8>, CryptoError> {
-        use aes_gcm::{Aes256Gcm, KeyInit, Nonce};
-        use aead::Aead;
+        use aes_gcm::{Aes256Gcm, Key, Nonce};
+        use aead::{Aead, NewAead};
         
-        let cipher = Aes256Gcm::new_from_slice(key)
-            .map_err(|e| CryptoError::EncryptionError(format!("Invalid key: {}", e)))?;
+        let key = Key::from_slice(key);
+        let cipher = Aes256Gcm::new(key);
         
         let nonce = Nonce::from_slice(nonce);
         let payload = aead::Payload {
@@ -462,11 +463,11 @@ impl SymmetricEncryption {
         ciphertext: &[u8],
         associated_data: Option<&[u8]>,
     ) -> Result<Vec<u8>, CryptoError> {
-        use aes_gcm::{Aes256Gcm, KeyInit, Nonce};
-        use aead::Aead;
+        use aes_gcm::{Aes256Gcm, Key, Nonce};
+        use aead::{Aead, NewAead};
         
-        let cipher = Aes256Gcm::new_from_slice(key)
-            .map_err(|e| CryptoError::DecryptionError(format!("Invalid key: {}", e)))?;
+        let key = Key::from_slice(key);
+        let cipher = Aes256Gcm::new(key);
         
         let nonce = Nonce::from_slice(nonce);
         let payload = aead::Payload {

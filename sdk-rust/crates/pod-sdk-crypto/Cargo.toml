@@ -16,23 +16,22 @@ name = "pod_sdk_crypto"
 path = "src/lib.rs"
 
 [dependencies]
-# Cryptography - Using workspace dependencies to ensure compatibility
-ed25519-dalek = { workspace = true }
+# Use Solana SDK for ed25519 operations to avoid version conflicts
+solana-sdk = { workspace = true }
+
+# Cryptography
 blake3 = { workspace = true }
 sha2 = { workspace = true }
 rand = { workspace = true }
 rand_core = { workspace = true }
 
-# Symmetric encryption - Using workspace versions to match patches
+# Symmetric encryption
 aes-gcm = { workspace = true, optional = true }
 chacha20poly1305 = { workspace = true, optional = true }
 aead = { workspace = true }
 
-# Crypto utilities - Using workspace versions
+# Crypto utilities
 hkdf = { workspace = true }
-zeroize = { workspace = true }
-subtle = { workspace = true }
-curve25519-dalek = { workspace = true }
 
 # Error handling
 thiserror = { workspace = true }

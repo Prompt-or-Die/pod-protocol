@@ -39,8 +39,8 @@ serde_json = { workspace = true }
 borsh = { workspace = true }
 bincode = { workspace = true }
 
-# Cryptography
-ed25519-dalek = { workspace = true }
+# Cryptography - ed25519-dalek comes from Solana SDK
+# Note: Do not specify ed25519-dalek here - use Solana's version
 blake3 = { workspace = true }
 sha2 = { workspace = true }
 rand = { workspace = true }
