@@ -15,7 +15,8 @@ use solana_sdk::{
 };
 
 use pod_sdk_types::{
-    AgentAccount, ChannelAccount, RegisterAgentRequest,
+    AgentAccount, ChannelAccount, RegisterAgentRequest, MessageAccount,
+    capabilities, MessageType, MessageStatus, ChannelVisibility,
 };
 
 use crate::{
@@ -417,7 +418,7 @@ impl AgentService {
         for (channel_pubkey, _) in channels {
             // Fetch message accounts for this channel and count messages from this agent
             let message_accounts = program
-                .accounts::<pod_sdk_types::accounts::MessageAccount>(vec![
+                .accounts::<MessageAccount>(vec![
                     solana_account_decoder::UiAccountEncoding::Base64,
                 ])
                 .await

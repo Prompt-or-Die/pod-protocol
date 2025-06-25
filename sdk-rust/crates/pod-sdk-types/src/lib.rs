@@ -30,16 +30,24 @@ pub const MAX_CHANNEL_DESCRIPTION_LENGTH: usize = 500;
 pub const MAX_MESSAGE_CONTENT_LENGTH: usize = 10000;
 
 /// Agent account structure that mirrors the Solana program
-#[derive(Debug, Clone, Serialize, Deserialize, BorshSerialize, BorshDeserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AgentAccount {
     /// The agent's public key (PDA)
     pub pubkey: Pubkey,
+    /// Owner of the agent
+    pub owner: Pubkey,
     /// Bitmask representing agent capabilities
     pub capabilities: u64,
     /// Agent's reputation score
     pub reputation: u64,
+    /// Agent's reputation score (alias)
+    pub reputation_score: u64,
     /// Last time the agent was updated (Unix timestamp)
     pub last_updated: i64,
+    /// Last time the agent was updated (Unix timestamp)
+    pub updated_at: i64,
+    /// Agent creation timestamp (Unix timestamp)
+    pub created_at: i64,
     /// URI pointing to agent metadata (IPFS, HTTPS, etc.)
     pub metadata_uri: String,
     /// Number of invites sent by this agent
@@ -50,10 +58,78 @@ pub struct AgentAccount {
     pub bump: u8,
 }
 
+/// Separate struct for borsh serialization without DateTime fields
+#[derive(Debug, Clone, BorshSerialize, BorshDeserialize)]
+pub struct AgentAccountBorsh {
+    /// The agent's public key (PDA)
+    pub pubkey: Pubkey,
+    /// Owner of the agent
+    pub owner: Pubkey,
+    /// Bitmask representing agent capabilities
+    pub capabilities: u64,
+    /// Agent's reputation score
+    pub reputation: u64,
+    /// Agent's reputation score (alias)
+    pub reputation_score: u64,
+    /// Last time the agent was updated (Unix timestamp)
+    pub last_updated: i64,
+    /// Last time the agent was updated (Unix timestamp)
+    pub updated_at: i64,
+    /// Agent creation timestamp (Unix timestamp)
+    pub created_at: i64,
+    /// URI pointing to agent metadata (IPFS, HTTPS, etc.)
+    pub metadata_uri: String,
+    /// Number of invites sent by this agent
+    pub invites_sent: u16,
+    /// Last time an invite was sent (Unix timestamp)
+    pub last_invite_at: i64,
+    /// PDA bump seed
+    pub bump: u8,
+}
+
+impl From<AgentAccount> for AgentAccountBorsh {
+    fn from(account: AgentAccount) -> Self {
+        Self {
+            pubkey: account.pubkey,
+            owner: account.owner,
+            capabilities: account.capabilities,
+            reputation: account.reputation,
+            reputation_score: account.reputation_score,
+            last_updated: account.last_updated,
+            updated_at: account.updated_at,
+            created_at: account.created_at,
+            metadata_uri: account.metadata_uri,
+            invites_sent: account.invites_sent,
+            last_invite_at: account.last_invite_at,
+            bump: account.bump,
+        }
+    }
+}
+
+impl From<AgentAccountBorsh> for AgentAccount {
+    fn from(borsh: AgentAccountBorsh) -> Self {
+        Self {
+            pubkey: borsh.pubkey,
+            owner: borsh.owner,
+            capabilities: borsh.capabilities,
+            reputation: borsh.reputation,
+            reputation_score: borsh.reputation_score,
+            last_updated: borsh.last_updated,
+            updated_at: borsh.updated_at,
+            created_at: borsh.created_at,
+            metadata_uri: borsh.metadata_uri,
+            invites_sent: borsh.invites_sent,
+            last_invite_at: borsh.last_invite_at,
+            bump: borsh.bump,
+        }
+    }
+}
+
 impl AgentAccount {
     /// Create a new agent account
     pub fn new(
         pubkey: Pubkey,
+        owner: Pubkey,
         capabilities: u64,
         metadata_uri: String,
         bump: u8,
@@ -61,14 +137,28 @@ impl AgentAccount {
         let now = chrono::Utc::now().timestamp();
         Self {
             pubkey,
+            owner,
             capabilities,
             reputation: 0,
+            reputation_score: 0,
             last_updated: now,
+            updated_at: now,
+            created_at: now,
             metadata_uri,
             invites_sent: 0,
             last_invite_at: 0,
             bump,
         }
+    }
+
+    /// Get DateTime<Utc> from timestamp
+    pub fn get_updated_at(&self) -> DateTime<Utc> {
+        DateTime::from_timestamp(self.updated_at, 0).unwrap_or_default()
+    }
+
+    /// Get DateTime<Utc> from timestamp
+    pub fn get_created_at(&self) -> DateTime<Utc> {
+        DateTime::from_timestamp(self.created_at, 0).unwrap_or_default()
     }
 
     /// Check if agent has specific capability
@@ -89,6 +179,8 @@ pub struct MessageAccount {
     pub sender: Pubkey,
     /// Recipient agent PDA
     pub recipient: Pubkey,
+    /// Channel PDA (optional)
+    pub channel: Option<Pubkey>,
     /// Hash of the message payload (Blake3)
     pub payload_hash: [u8; 32],
     /// Type of message
@@ -106,7 +198,7 @@ pub struct MessageAccount {
 }
 
 /// Channel account structure
-#[derive(Debug, Clone, Serialize, Deserialize, BorshSerialize, BorshDeserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ChannelAccount {
     /// Channel creator
     pub creator: Pubkey,
@@ -120,29 +212,257 @@ pub struct ChannelAccount {
     pub participant_limit: u32,
     /// Current number of participants
     pub participant_count: u32,
+    /// List of participants
+    pub participants: Vec<Pubkey>,
+    /// Whether the channel is active
+    pub is_active: bool,
     /// Fee per message in lamports
     pub fee_per_message: u64,
-    /// Channel creation timestamp
+    /// Channel creation timestamp (Unix timestamp)
     pub created_at: i64,
+    /// Channel creation timestamp (Unix timestamp)
+    pub created_at_dt: i64,
     /// Last activity timestamp
     pub last_activity: i64,
     /// PDA bump seed
     pub bump: u8,
 }
 
+/// Separate struct for borsh serialization
+#[derive(Debug, Clone, BorshSerialize, BorshDeserialize)]
+pub struct ChannelAccountBorsh {
+    /// Channel creator
+    pub creator: Pubkey,
+    /// Channel name
+    pub name: String,
+    /// Channel description
+    pub description: String,
+    /// Channel visibility setting
+    pub visibility: ChannelVisibility,
+    /// Maximum number of participants
+    pub participant_limit: u32,
+    /// Current number of participants
+    pub participant_count: u32,
+    /// List of participants
+    pub participants: Vec<Pubkey>,
+    /// Whether the channel is active
+    pub is_active: bool,
+    /// Fee per message in lamports
+    pub fee_per_message: u64,
+    /// Channel creation timestamp (Unix timestamp)
+    pub created_at: i64,
+    /// Channel creation timestamp (Unix timestamp)
+    pub created_at_dt: i64,
+    /// Last activity timestamp
+    pub last_activity: i64,
+    /// PDA bump seed
+    pub bump: u8,
+}
+
+impl From<ChannelAccount> for ChannelAccountBorsh {
+    fn from(account: ChannelAccount) -> Self {
+        Self {
+            creator: account.creator,
+            name: account.name,
+            description: account.description,
+            visibility: account.visibility,
+            participant_limit: account.participant_limit,
+            participant_count: account.participant_count,
+            participants: account.participants,
+            is_active: account.is_active,
+            fee_per_message: account.fee_per_message,
+            created_at: account.created_at,
+            created_at_dt: account.created_at_dt,
+            last_activity: account.last_activity,
+            bump: account.bump,
+        }
+    }
+}
+
+impl From<ChannelAccountBorsh> for ChannelAccount {
+    fn from(borsh: ChannelAccountBorsh) -> Self {
+        Self {
+            creator: borsh.creator,
+            name: borsh.name,
+            description: borsh.description,
+            visibility: borsh.visibility,
+            participant_limit: borsh.participant_limit,
+            participant_count: borsh.participant_count,
+            participants: borsh.participants,
+            is_active: borsh.is_active,
+            fee_per_message: borsh.fee_per_message,
+            created_at: borsh.created_at,
+            created_at_dt: borsh.created_at_dt,
+            last_activity: borsh.last_activity,
+            bump: borsh.bump,
+        }
+    }
+}
+
+impl ChannelAccount {
+    /// Get DateTime<Utc> from timestamp
+    pub fn get_created_at(&self) -> DateTime<Utc> {
+        DateTime::from_timestamp(self.created_at, 0).unwrap_or_default()
+    }
+
+    /// Get DateTime<Utc> from timestamp  
+    pub fn get_created_at_dt(&self) -> DateTime<Utc> {
+        DateTime::from_timestamp(self.created_at_dt, 0).unwrap_or_default()
+    }
+}
+
+/// Escrow status enumeration
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, BorshSerialize, BorshDeserialize)]
+pub enum EscrowStatus {
+    /// Escrow is active and funds are locked
+    Active,
+    /// Escrow has been released to beneficiary
+    Released,
+    /// Escrow has been refunded to payer
+    Refunded,
+    /// Escrow is in dispute
+    Disputed,
+}
+
+impl fmt::Display for EscrowStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            EscrowStatus::Active => write!(f, "active"),
+            EscrowStatus::Released => write!(f, "released"),
+            EscrowStatus::Refunded => write!(f, "refunded"),
+            EscrowStatus::Disputed => write!(f, "disputed"),
+        }
+    }
+}
+
 /// Escrow account structure for channel payments
-#[derive(Debug, Clone, Serialize, Deserialize, BorshSerialize, BorshDeserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EscrowAccount {
     /// Channel this escrow belongs to
     pub channel: Pubkey,
     /// Depositor's wallet
     pub depositor: Pubkey,
+    /// Payer of the escrow
+    pub payer: Pubkey,
+    /// Beneficiary of the escrow
+    pub beneficiary: Pubkey,
     /// Amount deposited in lamports
     pub amount: u64,
+    /// Escrow status
+    pub status: EscrowStatus,
     /// Timestamp when deposit was made
     pub deposited_at: i64,
+    /// Timestamp when deposit was made (Unix timestamp)
+    pub created_at: i64,
+    /// Timeout timestamp (Unix timestamp, optional)
+    pub timeout_at: Option<i64>,
+    /// Disputed timestamp (Unix timestamp, optional)
+    pub disputed_at: Option<i64>,
+    /// Release conditions
+    pub conditions: Vec<EscrowCondition>,
+    /// Optional arbitrators list
+    pub arbitrators: Option<Vec<Pubkey>>,
     /// PDA bump seed
     pub bump: u8,
+}
+
+/// Separate struct for borsh serialization
+#[derive(Debug, Clone, BorshSerialize, BorshDeserialize)]
+pub struct EscrowAccountBorsh {
+    /// Channel this escrow belongs to
+    pub channel: Pubkey,
+    /// Depositor's wallet
+    pub depositor: Pubkey,
+    /// Payer of the escrow
+    pub payer: Pubkey,
+    /// Beneficiary of the escrow
+    pub beneficiary: Pubkey,
+    /// Amount deposited in lamports
+    pub amount: u64,
+    /// Escrow status
+    pub status: EscrowStatus,
+    /// Timestamp when deposit was made
+    pub deposited_at: i64,
+    /// Timestamp when deposit was made (Unix timestamp)
+    pub created_at: i64,
+    /// Timeout timestamp (Unix timestamp, optional)
+    pub timeout_at: Option<i64>,
+    /// Disputed timestamp (Unix timestamp, optional)
+    pub disputed_at: Option<i64>,
+    /// Release conditions
+    pub conditions: Vec<EscrowCondition>,
+    /// Optional arbitrators list
+    pub arbitrators: Option<Vec<Pubkey>>,
+    /// PDA bump seed
+    pub bump: u8,
+}
+
+impl From<EscrowAccount> for EscrowAccountBorsh {
+    fn from(account: EscrowAccount) -> Self {
+        Self {
+            channel: account.channel,
+            depositor: account.depositor,
+            payer: account.payer,
+            beneficiary: account.beneficiary,
+            amount: account.amount,
+            status: account.status,
+            deposited_at: account.deposited_at,
+            created_at: account.created_at,
+            timeout_at: account.timeout_at,
+            disputed_at: account.disputed_at,
+            conditions: account.conditions,
+            arbitrators: account.arbitrators,
+            bump: account.bump,
+        }
+    }
+}
+
+impl From<EscrowAccountBorsh> for EscrowAccount {
+    fn from(borsh: EscrowAccountBorsh) -> Self {
+        Self {
+            channel: borsh.channel,
+            depositor: borsh.depositor,
+            payer: borsh.payer,
+            beneficiary: borsh.beneficiary,
+            amount: borsh.amount,
+            status: borsh.status,
+            deposited_at: borsh.deposited_at,
+            created_at: borsh.created_at,
+            timeout_at: borsh.timeout_at,
+            disputed_at: borsh.disputed_at,
+            conditions: borsh.conditions,
+            arbitrators: borsh.arbitrators,
+            bump: borsh.bump,
+        }
+    }
+}
+
+impl EscrowAccount {
+    /// Get DateTime<Utc> from timestamp
+    pub fn get_created_at(&self) -> DateTime<Utc> {
+        DateTime::from_timestamp(self.created_at, 0).unwrap_or_default()
+    }
+
+    /// Get DateTime<Utc> from timeout timestamp
+    pub fn get_timeout_at(&self) -> Option<DateTime<Utc>> {
+        self.timeout_at.map(|ts| DateTime::from_timestamp(ts, 0).unwrap_or_default())
+    }
+
+    /// Get DateTime<Utc> from disputed timestamp
+    pub fn get_disputed_at(&self) -> Option<DateTime<Utc>> {
+        self.disputed_at.map(|ts| DateTime::from_timestamp(ts, 0).unwrap_or_default())
+    }
+}
+
+/// Escrow condition structure
+#[derive(Debug, Clone, Serialize, Deserialize, BorshSerialize, BorshDeserialize, PartialEq, Eq)]
+pub struct EscrowCondition {
+    /// Type of condition (e.g., "time_elapsed", "service_completion", etc.)
+    pub condition_type: String,
+    /// Condition parameters
+    pub parameters: std::collections::HashMap<String, String>,
+    /// Whether this condition has been fulfilled
+    pub fulfilled: bool,
 }
 
 /// Analytics account structure
@@ -422,6 +742,7 @@ mod tests {
     #[test]
     fn test_agent_capabilities() {
         let agent = AgentAccount::new(
+            Pubkey::new_unique(),
             Pubkey::new_unique(),
             capabilities::AI_CHAT | capabilities::DATA_ANALYSIS,
             "https://example.com/metadata.json".to_string(),

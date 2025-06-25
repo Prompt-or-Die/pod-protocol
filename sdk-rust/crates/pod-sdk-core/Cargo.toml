@@ -47,7 +47,7 @@ rand = { workspace = true }
 rand_core = { workspace = true }
 
 # HTTP and networking
-reqwest = { workspace = true }
+reqwest = { workspace = true, features = ["multipart"] }
 hyper = { workspace = true }
 hyper-rustls = { workspace = true }
 rustls = { workspace = true }

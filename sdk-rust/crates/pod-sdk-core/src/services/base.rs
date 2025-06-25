@@ -18,7 +18,7 @@ use solana_rpc_client::rpc_client::RpcClient;
 use tokio::sync::RwLock;
 
 use crate::{
-    config::{RateLimitConfig, RetryConfig, CacheConfig},
+    config::{RateLimitConfig, RetryConfig, CacheConfig, IPFSConfig, ZKCompressionConfig},
     error::{PodComError, Result},
 };
 
@@ -52,6 +52,30 @@ pub struct ServiceConfig {
     pub compression_config: Option<CompressionConfig>,
     pub ipfs_endpoint: Option<String>,
     pub zk_compression_config: Option<ZKCompressionConfig>,
+}
+
+impl std::fmt::Debug for ServiceConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ServiceConfig")
+            .field("program_id", &self.program_id)
+            .field("commitment", &self.commitment)
+            .field("retry_config", &self.retry_config)
+            .field("timeout", &self.timeout)
+            .field("rate_limit_config", &self.rate_limit_config)
+            .field("cache_config", &self.cache_config)
+            .field("rpc_client", &"<RpcClient>")
+            .field("cluster", &self.cluster)
+            .field("rpc_timeout_secs", &self.rpc_timeout_secs)
+            .field("message_config", &self.message_config)
+            .field("channel_config", &self.channel_config)
+            .field("escrow_config", &self.escrow_config)
+            .field("analytics_config", &self.analytics_config)
+            .field("discovery_config", &self.discovery_config)
+            .field("compression_config", &self.compression_config)
+            .field("ipfs_endpoint", &self.ipfs_endpoint)
+            .field("zk_compression_config", &self.zk_compression_config)
+            .finish()
+    }
 }
 
 /// Message service configuration
@@ -110,42 +134,6 @@ pub struct CompressionConfig {
     pub enabled: bool,
     pub algorithm: String,
     pub level: u8,
-}
-
-/// ZK Compression configuration
-#[derive(Debug, Clone)]
-pub struct ZKCompressionConfig {
-    pub enabled: bool,
-    pub compression_level: u8,
-    pub cache_proofs: bool,
-    pub max_cache_size: usize,
-    pub proof_timeout: Duration,
-    pub proof_size_limit: usize,
-    pub batch_size: usize,
-}
-
-impl std::fmt::Debug for ServiceConfig {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ServiceConfig")
-            .field("program_id", &self.program_id)
-            .field("commitment", &self.commitment)
-            .field("retry_config", &self.retry_config)
-            .field("timeout", &self.timeout)
-            .field("rate_limit_config", &self.rate_limit_config)
-            .field("cache_config", &self.cache_config)
-            .field("rpc_client", &"<RpcClient>")
-            .field("cluster", &self.cluster)
-            .field("rpc_timeout_secs", &self.rpc_timeout_secs)
-            .field("message_config", &self.message_config)
-            .field("channel_config", &self.channel_config)
-            .field("escrow_config", &self.escrow_config)
-            .field("analytics_config", &self.analytics_config)
-            .field("discovery_config", &self.discovery_config)
-            .field("compression_config", &self.compression_config)
-            .field("ipfs_endpoint", &self.ipfs_endpoint)
-            .field("zk_compression_config", &self.zk_compression_config)
-            .finish()
-    }
 }
 
 /// Health status of a service

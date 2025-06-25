@@ -14,7 +14,7 @@ use solana_sdk::{
 };
 
 use pod_sdk_types::{
-    EscrowAccount, AgentAccount,
+    EscrowAccount, AgentAccount, EscrowStatus, EscrowCondition,
 };
 
 use crate::{
@@ -549,15 +549,6 @@ impl EscrowService {
             _ => false, // Cannot refund already completed escrows
         }
     }
-}
-
-/// Escrow status enumeration
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum EscrowStatus {
-    Active,
-    Released,
-    Refunded,
-    Disputed,
 }
 
 /// Escrow statistics

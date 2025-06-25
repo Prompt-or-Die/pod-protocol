@@ -7,6 +7,9 @@ use thiserror::Error;
 use solana_sdk::pubkey::Pubkey;
 use std::time::Duration;
 
+// Import EscrowStatus from pod_sdk_types to avoid duplication
+pub use pod_sdk_types::EscrowStatus;
+
 /// Main result type for the SDK
 pub type Result<T> = std::result::Result<T, PodComError>;
 
@@ -587,19 +590,6 @@ pub enum ErrorSeverity {
     Critical,
 }
 
-/// Escrow status enumeration (referenced in errors)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum EscrowStatus {
-    /// Escrow is active
-    Active,
-    /// Escrow has been released
-    Released,
-    /// Escrow has been refunded
-    Refunded,
-    /// Escrow is in dispute
-    Disputed,
-}
-
 /// Trait for errors that can be retried
 pub trait RetryableError {
     /// Check if this error can be retried
@@ -724,8 +714,26 @@ macro_rules! internal_error {
 
 impl From<anchor_client::ClientError> for PodComError {
     fn from(error: anchor_client::ClientError) -> Self {
-        PodComError::Network(NetworkError::AnchorClient {
-            details: error.to_string(),
+        PodComError::Network(NetworkError::RpcFailed {
+            method: "anchor_client".to_string(),
+            reason: error.to_string(),
+        })
+    }
+}
+
+impl From<reqwest::Error> for PodComError {
+    fn from(error: reqwest::Error) -> Self {
+        PodComError::Network(NetworkError::ConnectionFailed {
+            endpoint: error.url().map(|u| u.to_string()).unwrap_or_default(),
+            reason: error.to_string(),
+        })
+    }
+}
+
+impl From<serde_json::Error> for PodComError {
+    fn from(error: serde_json::Error) -> Self {
+        PodComError::Config(ConfigError::ParseError {
+            reason: error.to_string(),
         })
     }
 }
