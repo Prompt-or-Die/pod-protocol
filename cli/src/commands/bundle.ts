@@ -138,11 +138,16 @@ export function createBundleCommand(): Command {
         const spinner = createSpinner('Sending channel bundle...');
         
         // Use correct bundle method name
-        const result = await client.jitoBundles.sendBundle({
-          messages: channelMessages,
-          tipAmount: options.tipAmount || 1000000,
-          maxRetries: options.maxRetries || 3
-        });
+        const transactions = channelMessages.map(msg => ({
+          instruction: msg,
+          signers: []
+        }));
+        const config = {
+          tipLamports: parseInt(options.tipAmount) || 1000000,
+          priorityFee: 1000,
+          computeUnits: 200000
+        };
+        const result = await client.jitoBundles.sendBundle(transactions, config);
 
         showSuccess(spinner, 'Channel bundle sent successfully!', {
           'Bundle ID': result.bundleId,

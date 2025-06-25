@@ -12,6 +12,7 @@ export const PROGRAM_ID = address(
  */
 export enum MessageType {
   Text = "text",
+  Chat = "chat",
   Data = "data",
   Command = "command",
   Response = "response",

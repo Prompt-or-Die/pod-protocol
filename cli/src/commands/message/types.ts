@@ -30,3 +30,21 @@ export interface MessageListOptions {
   limit?: string;
   filter?: MessageStatus;
 }
+
+export interface CompressMessageOptions {
+  channel?: string;
+  content?: string;
+  type?: MessageType;
+  attachments?: string[];
+  metadata?: Record<string, any>;
+  replyTo?: string;
+}
+
+export interface GetMessagesOptions {
+  channel?: string;
+  limit?: number;
+  offset?: number;
+  sender?: string;
+  after?: Date;
+  before?: Date;
+}

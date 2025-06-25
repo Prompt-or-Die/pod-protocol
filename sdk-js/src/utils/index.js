@@ -29,12 +29,18 @@ export const MessageType = {
  */
 export function getMessageTypeId(messageType, customValue) {
   switch (messageType) {
-    case MessageType.Text 0;
-    case MessageType.Data 1;
-    case MessageType.Command 2;
-    case MessageType.Response 3;
-    case MessageType.Custom 4 + (customValue || 0);
-    default new Error(`Unknown message type: ${messageType}`);
+    case MessageType.Text:
+      return 0;
+    case MessageType.Data:
+      return 1;
+    case MessageType.Command:
+      return 2;
+    case MessageType.Response:
+      return 3;
+    case MessageType.Custom:
+      return 4 + (customValue || 0);
+    default:
+      throw new Error(`Unknown message type: ${messageType}`);
   }
 }
 
@@ -45,11 +51,11 @@ export function getMessageTypeId(messageType, customValue) {
  * @returns {Object} Message type and custom value
  */
 export function getMessageTypeFromId(id) {
-  if (id === 0) return { type.Text };
-  if (id === 1) return { type.Data };
-  if (id === 2) return { type.Command };
-  if (id === 3) return { type.Response };
-  if (id >= 4) return { type.Custom, customValue - 4 };
+  if (id === 0) return { type: MessageType.Text };
+  if (id === 1) return { type: MessageType.Data };
+  if (id === 2) return { type: MessageType.Command };
+  if (id === 3) return { type: MessageType.Response };
+  if (id >= 4) return { type: MessageType.Custom, customValue: id - 4 };
 
   throw new Error(`Unknown message type ID: ${id}`);
 }
@@ -63,12 +69,18 @@ export function getMessageTypeFromId(id) {
  */
 export function convertMessageTypeToProgram(messageType, customValue) {
   switch (messageType) {
-    case MessageType.Text { text: {} };
-    case MessageType.Data { data: {} };
-    case MessageType.Command { command: {} };
-    case MessageType.Response { response: {} };
-    case MessageType.Custom { custom || 0 };
-    default { text: {} };
+    case MessageType.Text:
+      return { text: {} };
+    case MessageType.Data:
+      return { data: {} };
+    case MessageType.Command:
+      return { command: {} };
+    case MessageType.Response:
+      return { response: {} };
+    case MessageType.Custom:
+      return { custom: customValue || 0 };
+    default:
+      return { text: {} };
   }
 }
 
@@ -79,13 +91,13 @@ export function convertMessageTypeToProgram(messageType, customValue) {
  * @returns {Object} Message type and custom value
  */
 export function convertMessageTypeFromProgram(programType) {
-  if (programType.text !== undefined) return { type.Text };
-  if (programType.data !== undefined) return { type.Data };
-  if (programType.command !== undefined) return { type.Command };
-  if (programType.response !== undefined) return { type.Response };
+  if (programType.text !== undefined) return { type: MessageType.Text };
+  if (programType.data !== undefined) return { type: MessageType.Data };
+  if (programType.command !== undefined) return { type: MessageType.Command };
+  if (programType.response !== undefined) return { type: MessageType.Response };
   if (programType.custom !== undefined)
-    return { type.Custom, customValue.custom };
-  return { type.Text };
+    return { type: MessageType.Custom, customValue: programType.custom };
+  return { type: MessageType.Text };
 }
 
 /**
@@ -114,7 +126,18 @@ export function getMessageTypeIdFromObject(msg) {
 export async function retry(fn, maxAttempts = 3, baseDelay = 1000) {
   let lastError;
 
-  for (let attempt = 1; attempt  setTimeout(resolve, delay));
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      
+      if (attempt === maxAttempts) {
+        break;
+      }
+
+      const delay = baseDelay * Math.pow(2, attempt - 1);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
 
@@ -163,12 +186,12 @@ export function removeCapability(capabilities, capability) {
 export function getCapabilityNames(capabilities) {
   const names = [];
   const AGENT_CAPABILITIES = {
-    MESSAGING,
-    ANALYSIS,
-    TRADING,
-    LEARNING,
-    PREDICTION,
-    AUTOMATION
+    MESSAGING: 1,
+    ANALYSIS: 2,
+    TRADING: 4,
+    LEARNING: 8,
+    PREDICTION: 16,
+    AUTOMATION: 32
   };
 
   Object.entries(AGENT_CAPABILITIES).forEach(([name, value]) => {
@@ -189,7 +212,7 @@ export function getCapabilityNames(capabilities) {
  */
 export function convertTimestamp(timestamp, fallback) {
   if (timestamp === null || timestamp === undefined) {
-    return fallback ? convertTimestamp(fallback) .floor(Date.now() / 1000);
+    return fallback ? convertTimestamp(fallback) : Math.floor(Date.now() / 1000);
   }
 
   if (typeof timestamp === 'number') {
@@ -236,13 +259,29 @@ export function getAccountLastUpdated(account) {
 /**
  * Format public key for display
  * 
- * @param {Address|string} pubkey - Public key
+ * @param {string} pubkey - Public key
  * @param {number} [length=8] - Display length
  * @returns {string} Formatted public key
  */
 export function formatAddress(pubkey, length = 8) {
-  const keyStr = pubkey;
-  if (keyStr.length  0) {
+  const keyStr = pubkey.toString ? pubkey.toString() : pubkey;
+  if (keyStr.length <= length * 2) {
+    return keyStr;
+  }
+  return `${keyStr.slice(0, length)}...${keyStr.slice(-length)}`;
+}
+
+/**
+ * Format time duration in human readable format
+ * 
+ * @param {number} seconds - Duration in seconds
+ * @returns {string} Formatted duration
+ */
+export function formatDuration(seconds) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor(seconds / 60);
+
+  if (hours > 0) {
     return `${hours}h ${minutes % 60}m`;
   } else if (minutes > 0) {
     return `${minutes}m ${seconds % 60}s`;
@@ -274,14 +313,37 @@ export function formatBytes(bytes) {
  * @returns {boolean} True if valid
  */
 export function validateCapabilities(capabilities) {
-  return Number.isInteger(capabilities) && capabilities >= 0 && capabilities } connection - Solana connection
+  return Number.isInteger(capabilities) && capabilities >= 0 && capabilities <= 0xFFFFFFFF;
+}
+
+/**
+ * Sleep for specified milliseconds
+ * 
+ * @param {number} ms - Milliseconds to sleep
+ * @returns {Promise} Promise that resolves after sleep
+ */
+export function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Confirm transaction with retries
+ * 
+ * @param {Object} connection - Solana connection
  * @param {string} signature - Transaction signature
  * @param {number} [maxRetries=10] - Maximum retries
  * @param {number} [delay=1000] - Delay between retries
  * @returns {Promise} True if confirmed
  */
 export async function confirmTransaction(connection, signature, maxRetries = 10, delay = 1000) {
-  for (let i = 0; i  setTimeout(resolve, delay));
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const status = await connection.getSignatureStatus(signature);
+      if (status?.value?.confirmationStatus === 'confirmed' || 
+          status?.value?.confirmationStatus === 'finalized') {
+        return true;
+      }
+      await new Promise(resolve => setTimeout(resolve, delay));
     } catch (error) {
       if (i === maxRetries - 1) {
         throw error;

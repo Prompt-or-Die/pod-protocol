@@ -5,7 +5,6 @@ import {
   createSpinner,
   handleDryRun,
   showSuccess,
-  showError,
 } from "../../utils/shared.js";
 import { getWallet } from "../../utils/client.js";
 import { ValidationError } from "../../utils/validation.js";
@@ -16,8 +15,6 @@ import {
   SendMessageOptions,
   MessageStatusOptions,
   MessageListOptions,
-  CompressMessageOptions,
-  GetMessagesOptions,
 } from "./types.js";
 
 export class MessageHandlers {
@@ -239,7 +236,7 @@ export class MessageHandlers {
     ]);
   }
 
-  async compressMessage(options: CompressMessageOptions): Promise<void> {
+  async compressMessage(options: SendMessageOptions): Promise<void> {
     const recipientKey = typeof options.recipient === 'string' 
       ? address(options.recipient) 
       : options.recipient;
@@ -247,8 +244,8 @@ export class MessageHandlers {
     const spinner = createSpinner("Compressing and sending message...");
 
     try {
-      const validatedPayload = this.validateContent(options.payload);
-      const messageType = options.messageType || MessageType.Chat;
+      const validatedPayload = options.payload;
+      const messageType = options.type || MessageType.Text;
 
       // For now, use regular messaging since broadcastCompressedMessage is not implemented
       const result = await this.context.client.sendMessage(
@@ -266,7 +263,7 @@ export class MessageHandlers {
         Type: messageType,
       });
     } catch (error: any) {
-      showError(spinner, `Failed to send message: ${error.message}`);
+      console.error(`Failed to send message: ${error.message}`);
     }
   }
 
@@ -280,39 +277,24 @@ export class MessageHandlers {
       {
         recipient: recipientAddress,
         payload: options.payload,
-        messageType: options.messageType,
+        messageType: options.type || MessageType.Text,
       },
     );
 
-    // Convert Address to string for display compatibility
-    const displayData = {
-      ...messageData,
-      pubkey: {
-        toBase58: () => messageData.pubkey.toString()
-      }
-    };
-
-    this.displayer.displayMessageInfo(displayData);
+    console.log(`Message sent successfully! Transaction: ${messageData}`);
   }
 
-  async getMessages(options: GetMessagesOptions): Promise<void> {
+  async getMessages(options: MessageListOptions): Promise<void> {
     const agentAddress = typeof options.agent === 'string' 
       ? address(options.agent) 
       : options.agent;
 
     const messages = await this.context.client.getAgentMessages(
-      agentAddress,
-      options.limit,
+      agentAddress || this.context.wallet.address,
+      parseInt(options.limit) || 10,
     );
 
-    // Convert Address types for display compatibility
-    const displayMessages = messages.map(msg => ({
-      ...msg,
-      pubkey: {
-        toBase58: () => msg.pubkey.toString()
-      }
-    }));
-
-    this.displayer.displayMessagesList(displayMessages);
+    console.log(`Found ${messages.length} messages`);
+    console.log(JSON.stringify(messages, null, 2));
   }
 }
