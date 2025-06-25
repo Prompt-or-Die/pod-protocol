@@ -344,42 +344,7 @@ pub trait BaseService: Send + Sync {
     async fn shutdown(&mut self) -> Result<(), Self::Error>;
 }
 
-/// Service health status
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ServiceHealth {
-    /// Service is healthy and operational
-    Healthy,
-    /// Service is degraded but functional
-    Degraded,
-    /// Service is unhealthy
-    Unhealthy,
-    /// Service is not initialized
-    NotInitialized,
-}
 
-/// Service metrics
-#[derive(Debug, Clone, Default)]
-pub struct ServiceMetrics {
-    /// Number of operations performed
-    pub operations_count: u64,
-    /// Number of errors encountered
-    pub errors_count: u64,
-    /// Average operation duration (ms)
-    pub avg_duration_ms: f64,
-    /// Last operation timestamp
-    pub last_operation_at: Option<chrono::DateTime<chrono::Utc>>,
-}
-
-impl ServiceMetrics {
-    /// Get error rate
-    pub fn error_rate(&self) -> f64 {
-        if self.operations_count == 0 {
-            0.0
-        } else {
-            self.errors_count as f64 / self.operations_count as f64
-        }
-    }
-}
 
 #[cfg(test)]
 mod tests {

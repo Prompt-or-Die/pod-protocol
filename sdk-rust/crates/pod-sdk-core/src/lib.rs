@@ -144,7 +144,7 @@ pub mod profiling;
 pub mod wasm;
 
 /// The official PoD Protocol program ID on Solana
-pub const PROGRAM_ID: Pubkey = solana_sdk::pubkey!("PoDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
+pub const PROGRAM_ID: Pubkey = solana_sdk::pubkey!("PoDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDd");
 
 /// SDK version information
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

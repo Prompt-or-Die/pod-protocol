@@ -3,13 +3,18 @@
  * This file provides feature parity with the TypeScript SDK
  */
 
-import { Address, address } from '@solana/web3.js';
+import { address } from '@solana/web3.js';
 import CryptoJS from 'crypto-js';
 
 // Re-export from specific utility files
 export * from './pda.js';
 export * from './crypto.js';
 export * from './secureMemory.js';
+
+// Advanced security and blockchain utilities
+export * from './advanced-security.js';
+export * from './blockchain-progress.js';
+export * from './multichain-defi.js';
 
 // Message Type constants and utilities
 export const MessageType = {

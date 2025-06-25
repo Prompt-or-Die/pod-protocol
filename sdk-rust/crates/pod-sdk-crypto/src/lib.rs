@@ -331,6 +331,8 @@ impl Signature {
     
     /// Generate a new keypair (backward compatibility)
     pub fn generate_keypair() -> Result<([u8; 32], [u8; 32]), CryptoError> {
+        use solana_sdk::signer::Signer;
+        
         let keypair = Self::generate_solana_keypair()?;
         
         let secret_bytes: [u8; 32] = keypair.secret().as_ref().try_into()
@@ -343,6 +345,8 @@ impl Signature {
     
     /// Get public key from private key (backward compatibility)  
     pub fn public_key_from_private(private_key: &[u8; 32]) -> Result<[u8; 32], CryptoError> {
+        use solana_sdk::signer::Signer;
+        
         let keypair = Keypair::from_bytes(private_key)
             .map_err(|_| CryptoError::InvalidPrivateKey)?;
         
@@ -488,11 +492,11 @@ impl SymmetricEncryption {
         plaintext: &[u8],
         associated_data: Option<&[u8]>,
     ) -> Result<Vec<u8>, CryptoError> {
-        use chacha20poly1305::{ChaCha20Poly1305, KeyInit, Nonce};
-        use aead::Aead;
+        use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce};
+        use aead::{Aead, NewAead};
         
-        let cipher = ChaCha20Poly1305::new_from_slice(key)
-            .map_err(|e| CryptoError::EncryptionError(format!("Invalid key: {}", e)))?;
+        let key = Key::from_slice(key);
+        let cipher = ChaCha20Poly1305::new(key);
         
         let nonce = Nonce::from_slice(nonce);
         let payload = aead::Payload {
@@ -513,11 +517,11 @@ impl SymmetricEncryption {
         ciphertext: &[u8],
         associated_data: Option<&[u8]>,
     ) -> Result<Vec<u8>, CryptoError> {
-        use chacha20poly1305::{ChaCha20Poly1305, KeyInit, Nonce};
-        use aead::Aead;
+        use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce};
+        use aead::{Aead, NewAead};
         
-        let cipher = ChaCha20Poly1305::new_from_slice(key)
-            .map_err(|e| CryptoError::DecryptionError(format!("Invalid key: {}", e)))?;
+        let key = Key::from_slice(key);
+        let cipher = ChaCha20Poly1305::new(key);
         
         let nonce = Nonce::from_slice(nonce);
         let payload = aead::Payload {

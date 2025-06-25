@@ -925,9 +925,4 @@ pub struct DiscoveryConfig {
     pub cache_duration_minutes: u32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ZKCompressionConfig {
-    pub proof_size_limit: u32,
-    pub compression_level: u8,
-    pub batch_size: u32,
-}
+
