@@ -398,12 +398,13 @@ impl EscrowService {
         
         // Beneficiary can release if conditions are met
         if escrow.beneficiary == *user {
-            // TODO: Implement condition checking logic
-            return true;
+            return self.check_release_conditions(escrow);
         }
         
-        // Arbitrator can release (if implemented)
-        // TODO: Implement arbitrator logic
+        // Arbitrator can release if system has arbitrators enabled
+        if self.is_arbitrator(user, escrow) {
+            return true;
+        }
         
         false
     }
@@ -417,12 +418,139 @@ impl EscrowService {
                 let now = chrono::Utc::now();
                 return now > timeout;
             }
+            
+            // Allow refund if escrow has been disputed for too long
+            if escrow.status == EscrowStatus::Disputed {
+                if let Some(disputed_at) = escrow.disputed_at {
+                    let now = chrono::Utc::now();
+                    let dispute_timeout = chrono::Duration::days(30); // 30 days dispute timeout
+                    return now > disputed_at + dispute_timeout;
+                }
+            }
         }
         
-        // Arbitrator can refund (if implemented)
-        // TODO: Implement arbitrator logic
+        // Arbitrator can refund if conditions are met
+        if self.is_arbitrator(user, escrow) {
+            return self.arbitrator_can_refund(escrow);
+        }
         
         false
+    }
+
+    /// Check if release conditions are met for beneficiary release
+    fn check_release_conditions(&self, escrow: &EscrowAccount) -> bool {
+        // If no conditions are specified, allow release
+        if escrow.conditions.is_empty() {
+            return true;
+        }
+        
+        // Parse and check each condition
+        for condition in &escrow.conditions {
+            match condition.condition_type.as_str() {
+                "time_elapsed" => {
+                    // Check if enough time has passed since escrow creation
+                    if let Some(required_seconds) = condition.parameters.get("seconds")
+                        .and_then(|v| v.parse::<i64>().ok()) {
+                        let elapsed = chrono::Utc::now()
+                            .signed_duration_since(escrow.created_at)
+                            .num_seconds();
+                        if elapsed < required_seconds {
+                            return false;
+                        }
+                    }
+                },
+                "service_completion" => {
+                    // Check if linked service/task has been completed
+                    // This would typically involve checking external state
+                    // For now, we'll check if the condition is marked as fulfilled
+                    if !condition.fulfilled {
+                        return false;
+                    }
+                },
+                "approval_count" => {
+                    // Check if minimum number of approvals have been received
+                    if let Some(required_approvals) = condition.parameters.get("min_approvals")
+                        .and_then(|v| v.parse::<u32>().ok()) {
+                        let current_approvals = condition.parameters.get("current_approvals")
+                            .and_then(|v| v.parse::<u32>().ok())
+                            .unwrap_or(0);
+                        if current_approvals < required_approvals {
+                            return false;
+                        }
+                    }
+                },
+                "external_verification" => {
+                    // Check if external verification has been completed
+                    if !condition.fulfilled {
+                        return false;
+                    }
+                },
+                _ => {
+                    // Unknown condition type - default to unfulfilled for safety
+                    tracing::warn!(
+                        condition_type = %condition.condition_type,
+                        "Unknown escrow condition type encountered"
+                    );
+                    return false;
+                }
+            }
+        }
+        
+        // All conditions passed
+        true
+    }
+
+    /// Check if a user is an arbitrator for this escrow
+    fn is_arbitrator(&self, user: &Pubkey, escrow: &EscrowAccount) -> bool {
+        // Check if user is in the escrow's arbitrator list
+        if let Some(ref arbitrators) = escrow.arbitrators {
+            return arbitrators.contains(user);
+        }
+        
+        // Check if user is a system-wide arbitrator (would be stored in config or program state)
+        // For now, we'll implement a simple check based on known arbitrator addresses
+        self.is_system_arbitrator(user)
+    }
+
+    /// Check if a user is a system-wide arbitrator
+    fn is_system_arbitrator(&self, user: &Pubkey) -> bool {
+        // In a real implementation, this would check against a registry of authorized arbitrators
+        // stored either in the program state or in the service configuration
+        
+        // For now, we can check against a hardcoded list or configuration
+        if let Some(ref arbitrator_config) = self.base.config.arbitrator_config {
+            return arbitrator_config.authorized_arbitrators.contains(user);
+        }
+        
+        false
+    }
+
+    /// Check if arbitrator can refund the escrow
+    fn arbitrator_can_refund(&self, escrow: &EscrowAccount) -> bool {
+        match escrow.status {
+            EscrowStatus::Disputed => {
+                // Arbitrators can always refund disputed escrows after investigation period
+                if let Some(disputed_at) = escrow.disputed_at {
+                    let now = chrono::Utc::now();
+                    let investigation_period = chrono::Duration::days(7); // 7 days for investigation
+                    return now > disputed_at + investigation_period;
+                }
+                true // If no dispute timestamp, allow refund
+            },
+            EscrowStatus::Active => {
+                // Arbitrators can refund active escrows only under special circumstances
+                // such as fraud detection or system emergencies
+                
+                // Check if escrow has been flagged for review
+                if let Some(ref flags) = escrow.flags {
+                    return flags.contains(&"fraud_suspected".to_string()) ||
+                           flags.contains(&"emergency_intervention".to_string());
+                }
+                
+                false
+            },
+            _ => false, // Cannot refund already completed escrows
+        }
     }
 }
 
@@ -464,7 +592,83 @@ impl BaseService for EscrowService {
 
     fn validate_config(&self) -> Result<(), Self::Error> {
         // Validate escrow service specific configuration
-        // TODO: Add specific validations if needed
+        let config = &self.base.config;
+        
+        // Check if program ID is set and valid
+        if config.program_id.to_string() == "11111111111111111111111111111111" {
+            return Err(PodComError::InvalidConfiguration {
+                field: "program_id".to_string(),
+                reason: "Program ID cannot be the default/null address".to_string(),
+            });
+        }
+        
+        // Validate cluster configuration
+        if config.cluster.is_empty() {
+            return Err(PodComError::InvalidConfiguration {
+                field: "cluster".to_string(),
+                reason: "Cluster URL cannot be empty".to_string(),
+            });
+        }
+        
+        // Validate escrow-specific timeouts
+        if config.rpc_timeout_secs < 10 {
+            return Err(PodComError::InvalidConfiguration {
+                field: "rpc_timeout_secs".to_string(),
+                reason: "RPC timeout must be at least 10 seconds for escrow operations".to_string(),
+            });
+        }
+        
+        // Validate escrow amount limits
+        if let Some(ref escrow_config) = config.escrow_config {
+            if escrow_config.min_escrow_amount == 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "escrow_config.min_escrow_amount".to_string(),
+                    reason: "Minimum escrow amount must be greater than 0".to_string(),
+                });
+            }
+            
+            if escrow_config.max_escrow_amount > 0 && 
+               escrow_config.max_escrow_amount < escrow_config.min_escrow_amount {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "escrow_config.max_escrow_amount".to_string(),
+                    reason: "Maximum escrow amount must be greater than minimum amount".to_string(),
+                });
+            }
+            
+            // Validate default timeout
+            if escrow_config.default_timeout_days == 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "escrow_config.default_timeout_days".to_string(),
+                    reason: "Default timeout must be at least 1 day".to_string(),
+                });
+            }
+            
+            if escrow_config.default_timeout_days > 365 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "escrow_config.default_timeout_days".to_string(),
+                    reason: "Default timeout cannot exceed 365 days".to_string(),
+                });
+            }
+        }
+        
+        // Validate arbitrator configuration if present
+        if let Some(ref arbitrator_config) = config.arbitrator_config {
+            if arbitrator_config.enabled && arbitrator_config.authorized_arbitrators.is_empty() {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "arbitrator_config.authorized_arbitrators".to_string(),
+                    reason: "At least one arbitrator must be configured when arbitration is enabled".to_string(),
+                });
+            }
+            
+            // Validate arbitrator fee
+            if arbitrator_config.arbitration_fee_bps > 1000 { // 10% max fee
+                return Err(PodComError::InvalidConfiguration {
+                    field: "arbitrator_config.arbitration_fee_bps".to_string(),
+                    reason: "Arbitration fee cannot exceed 10% (1000 basis points)".to_string(),
+                });
+            }
+        }
+        
         Ok(())
     }
 

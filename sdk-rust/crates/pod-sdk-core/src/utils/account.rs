@@ -5,8 +5,74 @@
 use solana_sdk::pubkey::Pubkey;
 use crate::error::Result;
 
-// Placeholder types that services expect
-pub use pod_sdk_types::accounts::*;
+/// Agent account data structure
+#[derive(Debug, Clone)]
+pub struct AgentAccount {
+    pub name: String,
+    pub owner: Pubkey,
+    pub is_active: bool,
+    pub reputation_score: u64,
+    pub capabilities: Vec<String>,
+    pub created_at: i64,
+    pub updated_at: i64,
+}
+
+/// Message account data structure
+#[derive(Debug, Clone)]
+pub struct MessageAccount {
+    pub id: String,
+    pub channel: Pubkey,
+    pub sender: Pubkey,
+    pub content: Vec<u8>,
+    pub content_type: String,
+    pub created_at: i64,
+    pub expires_at: Option<i64>,
+}
+
+/// Channel account data structure
+#[derive(Debug, Clone)]
+pub struct ChannelAccount {
+    pub id: String,
+    pub creator: Pubkey,
+    pub participants: Vec<Pubkey>,
+    pub is_active: bool,
+    pub created_at: i64,
+    pub updated_at: i64,
+}
+
+/// Escrow account data structure
+#[derive(Debug, Clone)]
+pub struct EscrowAccount {
+    pub id: String,
+    pub payer: Pubkey,
+    pub beneficiary: Pubkey,
+    pub amount: u64,
+    pub status: crate::error::EscrowStatus,
+    pub created_at: i64,
+    pub expires_at: i64,
+}
+
+/// IPFS metadata account
+#[derive(Debug, Clone)]
+pub struct IPFSMetadataAccount {
+    pub id: String,
+    pub uploader: Pubkey,
+    pub content_hash: String,
+    pub size: u64,
+    pub is_pinned: bool,
+    pub created_at: i64,
+}
+
+/// ZK compression account
+#[derive(Debug, Clone)]
+pub struct ZKCompressionAccount {
+    pub id: String,
+    pub compressor: Pubkey,
+    pub original_size: u64,
+    pub compressed_size: u64,
+    pub proof_hash: String,
+    pub created_at: i64,
+}
 
 /// Derive agent PDA
 pub fn derive_agent_pda(owner: &Pubkey, name: &str) -> Result<(Pubkey, u8)> {

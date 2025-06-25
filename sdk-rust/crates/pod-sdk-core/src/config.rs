@@ -581,6 +581,8 @@ pub struct PodComConfigBuilder {
     cache_config: Option<CacheConfig>,
     security_config: Option<SecurityConfig>,
     performance_config: Option<PerformanceConfig>,
+    ipfs_config: Option<IPFSConfig>,
+    zk_compression_config: Option<ZKCompressionConfig>,
 }
 
 impl PodComConfigBuilder {
@@ -649,6 +651,18 @@ impl PodComConfigBuilder {
         self
     }
     
+    /// Set IPFS configuration
+    pub fn ipfs_config(mut self, ipfs_config: IPFSConfig) -> Self {
+        self.ipfs_config = Some(ipfs_config);
+        self
+    }
+    
+    /// Set ZK compression configuration
+    pub fn zk_compression_config(mut self, zk_compression_config: ZKCompressionConfig) -> Self {
+        self.zk_compression_config = Some(zk_compression_config);
+        self
+    }
+    
     /// Build the configuration
     pub fn build(self) -> Result<PodComConfig> {
         let config = PodComConfig {
@@ -662,6 +676,8 @@ impl PodComConfigBuilder {
             cache_config: self.cache_config.unwrap_or_else(CacheConfig::default),
             security_config: self.security_config.unwrap_or_else(SecurityConfig::default),
             performance_config: self.performance_config.unwrap_or_else(PerformanceConfig::default),
+            ipfs_config: self.ipfs_config.unwrap_or_else(IPFSConfig::default),
+            zk_compression_config: self.zk_compression_config.unwrap_or_else(ZKCompressionConfig::default),
         };
         
         config.validate()?;

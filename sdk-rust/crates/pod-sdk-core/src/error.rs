@@ -718,6 +718,14 @@ macro_rules! internal_error {
     };
 }
 
+impl From<anchor_client::ClientError> for PodComError {
+    fn from(error: anchor_client::ClientError) -> Self {
+        PodComError::Network(NetworkError::AnchorClient {
+            details: error.to_string(),
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

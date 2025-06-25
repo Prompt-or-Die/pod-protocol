@@ -487,7 +487,93 @@ impl BaseService for MessageService {
 
     fn validate_config(&self) -> Result<(), Self::Error> {
         // Validate message service specific configuration
-        // TODO: Add specific validations if needed
+        let config = &self.base.config;
+        
+        // Check if program ID is set and valid
+        if config.program_id.to_string() == "11111111111111111111111111111111" {
+            return Err(PodComError::InvalidConfiguration {
+                field: "program_id".to_string(),
+                reason: "Program ID cannot be the default/null address".to_string(),
+            });
+        }
+        
+        // Validate cluster configuration
+        if config.cluster.is_empty() {
+            return Err(PodComError::InvalidConfiguration {
+                field: "cluster".to_string(),
+                reason: "Cluster URL cannot be empty".to_string(),
+            });
+        }
+        
+        // Validate message-specific timeouts
+        if config.rpc_timeout_secs < 5 {
+            return Err(PodComError::InvalidConfiguration {
+                field: "rpc_timeout_secs".to_string(),
+                reason: "RPC timeout must be at least 5 seconds for message operations".to_string(),
+            });
+        }
+        
+        // Validate message size limits
+        if let Some(ref message_config) = config.message_config {
+            if message_config.max_message_size == 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "message_config.max_message_size".to_string(),
+                    reason: "Maximum message size must be greater than 0".to_string(),
+                });
+            }
+            
+            if message_config.max_message_size > 32 * 1024 { // 32KB limit
+                return Err(PodComError::InvalidConfiguration {
+                    field: "message_config.max_message_size".to_string(),
+                    reason: "Maximum message size cannot exceed 32KB".to_string(),
+                });
+            }
+            
+            // Validate encryption settings
+            if message_config.encryption_required && message_config.encryption_key_size < 256 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "message_config.encryption_key_size".to_string(),
+                    reason: "Encryption key size must be at least 256 bits when encryption is required".to_string(),
+                });
+            }
+            
+            // Validate retention settings
+            if message_config.default_retention_days == 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "message_config.default_retention_days".to_string(),
+                    reason: "Default retention period must be at least 1 day".to_string(),
+                });
+            }
+            
+            if message_config.default_retention_days > 3650 { // 10 years max
+                return Err(PodComError::InvalidConfiguration {
+                    field: "message_config.default_retention_days".to_string(),
+                    reason: "Default retention period cannot exceed 10 years (3650 days)".to_string(),
+                });
+            }
+        }
+        
+        // Validate compression settings
+        if let Some(ref compression_config) = config.compression_config {
+            if compression_config.enabled && compression_config.compression_threshold == 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "compression_config.compression_threshold".to_string(),
+                    reason: "Compression threshold must be greater than 0 when compression is enabled".to_string(),
+                });
+            }
+            
+            // Validate compression algorithm
+            match compression_config.algorithm.as_str() {
+                "gzip" | "lz4" | "zstd" => {},
+                _ => {
+                    return Err(PodComError::InvalidConfiguration {
+                        field: "compression_config.algorithm".to_string(),
+                        reason: "Compression algorithm must be 'gzip', 'lz4', or 'zstd'".to_string(),
+                    });
+                }
+            }
+        }
+        
         Ok(())
     }
 

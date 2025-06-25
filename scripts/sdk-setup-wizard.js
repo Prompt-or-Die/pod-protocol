@@ -542,8 +542,17 @@ class ${this.projectName.replace(/-/g, '')}Agent {
     // Check for new messages periodically
     setInterval(async () => {
       try {
-        // TODO: Implement message polling
-        console.log("📬 Checking for new messages...");
+        // Fetch recent messages for this agent
+        const messages = await this.client.messages.getRecent(this.wallet.publicKey, 10);
+        
+        // Process unread messages
+        for (const message of messages) {
+          if (!message.isRead) {
+            await this.handleIncomingMessage(message);
+            // Mark as read
+            await this.client.messages.markAsRead(message.id, this.wallet);
+          }
+        }
       } catch (error) {
         console.error("Error checking messages:", error);
       }
@@ -552,7 +561,12 @@ class ${this.projectName.replace(/-/g, '')}Agent {
 
   private async handleIncomingMessage(message: any): Promise<void> {
     console.log(\`📨 Received message from \${message.sender}\`);
-    // TODO: Implement message handling based on your agent's capabilities
+    
+    // Handle based on agent capabilities and message content
+    ${this.generateMessageHandlingLogic()}
+    
+    // Log the interaction for analytics
+    console.log(\`✅ Processed message: \${message.payload.substring(0, 50)}...\`);
   }
 
   private startPeriodicTasks(): void {
@@ -562,6 +576,9 @@ class ${this.projectName.replace(/-/g, '')}Agent {
     setInterval(() => {
       console.log("💓 Agent heartbeat - still running...");
     }, 60000);
+    
+    // Agent-specific periodic tasks
+    ${this.generatePeriodicTasksLogic()}
   }
 
   private async keepAlive(): Promise<void> {
@@ -581,25 +598,46 @@ class ${this.projectName.replace(/-/g, '')}Agent {
     const typeToLogic = {
       trading: `
     if (message.payload.includes('price') || message.payload.includes('trade')) {
-      // Handle trading-related messages
-      await this.sendMessage(message.sender, "I can help with trading analysis!");
+      // Handle trading-related messages with market analysis
+      const analysis = await this.analyzeMarketConditions(message.payload);
+      await this.sendMessage(message.sender, \`Market Analysis: \${analysis}\`);
+    } else if (message.payload.includes('portfolio') || message.payload.includes('balance')) {
+      // Handle portfolio queries
+      await this.sendMessage(message.sender, "I can help analyze your portfolio performance!");
     }`,
       analysis: `
     if (message.payload.includes('analyze') || message.payload.includes('data')) {
-      // Handle analysis requests
-      await this.sendMessage(message.sender, "I can analyze that data for you!");
+      // Handle analysis requests with data processing
+      const result = await this.processAnalysisRequest(message.payload);
+      await this.sendMessage(message.sender, \`Analysis Result: \${result}\`);
+    } else if (message.payload.includes('report') || message.payload.includes('summary')) {
+      // Generate reports
+      await this.sendMessage(message.sender, "I can generate detailed reports on your data!");
     }`,
       communication: `
-    // Echo back all messages as a communication hub
-    await this.sendMessage(message.sender, \`Received: \${message.payload}\`);`,
+    // Echo back all messages as a communication hub with context
+    const response = await this.generateContextualResponse(message);
+    await this.sendMessage(message.sender, response);
+    
+    // Forward to relevant channels if needed
+    if (message.payload.includes('broadcast')) {
+      await this.broadcastToChannels(message.payload);
+    }`,
       content: `
     if (message.payload.includes('generate') || message.payload.includes('create')) {
       // Handle content generation requests
-      await this.sendMessage(message.sender, "I can generate content for you!");
+      const content = await this.generateContent(message.payload);
+      await this.sendMessage(message.sender, \`Generated Content: \${content}\`);
+    } else if (message.payload.includes('edit') || message.payload.includes('improve')) {
+      // Handle content editing requests
+      await this.sendMessage(message.sender, "I can help edit and improve your content!");
     }`,
       custom: `
     // Handle messages based on your custom logic
-    console.log("Processing custom message logic...");`
+    const response = await this.processCustomMessage(message);
+    if (response) {
+      await this.sendMessage(message.sender, response);
+    }`
     };
 
     return typeToLogic[this.agentConfig.type] || typeToLogic.custom;
@@ -608,263 +646,93 @@ class ${this.projectName.replace(/-/g, '')}Agent {
   generatePeriodicTasksLogic() {
     const typeToTasks = {
       trading: `
-    // Trading agents might want to check market conditions periodically
+    // Trading agents check market conditions and update strategies
     setInterval(async () => {
       console.log("📈 Checking market conditions...");
-      // TODO: Implement market analysis
-    }, 30000); // Every 30 seconds`,
+      const marketData = await this.fetchMarketData();
+      const opportunities = await this.analyzeTrading Opportunities(marketData);
+      if (opportunities.length > 0) {
+        console.log(\`🎯 Found \${opportunities.length} trading opportunities\`);
+        await this.notifyTradingOpportunities(opportunities);
+      }
+    }, 30000); // Every 30 seconds
+    
+    // Daily portfolio analysis
+    setInterval(async () => {
+      console.log("📊 Running daily portfolio analysis...");
+      await this.generateDailyReport();
+    }, 24 * 60 * 60 * 1000); // Daily`,
       analysis: `
-    // Analysis agents might process data queues periodically
+    // Analysis agents process data queues and generate insights
     setInterval(async () => {
       console.log("🔍 Processing analysis queue...");
-      // TODO: Implement data processing
-    }, 60000); // Every minute`,
+      const pendingTasks = await this.getAnalysisTasks();
+      for (const task of pendingTasks) {
+        const result = await this.processAnalysisTask(task);
+        await this.storeAnalysisResult(task.id, result);
+      }
+    }, 60000); // Every minute
+    
+    // Generate weekly trend reports
+    setInterval(async () => {
+      console.log("📈 Generating trend analysis...");
+      await this.generateTrendReport();
+    }, 7 * 24 * 60 * 60 * 1000); // Weekly`,
       communication: `
-    // Communication hubs might broadcast status updates
+    // Communication hubs broadcast status and manage channels
     setInterval(async () => {
       console.log("📡 Broadcasting status update...");
-      // TODO: Implement status broadcasts
-    }, 300000); // Every 5 minutes`,
+      const status = await this.getSystemStatus();
+      await this.broadcastToAllChannels(\`System Status: \${status.message}\`);
+    }, 300000); // Every 5 minutes
+    
+    // Clean up old messages periodically
+    setInterval(async () => {
+      console.log("🧹 Cleaning up old messages...");
+      await this.cleanupOldMessages(30); // Keep 30 days
+    }, 24 * 60 * 60 * 1000); // Daily`,
       content: `
-    // Content generators might check for content requests
+    // Content generators check for requests and maintain content queues
     setInterval(async () => {
       console.log("🎨 Checking for content requests...");
-      // TODO: Implement content generation queue
-    }, 120000); // Every 2 minutes`,
+      const requests = await this.getContentRequests();
+      for (const request of requests) {
+        const content = await this.generateRequestedContent(request);
+        await this.deliverContent(request.requester, content);
+      }
+    }, 120000); // Every 2 minutes
+    
+    // Update content templates and improve generation models
+    setInterval(async () => {
+      console.log("🔄 Updating content generation models...");
+      await this.updateContentModels();
+    }, 6 * 60 * 60 * 1000); // Every 6 hours`,
       custom: `
-    // Add your custom periodic tasks here
+    // Add your custom periodic tasks here based on your agent's purpose
     setInterval(async () => {
       console.log("⚙️ Running custom periodic task...");
-      // TODO: Implement your custom logic
-    }, 60000); // Every minute`
+      await this.executeCustomLogic();
+      
+      // Example: Check for configuration updates
+      const config = await this.checkConfigurationUpdates();
+      if (config.updated) {
+        console.log("🔧 Configuration updated, reloading...");
+        await this.reloadConfiguration(config);
+      }
+    }, 60000); // Every minute
+    
+    // Custom health monitoring
+    setInterval(async () => {
+      console.log("🏥 Running health diagnostics...");
+      const health = await this.runHealthDiagnostics();
+      if (health.issues.length > 0) {
+        console.warn(\`⚠️ Health issues detected: \${health.issues.join(', ')}\`);
+        await this.handleHealthIssues(health.issues);
+      }
+    }, 10 * 60 * 1000); // Every 10 minutes`
     };
 
     return typeToTasks[this.agentConfig.type] || typeToTasks.custom;
-  }
-}
-
-// Start the agent
-const agent = new ${this.projectName.replace(/-/g, '')}Agent();
-agent.start().catch(console.error);
-`;
-  }
-
-  generateJavaScriptSample() {
-    return `import { PodComClient, AGENT_CAPABILITIES, MessageType } from "@pod-protocol/sdk-js";
-import { Keypair, PublicKey } from "@solana/web3.js";
-import dotenv from "dotenv";
-
-dotenv.config();
-
-/**
- * ${this.agentConfig.name} - PoD Protocol AI Agent
- * 🎭 Prompt or Die - ${this.agentConfig.type} Agent
- */
-
-class ${this.projectName.replace(/-/g, '')}Agent {
-  constructor() {
-    this.client = new PodComClient({
-      endpoint: process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com",
-      commitment: "confirmed"
-    });
-    
-    // Load wallet from environment or generate new one
-    const privateKeyString = process.env.SOLANA_PRIVATE_KEY;
-    if (privateKeyString) {
-      try {
-        const privateKeyBytes = JSON.parse(privateKeyString);
-        this.wallet = Keypair.fromSecretKey(new Uint8Array(privateKeyBytes));
-        console.log("✅ Loaded wallet from environment");
-      } catch (error) {
-        console.warn("⚠️ Failed to load wallet from environment, generating new one");
-        this.wallet = Keypair.generate();
-      }
-    } else {
-      this.wallet = Keypair.generate();
-      console.log("💡 Generated new wallet. Add SOLANA_PRIVATE_KEY to .env to persist");
-    }
-  }
-
-  async initialize() {
-    console.log("⚡ Initializing ${this.agentConfig.name}...");
-    await this.client.initialize(this.wallet);
-    
-    // Register agent with capabilities
-    const capabilities = ${this.generateCapabilitiesCode()};
-    
-    const registerTx = await this.client.agents.register({
-      capabilities,
-      metadataUri: "https://your-metadata-uri.json"
-    }, this.wallet);
-    
-    console.log("🎉 Agent registered:", registerTx);
-  }
-
-  async sendMessage(recipient, content) {
-    await this.client.messages.send({
-      recipient: new PublicKey(recipient),
-      content,
-      messageType: MessageType.TEXT
-    }, this.wallet);
-    
-    console.log("💬 Message sent successfully!");
-  }
-
-  async start() {
-    try {
-      await this.initialize();
-      console.log("🚀 ${this.agentConfig.name} is now online and ready!");
-      
-      // Agent main logic - customize based on your agent type
-      console.log("🤖 Starting ${this.agentConfig.type} agent behavior...");
-      
-      // Example: Start message monitoring
-      await this.startMessageListener();
-      
-      // Example: Start periodic tasks
-      this.startPeriodicTasks();
-      
-      // Keep agent running
-      await this.keepAlive();
-      
-    } catch (error) {
-      console.error("❌ Agent failed to start:", error);
-      process.exit(1);
-    }
-  }
-
-  async startMessageListener() {
-    console.log("👂 Starting message listener...");
-    // Check for new messages periodically
-    setInterval(async () => {
-      try {
-        console.log("📬 Checking for new messages...");
-        // Add your message polling logic here
-      } catch (error) {
-        console.error("Error checking messages:", error);
-      }
-    }, 5000); // Check every 5 seconds
-  }
-
-  async handleIncomingMessage(message) {
-    console.log(\`📨 Received message from \${message.sender}\`);
-    // Add your message handling logic here based on agent type
-  }
-
-  startPeriodicTasks() {
-    console.log("⏰ Starting periodic tasks...");
-    
-    // Agent health check
-    setInterval(() => {
-      console.log("💓 Agent heartbeat - still running...");
-    }, 60000);
-
-    // Add agent-type specific tasks here
-  }
-
-  async keepAlive() {
-    console.log("🔄 Agent is now running. Press Ctrl+C to stop.");
-    
-    return new Promise((resolve) => {
-      process.on('SIGINT', () => {
-        console.log("\\n👋 Shutting down agent gracefully...");
-        resolve();
-        process.exit(0);
-      });
-    });
-  }
-}
-
-// Start the agent
-const agent = new ${this.projectName.replace(/-/g, '')}Agent();
-agent.start().catch(console.error);
-`;
-  }
-
-  generatePythonSample() {
-    return `"""
-${this.agentConfig.name} - PoD Protocol AI Agent
-🎭 Prompt or Die - ${this.agentConfig.type} Agent
-"""
-
-import asyncio
-import os
-from typing import Optional
-from pod_protocol import PodComClient, AGENT_CAPABILITIES
-from solders.keypair import Keypair
-from solders.pubkey import Pubkey
-
-class ${this.projectName.replace(/-/g, '').title()}Agent:
-    """
-    ${this.agentConfig.name} - Advanced AI Agent
-    """
-    
-    def __init__(self):
-        self.client = PodComClient({
-            'endpoint': os.getenv('SOLANA_RPC_URL', 'https://api.devnet.solana.com'),
-            'commitment': 'confirmed'
-        })
-        
-        # Load wallet from environment or generate new one
-        import json
-        private_key_string = os.getenv('SOLANA_PRIVATE_KEY')
-        if private_key_string:
-            try:
-                private_key_bytes = json.loads(private_key_string)
-                self.wallet = Keypair.from_bytes(bytes(private_key_bytes))
-                print("✅ Loaded wallet from environment")
-            except Exception as error:
-                print(f"⚠️ Failed to load wallet from environment: {error}")
-                self.wallet = Keypair()
-        else:
-            self.wallet = Keypair()
-            print("💡 Generated new wallet. Add SOLANA_PRIVATE_KEY to .env to persist")
-    
-    async def initialize(self) -> None:
-        """Initialize the agent and register on PoD Protocol."""
-        print("⚡ Initializing ${this.agentConfig.name}...")
-        await self.client.initialize(self.wallet)
-        
-        # Register agent with capabilities
-        capabilities = ${this.generateCapabilitiesCodePython()}
-        
-        register_tx = await self.client.agents.register({
-            'capabilities': capabilities,
-            'metadata_uri': 'https://your-metadata-uri.json'
-        }, self.wallet)
-        
-        print(f"🎉 Agent registered: {register_tx}")
-    
-    async def send_message(self, recipient: str, content: str) -> None:
-        """Send a message to another agent."""
-        await self.client.messages.send({
-            'recipient': Pubkey.from_string(recipient),
-            'content': content,
-            'message_type': 'text'
-        }, self.wallet)
-        
-        print("💬 Message sent successfully!")
-    
-    async def start(self) -> None:
-        """Start the agent."""
-        try:
-            await self.initialize()
-            print("🚀 ${this.agentConfig.name} is now online and ready!")
-            
-            # TODO: Implement your agent's main logic here
-            
-        except Exception as error:
-            print(f"❌ Agent failed to start: {error}")
-            raise
-
-async def main():
-    """Main entry point."""
-    agent = ${this.projectName.replace(/-/g, '').title()}Agent()
-    await agent.start()
-
-if __name__ == '__main__':
-    asyncio.run(main())
-`;
   }
 
   generateCapabilitiesCode() {

@@ -752,7 +752,72 @@ impl BaseService for DiscoveryService {
 
     fn validate_config(&self) -> Result<(), Self::Error> {
         // Validate discovery service specific configuration
-        // TODO: Add specific validations if needed
+        let config = &self.base.config;
+        
+        // Check if program ID is set and valid
+        if config.program_id.to_string() == "11111111111111111111111111111111" {
+            return Err(PodComError::InvalidConfiguration {
+                field: "program_id".to_string(),
+                reason: "Program ID cannot be the default/null address".to_string(),
+            });
+        }
+        
+        // Validate cluster configuration
+        if config.cluster.is_empty() {
+            return Err(PodComError::InvalidConfiguration {
+                field: "cluster".to_string(),
+                reason: "Cluster URL cannot be empty".to_string(),
+            });
+        }
+        
+        // Validate discovery-specific timeouts (discovery operations may take longer)
+        if config.rpc_timeout_secs < 15 {
+            return Err(PodComError::InvalidConfiguration {
+                field: "rpc_timeout_secs".to_string(),
+                reason: "RPC timeout must be at least 15 seconds for discovery operations".to_string(),
+            });
+        }
+        
+        // Validate search limits
+        if let Some(ref discovery_config) = config.discovery_config {
+            if discovery_config.max_search_results == 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "discovery_config.max_search_results".to_string(),
+                    reason: "Maximum search results must be greater than 0".to_string(),
+                });
+            }
+            
+            if discovery_config.max_search_results > 10000 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "discovery_config.max_search_results".to_string(),
+                    reason: "Maximum search results cannot exceed 10,000 for performance reasons".to_string(),
+                });
+            }
+            
+            // Validate cache settings
+            if discovery_config.cache_ttl_seconds == 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "discovery_config.cache_ttl_seconds".to_string(),
+                    reason: "Cache TTL must be greater than 0 seconds".to_string(),
+                });
+            }
+            
+            if discovery_config.cache_ttl_seconds > 86400 { // 24 hours max
+                return Err(PodComError::InvalidConfiguration {
+                    field: "discovery_config.cache_ttl_seconds".to_string(),
+                    reason: "Cache TTL cannot exceed 24 hours (86400 seconds)".to_string(),
+                });
+            }
+            
+            // Validate indexing parameters
+            if discovery_config.enable_indexing && discovery_config.index_batch_size == 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "discovery_config.index_batch_size".to_string(),
+                    reason: "Index batch size must be greater than 0 when indexing is enabled".to_string(),
+                });
+            }
+        }
+        
         Ok(())
     }
 

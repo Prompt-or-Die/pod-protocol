@@ -270,8 +270,54 @@ impl ServiceBase {
             }
         }
         
-        // TODO: Add more sophisticated health checks based on metrics
-        ServiceHealth::Healthy
+        // Perform sophisticated health checks based on metrics
+        let metrics = futures::executor::block_on(self.metrics());
+        
+        // If no operations have been performed yet, consider healthy
+        if metrics.operations_count == 0 {
+            return ServiceHealth::Healthy;
+        }
+        
+        // Check error rate
+        let error_rate = metrics.error_rate();
+        let recent_activity = metrics.last_operation_at
+            .map(|last| {
+                let now = chrono::Utc::now();
+                let minutes_since_last = now.signed_duration_since(last).num_minutes();
+                minutes_since_last < 5 // Active within last 5 minutes
+            })
+            .unwrap_or(false);
+        
+        // Determine health based on error rate and activity
+        match error_rate {
+            rate if rate >= 0.8 => {
+                // 80% or higher error rate is unhealthy
+                ServiceHealth::Unhealthy
+            },
+            rate if rate >= 0.5 => {
+                // 50-80% error rate is degraded
+                ServiceHealth::Degraded
+            },
+            rate if rate >= 0.2 => {
+                // 20-50% error rate - check if recent activity helps
+                if recent_activity && metrics.operations_count >= 10 {
+                    // If we have recent activity and sufficient sample size, it's degraded
+                    ServiceHealth::Degraded
+                } else {
+                    // Otherwise still healthy but watch closely
+                    ServiceHealth::Healthy
+                }
+            },
+            _ => {
+                // Less than 20% error rate
+                if !recent_activity && metrics.operations_count > 100 {
+                    // No recent activity but has history - might be degraded
+                    ServiceHealth::Degraded
+                } else {
+                    ServiceHealth::Healthy
+                }
+            }
+        }
     }
     
     /// Shutdown the service
