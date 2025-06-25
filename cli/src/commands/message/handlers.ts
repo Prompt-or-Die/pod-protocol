@@ -1,10 +1,11 @@
-import { type Address } from "@solana/web3.js";
+import { type Address, address } from "@solana/web3.js";
 import { MessageType } from "@pod-protocol/sdk";
 import inquirer from "inquirer";
 import {
   createSpinner,
   handleDryRun,
   showSuccess,
+  showError,
 } from "../../utils/shared.js";
 import { getWallet } from "../../utils/client.js";
 import { ValidationError } from "../../utils/validation.js";
@@ -15,6 +16,8 @@ import {
   SendMessageOptions,
   MessageStatusOptions,
   MessageListOptions,
+  CompressMessageOptions,
+  GetMessagesOptions,
 } from "./types.js";
 
 export class MessageHandlers {
@@ -64,18 +67,13 @@ export class MessageHandlers {
       return;
     }
 
-    const result = await this.context.client.zkCompression.broadcastCompressedMessage(
-      recipientKey,
-      validatedPayload,
-      messageType,
-    );
-    const signature = result.signature;
-
-    showSuccess(spinner, "Message sent successfully!", {
-      Transaction: signature,
-      Recipient: String(recipientKey),
-      Type: messageType,
+    const result = await this.context.client.zkCompression.compressMessage({
+      content: validatedPayload,
+      channelPDA: options.channelPDA,
+      priority: options.priority || 'medium'
     });
+
+    this.displayer.displayCompressionResult(result);
   }
 
   public async handleInfo(messageId: string): Promise<void> {
@@ -205,5 +203,82 @@ export class MessageHandlers {
         when: (answers) => answers.messageType === MessageType.Custom,
       },
     ]);
+  }
+
+  async compressMessage(options: CompressMessageOptions): Promise<void> {
+    const recipientKey = typeof options.recipient === 'string' 
+      ? address(options.recipient) 
+      : options.recipient;
+
+    const spinner = createSpinner("Compressing and sending message...");
+
+    try {
+      const validatedPayload = this.validateContent(options.payload);
+      const messageType = options.messageType || MessageType.Chat;
+
+      // For now, use regular messaging since broadcastCompressedMessage is not implemented
+      const result = await this.context.client.sendMessage(
+        this.context.wallet,
+        {
+          recipient: recipientKey,
+          payload: validatedPayload,
+          messageType: messageType,
+        },
+      );
+
+      showSuccess(spinner, "Message sent successfully!", {
+        Transaction: result,
+        Recipient: String(recipientKey),
+        Type: messageType,
+      });
+    } catch (error: any) {
+      showError(spinner, `Failed to send message: ${error.message}`);
+    }
+  }
+
+  async sendMessage(options: SendMessageOptions): Promise<void> {
+    const recipientAddress = typeof options.recipient === 'string' 
+      ? address(options.recipient) 
+      : options.recipient;
+
+    const messageData = await this.context.client.sendMessage(
+      this.context.wallet,
+      {
+        recipient: recipientAddress,
+        payload: options.payload,
+        messageType: options.messageType,
+      },
+    );
+
+    // Convert Address to string for display compatibility
+    const displayData = {
+      ...messageData,
+      pubkey: {
+        toBase58: () => messageData.pubkey.toString()
+      }
+    };
+
+    this.displayer.displayMessageInfo(displayData);
+  }
+
+  async getMessages(options: GetMessagesOptions): Promise<void> {
+    const agentAddress = typeof options.agent === 'string' 
+      ? address(options.agent) 
+      : options.agent;
+
+    const messages = await this.context.client.getAgentMessages(
+      agentAddress,
+      options.limit,
+    );
+
+    // Convert Address types for display compatibility
+    const displayMessages = messages.map(msg => ({
+      ...msg,
+      pubkey: {
+        toBase58: () => msg.pubkey.toString()
+      }
+    }));
+
+    this.displayer.displayMessagesList(displayMessages);
   }
 }

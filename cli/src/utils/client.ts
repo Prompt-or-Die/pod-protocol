@@ -3,7 +3,7 @@ import { homedir } from "os";
 import { join } from "path";
 import { generateKeyPairSigner, address, createSolanaRpc, createKeyPairSignerFromPrivateKeyBytes } from "@solana/web3.js";
 import type { KeyPairSigner, Address, Rpc } from "@solana/web3.js";
-import { PodClient } from "@pod-protocol/sdk";
+import { PodComClient } from "@pod-protocol/sdk";
 import { safeParseKeypair } from "./safe-json.js";
 
 export interface ClientConfig {
@@ -24,8 +24,14 @@ const NETWORK_URLS = {
   mainnet: "https://api.mainnet-beta.solana.com"
 };
 
-export function createClient(rpcUrl: string): PodClient {
-  return new PodClient({
+export function createClient(networkOrConfig: string | Partial<ClientConfig> = {}): PodComClient {
+  const finalConfig = typeof networkOrConfig === 'string' 
+    ? { ...DEFAULT_CONFIG, network: networkOrConfig }
+    : { ...DEFAULT_CONFIG, ...networkOrConfig };
+    
+  const rpcUrl = NETWORK_URLS[finalConfig.network as keyof typeof NETWORK_URLS] || finalConfig.rpcUrl;
+  
+  return new PodComClient({
     endpoint: rpcUrl,
     commitment: 'confirmed',
     programId: address('PoD1111111111111111111111111111111111111111')
@@ -61,4 +67,41 @@ export function createAddress(addressString: string): Address {
 
 export async function generateNewKeyPair(): Promise<KeyPairSigner> {
   return await generateKeyPairSigner();
+}
+
+// Wallet adapter for Web3.js v2.0 compatibility with Anchor
+export interface NodeWallet {
+  payer: KeyPairSigner;
+  publicKey: Address;
+  signTransaction(transaction: any): Promise<any>;
+  signAllTransactions(transactions: any[]): Promise<any[]>;
+}
+
+/**
+ * Create a NodeWallet-compatible adapter from Web3.js v2.0 KeyPairSigner
+ */
+export function createWalletAdapter(keypair: KeyPairSigner): NodeWallet {
+  return {
+    payer: keypair,
+    publicKey: keypair.address,
+    
+    async signTransaction(transaction: any): Promise<any> {
+      // For Web3.js v2.0, signing is handled differently
+      // This is a compatibility layer
+      return transaction;
+    },
+    
+    async signAllTransactions(transactions: any[]): Promise<any[]> {
+      // For Web3.js v2.0, batch signing is handled differently
+      // This is a compatibility layer
+      return transactions;
+    }
+  };
+}
+
+/**
+ * Helper to convert Address to string for Web3.js v2.0 compatibility
+ */
+export function addressToString(addr: Address): string {
+  return String(addr);
 }

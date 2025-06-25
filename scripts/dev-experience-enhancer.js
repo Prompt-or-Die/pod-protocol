@@ -50,15 +50,15 @@ class DevExperienceEnhancer {
     console.log(gradient.rainbow('║  ⚡️ Web3.js v2 Ready  🧠 AI Powered  🚀 Hot Reload  💎 Performance Tuned   ║'));
     console.log(gradient.rainbow('╚═══════════════════════════════════════════════════════════════════════════════╝'));
     console.log(COLORS.accent('🎪 Starting the ultimate PoD Protocol development experience...'));
-
+    
     await this.detectConfiguration();
     await this.startDevServer();
     await this.setupWeb3V2HotReload();
-    await this.startAIPoweredTypeGeneration(); 
+    await this.startAIPoweredTypeGeneration();
     await this.setupIntelligentLogs();
     await this.startAdvancedPerformanceMonitoring();
     await this.enableAIAssistant();
-
+    
     this.showAdvancedDevDashboard();
   }
 
@@ -137,7 +137,7 @@ class DevExperienceEnhancer {
     
     cliWatcher.on('change', async (path) => {
       console.log(COLORS.primary(`⚡ CLI file changed: ${path}`));
-      await this.rebuildCLIWithWeb3V2(path);
+        await this.rebuildCLIWithWeb3V2(path);
     });
     
     this.watchers.set('cli', cliWatcher);

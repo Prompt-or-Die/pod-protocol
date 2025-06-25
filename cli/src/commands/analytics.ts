@@ -489,7 +489,7 @@ export class AnalyticsCommands {
         .slice(0, 10)
         .map((agent: any, index: number) => [
           `#${index + 1}`,
-          formatValue(agent.pubkey.toBase58().slice(0, 8) + "...", "address"),
+          formatValue(String(agent.pubkey).slice(0, 8) + "...", "address"),
           formatValue(agent.reputation.toString(), "number"),
           formatValue(
             new Date(agent.lastUpdated * 1000).toLocaleDateString(),

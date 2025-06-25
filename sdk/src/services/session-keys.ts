@@ -1,21 +1,24 @@
 import { 
-  PublicKey,
-  Keypair
+  // Web3.js v2 imports
+  address,
+  Address,
+  KeyPairSigner,
+  generateKeyPairSigner
 } from "@solana/web3.js";
 import { BaseService, BaseServiceConfig } from './base.js';
 import anchor from "@coral-xyz/anchor";
 const { BN, web3 } = anchor;
 
 // Define the instruction type that matches what other services expect
-export interface anyInstruction {
-  programId: PublicKey;
-  accounts: Array<{ pubkey: PublicKey; isSigner: boolean; isWritable: boolean }>;
-  data: Buffer;
+export interface TransactionInstruction {
+  programAddress: Address;
+  accounts: Array<{ address: Address; role: any }>;
+  data: Uint8Array;
 }
 
 export interface SessionKeyConfig {
   /** Target programs this session key can interact with */
-  targetPrograms: PublicKey[];
+  targetPrograms: Address[];
   /** Session expiry timestamp */
   expiryTime: number;
   /** Maximum number of uses for this session */
@@ -26,11 +29,11 @@ export interface SessionKeyConfig {
 
 export interface SessionToken {
   /** Ephemeral keypair for this session */
-  sessionKeyPairSigner: Keypair;
+  sessionKeyPairSigner: KeyPairSigner;
   /** Session configuration */
   config: SessionKeyConfig;
   /** Session token account address */
-  sessionTokenAccount: PublicKey;
+  sessionTokenAccount: Address;
   /** Number of uses remaining */
   usesRemaining?: number;
 }
@@ -76,7 +79,7 @@ export class SessionKeysService extends BaseService {
   async createSessionKey(config: SessionKeyConfig): Promise<SessionToken> {
     try {
       // Generate ephemeral keypair
-      const sessionKeyPairSigner = generateKeyPairSigner();
+      const sessionKeyPairSigner = await generateKeyPairSigner();
       
       // Create session token account (PDA)
       const wallet = this.ensureWallet();
@@ -133,7 +136,7 @@ export class SessionKeysService extends BaseService {
    */
   async useSessionKey(
     sessionId: string, 
-    instructions: anyInstruction[]
+    instructions: TransactionInstruction[]
   ): Promise<string> {
     const session = this.sessions.get(sessionId);
     if (!session) {
@@ -153,7 +156,7 @@ export class SessionKeysService extends BaseService {
       // Validate instructions are allowed
       for (const instruction of instructions) {
         if (!this.isInstructionAllowed(instruction, session.config)) {
-          throw new Error(`Instruction not allowed for this session: ${instruction.programId}`);
+          throw new Error(`Instruction not allowed for this session: ${instruction.programAddress}`);
         }
       }
 
@@ -234,7 +237,7 @@ export class SessionKeysService extends BaseService {
    */
   async createMessagingSession(durationHours: number = 24): Promise<SessionToken> {
     const config: SessionKeyConfig = {
-      targetPrograms: [this.programId], // PoD Protocol program
+      targetPrograms: [address(this.programId)], // PoD Protocol program
       expiryTime: Date.now() + (durationHours * 60 * 60 * 1000),
       maxUses: 1000, // Generous limit for AI messaging
       allowedInstructions: [
@@ -250,14 +253,14 @@ export class SessionKeysService extends BaseService {
 
 
   private isInstructionAllowed(
-    instruction: anyInstruction,
+    instruction: TransactionInstruction,
     config: SessionKeyConfig
   ): boolean {
     // Check if program is allowed
     const programAllowed = config.targetPrograms.some(
       program => {
         const programAddr = typeof program === 'string' ? address(program) : program;
-        const instructionProgramAddr = typeof instruction.programId === 'string' ? address(instruction.programId) : instruction.programId;
+        const instructionProgramAddr = typeof instruction.programAddress === 'string' ? address(instruction.programAddress) : instruction.programAddress;
         return programAddr === instructionProgramAddr;
       }
     );
