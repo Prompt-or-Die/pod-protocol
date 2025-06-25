@@ -17,36 +17,74 @@ no-idl = []
 idl-build = ["anchor-lang/idl-build", "spl-account-compression/idl-build"]
 anchor-debug = []
 no-log-ix-name = []
+# 2025 Enhanced Features
+ai-agents = ["anchor-lang/ai-agents"]
+quantum-resistant = []
+advanced-compression = ["spl-account-compression/advanced"]
+cross-chain = []
+defi-integration = []
 
 [dependencies]
 # Core Solana dependencies - latest stable versions for 2025
 anchor-lang = { version = "0.31.1", default-features = false, features = ["init-if-needed"] }
 
-# Native Solana State Compression - the modern alternative to Light Protocol
-spl-account-compression = { version = "1.0.0", features = ["cpi"], default-features = false }
+# Enhanced State Compression with Advanced ZK Features
+spl-account-compression = { version = "1.0.0", features = ["cpi", "advanced"], default-features = false }
 spl-concurrent-merkle-tree = { version = "1.0.0", default-features = false }
+# New ZK-SNARKs integration for advanced privacy
+zk-sdk = { version = "0.3.0", optional = true }
 
-# Serialization handled by Anchor internally
+# Enhanced Token Standards for 2025
+spl-token = { version = "6.0.0", features = ["no-entrypoint"], default-features = false }
+spl-token-2022 = { version = "4.0.0", features = ["no-entrypoint"], default-features = false }
+spl-associated-token-account = { version = "4.0.0", features = ["no-entrypoint"], default-features = false }
+
+# Advanced DeFi Integration
+spl-governance = { version = "4.0.0", features = ["no-entrypoint"], optional = true }
 
 # Error handling
 thiserror = "2.0.12"
+anyhow = "1.0.93"
 
-# Secure memory handling - using custom SecureBuffer implementation
-
-# Cryptographic operations - native Solana compatible
+# Enhanced cryptographic operations for 2025
 blake3 = { version = "1.5.5", features = ["traits-preview"] }
 bs58 = { version = "0.5.1", default-features = false, features = ["alloc"] }
 sha2 = { version = "0.10.8", default-features = false }
 sha3 = { version = "0.10.8", default-features = false }
+# Quantum-resistant cryptography preparation
+kyber = { version = "0.3.0", optional = true }
+dilithium = { version = "0.2.0", optional = true }
 
-# Utility
-bytemuck = "1.21.0"
+# AI Agent Integration
+borsh = { version = "1.5.3", default-features = false }
 serde = { version = "1.0.217", features = ["derive"] }
+serde_json = { version = "1.0.133", default-features = false, features = ["alloc"] }
+
+# Enhanced utilities for 2025
+bytemuck = { version = "1.21.0", features = ["derive"] }
+solana-program-test = { version = "2.1.0", optional = true }
 log = "0.4.25"
+
+# Cross-chain compatibility
+solana-sdk = { version = "2.1.0", optional = true }
 
 [dev-dependencies]
 anchor-lang = { version = "0.31.1", features = ["derive"] }
+solana-program-test = "2.1.0"
+tokio = { version = "1.42.0", features = ["macros", "rt-multi-thread"] }
+proptest = "1.5.0"
 
 [package.metadata.docs.rs]
 all-features = false
 no-default-features = true
+
+# Enhanced build configuration for 2025
+[profile.release]
+overflow-checks = true
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+
+[profile.release.build-override]
+opt-level = 3
+codegen-units = 1

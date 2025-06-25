@@ -1,97 +1,39 @@
 {
   "name": "@pod-protocol/cli",
   "version": "1.5.2",
-  "description": "Command-line interface for PoD Protocol (Prompt or Die) AI Agent Communication Protocol",
-  "type": "module",
+  "description": "Pod Protocol CLI tool",
   "main": "dist/index.js",
-  "exports": {
-    ".": "./dist/index.js"
-  },
   "bin": {
     "pod": "dist/index.js"
   },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
-  "engines": {
-    "node": ">=18.0.0",
-    "bun": ">=1.0.0"
-  },
   "scripts": {
-    "build": "tsc",
-    "build:prod": "tsc --sourceMap false",
-    "dev": "tsx src/index.ts",
-    "test": "bun test",
-    "test:coverage": "bun test --coverage",
-    "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix",
-    "clean": "rm -rf dist/",
-    "prepublishOnly": "bun run clean && bun run build:prod",
-    "postinstall": "echo 'PoD Protocol CLI installed successfully! Run: pod --help'"
+    "build": "tsc && chmod +x dist/index.js",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
   },
-  "packageManager": "bun@1.0.0",
-  "keywords": [
-    "solana",
-    "ai-agents",
-    "agent-communication",
-    "blockchain-cli",
-    "web3-tools",
-    "decentralized-messaging",
-    "prompt-or-die",
-    "pod-protocol",
-    "command-line",
-    "cli"
-  ],
-  "author": "PoD Protocol Team",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Dexploarer/PoD-Protocol.git",
-    "directory": "cli"
-  },
-  "bugs": {
-    "url": "https://github.com/Dexploarer/PoD-Protocol/issues"
-  },
-  "homepage": "https://github.com/Dexploarer/PoD-Protocol#readme",
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org/"
-  },
-  "license": "MIT",
   "dependencies": {
-    "@coral-xyz/anchor": "0.31.1",
-    "@coral-xyz/anchor-cli": "0.31.1",
-    "@inquirer/checkbox": "4.1.8",
-    "@inquirer/core": "10.1.13",
-    "@lightprotocol/compressed-token": "0.22.0",
-    "@lightprotocol/stateless.js": "0.22.0",
     "@pod-protocol/sdk": "^1.5.2",
-    "@solana/spl-token": "0.4.13",
-    "@solana/wallet-adapter-base": "0.9.27",
-    "@solana/web3.js": "1.98.2",
-    "chalk": "5.4.1",
-    "commander": "14.0.0",
-    "figlet": "^1.7.0",
-    "gradient-string": "^2.0.2",
-    "inquirer": "12.6.3",
-    "keccak": "3.0.4",
-    "multiformats": "13.3.7",
-    "ora": "8.2.0",
-    "qrcode-terminal": "0.12.0",
-    "react-syntax-highlighter": "15.6.1",
-    "table": "6.9.0"
+    "@solana/web3.js": "^2.0.0",
+    "@solana-program/system": "^0.7.0",
+    "@solana-program/token": "^0.5.1",
+    "commander": "^11.0.0",
+    "chalk": "^4.1.2"
   },
   "devDependencies": {
-    "@eslint/js": "9.29.0",
-    "@types/inquirer": "9.0.8",
-    "@types/node": "24.0.3",
-    "@types/qrcode-terminal": "0.12.2",
-    "@typescript-eslint/eslint-plugin": "8.35.0",
-    "@typescript-eslint/parser": "8.35.0",
-    "eslint": "9.29.0",
-    "globals": "16.2.0",
-    "tsx": "4.20.3",
-    "typescript": "5.8.3"
+    "@types/node": "^18.0.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "solana",
+    "blockchain",
+    "cli",
+    "pod-protocol"
+  ],
+  "author": "Pod Protocol",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pod-protocol/pod-protocol.git",
+    "directory": "cli"
   }
 }

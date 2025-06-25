@@ -8,6 +8,9 @@
 // Core client
 export { PodComClient } from "./client";
 
+// Web3.js v2.0 Generated Clients (Codama)
+export * from "./generated";
+
 // Services
 export { AgentService } from "./services/agent";
 export { MessageService } from "./services/message";
@@ -95,5 +98,6 @@ export {
   retry,
 } from "./utils";
 
-// Re-export commonly used Solana types for convenience
-export type { PublicKey, Signer, Connection } from "@solana/web3.js";
+// Re-export commonly used Solana types for convenience from Web3.js v2.0
+export type { Address, RpcApi, RpcSubscriptionsApi } from "@solana/web3.js";
+export type { KeyPairSigner } from "@solana/signers";

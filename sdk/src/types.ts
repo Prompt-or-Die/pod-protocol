@@ -1,4 +1,4 @@
-import { PublicKey } from "@solana/web3.js";
+import { Address, address } from "@solana/web3.js";
 
 /**
  * PoD Protocol Program ID on Solana Devnet

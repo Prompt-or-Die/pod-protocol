@@ -1,4 +1,4 @@
-import { PublicKey } from "@solana/web3.js";
+import { Address, address } from "@solana/web3.js";
 import { PROGRAM_ID, MessageType, AGENT_CAPABILITIES } from "./types";
 
 // Re-export types for convenience

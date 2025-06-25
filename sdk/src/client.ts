@@ -1,4 +1,16 @@
-import { Connection, PublicKey, Signer, Commitment } from "@solana/web3.js";
+import { 
+  createSolanaRpc, 
+  address, 
+  Address,
+  RpcApi,
+  Rpc,
+  Commitment
+} from "@solana/web3.js";
+import { 
+  KeyPairSigner, 
+  generateKeyPairSigner,
+  createKeyPairSignerFromBytes 
+} from "@solana/web3.js";
 import anchor from "@coral-xyz/anchor";
 const { Program, AnchorProvider } = anchor;
 import type { Program as ProgramType } from "@coral-xyz/anchor";
@@ -18,6 +30,13 @@ import {
   BroadcastMessageOptions,
   MessageStatus,
   ChannelVisibility,
+  type ChannelState,
+  type MessageState,
+  type AdvancedCompressionConfig,
+  type JitoBundlingConfig,
+  type PerformanceConfig,
+  type SecurityConfig,
+  type ClientConfig,
 } from "./types";
 import { PodCom, IDL } from "./pod_com";
 import type { IdlAccounts } from "@coral-xyz/anchor";
@@ -35,6 +54,20 @@ import { AnalyticsService } from "./services/analytics";
 import { DiscoveryService } from "./services/discovery";
 import { IPFSService, IPFSConfig } from "./services/ipfs";
 import { ZKCompressionService, ZKCompressionConfig } from "./services/zk-compression";
+import { JitoBundleService } from "./services/jito-bundles";
+
+// Client configuration with 2025 enhancements
+export interface PodClientConfig extends ClientConfig {
+  rpcEndpoint?: string;
+  wsEndpoint?: string;
+  commitment?: Commitment;
+  programId?: Address;
+  enableCompression?: boolean;
+  enableJitoMEV?: boolean;
+  enableAnalytics?: boolean;
+  performanceConfig?: PerformanceConfig;
+  securityConfig?: SecurityConfig;
+}
 
 /**
  * Main PoD Protocol SDK client for interacting with the protocol
@@ -58,13 +91,12 @@ export class PodComClient {
   public sessionKeys: SessionKeysService;
   public jitoBundles: JitoBundlesService;
 
-  constructor(config: PodComConfig = {}) {
-    this.connection = new Connection(
-      config.endpoint ?? "https://api.devnet.solana.com",
-      config.commitment ?? "confirmed",
-    );
-    this.programId = config.programId ?? PROGRAM_ID;
-    this.commitment = config.commitment ?? "confirmed";
+  constructor(config: PodClientConfig = {}) {
+    const endpoint = config.rpcEndpoint || "https://api.devnet.solana.com";
+    
+    this.connection = new Connection(endpoint, config.commitment || "confirmed");
+    this.programId = config.programId ? address(config.programId) : address(PROGRAM_ID.toString());
+    this.commitment = config.commitment || "confirmed";
 
     // Initialize services
     const serviceConfig: BaseServiceConfig = {
@@ -469,3 +501,18 @@ export class PodComClient {
     return buffer;
   }
 }
+
+// Enhanced default export for 2025
+export default PodComClient;
+
+// Re-export all types and utilities for 2025
+export * from "./types";
+export * from "./utils";
+export * from "./services/agent";
+export * from "./services/channel";
+export * from "./services/message";
+export * from "./services/discovery";
+export * from "./services/escrow";
+export * from "./services/zk-compression";
+export * from "./services/analytics";
+export * from "./services/jito-bundles";

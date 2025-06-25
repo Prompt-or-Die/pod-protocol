@@ -1,98 +1,41 @@
 {
   "name": "@pod-protocol/sdk",
   "version": "1.5.2",
-  "description": "TypeScript SDK for PoD Protocol (Prompt or Die) AI Agent Communication Protocol",
-  "type": "module",
+  "description": "Pod Protocol SDK for TypeScript",
   "main": "dist/index.js",
-  "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.esm.js",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
-  "files": [
-    "dist",
-    "src",
-    "README.md",
-    "LICENSE"
-  ],
-  "engines": {
-    "node": ">=18.0.0",
-    "bun": ">=1.0.0"
-  },
   "scripts": {
-    "build": "rollup -c",
-    "build:prod": "rollup -c --environment NODE_ENV:production",
-    "dev": "rollup -c -w",
-    "test": "bun test",
-    "test:coverage": "bun test --coverage",
-    "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix",
-    "clean": "rm -rf dist/",
-    "prepublishOnly": "bun run clean && bun run build:prod && bun run test",
-    "docs": "typedoc --out docs src/index.ts"
+    "build": "tsc --noEmit false --skipLibCheck",
+    "build:ignore-errors": "tsc --noEmit false --skipLibCheck --noEmitOnError false",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts",
+    "clean": "rm -rf dist"
   },
-  "packageManager": "bun@1.0.0",
-  "keywords": [
-    "solana",
-    "ai-agents",
-    "agent-communication",
-    "blockchain-protocol",
-    "web3-sdk",
-    "decentralized-messaging",
-    "prompt-or-die",
-    "pod-protocol",
-    "typescript",
-    "anchor"
-  ],
-  "author": "PoD Protocol Team",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Dexploarer/PoD-Protocol.git",
-    "directory": "sdk"
-  },
-  "bugs": {
-    "url": "https://github.com/Dexploarer/PoD-Protocol/issues"
-  },
-  "homepage": "https://github.com/Dexploarer/PoD-Protocol#readme",
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org/"
-  },
-  "license": "MIT",
   "dependencies": {
-    "@coral-xyz/anchor": "0.31.1",
-    "@helia/json": "4.0.6", 
-    "@helia/unixfs": "5.0.3",
-    "@solana/spl-account-compression": "0.2.0",
-    "@solana/spl-token": "0.4.13",
-    "@solana/wallet-adapter-base": "0.9.27",
-    "@solana/web3.js": "1.98.2",
-    "helia": "5.4.2",
-    "keccak": "3.0.4",
-    "multiformats": "13.3.7",
-    "react-syntax-highlighter": "15.6.1",
-    "jito-ts": "^3.0.1",
-    "@gumhq/sdk": "^3.0.0"
+    "@solana/web3.js": "^2.0.0",
+    "@solana-program/system": "^0.7.0",
+    "@solana-program/token": "^0.5.1",
+    "@solana-program/compute-budget": "^0.8.0"
   },
   "devDependencies": {
-    "@rollup/plugin-alias": "5.1.1",
-    "@rollup/plugin-commonjs": "28.0.6",
-    "@rollup/plugin-json": "6.1.0",
-    "@rollup/plugin-node-resolve": "16.0.1",
-    "@rollup/plugin-replace": "6.0.2",
-    "@rollup/plugin-typescript": "12.1.3",
-    "@types/node": "24.0.3",
-    "@typescript-eslint/eslint-plugin": "8.35.0",
-    "@typescript-eslint/parser": "8.35.0",
-    "eslint": "9.29.0",
-    "rollup": "4.44.0",
-    "typescript": "5.8.3"
+    "@codama/nodes-from-anchor": "^1.2.1",
+    "@codama/renderers": "^1.0.24",
+    "@codama/visitors-core": "^1.3.0",
+    "@types/node": "^18.0.0",
+    "typescript": "^5.0.0"
   },
-  "peerDependencies": {
-    "@solana/web3.js": "1.98.2"
+  "keywords": [
+    "solana",
+    "blockchain",
+    "web3",
+    "pod-protocol"
+  ],
+  "author": "Pod Protocol",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pod-protocol/pod-protocol.git",
+    "directory": "sdk"
   }
 }

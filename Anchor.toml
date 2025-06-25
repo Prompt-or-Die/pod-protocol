@@ -1,40 +1,129 @@
 [toolchain]
-# Using yarn as the package manager for Anchor compatibility
-# Anchor CLI expects yarn and has hardcoded dependencies on it
-package_manager = "yarn"
+# Enhanced toolchain configuration for 2025
+anchor_version = "0.31.1"
+solana_version = "2.1.0"  # Latest Agave version
+# Using bun as the preferred package manager for faster performance
+package_manager = "bun"
 
 [features]
 # Enable resolution of Anchor feature flags
 resolution = true
-# Skip linting during build (set to false for production)
+# Enable idl-build for better IDL generation
+idl-build = true
+# Skip linting during development (enable for production)
 skip-lint = false
 
-# Program configurations for different clusters
+# Enhanced program configurations for different clusters
 [programs.localnet]
 pod_com = "HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps"
 
 [programs.devnet]
 pod_com = "HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps"
 
+[programs.mainnet-beta]
+pod_com = "HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps"  # Update with actual mainnet address
+
 # Registry configuration for Anchor programs
 [registry]
 url = "https://api.apr.dev"
 
-# Provider configuration
+# Enhanced provider configuration
 [provider]
 # Default cluster to use (devnet, testnet, mainnet-beta, or localnet)
 cluster = "devnet"
 # Path to the wallet to use for deployment
 wallet = "~/.config/solana/id.json"
 
-# Test script configuration
+# Enhanced test configuration
 [scripts]
-# Use bun for faster testing while keeping anchor compatibility
-test = "yarn run test:bun"
+# Use bun for faster testing and enhanced features
+test = "bun run test:enhanced"
+lint = "bun run lint:all"
+build = "bun run build:optimized"
+deploy = "bun run deploy:safe"
 
-# Solana configuration
+# Enhanced test validator configuration
+[test.validator]
+# AI-friendly test environment
+url = "http://127.0.0.1:8899"
+ledger = ".anchor/test-ledger"
+bind_address = "0.0.0.0"
+rpc_port = 8899
+rpc_bind_address = "0.0.0.0"
+limit_ledger_size = 10000
+quiet = false
+# Enable features for modern Solana development
+reset = true
+verifier = true
+# Enable Agave-specific features
+enable_rpc_transaction_history = true
+enable_extended_tx_metadata_storage = true
+
+# Clone important accounts for testing AI agents
+[[test.validator.clone]]
+address = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"  # Token Program
+
+[[test.validator.clone]]
+address = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"  # Associated Token Program
+
+[[test.validator.clone]]
+address = "11111111111111111111111111111111"  # System Program
+
+# Enhanced Solana configuration for 2025
 [solana]
-# Enable the new BPF loader (required for Agave)
+# Enable the Agave BPF loader (required for modern Solana)
 enable_bpf_loader = true
-# Enable the new BPF program deployment
+enable_sbf_loader = true
+# Enable modern deployment features
 enable_deploy = true
+# Enhanced security features
+enable_program_runtime_v2 = true
+# AI Agent features
+enable_ai_cpi = true
+
+# Build configuration for optimized performance
+[build]
+# Use SBF (Solana Bytecode Format) instead of deprecated BPF
+arch = "sbf"
+# Enable overflow checks for security
+overflow-checks = true
+# Optimize for size and performance
+opt-level = 3
+# Enable Link Time Optimization
+lto = true
+
+# Enhanced workspace configuration
+[workspace]
+# Exclude certain directories from workspace
+exclude = [
+    "target",
+    "node_modules",
+    ".git",
+    ".anchor"
+]
+
+# Include all relevant packages
+members = [
+    "programs/*",
+    "sdk",
+    "sdk-js",
+    "cli",
+    "frontend"
+]
+
+# Development configuration
+[dev]
+# Hot reload configuration for enhanced DX
+hot_reload = true
+auto_save = true
+watch_timeout = 1000
+
+# Enhanced deployment configuration
+[deploy]
+# Deployment safety checks
+verify_program_id = true
+confirm_deployment = true
+upgrade_authority_check = true
+# Modern deployment features
+use_quic = true
+priority_fees = "auto"
