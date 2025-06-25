@@ -176,9 +176,24 @@ class PodTerminal {
 
     addRawOutput(html) {
         const div = document.createElement('div');
-        div.innerHTML = html;
+        // SECURITY FIX: Sanitize HTML to prevent XSS
+        div.innerHTML = this.sanitizeHtml(html);
         this.output.appendChild(div);
         this.scrollToBottom();
+    }
+
+    sanitizeHtml(html) {
+        // Remove dangerous HTML elements and attributes
+        return html
+            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+            .replace(/javascript:/gi, '')
+            .replace(/on\w+\s*=/gi, '')
+            .replace(/data:text\/html/gi, '')
+            .replace(/<iframe\b[^>]*>/gi, '')
+            .replace(/<object\b[^>]*>/gi, '')
+            .replace(/<embed\b[^>]*>/gi, '')
+            .replace(/<link\b[^>]*>/gi, '')
+            .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
     }
 
     showTypingIndicator() {

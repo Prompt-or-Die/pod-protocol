@@ -701,7 +701,20 @@ export class InstallCommands {
     return new Promise((resolve, reject) => {
       const spinner = message ? ora(message).start() : null;
       
-      exec(command, { cwd: this.projectRoot }, (error, stdout, stderr) => {
+      // SECURITY FIX: Validate and sanitize command input to prevent injection
+      const sanitizedCommand = this.sanitizeCommand(command);
+      if (!sanitizedCommand) {
+        const error = new Error(`Invalid or potentially dangerous command: ${command}`);
+        if (spinner) spinner.fail(message);
+        reject(error);
+        return;
+      }
+      
+      exec(sanitizedCommand, { 
+        cwd: this.projectRoot,
+        timeout: 300000, // 5 minute timeout
+        maxBuffer: 1024 * 1024 * 10 // 10MB buffer limit
+      }, (error, stdout, stderr) => {
         if (spinner) {
           if (error) {
             spinner.fail(message);
@@ -724,6 +737,63 @@ export class InstallCommands {
     const currentVersion = current.replace(/[^0-9.]/g, '');
     const requiredVersion = required.replace(/[^0-9.]/g, '');
     return currentVersion >= requiredVersion;
+  }
+
+  private sanitizeCommand(command: string): string | null {
+    // SECURITY: Enhanced validation and sanitization
+    if (!command || typeof command !== 'string') {
+      return null;
+    }
+
+    // Maximum command length check
+    if (command.length > 1000) {
+      console.warn('Command too long, blocked for security');
+      return null;
+    }
+
+    // Check for null bytes and other dangerous characters
+    if (command.includes('\0') || command.includes('\r') || command.includes('\n')) {
+      console.warn('Command contains dangerous characters, blocked');
+      return null;
+    }
+
+    // SECURITY: Whitelist of allowed commands with strict patterns
+    const allowedCommands = [
+      /^bun\s+(?:install|run|build|test|dev)(?:\s+[\w\-\.@\/]+)*$/,
+      /^npm\s+(?:install|run|build|test|start)(?:\s+[\w\-\.@\/]+)*$/,
+      /^yarn\s+(?:install|run|build|test|start)(?:\s+[\w\-\.@\/]+)*$/,
+      /^anchor\s+(?:build|deploy|test|--version)(?:\s+--[\w\-]+)*$/,
+      /^solana\s+(?:--version|config\s+get|program\s+show)(?:\s+[\w\-\.]+)*$/,
+      /^rustup\s+(?:--version|show|update)$/,
+      /^cargo\s+(?:--version|build|test)(?:\s+--[\w\-]+)*$/,
+      /^git\s+(?:--version|status)$/,
+      /^docker\s+(?:--version|ps)$/,
+      /^node\s+--version$/,
+      /^which\s+[\w\-]+$/,
+      /^ls\s+-[\w]+\s+[\w\-\.\/]+$/
+    ];
+
+    // Check if command matches any allowed pattern
+    const isAllowed = allowedCommands.some(pattern => pattern.test(command));
+    
+    if (!isAllowed) {
+      console.warn(`Security: Blocked command not in whitelist: ${command}`);
+      return null;
+    }
+
+    // Additional sanitization - remove dangerous shell metacharacters
+    const sanitized = command
+      .replace(/[;&|`$<>()[\]{}\\'"]/g, '') // Remove all shell metacharacters
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
+
+    // Final validation after sanitization
+    if (sanitized !== command) {
+      console.warn('Command was modified during sanitization, blocking for safety');
+      return null;
+    }
+
+    return sanitized;
   }
 
   private async checkAnchorWorkspace(): Promise<boolean> {

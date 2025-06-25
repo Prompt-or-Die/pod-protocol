@@ -4,6 +4,7 @@
  */
 
 import { randomBytes, createHash, timingSafeEqual } from 'crypto';
+import { safeParseKeypair } from './safe-json.js';
 
 /**
  * Secure buffer wrapper for sensitive data operations
@@ -87,11 +88,11 @@ export class SecureKeypairLoader {
     const fs = await import('fs/promises');
     const fileData = await fs.readFile(path);
     
-    // Parse the keypair array
-    const keypairArray = JSON.parse(fileData.toString());
+    // Parse the keypair array safely
+    const keypairArray = safeParseKeypair(fileData.toString());
     
-    if (!Array.isArray(keypairArray) || keypairArray.length !== 64) {
-      throw new Error('Invalid keypair file format');
+    if (!keypairArray) {
+      throw new Error('Invalid or potentially malicious keypair file format');
     }
 
     // Store in secure memory

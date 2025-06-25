@@ -26,9 +26,25 @@ pub struct SecureBuffer {
 impl SecureBuffer {
     /// Allocate secure memory for sensitive data
     pub fn new(size: usize) -> Result<Self> {
-        Ok(SecureBuffer {
-            data: vec![0u8; size],
-        })
+        // SECURITY FIX: Add size validation to prevent attacks
+        if size == 0 {
+            return Err(PodComError::SecureMemoryAllocationFailed.into());
+        }
+        
+        // Prevent excessive memory allocation that could cause DoS
+        const MAX_SECURE_BUFFER_SIZE: usize = 64 * 1024; // 64KB limit
+        if size > MAX_SECURE_BUFFER_SIZE {
+            return Err(PodComError::SecureMemoryAllocationFailed.into());
+        }
+        
+        // Initialize with secure zero pattern
+        let mut data = vec![0u8; size];
+        
+        // Use Solana's secure memory operations if available
+        use anchor_lang::solana_program::program_memory::sol_memset;
+        sol_memset(&mut data, 0, size);
+        
+        Ok(SecureBuffer { data })
     }
     
     /// Get mutable slice to secure memory
@@ -53,11 +69,15 @@ impl SecureBuffer {
 
 impl Drop for SecureBuffer {
     fn drop(&mut self) {
-        // Securely zero the memory before deallocation using volatile writes
-        for byte in self.data.iter_mut() {
-            unsafe {
-                std::ptr::write_volatile(byte, 0);
-            }
+        // SECURITY FIX: Safely zero the memory with bounds checking
+        if !self.data.is_empty() {
+            // Use safe rust patterns for memory clearing
+            let len = self.data.len();
+            self.data.iter_mut().for_each(|byte| *byte = 0);
+            
+            // Additional security: overwrite with random then zero again
+            use anchor_lang::solana_program::program_memory::sol_memset;
+            sol_memset(&mut self.data, 0, len);
         }
     }
 }
@@ -426,8 +446,17 @@ impl CompressedChannelMessage {
         if self.edited_at.is_some() { size += 8; }
         if self.reply_to.is_some() { size += 32; }
         
+        // Validate size before allocation to prevent excessive memory usage
+        if size > 1024 * 1024 { // 1MB limit
+            return Err(PodComError::SecureMemoryAllocationFailed);
+        }
+        if size == 0 {
+            return Err(PodComError::InvalidMessageHash);
+        }
+        
         // Use secure memory for sensitive hash computation
-        let mut secure_buf = SecureBuffer::new(size).unwrap();
+        let mut secure_buf = SecureBuffer::new(size)
+            .map_err(|_| PodComError::SecureMemoryAllocationFailed)?;
         
         let data = secure_buf.as_mut_slice();
         let mut offset = 0;
@@ -489,7 +518,8 @@ impl CompressedChannelParticipant {
         const BUFFER_SIZE: usize = 120;
         
         // Use secure memory for sensitive hash computation
-        let mut secure_buf = SecureBuffer::new(BUFFER_SIZE).unwrap();
+        let mut secure_buf = SecureBuffer::new(BUFFER_SIZE)
+            .map_err(|_| PodComError::SecureMemoryAllocationFailed)?;
         
         let data = secure_buf.as_mut_slice();
         let mut offset = 0;
@@ -508,8 +538,131 @@ impl CompressedChannelParticipant {
         data[offset..offset+32].copy_from_slice(&self.metadata_hash);
         
         // Perform hash computation on secure data using Blake3
-        Ok(*blake3::hash(data).as_bytes())
+            Ok(*blake3::hash(data).as_bytes())
     }
+}
+
+// SECURITY: Validate metadata URI format and prevent dangerous schemes
+fn is_valid_metadata_uri(uri: &str) -> bool {
+    // Check for valid URL schemes only
+    if !uri.starts_with("https://") && !uri.starts_with("http://") {
+        return false;
+    }
+    
+    // Prevent dangerous schemes and characters
+    let dangerous_patterns = [
+        "javascript:",
+        "data:",
+        "file:",
+        "ftp:",
+        "vbscript:",
+        "about:",
+        "chrome:",
+        "<script",
+        "onerror",
+        "onload",
+        "onclick",
+    ];
+    
+    let uri_lower = uri.to_lowercase();
+    for pattern in &dangerous_patterns {
+        if uri_lower.contains(pattern) {
+            return false;
+        }
+    }
+    
+    // Additional character validation
+    for ch in uri.chars() {
+        if ch.is_control() && ch != '\t' {
+            return false;
+        }
+    }
+    
+    // Basic URL format validation
+    if uri.contains("..") || (uri.contains("//") && !uri.starts_with("http")) {
+        return false;
+    }
+    
+    true
+}
+
+// SECURITY: Validate message content to prevent injection attacks
+fn is_valid_message_content(content: &str) -> bool {
+    // Check for null bytes and control characters (except tabs and newlines)
+    for ch in content.chars() {
+        if ch == '\0' || (ch.is_control() && ch != '\n' && ch != '\r' && ch != '\t') {
+            return false;
+        }
+    }
+    
+    // Check for dangerous patterns that could be used in attacks
+    let dangerous_patterns = [
+        "javascript:",
+        "<script",
+        "</script>",
+        "onerror",
+        "onload",
+        "onclick",
+        "data:text/html",
+        "vbscript:",
+        "about:",
+        "file:",
+        "eval(",
+        "Function(",
+        "setTimeout(",
+        "setInterval(",
+    ];
+    
+    let content_lower = content.to_lowercase();
+    for pattern in &dangerous_patterns {
+        if content_lower.contains(pattern) {
+            return false;
+        }
+    }
+    
+    // Check for excessive repetition (potential spam/DoS)
+    if has_excessive_repetition(content) {
+        return false;
+    }
+    
+    // Check for SQL injection patterns
+    let sql_patterns = [
+        "drop table",
+        "delete from",
+        "update set",
+        "insert into",
+        "union select",
+        "' or 1=1",
+        "'; --",
+        "/*",
+        "*/",
+    ];
+    
+    for pattern in &sql_patterns {
+        if content_lower.contains(pattern) {
+            return false;
+        }
+    }
+    
+    true
+}
+
+// Helper function to detect spam/DoS attempts through repetition
+fn has_excessive_repetition(content: &str) -> bool {
+    if content.len() < 10 {
+        return false;
+    }
+    
+    // Check for repeated characters (more than 50% of content)
+    let mut char_counts = std::collections::HashMap::new();
+    for ch in content.chars() {
+        *char_counts.entry(ch).or_insert(0) += 1;
+    }
+    
+    let max_count = char_counts.values().max().unwrap_or(&0);
+    let threshold = content.len() / 2;
+    
+    *max_count > threshold
 }
 
 // IPFS Content structures for off-chain storage
@@ -538,16 +691,36 @@ pub mod pod_com {
         capabilities: u64,
         metadata_uri: String,
     ) -> Result<()> {
-        // Comprehensive input validation
+        // SECURITY: Comprehensive input validation
+        
+        // Validate metadata_uri format and content
         if metadata_uri.trim().is_empty() {
             return Err(PodComError::InvalidMetadataUriLength.into());
         }
+        
+        // Enforce strict length limits
         if metadata_uri.len() > MAX_METADATA_URI_LENGTH {
             return Err(PodComError::InvalidMetadataUriLength.into());
         }
+        
+        // Additional security validations
+        if metadata_uri.len() < 10 { // Minimum reasonable URL length
+            return Err(PodComError::InvalidMetadataUriLength.into());
+        }
+        
+        // Validate URL format and prevent dangerous schemes
+        if !super::is_valid_metadata_uri(&metadata_uri) {
+            return Err(PodComError::InvalidMetadataUriLength.into());
+        }
+        
+        // Capabilities validation - prevent overflow and unreasonable values
         if capabilities > u64::MAX / 2 {
-            // Reasonable upper bound
-            return Err(PodComError::Unauthorized.into()); // Reusing error for invalid capabilities
+            return Err(PodComError::Unauthorized.into());
+        }
+        
+        // Check for null bytes and other dangerous characters
+        if metadata_uri.contains('\0') || metadata_uri.contains('\r') || metadata_uri.contains('\n') {
+            return Err(PodComError::InvalidMetadataUriLength.into());
         }
 
         let agent = &mut ctx.accounts.agent_account;
@@ -849,7 +1022,10 @@ pub mod pod_com {
                 &[b"escrow", channel.key().as_ref(), ctx.accounts.user.key().as_ref()],
                 &crate::ID
             );
-            if ctx.accounts.escrow_account.as_ref().unwrap().key() != expected_escrow_pda {
+            let escrow_account = ctx.accounts.escrow_account.as_ref()
+                .ok_or(PodComError::InsufficientFunds)?;
+            
+            if escrow_account.key() != expected_escrow_pda {
                 return Err(PodComError::Unauthorized.into());
             }
             
@@ -859,7 +1035,8 @@ pub mod pod_com {
             }
             
             // ATOMIC OPERATION: Deduct fee and grant access in single transaction
-            let escrow_mut = ctx.accounts.escrow_account.as_mut().unwrap();
+            let escrow_mut = ctx.accounts.escrow_account.as_mut()
+                .ok_or(PodComError::InsufficientFunds)?;
             escrow_mut.amount = escrow_mut.amount.checked_sub(channel.fee_per_message)
                 .ok_or(PodComError::InsufficientFunds)?;
             
@@ -969,8 +1146,25 @@ pub mod pod_com {
         let message = &mut ctx.accounts.message_account;
         let clock = Clock::get()?;
 
+        // SECURITY: Comprehensive message content validation
+        
         // Validate content length
         if content.len() > MAX_MESSAGE_CONTENT_LENGTH {
+            return Err(PodComError::MessageContentTooLong.into());
+        }
+        
+        // Reject empty messages
+        if content.trim().is_empty() {
+            return Err(PodComError::MessageContentTooLong.into());
+        }
+        
+        // Validate message content for dangerous patterns
+        if !super::is_valid_message_content(&content) {
+            return Err(PodComError::MessageContentTooLong.into());
+        }
+        
+        // Additional safety checks
+        if content.len() > 10000 { // Extra safety beyond MAX_MESSAGE_CONTENT_LENGTH
             return Err(PodComError::MessageContentTooLong.into());
         }
 

@@ -10,6 +10,8 @@ import { displayError } from '../utils/error-handler.js';
 import { outputFormatter } from '../utils/output-formatter.js';
 import { validatePublicKey } from '../utils/validation.js';
 import { findAgentPDA } from '@pod-protocol/sdk';
+import { safeParseConfig } from '../utils/safe-json.js';
+import chalk from 'chalk';
 
 export function createZKCompressionCommand(): Command {
   const zk = new Command('zk')
@@ -45,7 +47,12 @@ export function createZKCompressionCommand(): Command {
         const channel = new PublicKey(channelId);
         const replyTo = options.replyTo ? new PublicKey(options.replyTo) : undefined;
         const attachments = options.attachments || [];
-        const metadata = options.metadata ? JSON.parse(options.metadata) : {};
+        const metadata = options.metadata ? safeParseConfig(options.metadata) : {};
+    
+    if (options.metadata && !metadata) {
+      console.error(chalk.red("Error: Invalid metadata format"));
+      return;
+    }
 
         console.log('📤 Broadcasting compressed message...');
         

@@ -1,103 +1,224 @@
 #!/bin/bash
 
-# PoD Protocol Installer Script
-# This script allows users to choose which SDK to install
+# PoD Protocol Ultimate Installer Script
+# Prompt or Die: Where AI Agents Meet Their Destiny ⚡️
 
 set -e
 
-COLORS=(
-  "\033[0m"     # Reset
-  "\033[31m"    # Red
-  "\033[32m"    # Green
-  "\033[33m"    # Yellow
-  "\033[34m"    # Blue
-  "\033[35m"    # Magenta
-  "\033[36m"    # Cyan
-  "\033[1m"     # Bold
+# Enhanced color palette for PoD Protocol branding
+declare -A COLORS=(
+  [RESET]="\033[0m"
+  [BOLD]="\033[1m"
+  [DIM]="\033[2m"
+  
+  # PoD Protocol Brand Colors
+  [PRIMARY]="\033[35m"      # Magenta
+  [SECONDARY]="\033[36m"    # Cyan  
+  [ACCENT]="\033[97m"       # Bright White
+  [SUCCESS]="\033[32m"      # Green
+  [WARNING]="\033[33m"      # Yellow
+  [ERROR]="\033[31m"        # Red
+  [INFO]="\033[34m"         # Blue
+  [MUTED]="\033[90m"        # Gray
+  
+  # Special effects
+  [UNDERLINE]="\033[4m"
+  [REVERSE]="\033[7m"
+)
+
+# PoD Protocol Icons
+ICONS=(
+  "⚡️" "🚀" "💎" "🤖" "🔥" "⭐" "🛡️" "⚙️" 
+  "💫" "🎯" "🌟" "🎭" "👁️" "🧠" "💥" "🌐"
 )
 
 log() {
-  echo -e "${COLORS[$2]:-${COLORS[0]}}$1${COLORS[0]}"
+  local message="$1"
+  local color="${2:-RESET}"
+  echo -e "${COLORS[$color]}$message${COLORS[RESET]}"
 }
 
-banner() {
+log_icon() {
+  local message="$1"
+  local color="${2:-RESET}"
+  local icon="${3:-⚡️}"
+  echo -e "${COLORS[$color]}$icon $message${COLORS[RESET]}"
+}
+
+typewriter() {
+  local text="$1"
+  local delay="${2:-0.05}"
+  for (( i=0; i<${#text}; i++ )); do
+    printf '%s' "${text:$i:1}"
+    sleep "$delay"
+  done
+  echo
+}
+
+show_banner() {
+  clear
   log "
-╔═══════════════════════════════════════════════════════════════╗
-║                    PoD Protocol Installer                      ║
-║           Prompt or Die: AI Agent Communication                ║
-╚═══════════════════════════════════════════════════════════════╝
-" 6
+${COLORS[PRIMARY]}╔═══════════════════════════════════════════════════════════════════════════════╗
+║  ██████╗  ██████╗ ██████╗     ██████╗ ██████╗  ██████╗ ████████╗ ██████╗      ║
+║  ██╔══██╗██╔═══██╗██╔══██╗    ██╔══██╗██╔══██╗██╔═══██╗╚══██╔══╝██╔═══██╗     ║
+║  ██████╔╝██║   ██║██║  ██║    ██████╔╝██████╔╝██║   ██║   ██║   ██║   ██║     ║
+║  ██╔═══╝ ██║   ██║██║  ██║    ██╔═══╝ ██╔══██╗██║   ██║   ██║   ██║   ██║     ║
+║  ██║     ╚██████╔╝██████╔╝    ██║     ██║  ██║╚██████╔╝   ██║   ╚██████╔╝     ║
+║  ╚═╝      ╚═════╝ ╚═════╝     ╚═╝     ╚═╝  ╚═╝ ╚═════╝    ╚═╝    ╚═════╝      ║
+║                                                                               ║
+║${COLORS[ACCENT]}    ██████╗ ██████╗  ██████╗ ███╗   ███╗██████╗ ████████╗              ║
+║    ██╔══██╗██╔══██╗██╔═══██╗████╗ ████║██╔══██╗╚══██╔══╝              ║
+║    ██████╔╝██████╔╝██║   ██║██╔████╔██║██████╔╝   ██║                 ║
+║    ██╔═══╝ ██╔══██╗██║   ██║██║╚██╔╝██║██╔═══╝    ██║                 ║
+║    ██║     ██║  ██║╚██████╔╝██║ ╚═╝ ██║██║        ██║                 ║
+║    ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝╚═╝        ╚═╝                 ║
+║                                                                               ║
+║     ██████╗ ██████╗     ██████╗ ██╗███████╗                              ║
+║    ██╔═══██╗██╔══██╗    ██╔══██╗██║██╔════╝                              ║
+║    ██║   ██║██████╔╝    ██║  ██║██║█████╗                                ║
+║    ██║   ██║██╔══██╗    ██║  ██║██║██╔══╝                                ║
+║    ╚██████╔╝██║  ██║    ██████╔╝██║███████╗                              ║
+║     ╚═════╝ ╚═╝  ╚═╝    ╚═════╝ ╚═╝╚══════╝                              ║
+║                                                                               ║
+║${COLORS[SECONDARY]}              ⚡️ WHERE AI AGENTS MEET THEIR DESTINY ⚡️                  ${COLORS[PRIMARY]}║
+║${COLORS[MUTED]}                      Ultimate Installation Experience                      ${COLORS[PRIMARY]}║
+╚═══════════════════════════════════════════════════════════════════════════════╝${COLORS[RESET]}"
+  
+  echo
+  typewriter "🎭 Welcome to the PoD Protocol installer! 🎭" 0.03
+  echo
+  log_icon "Preparing to install the ultimate AI agent communication protocol..." "INFO" "🚀"
+  echo
 }
 
 check_dependencies() {
-  log "Checking dependencies..." 3
+  log_icon "Scanning system for dependencies..." "INFO" "🔍"
+  echo
   
   local missing_deps=()
+  local warnings=()
   
   # Check for Node.js
   if ! command -v node &> /dev/null; then
     missing_deps+=("Node.js (https://nodejs.org)")
+  else
+    local node_version=$(node --version | cut -d'v' -f2)
+    log_icon "Node.js v$node_version detected" "SUCCESS" "✅"
   fi
   
   # Check for Git
   if ! command -v git &> /dev/null; then
     missing_deps+=("Git")
+  else
+    local git_version=$(git --version | cut -d' ' -f3)
+    log_icon "Git v$git_version detected" "SUCCESS" "✅"
   fi
   
   # Check for Rust/Cargo
   if ! command -v cargo &> /dev/null; then
     missing_deps+=("Rust/Cargo (https://rustup.rs)")
+  else
+    local rust_version=$(rustc --version | cut -d' ' -f2)
+    log_icon "Rust v$rust_version detected" "SUCCESS" "✅"
+  fi
+  
+  # Check for Bun (preferred)
+  if ! command -v bun &> /dev/null; then
+    warnings+=("Bun (recommended for optimal performance)")
+  else
+    local bun_version=$(bun --version)
+    log_icon "Bun v$bun_version detected (optimal choice!) 🔥" "SUCCESS" "⚡️"
   fi
   
   if [ ${#missing_deps[@]} -ne 0 ]; then
-    log "Missing dependencies:" 1
+    echo
+    log_icon "❌ Missing critical dependencies:" "ERROR" "🚨"
     for dep in "${missing_deps[@]}"; do
-      log "  - $dep" 1
+      log "  • $dep" "ERROR"
     done
-    log "Please install the missing dependencies and run this script again." 3
+    echo
+    log_icon "Please install missing dependencies and run this script again." "WARNING" "⚠️"
     exit 1
   fi
   
-  log "✅ All dependencies found!" 2
+  if [ ${#warnings[@]} -ne 0 ]; then
+    echo
+    log_icon "Recommendations for optimal performance:" "WARNING" "💡"
+    for warning in "${warnings[@]}"; do
+      log "  • $warning" "WARNING"
+    done
+  fi
+  
+  echo
+  log_icon "🎯 System check complete - Ready for installation!" "SUCCESS" "🛡️"
+  echo
 }
 
 select_package_manager() {
-  log "Select package manager:" 4
-  log "1) Bun (recommended - fastest)" 2
-  log "2) Yarn" 3
-  log "3) NPM" 3
+  log_icon "Choose your package manager:" "PRIMARY" "⚙️"
+  echo
+  log "  ${COLORS[SUCCESS]}1)${COLORS[RESET]} ${COLORS[ACCENT]}Bun${COLORS[RESET]} ${COLORS[SUCCESS]}(⚡️ RECOMMENDED - Ultimate Performance)${COLORS[RESET]}"
+  log "  ${COLORS[INFO]}2)${COLORS[RESET]} ${COLORS[ACCENT]}Yarn${COLORS[RESET]} ${COLORS[MUTED]}(Fast and Reliable)${COLORS[RESET]}"
+  log "  ${COLORS[MUTED]}3)${COLORS[RESET]} ${COLORS[ACCENT]}NPM${COLORS[RESET]} ${COLORS[MUTED]}(Standard Option)${COLORS[RESET]}"
+  echo
   
   while true; do
-    read -p "Enter your choice (1-3): " pm_choice
+    read -p "$(log_icon "Enter your choice (1-3): " "ACCENT" "🎯")" pm_choice
     case $pm_choice in
       1)
         PACKAGE_MANAGER="bun"
         if ! command -v bun &> /dev/null; then
-          log "Installing Bun..." 3
+          log_icon "Installing Bun for maximum performance..." "INFO" "⚡️"
           curl -fsSL https://bun.sh/install | bash
           export PATH="$HOME/.bun/bin:$PATH"
         fi
+        log_icon "🔥 Using Bun - Prepare for blazing speed!" "SUCCESS" "⚡️"
         break
         ;;
       2)
         PACKAGE_MANAGER="yarn"
         if ! command -v yarn &> /dev/null; then
-          log "Installing Yarn..." 3
+          log_icon "Installing Yarn..." "INFO" "📦"
           npm install -g yarn
         fi
+        log_icon "Using Yarn - Solid choice!" "SUCCESS" "✅"
         break
         ;;
       3)
         PACKAGE_MANAGER="npm"
+        log_icon "Using NPM - Classic and reliable!" "SUCCESS" "✅"
         break
         ;;
       *)
-        log "Invalid choice. Please enter 1, 2, or 3." 1
+        log_icon "Invalid choice. Please enter 1, 2, or 3." "ERROR" "❌"
         ;;
     esac
   done
+  echo
+}
+
+select_installation_type() {
+  log_icon "Select installation type:" "PRIMARY" "🎯"
+  echo
+  log "  ${COLORS[SUCCESS]}1)${COLORS[RESET]} ${COLORS[ACCENT]}Complete Setup${COLORS[RESET]} ${COLORS[SUCCESS]}(🚀 All components, ready for production)${COLORS[RESET]}"
+  log "  ${COLORS[INFO]}2)${COLORS[RESET]} ${COLORS[ACCENT]}Developer Environment${COLORS[RESET]} ${COLORS[INFO]}(🔧 With dev tools and testing)${COLORS[RESET]}"
+  log "  ${COLORS[WARNING]}3)${COLORS[RESET]} ${COLORS[ACCENT]}CLI Only${COLORS[RESET]} ${COLORS[MUTED]}(⚡️ Just the command line tools)${COLORS[RESET]}"
+  log "  ${COLORS[MUTED]}4)${COLORS[RESET]} ${COLORS[ACCENT]}Custom Selection${COLORS[RESET]} ${COLORS[MUTED]}(🎛️ Choose specific components)${COLORS[RESET]}"
+  echo
   
-  log "✅ Using $PACKAGE_MANAGER" 2
+  while true; do
+    read -p "$(log_icon "Enter your choice (1-4): " "ACCENT" "🎯")" install_choice
+    case $install_choice in
+      1) INSTALL_TYPE="complete"; break ;;
+      2) INSTALL_TYPE="developer"; break ;;
+      3) INSTALL_TYPE="cli-only"; break ;;
+      4) INSTALL_TYPE="custom"; break ;;
+      *) log_icon "Invalid choice. Please enter 1-4." "ERROR" "❌" ;;
+    esac
+  done
+  
+  log_icon "🎯 Selected: $INSTALL_TYPE installation" "SUCCESS" "✅"
+  echo
 }
 
 select_sdk() {
@@ -339,16 +460,104 @@ Usage Information:
 " 6
 }
 
-main() {
-  banner
-  check_dependencies
-  select_package_manager
-  select_sdk
-  install_solana_cli
-  install_dependencies
-  build_sdk "$SDK_CHOICE"
-  show_usage_info
+install_components() {
+  case $INSTALL_TYPE in
+    "complete")
+      log_icon "🚀 Installing complete PoD Protocol suite..." "PRIMARY" "🌟"
+      components=("typescript" "javascript" "python" "cli" "frontend")
+      ;;
+    "developer")
+      log_icon "🔧 Setting up developer environment..." "INFO" "⚙️"
+      components=("typescript" "cli" "testing")
+      ;;
+    "cli-only")
+      log_icon "⚡️ Installing CLI tools only..." "WARNING" "🔧"
+      components=("cli")
+      ;;
+    "custom")
+      select_custom_components
+      ;;
+  esac
+  
+  local total=${#components[@]}
+  local current=0
+  
+  for component in "${components[@]}"; do
+    ((current++))
+    log_icon "[$current/$total] Installing $component..." "INFO" "📦"
+    install_component "$component"
+    log_icon "✅ $component installation complete!" "SUCCESS" "🎉"
+    echo
+  done
 }
 
-# Run main function
+install_component() {
+  local component=$1
+  
+  case $component in
+    "typescript")
+      cd sdk && $PACKAGE_MANAGER install && $PACKAGE_MANAGER run build
+      ;;
+    "javascript")
+      cd ../sdk-js && $PACKAGE_MANAGER install && $PACKAGE_MANAGER run build
+      ;;
+    "python")
+      cd ../sdk-python && pip install -e .
+      ;;
+    "cli")
+      cd ../cli && $PACKAGE_MANAGER install && $PACKAGE_MANAGER run build
+      ;;
+    "frontend")
+      cd ../frontend && $PACKAGE_MANAGER install && $PACKAGE_MANAGER run build
+      ;;
+    "testing")
+      $PACKAGE_MANAGER run test:setup
+      ;;
+  esac
+  cd ..
+}
+
+show_success_message() {
+  clear
+  log "
+${COLORS[SUCCESS]}╔═══════════════════════════════════════════════════════════════════════════════╗
+║                                                                               ║
+║  🎉🎉🎉  PoD PROTOCOL INSTALLATION SUCCESSFUL!  🎉🎉🎉                      ║
+║                                                                               ║
+║  ${COLORS[ACCENT]}Your AI Agent Communication Protocol is ready to dominate! ⚡️${COLORS[SUCCESS]}          ║
+║                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝${COLORS[RESET]}"
+  
+  echo
+  log_icon "🚀 Quick Start Commands:" "PRIMARY" "⚡️"
+  echo
+  log "  ${COLORS[ACCENT]}pod --help${COLORS[RESET]}                    ${COLORS[MUTED]}# Show all available commands${COLORS[RESET]}"
+  log "  ${COLORS[ACCENT]}pod config init${COLORS[RESET]}               ${COLORS[MUTED]}# Initialize configuration${COLORS[RESET]}"
+  log "  ${COLORS[ACCENT]}pod agent register${COLORS[RESET]}            ${COLORS[MUTED]}# Register your first agent${COLORS[RESET]}"
+  log "  ${COLORS[ACCENT]}pod message send${COLORS[RESET]}              ${COLORS[MUTED]}# Send messages between agents${COLORS[RESET]}"
+  echo
+  log_icon "📚 Documentation: https://github.com/Dexploarer/PoD-Protocol/tree/main/docs" "INFO" "📖"
+  log_icon "🐛 Issues: https://github.com/Dexploarer/PoD-Protocol/issues" "INFO" "🔧"
+  log_icon "💬 Community: Join our Discord for support and updates!" "INFO" "🌐"
+  echo
+  log_icon "🎭 Welcome to the future of AI agent communication! 🎭" "ACCENT" "👑"
+  echo
+}
+
+main() {
+  show_banner
+  check_dependencies
+  select_package_manager
+  select_installation_type
+  
+  log_icon "🚀 Starting installation process..." "PRIMARY" "⚡️"
+  sleep 1
+  
+  install_components
+  show_success_message
+  
+  log_icon "🎯 Installation completed successfully!" "SUCCESS" "🏆"
+}
+
+# Run main installation
 main "$@"

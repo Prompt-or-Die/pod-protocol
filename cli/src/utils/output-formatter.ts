@@ -8,6 +8,7 @@ import {
   sectionHeader,
   DIVIDERS,
 } from "./branding.js";
+import { safeJSONParse } from "./safe-json.js";
 
 /**
  * Enhanced Output Formatter for PoD CLI
@@ -484,10 +485,10 @@ export class OutputFormatter {
     if (!payload) return BRAND_COLORS.muted("(empty)");
 
     // Try to parse as JSON for pretty formatting
-    try {
-      const parsed = JSON.parse(payload);
+    const parsed = safeJSONParse(payload);
+    if (parsed) {
       return BRAND_COLORS.dim(JSON.stringify(parsed, null, 2));
-    } catch {
+    } else {
       // Display as plain text, truncated if too long
       const maxLength = this.verbose ? 500 : 100;
       if (payload.length > maxLength) {

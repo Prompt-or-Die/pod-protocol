@@ -105,6 +105,7 @@ export const DECORATIVE_ELEMENTS = {
   gemBorder: `${chalk.cyan("◆")} ${chalk.magenta("─".repeat(48))} ${chalk.cyan("◆")}`,
   lightningBorder: `${chalk.yellow("⚡")} ${chalk.magenta("━".repeat(48))} ${chalk.yellow("⚡")}`,
   violetGradient: chalk.magenta("▓".repeat(50)),
+  thin: chalk.gray("─".repeat(60)),
 };
 
 // Banner size options
@@ -152,6 +153,7 @@ export const ICONS = {
   info: "ℹ️",
   loading: "⏳",
   agent: "🤖",
+  brain: "🧠",
   message: "💬",
   channel: "🏛️",
   escrow: "💰",

@@ -30,6 +30,7 @@ import {
   DECORATIVE_ELEMENTS,
 } from "./utils/branding.js";
 import { errorHandler } from "./utils/enhanced-error-handler.js";
+import { AIAssistant } from "./utils/ai-assistant.js";
 
 // Get current version from package.json
 const __filename = fileURLToPath(import.meta.url);
@@ -40,6 +41,7 @@ const packageJson = JSON.parse(
 const CLI_VERSION = packageJson.version;
 
 const program = new Command();
+const aiAssistant = new AIAssistant();
 
 // Show branded banner (check for --no-banner flag)
 if (!process.argv.includes("--no-banner")) {
@@ -111,6 +113,96 @@ program.addCommand(createSessionCommand());
 
 // Add Jito bundle commands
 program.addCommand(createBundleCommand());
+
+// AI Assistant Commands
+program
+  .command("help-me [query...]")
+  .alias("ask")
+  .description(`${ICONS.agent} Get AI-powered help and command suggestions`)
+  .action(async (query) => {
+    const queryString = Array.isArray(query) ? query.join(" ") : query || "";
+    
+    if (!queryString) {
+      console.log(`${ICONS.agent} ${BRAND_COLORS.accent("PoD Protocol AI Assistant")}\n`);
+      console.log(`${ICONS.info} Ask me anything about PoD Protocol!\n`);
+      console.log(`${BRAND_COLORS.primary("Examples:")}`);
+      console.log(`  ${BRAND_COLORS.secondary("pod help-me register an agent with trading capabilities")}`);
+      console.log(`  ${BRAND_COLORS.secondary("pod help-me send encrypted messages")}`);
+      console.log(`  ${BRAND_COLORS.secondary("pod help-me save money with ZK compression")}`);
+      console.log(`  ${BRAND_COLORS.secondary("pod help-me create a community channel")}`);
+      console.log();
+      return;
+    }
+    
+    console.log(`${ICONS.agent} ${BRAND_COLORS.accent("AI Assistant analyzing:")} "${queryString}"\n`);
+    aiAssistant.displayInteractiveHelp(queryString);
+  });
+
+program
+  .command("tutorial [topic]")
+  .description(`${ICONS.star} Interactive tutorials for common workflows`)
+  .action(async (topic) => {
+    if (!topic) {
+      console.log(`${ICONS.star} ${BRAND_COLORS.accent("Available Tutorials:")}\n`);
+      console.log(`  ${BRAND_COLORS.primary("first-agent")}      - Register and manage your first AI agent`);
+      console.log(`  ${BRAND_COLORS.primary("zk-compression")}   - Save 99% on costs with ZK compression`);
+      console.log(`  ${BRAND_COLORS.primary("advanced-messaging")} - Channels and group communication`);
+      console.log();
+      console.log(`${BRAND_COLORS.muted("Usage:")} ${BRAND_COLORS.accent("pod tutorial first-agent")}`);
+      return;
+    }
+
+    const tutorial = aiAssistant.getTutorial(topic);
+    if (tutorial.length === 0) {
+      console.log(`${ICONS.warning} ${BRAND_COLORS.warning(`Tutorial "${topic}" not found.`)}`);
+      console.log(`${ICONS.info} Available tutorials: first-agent, zk-compression, advanced-messaging`);
+      return;
+    }
+
+    console.log(`${ICONS.star} ${BRAND_COLORS.accent(`Tutorial: ${topic}`)}\n`);
+    tutorial.forEach((step, index) => {
+      console.log(`${BRAND_COLORS.primary(`Step ${index + 1}:`)} ${step.title}`);
+      console.log(`  ${step.description}`);
+      if (step.command) {
+        console.log(`  ${BRAND_COLORS.accent("Command:")} ${BRAND_COLORS.secondary(step.command)}`);
+      }
+      if (step.example) {
+        console.log(`  ${BRAND_COLORS.muted(step.example)}`);
+      }
+      console.log();
+    });
+  });
+
+program
+  .command("explain <command>")
+  .description(`${ICONS.info} Explain what a command does in detail`)
+  .action(async (command) => {
+    console.log(aiAssistant.explainCommand(command));
+  });
+
+program
+  .command("suggest")
+  .description(`${ICONS.lightning} Get personalized command suggestions`)
+  .action(async () => {
+    console.log(`${ICONS.lightning} ${BRAND_COLORS.accent("Personalized Command Suggestions")}\n`);
+    
+    // For now, show general popular commands
+    const popularCommands = [
+      "pod agent register --interactive",
+      "pod message send --interactive", 
+      "pod status --health",
+      "pod zk compress --help",
+      "pod analytics network"
+    ];
+    
+    console.log(`${BRAND_COLORS.primary("Popular Commands:")}\n`);
+    popularCommands.forEach((cmd, index) => {
+      console.log(`${BRAND_COLORS.secondary(`${index + 1}.`)} ${BRAND_COLORS.accent(cmd)}`);
+    });
+    
+    console.log();
+    console.log(`${ICONS.info} ${BRAND_COLORS.muted("Tip: Use")} ${BRAND_COLORS.accent("pod help-me <describe what you want>")} ${BRAND_COLORS.muted("for personalized suggestions")}`);
+  });
 
 // Enhanced status command
 program
@@ -199,110 +291,52 @@ program
             desc: "Send compressed message with IPFS storage",
           },
           {
-            cmd: "pod zk participant join <channel> --name 'AI Agent' --participant <pubkey>",
-            desc:
-              'Join a channel with compressed participant data (defaults to wallet PDA)',
-          },
-          {
-            cmd: "pod zk stats channel <channel-id>",
-            desc: "View compression statistics and savings",
+            cmd: "pod zk compress --data <ipfs-hash>",
+            desc: "Compress data for 99% cost reduction",
           },
         ],
       },
       {
-        category: `${ICONS.key} Session Keys`,
+        category: `${ICONS.brain} AI Assistant`,
         commands: [
           {
-            cmd: "pod session create-messaging --duration 24",
-            desc: "Create session key for AI messaging (24 hours)",
+            cmd: "pod help-me register an agent with trading capabilities",
+            desc: "Get AI-powered command suggestions",
           },
           {
-            cmd: "pod session list",
-            desc: "List all active session keys",
+            cmd: "pod tutorial first-agent",
+            desc: "Interactive step-by-step tutorials",
           },
           {
-            cmd: "pod session revoke --session-id <id>",
-            desc: "Revoke a specific session key",
-          },
-        ],
-      },
-      {
-        category: `${ICONS.lightning} Jito Bundles`,
-        commands: [
-          {
-            cmd: 'pod bundle message --recipients "addr1,addr2" --message "Hello"',
-            desc: "Send messages to multiple recipients in one bundle",
-          },
-          {
-            cmd: "pod bundle channel --channel <id> --action join",
-            desc: "Execute channel operations with MEV protection",
-          },
-          {
-            cmd: "pod bundle optimal-tip",
-            desc: "Get optimal tip amount for current network conditions",
-          },
-        ],
-      },
-      {
-        category: `${ICONS.message} Messaging`,
-        commands: [
-          {
-            cmd: 'pod message send <recipient> "Hello world"',
-            desc: "Send a text message to another agent (deprecated, use zk compression)",
-          },
-          {
-            cmd: "pod message list --sender <address>",
-            desc: "List messages from a specific sender",
-          },
-        ],
-      },
-      {
-        category: `${ICONS.channel} Channels`,
-        commands: [
-          {
-            cmd: 'pod channel create "AI Research" --public',
-            desc: "Create a public discussion channel",
-          },
-          {
-            cmd: "pod channel join <channel-address>",
-            desc: "Join an existing channel",
+            cmd: "pod explain agent register",
+            desc: "Detailed command explanations",
           },
         ],
       },
     ];
 
     commandExamples.forEach((category) => {
-      console.log(BRAND_COLORS.accent(category.category));
-      category.commands.forEach((example) => {
-        console.log(
-          `  ${BRAND_COLORS.muted("$")} ${BRAND_COLORS.primary(example.cmd)}`,
-        );
-        console.log(`    ${BRAND_COLORS.dim(example.desc)}`);
+      console.log(`${category.category}`);
+      console.log(DECORATIVE_ELEMENTS.thin);
+      category.commands.forEach((cmd) => {
+        console.log(`${BRAND_COLORS.accent(cmd.cmd)}`);
+        console.log(`  ${BRAND_COLORS.muted(cmd.desc)}`);
         console.log();
       });
     });
 
-    console.log(`${ICONS.rocket} ${BRAND_COLORS.accent("Quick Start Guide:")}`);
-    console.log(
-      `  1. Configure your network: ${BRAND_COLORS.primary("pod config set-network devnet")}`,
-    );
-    console.log(
-      `  2. Set up your keypair: ${BRAND_COLORS.primary("pod config set-keypair ~/.config/solana/id.json")}`,
-    );
-    console.log(
-      `  3. Register as an agent: ${BRAND_COLORS.primary("pod agent register")}`,
-    );
-    console.log(
-      `  4. Start communicating: ${BRAND_COLORS.primary('pod message send <address> "Hello!"')}`,
-    );
+    console.log(`${ICONS.info} ${BRAND_COLORS.accent("Quick Tips:")}`);
+    console.log(`  • Use ${BRAND_COLORS.primary("--interactive")} for guided experiences`);
+    console.log(`  • Use ${BRAND_COLORS.primary("--help")} on any command for detailed options`);
+    console.log(`  • Use ${BRAND_COLORS.primary("pod help-me <query>")} for AI assistance`);
+    console.log(`  • Use ${BRAND_COLORS.primary("--dry-run")} to preview actions safely`);
     console.log();
-
     console.log(
       `${ICONS.info} ${BRAND_COLORS.info("For more help: https://github.com/Dexploarer/PoD-Protocol/docs")}`,
     );
   });
 
-// Command not found handler with suggestions
+// Command not found handler with AI suggestions
 program.on("command:*", (operands) => {
   const unknownCommand = operands[0];
   console.log();
@@ -311,10 +345,22 @@ program.on("command:*", (operands) => {
   );
   console.log();
 
-  // Simple command suggestions
+  // Get AI suggestions for the unknown command
+  const suggestions = aiAssistant.suggestCommands(unknownCommand);
+  
+  if (suggestions.length > 0) {
+    console.log(`${ICONS.brain} ${BRAND_COLORS.accent("AI Assistant suggests:")}`);
+    suggestions.slice(0, 3).forEach((suggestion, index) => {
+      console.log(`  ${index + 1}. ${BRAND_COLORS.primary(suggestion.command)}`);
+      console.log(`     ${BRAND_COLORS.muted(suggestion.description)}`);
+    });
+    console.log();
+  }
+
+  // Fallback to simple suggestions
   const availableCommands = [
     "agent",
-    "message",
+    "message", 
     "channel",
     "escrow",
     "config",
@@ -324,30 +370,26 @@ program.on("command:*", (operands) => {
     "session",
     "bundle",
     "status",
+    "help-me",
+    "tutorial",
   ];
-  const suggestions = availableCommands.filter(
+  
+  const simpleSuggestions = availableCommands.filter(
     (cmd) => cmd.includes(unknownCommand) || unknownCommand.includes(cmd),
   );
 
-  if (suggestions.length > 0) {
+  if (simpleSuggestions.length > 0 && suggestions.length === 0) {
     console.log(`${ICONS.info} ${BRAND_COLORS.accent("Did you mean:")}`);
-    suggestions.forEach((suggestion) => {
+    simpleSuggestions.forEach((suggestion) => {
       console.log(`  ${BRAND_COLORS.primary(`pod ${suggestion}`)}`);
     });
-  } else {
-    console.log(`${ICONS.info} ${BRAND_COLORS.accent("Available commands:")}`);
-    availableCommands.forEach((cmd) => {
-      console.log(`  ${BRAND_COLORS.primary(`pod ${cmd}`)}`);
-    });
+    console.log();
   }
 
-  console.log();
-  console.log(
-    `${ICONS.info} Run ${BRAND_COLORS.primary("pod help-extended")} for examples and tutorials`,
-  );
-  console.log(
-    `${ICONS.info} Run ${BRAND_COLORS.primary("pod --help")} for basic help`,
-  );
+  console.log(`${ICONS.star} ${BRAND_COLORS.accent("Try these commands:")}`);
+  console.log(`  ${BRAND_COLORS.primary(`pod help-me ${unknownCommand}`)} - Get AI suggestions`);
+  console.log(`  ${BRAND_COLORS.primary("pod help-extended")} - See examples and tutorials`);
+  console.log(`  ${BRAND_COLORS.primary("pod --help")} - Basic help`);
   console.log();
 
   process.exit(1);
@@ -398,13 +440,36 @@ program
     );
   });
 
-// Global error handler
+// Global error handler with AI assistance
 process.on("uncaughtException", (error) => {
+  console.log();
+  console.log(`${ICONS.error} ${BRAND_COLORS.error("An unexpected error occurred:")}`);
+  console.log(`${BRAND_COLORS.muted(error.message)}`);
+  
+  // Get contextual help from AI assistant
+  const help = aiAssistant.getContextualHelp(undefined, error.message);
+  if (help.length > 0) {
+    console.log();
+    help.forEach(line => console.log(line));
+  }
+  
   errorHandler.handleError(error);
 });
 
 process.on("unhandledRejection", (reason) => {
-  errorHandler.handleError(new Error(String(reason)));
+  const error = new Error(String(reason));
+  console.log();
+  console.log(`${ICONS.error} ${BRAND_COLORS.error("Promise rejection:")}`);
+  console.log(`${BRAND_COLORS.muted(error.message)}`);
+  
+  // Get contextual help from AI assistant
+  const help = aiAssistant.getContextualHelp(undefined, error.message);
+  if (help.length > 0) {
+    console.log();
+    help.forEach(line => console.log(line));
+  }
+  
+  errorHandler.handleError(error);
 });
 
 // Update command
@@ -497,14 +562,17 @@ try {
   if (err.code === "commander.help") {
     process.exit(0);
   }
-  if (err.code === "commander.version") {
-    process.exit(0);
+  
+  console.log(`${ICONS.error} ${BRAND_COLORS.error("CLI Error:")}`);
+  console.log(`${BRAND_COLORS.muted(err.message)}`);
+  
+  // Get contextual help from AI assistant
+  const help = aiAssistant.getContextualHelp(undefined, err.message);
+  if (help.length > 0) {
+    console.log();
+    help.forEach(line => console.log(line));
   }
-  console.error(chalk.red("Error:"), err.message);
+  
   process.exit(1);
 }
 
-// Show help if no command provided
-if (!process.argv.slice(2).length) {
-  program.outputHelp();
-}

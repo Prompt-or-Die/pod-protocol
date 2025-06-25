@@ -810,14 +810,61 @@ Happy coding! 🚀
 
   async executeCommand(command) {
     return new Promise((resolve, reject) => {
-      exec(command, { cwd: this.projectRoot }, (error, stdout, stderr) => {
+      // SECURITY FIX: Validate and sanitize command input to prevent injection
+      const sanitizedCommand = this.sanitizeCommand(command);
+      if (!sanitizedCommand) {
+        reject(new Error(`Invalid or potentially dangerous command: ${command}`));
+        return;
+      }
+      
+      exec(sanitizedCommand, { 
+        cwd: this.projectRoot,
+        timeout: 300000, // 5 minute timeout
+        maxBuffer: 1024 * 1024 * 10 // 10MB buffer limit
+      }, (error, stdout, stderr) => {
         if (error) {
-          reject(new Error(`Command failed: ${command}\n${stderr}`));
+          reject(new Error(`Command failed: ${sanitizedCommand}\n${stderr}`));
         } else {
           resolve(stdout);
         }
       });
     });
+  }
+
+  sanitizeCommand(command) {
+    // SECURITY: Whitelist of allowed commands and their patterns
+    const allowedCommands = [
+      /^bun\s+(?:install|run|build|test|dev)(?:\s+[\w\-\.]+)*$/,
+      /^npm\s+(?:install|run|build|test|start)(?:\s+[\w\-\.]+)*$/,
+      /^yarn\s+(?:install|run|build|test|start)(?:\s+[\w\-\.]+)*$/,
+      /^anchor\s+(?:build|deploy|test|--version)$/,
+      /^solana\s+(?:--version|config|program)(?:\s+[\w\-\.]+)*$/,
+      /^rustup\s+(?:--version|update|install)(?:\s+[\w\-\.]+)*$/,
+      /^cargo\s+(?:--version|build|test|install)(?:\s+[\w\-\.\/]+)*$/,
+      /^git\s+(?:--version|status|clone|pull|push)(?:\s+[\w\-\.\/\:]+)*$/,
+      /^docker\s+(?:--version|ps|build|run|stop)(?:\s+[\w\-\.\/\:]+)*$/,
+      /^docker-compose\s+(?:--version|up|down|build|ps)(?:\s+[\w\-\.\/]+)*$/,
+      /^mkdir\s+-p\s+[\w\-\.\/]+$/,
+      /^echo\s+"[^"]*"\s*>\s*[\w\-\.\/]+$/,
+      /^cd\s+[\w\-\.\/]+\s*&&\s*[\w\-\.\/\s]+$/,
+      /^sh\s+-c\s+"[^"]*"$/,
+      /^curl\s+(?:--proto|--tlsv1\.2|-sSf|-sSfL|\-\-|\w+\:\/\/[\w\-\.\/\?\&\=]+|\s)+$/
+    ];
+
+    // Check if command matches any allowed pattern
+    const isAllowed = allowedCommands.some(pattern => pattern.test(command));
+    
+    if (!isAllowed) {
+      console.warn(`Blocked potentially dangerous command: ${command}`);
+      return null;
+    }
+
+    // Additional sanitization - remove dangerous characters
+    const sanitized = command
+      .replace(/[;&|`$()\[\]{}\\]/g, '') // Remove shell metacharacters
+      .trim();
+
+    return sanitized;
   }
 
      versionSatisfies(current, required) {

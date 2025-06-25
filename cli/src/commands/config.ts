@@ -9,6 +9,7 @@ import { join, dirname } from "path";
 import { Keypair } from "@solana/web3.js";
 import qrcode from "qrcode-terminal";
 import { loadConfig as loadSharedConfig } from "../utils/config.js";
+import { safeParseKeypair, safeParseConfig } from "../utils/safe-json.js";
 
 interface CliConfig {
   network: string;
@@ -281,12 +282,17 @@ export class ConfigCommands {
           // Check if keypair exists and show public key
           if (existsSync(currentConfig.keypairPath)) {
             try {
-              const keypairData = JSON.parse(
-                readFileSync(currentConfig.keypairPath, "utf8"),
-              );
-              const keypair = Keypair.fromSecretKey(
-                new Uint8Array(keypairData),
-              );
+                          const keypairData = safeParseKeypair(
+              readFileSync(currentConfig.keypairPath, "utf8")
+            );
+            
+            if (!keypairData) {
+              throw new Error("Invalid or potentially malicious keypair file format");
+            }
+            
+            const keypair = Keypair.fromSecretKey(
+              new Uint8Array(keypairData),
+            );
               data.push(["Public Key", keypair.publicKey.toBase58()]);
             } catch {
               data.push(["Public Key", chalk.red("Invalid keypair file")]);
@@ -360,7 +366,12 @@ export class ConfigCommands {
 
           // Validate keypair file
           try {
-            const keypairData = JSON.parse(readFileSync(expandedPath, "utf8"));
+            const keypairData = safeParseKeypair(readFileSync(expandedPath, "utf8"));
+            
+            if (!keypairData) {
+              throw new Error("Invalid or potentially malicious keypair file format");
+            }
+            
             const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
 
             const currentConfig = this.loadConfig();
@@ -518,9 +529,15 @@ export class ConfigCommands {
           }
 
           // Load keypair to get public key
-          const keypairData = JSON.parse(
-            readFileSync(currentConfig.keypairPath, "utf8"),
+          const keypairData = safeParseKeypair(
+            readFileSync(currentConfig.keypairPath, "utf8")
           );
+          
+          if (!keypairData) {
+            console.error(chalk.red("Error: Invalid or potentially malicious keypair file format"));
+            return;
+          }
+          
           const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
           const publicKey = keypair.publicKey.toBase58();
 
@@ -754,9 +771,14 @@ export class ConfigCommands {
           }
 
           if (answers.generateKeypair) {
-            const keypairData = JSON.parse(
-              readFileSync(newConfig.keypairPath, "utf8"),
+            const keypairData = safeParseKeypair(
+              readFileSync(newConfig.keypairPath, "utf8")
             );
+            
+            if (!keypairData) {
+              throw new Error("Invalid or potentially malicious keypair file format");
+            }
+            
             const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
             console.log(
               chalk.cyan("Public Key:"),
@@ -811,9 +833,15 @@ export class ConfigCommands {
             return;
           }
 
-          const keypairData = JSON.parse(
-            readFileSync(currentConfig.keypairPath, "utf8"),
+          const keypairData = safeParseKeypair(
+            readFileSync(currentConfig.keypairPath, "utf8")
           );
+          
+          if (!keypairData) {
+            console.error(chalk.red("Error: Invalid or potentially malicious keypair file format"));
+            return;
+          }
+          
           const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
           const publicKey = keypair.publicKey.toBase58();
 

@@ -4,6 +4,7 @@ import { join } from "path";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import chalk from "chalk";
 import { SecureKeypairLoader, secureWipe } from "./secure-memory.js";
+import { safeParseConfig, safeParseKeypair } from "./safe-json.js";
 
 interface CliConfig {
   network: string;
@@ -39,7 +40,13 @@ export function loadConfig(): CliConfig {
   if (existsSync(configPath)) {
     try {
       const configData = readFileSync(configPath, "utf8");
-      config = { ...config, ...JSON.parse(configData) };
+      const parsedConfig = safeParseConfig(configData);
+      
+      if (parsedConfig) {
+        config = { ...config, ...parsedConfig };
+      } else {
+        throw new Error("Invalid config format");
+      }
     } catch {
       console.warn(
         chalk.yellow("Warning: Could not read config file, using defaults"),
@@ -170,11 +177,10 @@ export function loadKeypair(keypairPath?: string): Keypair {
       process.exit(1);
     }
 
-    const keypairData = JSON.parse(fileContent);
+    const keypairData = safeParseKeypair(fileContent);
     
-    // SECURITY: Validate keypair data structure
-    if (!Array.isArray(keypairData) || keypairData.length !== 64) {
-      console.error(chalk.red("Error: Invalid keypair data (must be 64-byte array)"));
+    if (!keypairData) {
+      console.error(chalk.red("Error: Invalid or potentially malicious keypair file format"));
       process.exit(1);
     }
 

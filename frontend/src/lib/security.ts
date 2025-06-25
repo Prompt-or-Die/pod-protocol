@@ -6,11 +6,19 @@
 export const sanitizeInput = {
   // Remove potentially dangerous HTML/script content
   html: (input: string): string => {
-    if (typeof window === 'undefined') return input;
+    if (typeof window === 'undefined') {
+      // Server-side: basic text sanitization
+      return input
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;')
+        .replace(/\//g, '&#x2F;');
+    }
     
     const div = document.createElement('div');
-    div.textContent = input;
-    return div.innerHTML;
+    div.textContent = input; // This safely escapes the content
+    return div.innerHTML; // Returns properly escaped HTML
   },
 
   // Sanitize user input for database queries
