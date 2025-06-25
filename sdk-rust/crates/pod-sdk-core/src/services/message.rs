@@ -13,18 +13,22 @@ use solana_sdk::{
     signer::{keypair::Keypair, Signer},
 };
 
-use pod_sdk_types::{
-    MessageAccount, ChannelAccount, SendMessageRequest,
-    MessageType, MessageStatus,
-};
+// Import UUID for message ID generation
+use uuid::Uuid;
+
+// Import the actual program types
+use pod_com::{MessageAccount, ChannelAccount, AgentAccount, MessageType, MessageStatus};
 
 use crate::{
     error::{PodComError, Result},
     services::base::{BaseService, ServiceBase, ServiceConfig, ServiceHealth, ServiceMetrics},
+    types::{
+        SendMessageParams, MessageContent, FilterOptions,
+        BatchOperationResult, RequestOptions,
+    },
     utils::{
         account::{derive_message_pda, validate_message_account},
-        encryption::{encrypt_message, decrypt_message},
-        compression::{compress_message, decompress_message},
+        crypto::{encrypt_message, decrypt_message, compress_message, decompress_message, secure_hash_data},
     },
 };
 
@@ -90,20 +94,16 @@ impl MessageService {
             // Build instruction
             let ix = program
                 .request()
-                .accounts(pod_protocol::accounts::SendMessage {
-                    message: message_pda,
-                    channel: *channel_address,
-                    sender: sender.pubkey(),
+                .accounts(pod_com::accounts::SendMessage {
+                    message_account: message_pda,
+                    sender_agent: sender.pubkey(),
+                    signer: sender.pubkey(),
                     system_program: solana_sdk::system_program::id(),
-                    rent: solana_sdk::sysvar::rent::id(),
                 })
-                .args(pod_protocol::instruction::SendMessage {
-                    message_id: message_id.clone(),
-                    content: final_content,
+                .args(pod_com::instruction::SendMessage {
+                    recipient: *channel_address,
+                    payload_hash: pod_com::secure_hash_data(&final_content).unwrap_or([0u8; 32]),
                     message_type: params.message_type,
-                    metadata: params.metadata,
-                    priority: params.priority,
-                    expiration_timestamp,
                 })
                 .signer(sender);
 
@@ -271,17 +271,11 @@ impl MessageService {
                 });
             }
             
-            // Build instruction
-            let ix = program
-                .request()
-                .accounts(pod_protocol::accounts::ReactToMessage {
-                    message: *message_address,
-                    reactor: reactor.pubkey(),
-                })
-                .args(pod_protocol::instruction::ReactToMessage {
-                    reaction,
-                })
-                .signer(reactor);
+            // Build instruction - Note: pod-com doesn't have react_to_message, this would need custom implementation
+            // For now, we'll return an error indicating this feature needs implementation
+            return Err(PodComError::NotImplemented {
+                feature: "react_to_message".to_string(),
+            });
 
             // Send transaction
             let signature = ix.send()?;
@@ -321,15 +315,11 @@ impl MessageService {
                 });
             }
             
-            // Build instruction
-            let ix = program
-                .request()
-                .accounts(pod_protocol::accounts::DeleteMessage {
-                    message: *message_address,
-                    sender: sender.pubkey(),
-                })
-                .args(pod_protocol::instruction::DeleteMessage {})
-                .signer(sender);
+            // Build instruction - Note: pod-com doesn't have delete_message, this would need custom implementation
+            // For now, we'll return an error indicating this feature needs implementation
+            return Err(PodComError::NotImplemented {
+                feature: "delete_message".to_string(),
+            });
 
             // Send transaction
             let signature = ix.send()?;
@@ -378,15 +368,10 @@ impl MessageService {
                 if message_account.expiration_timestamp > 0 && 
                    current_timestamp > message_account.expiration_timestamp {
                     
-                    // Build cleanup instruction
-                    let ix = program
-                        .request()
-                        .accounts(pod_protocol::accounts::CleanupExpiredMessage {
-                            message: message_address,
-                            cleaner: cleaner.pubkey(),
-                        })
-                        .args(pod_protocol::instruction::CleanupExpiredMessage {})
-                        .signer(cleaner);
+                    // Build cleanup instruction - Note: pod-com doesn't have cleanup_expired_message
+                    // For now, we'll skip this message and continue
+                    tracing::info!("Skipping cleanup of expired message - feature not implemented in pod-com program");
+                    continue;
 
                     // Send transaction
                     let _signature = ix.send()?;

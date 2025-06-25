@@ -63,14 +63,14 @@ impl EscrowService {
             // Build instruction
             let ix = program
                 .request()
-                .accounts(pod_protocol::accounts::CreateEscrow {
+                .accounts(pod_com::accounts::DepositEscrow {
                     escrow: escrow_pda,
                     payer: payer.pubkey(),
                     beneficiary: params.beneficiary,
                     system_program: solana_sdk::system_program::id(),
                     rent: solana_sdk::sysvar::rent::id(),
                 })
-                .args(pod_protocol::instruction::CreateEscrow {
+                .args(pod_com::instruction::DepositEscrow {
                     escrow_id: escrow_id.clone(),
                     amount: params.amount,
                     conditions: params.conditions.clone(),
@@ -147,12 +147,12 @@ impl EscrowService {
             // Build instruction
             let ix = program
                 .request()
-                .accounts(pod_protocol::accounts::ReleaseEscrow {
+                .accounts(pod_com::accounts::WithdrawEscrow {
                     escrow: *escrow_address,
                     releaser: releaser.pubkey(),
                     beneficiary: escrow_account.beneficiary,
                 })
-                .args(pod_protocol::instruction::ReleaseEscrow {
+                .args(pod_com::instruction::WithdrawEscrow {
                     release_amount: params.release_amount.unwrap_or(escrow_account.amount),
                     release_reason: params.release_reason,
                 })
@@ -211,12 +211,12 @@ impl EscrowService {
             // Build instruction
             let ix = program
                 .request()
-                .accounts(pod_protocol::accounts::RefundEscrow {
+                .accounts(pod_com::accounts::WithdrawEscrow {
                     escrow: *escrow_address,
                     refunder: refunder.pubkey(),
                     payer: escrow_account.payer,
                 })
-                .args(pod_protocol::instruction::RefundEscrow {
+                .args(pod_com::instruction::WithdrawEscrow {
                     refund_reason,
                 })
                 .signer(refunder);
@@ -271,34 +271,11 @@ impl EscrowService {
                 });
             }
             
-            // Build instruction
-            let ix = program
-                .request()
-                .accounts(pod_protocol::accounts::DisputeEscrow {
-                    escrow: *escrow_address,
-                    disputer: disputer.pubkey(),
-                })
-                .args(pod_protocol::instruction::DisputeEscrow {
-                    dispute_reason: params.dispute_reason,
-                    evidence: params.evidence,
-                    requested_resolution: params.requested_resolution,
-                })
-                .signer(disputer);
-
-            // Send transaction
-            let signature = ix.send()?;
-            
-            // Fetch updated escrow account
-            let updated_account = self.get_escrow_account(escrow_address).await?;
-            
-            tracing::info!(
-                escrow_address = %escrow_address,
-                signature = %signature,
-                disputer = %disputer.pubkey(),
-                "Escrow dispute initiated successfully"
-            );
-
-            Ok(updated_account)
+            // Build instruction - Note: pod-com doesn't have dispute_escrow, this would need custom implementation
+            // For now, we'll return an error indicating this feature needs implementation
+            return Err(PodComError::NotImplemented {
+                feature: "dispute_escrow".to_string(),
+            });
         }).await
     }
 

@@ -80,20 +80,17 @@ impl ChannelService {
             // Build instruction
             let ix = program
                 .request()
-                .accounts(pod_protocol::accounts::CreateChannel {
-                    channel: channel_pda,
+                .accounts(pod_com::accounts::CreateChannel {
+                    channel_account: channel_pda,
                     creator: creator.pubkey(),
                     system_program: solana_sdk::system_program::id(),
-                    rent: solana_sdk::sysvar::rent::id(),
                 })
-                .args(pod_protocol::instruction::CreateChannel {
-                    channel_id: channel_id.clone(),
+                .args(pod_com::instruction::CreateChannel {
                     name: params.name.clone(),
                     description: params.description.clone(),
-                    participants: params.participants.clone(),
-                    encryption_key: encryption_key.clone(),
-                    access_level: params.access_level,
-                    metadata: params.metadata.clone(),
+                    visibility: pod_com::ChannelVisibility::Private, // Default to private
+                    max_participants: params.participants.len() as u32,
+                    fee_per_message: 0, // Default to no fee
                 })
                 .signer(creator);
 
@@ -171,16 +168,11 @@ impl ChannelService {
                 });
             }
             
-            // Build instruction
-            let ix = program
-                .request()
-                .accounts(pod_protocol::accounts::AddChannelParticipant {
-                    channel: *channel_address,
-                    admin: admin.pubkey(),
-                    new_participant: *new_participant,
-                })
-                .args(pod_protocol::instruction::AddChannelParticipant {})
-                .signer(admin);
+            // Build instruction - Note: pod-com doesn't have add_participant, this would need custom implementation
+            // For now, we'll return an error indicating this feature needs implementation
+            return Err(PodComError::NotImplemented {
+                feature: "add_participant".to_string(),
+            });
 
             // Send transaction
             let signature = ix.send()?;
@@ -237,16 +229,11 @@ impl ChannelService {
                 });
             }
             
-            // Build instruction
-            let ix = program
-                .request()
-                .accounts(pod_protocol::accounts::RemoveChannelParticipant {
-                    channel: *channel_address,
-                    admin: admin.pubkey(),
-                    participant_to_remove: *participant_to_remove,
-                })
-                .args(pod_protocol::instruction::RemoveChannelParticipant {})
-                .signer(admin);
+            // Build instruction - Note: pod-com doesn't have remove_participant, this would need custom implementation
+            // For now, we'll return an error indicating this feature needs implementation
+            return Err(PodComError::NotImplemented {
+                feature: "remove_participant".to_string(),
+            });
 
             // Send transaction
             let signature = ix.send()?;
@@ -291,15 +278,16 @@ impl ChannelService {
             // Build instruction
             let ix = program
                 .request()
-                .accounts(pod_protocol::accounts::UpdateChannel {
-                    channel: *channel_address,
-                    admin: admin.pubkey(),
+                .accounts(pod_com::accounts::UpdateChannel {
+                    channel_account: *channel_address,
+                    signer: admin.pubkey(),
                 })
-                .args(pod_protocol::instruction::UpdateChannel {
+                .args(pod_com::instruction::UpdateChannel {
                     name: params.name,
                     description: params.description,
-                    access_level: params.access_level,
-                    metadata: params.metadata,
+                    max_participants: None,
+                    fee_per_message: None,
+                    is_active: None,
                 })
                 .signer(admin);
 
@@ -341,14 +329,20 @@ impl ChannelService {
                 });
             }
             
-            // Build instruction
+            // Build instruction - Note: pod-com doesn't have archive_channel, using update_channel instead
             let ix = program
                 .request()
-                .accounts(pod_protocol::accounts::ArchiveChannel {
-                    channel: *channel_address,
-                    admin: admin.pubkey(),
+                .accounts(pod_com::accounts::UpdateChannel {
+                    channel_account: *channel_address,
+                    signer: admin.pubkey(),
                 })
-                .args(pod_protocol::instruction::ArchiveChannel {})
+                .args(pod_com::instruction::UpdateChannel {
+                    name: None,
+                    description: None,
+                    max_participants: None,
+                    fee_per_message: None,
+                    is_active: Some(false), // Archive by setting inactive
+                })
                 .signer(admin);
 
             // Send transaction
@@ -392,15 +386,11 @@ impl ChannelService {
             // Check if channel has messages (optional safety check)
             // TODO: Implement message count check if needed
             
-            // Build instruction
-            let ix = program
-                .request()
-                .accounts(pod_protocol::accounts::DeleteChannel {
-                    channel: *channel_address,
-                    creator: creator.pubkey(),
-                })
-                .args(pod_protocol::instruction::DeleteChannel {})
-                .signer(creator);
+            // Build instruction - Note: pod-com doesn't have delete_channel, this would need custom implementation
+            // For now, we'll return an error indicating this feature needs implementation
+            return Err(PodComError::NotImplemented {
+                feature: "delete_channel".to_string(),
+            });
 
             // Send transaction
             let signature = ix.send()?;

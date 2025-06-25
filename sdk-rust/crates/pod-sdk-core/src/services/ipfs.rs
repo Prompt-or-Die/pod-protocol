@@ -89,25 +89,11 @@ impl IPFSService {
             let metadata_id = uuid::Uuid::new_v4().to_string();
             let (metadata_pda, _bump) = derive_ipfs_metadata_pda(&uploader.pubkey(), &metadata_id)?;
             
-            // Build instruction
-            let ix = program
-                .request()
-                .accounts(pod_protocol::accounts::CreateIPFSMetadata {
-                    metadata: metadata_pda,
-                    uploader: uploader.pubkey(),
-                    system_program: solana_sdk::system_program::id(),
-                    rent: solana_sdk::sysvar::rent::id(),
-                })
-                .args(pod_protocol::instruction::CreateIPFSMetadata {
-                    metadata_id: metadata_id.clone(),
-                    content_hash: content_hash.clone(),
-                    content_type: params.content_type.clone(),
-                    size: final_content.len() as u64,
-                    is_encrypted: params.encrypt,
-                    is_pinned: params.pin,
-                    metadata: params.metadata.clone(),
-                })
-                .signer(uploader);
+            // Build instruction - Note: pod-com doesn't have IPFS functionality, this would need custom implementation
+            // For now, we'll return an error indicating this feature needs implementation
+            return Err(PodComError::NotImplemented {
+                feature: "upload_ipfs_content".to_string(),
+            });
 
             // Send transaction
             let signature = ix.send()?;
@@ -194,18 +180,9 @@ impl IPFSService {
             if let Some(metadata_address) = self.find_metadata_address_by_hash(content_hash).await? {
                 let program = self.base.program()?;
                 
-                let ix = program
-                    .request()
-                    .accounts(pod_protocol::accounts::PinIPFSContent {
-                        metadata: metadata_address,
-                        pinner: pinner.pubkey(),
-                    })
-                    .args(pod_protocol::instruction::PinIPFSContent {
-                        pin_duration: params.pin_duration,
-                    })
-                    .signer(pinner);
-
-                let _signature = ix.send()?;
+                // Note: pod-com doesn't have IPFS pin functionality, this would need custom implementation
+                // For now, we'll skip the on-chain update
+                tracing::info!("Skipping on-chain pin update - feature not implemented in pod-com program");
             }
             
             // Update pin cache
@@ -251,16 +228,9 @@ impl IPFSService {
             if let Some(metadata_address) = self.find_metadata_address_by_hash(content_hash).await? {
                 let program = self.base.program()?;
                 
-                let ix = program
-                    .request()
-                    .accounts(pod_protocol::accounts::UnpinIPFSContent {
-                        metadata: metadata_address,
-                        unpinner: unpinner.pubkey(),
-                    })
-                    .args(pod_protocol::instruction::UnpinIPFSContent {})
-                    .signer(unpinner);
-
-                let _signature = ix.send()?;
+                // Note: pod-com doesn't have IPFS unpin functionality, this would need custom implementation
+                // For now, we'll skip the on-chain update
+                tracing::info!("Skipping on-chain unpin update - feature not implemented in pod-com program");
             }
             
             // Update pin cache

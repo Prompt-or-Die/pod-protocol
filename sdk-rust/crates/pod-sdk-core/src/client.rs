@@ -262,7 +262,7 @@ impl PodComClient {
     /// Create a transaction config with Web3.js v2.0 patterns
     pub fn create_transaction_config(&self) -> RpcTransactionConfig {
         RpcTransactionConfig {
-            encoding: Some(solana_account_decoder::UiTransactionEncoding::Base64),
+            encoding: Some(solana_rpc_client_api::config::UiTransactionEncoding::Base64),
             commitment: Some(self.config.commitment),
             max_supported_transaction_version: Some(0),
         }
@@ -271,7 +271,7 @@ impl PodComClient {
     /// Create an account info config
     pub fn create_account_config(&self) -> RpcAccountInfoConfig {
         RpcAccountInfoConfig {
-            encoding: Some(solana_account_decoder::UiAccountEncoding::Base64),
+            encoding: Some(solana_rpc_client_api::config::UiAccountEncoding::Base64),
             commitment: Some(self.config.commitment),
             data_slice: None,
             min_context_slot: None,

@@ -133,6 +133,12 @@ toml = "0.8"
 # Derive macros
 derive_more = "0.99"
 
+# UUID generation for unique identifiers
+uuid = { version = "1.10", features = ["v4", "serde"] }
+
+# PoD Protocol Program - link to actual Solana program
+pod-com = { path = "../programs/pod-com", features = ["cpi"] }
+
 [profile.release]
 opt-level = 3
 lto = true

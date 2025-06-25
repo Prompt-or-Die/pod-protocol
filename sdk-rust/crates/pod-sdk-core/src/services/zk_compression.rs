@@ -89,26 +89,11 @@ impl ZKCompressionService {
             let compression_id = uuid::Uuid::new_v4().to_string();
             let (compression_pda, _bump) = derive_zk_compression_pda(&compressor.pubkey(), &compression_id)?;
             
-            // Build instruction
-            let ix = program
-                .request()
-                .accounts(pod_protocol::accounts::CreateZKCompression {
-                    compression: compression_pda,
-                    compressor: compressor.pubkey(),
-                    system_program: solana_sdk::system_program::id(),
-                    rent: solana_sdk::sysvar::rent::id(),
-                })
-                .args(pod_protocol::instruction::CreateZKCompression {
-                    compression_id: compression_id.clone(),
-                    original_size: data.len() as u64,
-                    compressed_size: compression_result.compressed_data.len() as u64,
-                    algorithm: params.algorithm,
-                    level: params.level,
-                    data_commitment,
-                    proof_hash: compression_result.proof.hash(),
-                    metadata: params.metadata.clone(),
-                })
-                .signer(compressor);
+            // Build instruction - Note: pod-com doesn't have separate ZK compression functionality
+            // The program has compressed message support built-in, this would need custom implementation
+            return Err(PodComError::NotImplemented {
+                feature: "create_zk_compression".to_string(),
+            });
 
             // Send transaction
             let signature = ix.send()?;

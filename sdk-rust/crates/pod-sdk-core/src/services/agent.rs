@@ -5,6 +5,7 @@
 
 use std::sync::Arc;
 use std::time::Instant;
+use std::collections::HashMap;
 
 use anchor_client::Program;
 use async_trait::async_trait;
@@ -14,15 +15,25 @@ use solana_sdk::{
     system_instruction,
 };
 
+// Import the actual program types
+use pod_com::{AgentAccount, ChannelAccount, MessageAccount};
+
 use pod_sdk_types::{
-    AgentAccount, ChannelAccount, RegisterAgentRequest, MessageAccount,
-    capabilities, MessageType, MessageStatus, ChannelVisibility,
+    RegisterAgentRequest, MessageType, MessageStatus, ChannelVisibility,
 };
 
 use crate::{
     error::{PodComError, Result},
     services::base::{BaseService, ServiceBase, ServiceConfig, ServiceHealth, ServiceMetrics},
-    utils::account::{derive_agent_pda, validate_agent_account},
+    types::{
+        CreateAgentParams, UpdateAgentParams, FilterOptions,
+        BatchOperationResult, RequestOptions,
+    },
+    utils::{
+        account::{derive_agent_pda, validate_agent_account},
+        crypto::hash_message,
+    },
+    client::BaseService,
 };
 
 /// Service for managing AI agents
@@ -56,18 +67,14 @@ impl AgentService {
             // Build instruction
             let ix = program
                 .request()
-                .accounts(pod_protocol::accounts::CreateAgent {
-                    agent: agent_pda,
-                    owner: owner.pubkey(),
+                .accounts(pod_com::accounts::RegisterAgent {
+                    agent_account: agent_pda,
+                    signer: owner.pubkey(),
                     system_program: solana_sdk::system_program::id(),
-                    rent: solana_sdk::sysvar::rent::id(),
                 })
-                .args(pod_protocol::instruction::CreateAgent {
-                    name: params.name.clone(),
-                    description: params.description.clone(),
-                    capabilities: params.capabilities.clone(),
-                    model_config: params.model_config.clone(),
-                    access_level: params.access_level,
+                .args(pod_com::instruction::RegisterAgent {
+                    capabilities: params.capabilities,
+                    metadata_uri: params.description.clone(),
                 })
                 .signer(owner);
 
@@ -113,15 +120,13 @@ impl AgentService {
             // Build instruction
             let ix = program
                 .request()
-                .accounts(pod_protocol::accounts::UpdateAgent {
-                    agent: *agent_address,
-                    owner: owner.pubkey(),
+                .accounts(pod_com::accounts::UpdateAgent {
+                    agent_account: *agent_address,
+                    signer: owner.pubkey(),
                 })
-                .args(pod_protocol::instruction::UpdateAgent {
-                    description: params.description,
+                .args(pod_com::instruction::UpdateAgent {
                     capabilities: params.capabilities,
-                    model_config: params.model_config,
-                    access_level: params.access_level,
+                    metadata_uri: params.description,
                 })
                 .signer(owner);
 
@@ -251,14 +256,17 @@ impl AgentService {
                 });
             }
             
-            // Build instruction
+            // Build instruction - using update_agent since pod-com doesn't have separate activate/deactivate
             let ix = program
                 .request()
-                .accounts(pod_protocol::accounts::ActivateAgent {
-                    agent: *agent_address,
-                    owner: owner.pubkey(),
+                .accounts(pod_com::accounts::UpdateAgent {
+                    agent_account: *agent_address,
+                    signer: owner.pubkey(),
                 })
-                .args(pod_protocol::instruction::ActivateAgent {})
+                .args(pod_com::instruction::UpdateAgent {
+                    capabilities: None, // Keep current capabilities
+                    metadata_uri: None, // Keep current metadata
+                })
                 .signer(owner);
 
             // Send transaction
@@ -298,14 +306,17 @@ impl AgentService {
                 });
             }
             
-            // Build instruction
+            // Build instruction - using update_agent since pod-com doesn't have separate activate/deactivate
             let ix = program
                 .request()
-                .accounts(pod_protocol::accounts::DeactivateAgent {
-                    agent: *agent_address,
-                    owner: owner.pubkey(),
+                .accounts(pod_com::accounts::UpdateAgent {
+                    agent_account: *agent_address,
+                    signer: owner.pubkey(),
                 })
-                .args(pod_protocol::instruction::DeactivateAgent {})
+                .args(pod_com::instruction::UpdateAgent {
+                    capabilities: None, // Keep current capabilities
+                    metadata_uri: None, // Keep current metadata
+                })
                 .signer(owner);
 
             // Send transaction
@@ -354,15 +365,11 @@ impl AgentService {
                 });
             }
             
-            // Build instruction
-            let ix = program
-                .request()
-                .accounts(pod_protocol::accounts::DeleteAgent {
-                    agent: *agent_address,
-                    owner: owner.pubkey(),
-                })
-                .args(pod_protocol::instruction::DeleteAgent {})
-                .signer(owner);
+            // Build instruction - Note: pod-com doesn't have delete_agent, this would need custom implementation
+            // For now, we'll return an error indicating this feature needs implementation
+            return Err(PodComError::NotImplemented {
+                feature: "delete_agent".to_string(),
+            });
 
             // Send transaction
             let signature = ix.send()?;

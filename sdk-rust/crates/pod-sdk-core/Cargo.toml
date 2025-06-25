@@ -101,6 +101,12 @@ hex = "0.4"
 pod-sdk-types = { path = "../pod-sdk-types" }
 pod-sdk-crypto = { path = "../pod-sdk-crypto" }
 
+# UUID generation
+uuid = { workspace = true }
+
+# PoD Protocol Program
+pod-com = { workspace = true }
+
 [dev-dependencies]
 tokio-test = "0.4"
 pretty_assertions = { workspace = true }

@@ -88,6 +88,10 @@ pub enum PodComError {
     #[error("Internal error: {message}")]
     Internal { message: String },
     
+    /// Feature not implemented
+    #[error("Feature not implemented: {feature}")]
+    NotImplemented { feature: String },
+    
     /// Unauthorized access
     #[error("Unauthorized access to {resource} for action {action}")]
     UnauthorizedAccess { resource: String, action: String },
