@@ -86,5 +86,6 @@ export default {
     "multiformats",
     "keccak",
     "node-domexception",
+    "ws",
   ],
 };

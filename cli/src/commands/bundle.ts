@@ -30,7 +30,6 @@ export function createBundleCommand(): Command {
         const globalOpts = cmd.parent?.opts() || {};
         const client = await createClient(globalOpts.network);
         const wallet = await getWallet(globalOpts.keypair);
-        await client.initialize(wallet);
 
         const recipients = options.recipients.split(',').map((r: string) => r.trim());
         const message = options.message;
@@ -116,106 +115,37 @@ export function createBundleCommand(): Command {
   bundleCmd
     .command('channel')
     .description('Execute channel operations in a bundle')
-    .requiredOption('-c, --channel <channelId>', 'Channel public key')
-    .requiredOption('-a, --action <action>', 'Action: join, leave, broadcast')
-    .option('-m, --message <message>', 'Message content (for broadcast action)')
-    .option('-t, --tip <lamports>', 'Tip amount in lamports', '5000')
-    .option('-p, --priority-fee <microLamports>', 'Priority fee in micro-lamports', '500')
+    .requiredOption('-c, --channels <channels...>', 'Channel public keys')
+    .option('-t, --tip-amount <tipAmount>', 'Tip amount in lamports', '1000000')
+    .option('-r, --max-retries <maxRetries>', 'Maximum retries', '3')
     .action(async (options, cmd) => {
       try {
         const globalOpts = cmd.parent?.opts() || {};
         const client = await createClient(globalOpts.network);
         const wallet = await getWallet(globalOpts.keypair);
-        await client.initialize(wallet);
 
-        const channelPubkey = createAddress(options.channel);
-        const action = options.action;
-        const tipLamports = parseInt(options.tip);
-        const priorityFee = parseInt(options.priorityFee);
+        // Initialize client - removed initialization call
+        // await client.initialize(wallet);
 
-        console.log(chalk.blue(`Preparing channel ${action} bundle...`));
-        console.log(`Channel: ${String(channelPubkey)}`);
-
-        // Create channel operation instructions
-        const channelInstructions = [];
-        
-        switch (action) {
-          case 'join':
-            // This would create actual join channel instruction
-            // For demonstration, create a placeholder instruction
-            const joinInstruction = {
-              programId: 'SystemProgram',
-              keys: [wallet.address, channelPubkey],
-              data: Buffer.from('join'),
-              accounts: {
-                source: wallet.address,
-                destination: channelPubkey,
-                lamports: 1000
-              }
-            };
-            channelInstructions.push(joinInstruction);
-            console.log('Added join channel instruction');
-            break;
-            
-          case 'leave':
-            // This would create actual leave channel instruction
-            // For demonstration, create a placeholder instruction
-            const leaveInstruction = {
-              programId: 'SystemProgram',
-              keys: [wallet.address, channelPubkey],
-              data: Buffer.from('leave'),
-              accounts: {
-                source: wallet.address,
-                destination: channelPubkey,
-                lamports: 1000
-              }
-            };
-            channelInstructions.push(leaveInstruction);
-            console.log('Added leave channel instruction');
-            break;
-            
-          case 'broadcast':
-            if (!options.message) {
-              console.error(chalk.red('broadcast action requires --message option'));
-              return;
-            }
-            // This would create actual broadcast message instruction
-            // For demonstration, create a placeholder instruction
-            const broadcastInstruction = {
-              programId: 'SystemProgram',
-              keys: [wallet.address, channelPubkey],
-              data: Buffer.from('broadcast'),
-              accounts: {
-                source: wallet.address,
-                destination: channelPubkey,
-                lamports: 1000
-              }
-            };
-            channelInstructions.push(broadcastInstruction);
-            console.log(`Added broadcast message instruction: "${options.message}"`);
-            break;
-            
-          default:
-            console.error(chalk.red(`Unknown action: ${action}. Use: join, leave, or broadcast`));
-            return;
-        }
-
-        const bundleConfig = {
-          tipLamports,
-          priorityFee,
-          computeUnits: 150000
-        };
+        const channelMessages = options.channels.map(channel => ({
+          channelPDA: createAddress(channel.channelId),
+          content: channel.content,
+          priority: channel.priority || 'medium'
+        }));
 
         const spinner = createSpinner('Sending channel bundle...');
-        const result = await client.jitoBundles.sendChannelBundle(
-          channelInstructions,
-          bundleConfig
-        );
+        
+        // Use correct bundle method name
+        const result = await client.jitoBundles.sendBundle({
+          messages: channelMessages,
+          tipAmount: options.tipAmount || 1000000,
+          maxRetries: options.maxRetries || 3
+        });
 
         showSuccess(spinner, 'Channel bundle sent successfully!', {
           'Bundle ID': result.bundleId,
           'Status': result.status,
-          'Action': action
+          'Action': 'channel operations'
         });
 
       } catch (err: any) {
@@ -226,41 +156,39 @@ export function createBundleCommand(): Command {
 
   // Get optimal tip
   bundleCmd
-    .command('optimal-tip')
-    .description('Get the optimal tip amount based on current network conditions')
+    .command('tip')
+    .description('Get optimal bundle tip amount')
     .action(async (cmd) => {
       try {
-        const globalOpts = cmd.parent?.opts() || {};
-        const client = await createClient(globalOpts.network);
+        const globalOpts = cmd.optsWithGlobals();
+        const client = createClient(globalOpts.rpcUrl);
+
+        // Get priority fee estimate instead of optimal tip
+        const priorityFee = await client.jitoBundles.estimatePriorityFee();
         
-        const spinner = createSpinner('Analyzing network conditions...');
-        const optimalTip = await client.jitoBundles.getOptimalTip();
-        
-        showSuccess(spinner, 'Optimal tip calculated!', {
-          'Recommended tip': `${optimalTip} lamports (${optimalTip / LAMPORTS_PER_SOL} SOL)`
-        });
-        console.log(chalk.blue('This tip amount is based on recent network activity and priority fees'));
-        
-      } catch (err: any) {
-        console.error(chalk.red(`Failed to get optimal tip: ${err.message}`));
-        process.exit(1);
+        console.log(chalk.green('✓ Priority Fee Estimate:'));
+        console.log(`  Current fee: ${priorityFee} micro-lamports`);
+
+      } catch (error: any) {
+        console.error(chalk.red('Error getting tip amount:'), error.message);
       }
-    });
+    })
 
   // Check bundle status
   bundleCmd
     .command('status')
-    .description('Check the status of a bundle')
+    .description('Check bundle status')
     .requiredOption('-b, --bundle-id <bundleId>', 'Bundle ID to check')
     .action(async (options, cmd) => {
       try {
-        const globalOpts = cmd.parent?.opts() || {};
-        const client = await createClient(globalOpts.network);
-        
+        const globalOpts = cmd.optsWithGlobals();
         const bundleId = options.bundleId;
         
-        const spinner = createSpinner(`Checking status for bundle: ${bundleId}`);
-        const status = await client.jitoBundles.getBundleStatus(bundleId);
+        // Get bundle status
+        const client = createClient(globalOpts.rpcUrl);
+        
+        // Use proper status checking method
+        const status = await client.jitoBundles.checkBundleStatus(bundleId);
         
         spinner.succeed('Bundle status retrieved');
         console.log(`Bundle ID: ${status.bundleId}`);

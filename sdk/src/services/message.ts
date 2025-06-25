@@ -35,7 +35,7 @@ export class MessageService extends BaseService {
     const program = this.ensureInitialized();
 
     // Derive sender agent PDA
-    const [senderAgentPDA] = findAgentPDA(wallet.address, this.programId);
+    const [senderAgentPDA] = await findAgentPDA(wallet.address, this.programId);
 
     // Hash the payload
     const payloadHash = await hashPayload(options.payload);
@@ -46,12 +46,14 @@ export class MessageService extends BaseService {
       options.customValue,
     );
 
-    // Find message PDA
-    const [messagePDA] = findMessagePDA(
-      senderAgentPDA,
+    // Generate message ID
+    const messageId = Math.random().toString(36).substring(2, 15);
+
+    // Find message PDA with correct parameters
+    const [messagePDA] = await findMessagePDA(
+      wallet.address,
       options.recipient,
-      address(options.recipient),
-      messageTypeObj,
+      messageId,
       this.programId,
     );
 

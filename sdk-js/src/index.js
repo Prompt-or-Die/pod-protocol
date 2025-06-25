@@ -73,9 +73,9 @@ export class PodComClient {
     
     // Initialize services
     const serviceConfig = {
-      connection.connection,
-      programId.programId,
-      commitment.commitment
+      connection: this.connection,
+      programId: this.programId,
+      commitment: this.commitment
     };
     
     this.agents = new AgentService(serviceConfig);
@@ -111,15 +111,15 @@ export class PodComClient {
     try {
       if (wallet) {
         // Create wallet adapter if needed
-        const walletAdapter = wallet.publicKey ? wallet  Wallet(wallet);
+        const walletAdapter = wallet.publicKey ? wallet : new Wallet(wallet);
         
         // Create provider and program
         const provider = new AnchorProvider(
           this.connection,
           walletAdapter,
           {
-            commitment.commitment,
-            skipPreflight
+            commitment: this.commitment,
+            skipPreflight: false
           }
         );
         
@@ -173,13 +173,13 @@ export class PodComClient {
 
   /**
    * Get connection info
-   * @returns {Object} Rpc information
+   * @returns {Object} RPC information
    */
   getRpcInfo() {
     return {
-      endpoint.connection.rpcEndpoint,
-      commitment.commitment,
-      programId.programId
+      endpoint: this.connection.rpcEndpoint,
+      commitment: this.commitment,
+      programId: this.programId
     };
   }
 

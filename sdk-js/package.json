@@ -4,6 +4,7 @@
   "description": "Pod Protocol SDK for JavaScript",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "type": "module",
   "scripts": {
     "build": "rollup -c && tsc",
     "clean": "rm -rf dist",

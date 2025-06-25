@@ -338,7 +338,7 @@ export class AnalyticsCommands {
         const agentData = recommendedAgents.map((rec, index) => [
           `#${index + 1}`,
           formatValue(
-            rec.item.pubkey.toBase58().slice(0, 8) + "...",
+            rec.item.pubkey.toString().slice(0, 8) + "...",
             "address",
           ),
           formatValue(rec.item.reputation.toString(), "number"),
