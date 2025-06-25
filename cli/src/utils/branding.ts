@@ -9,7 +9,7 @@ if (process.env.NODE_ENV !== "test") {
  * PoD Protocol CLI Branding and Visual Elements
  */
 
-// Revert to original working banner
+// Enhanced POD Banner with better Unicode support
 export const POD_BANNER = `
 ${chalk.magenta.bold("██████╗  ██████╗ ██████╗     ██████╗ ██████╗  ██████╗ ████████╗ ██████╗  ██████╗ ██████╗ ██╗     ")}
 ${chalk.magenta.bold("██╔══██╗██╔═══██╗██╔══██╗    ██╔══██╗██╔══██╗██╔═══██╗╚══██╔══╝██╔═══██╗██╔════╝██╔═══██╗██║     ")}
@@ -22,7 +22,7 @@ ${chalk.cyan.bold("                    The Ultimate AI Agent Communication Proto
 ${chalk.gray("                          Where prompts become prophecy ⚡️")}
 `;
 
-// Beautiful "Prompt or Die" banner with enhanced styling
+// Enhanced "Prompt or Die" banner with improved Unicode support
 export const PROMPT_OR_DIE_BANNER = `
 ${chalk.gray("╔═══════════════════════════════════════════════════════════════════════════════╗")}
 ${chalk.gray("║")} ${chalk.magenta.bold("██████╗ ██████╗  ██████╗ ███╗   ███╗██████╗ ████████╗")} ${chalk.white.bold("  ██████╗ ██████╗ ")} ${chalk.gray("║")}
@@ -32,12 +32,12 @@ ${chalk.gray("║")} ${chalk.magenta.bold("██╔═══╝ ██╔══
 ${chalk.gray("║")} ${chalk.magenta.bold("██║     ██║  ██║╚██████╔╝██║ ╚═╝ ██║██║        ██║   ")} ${chalk.white.bold(" ╚██████╔╝██║  ██║")} ${chalk.gray("║")}
 ${chalk.gray("║")} ${chalk.magenta.bold("╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝╚═╝        ╚═╝   ")} ${chalk.white.bold("  ╚═════╝ ╚═╝  ╚═╝")} ${chalk.gray("║")}
 ${chalk.gray("║")}                                                                               ${chalk.gray("║")}
-${chalk.gray("║")} ${chalk.magenta.bold("    ███████╗██╗██╗     ██╗")} ${chalk.white.bold("███████╗    ██████╗ ██╗███████╗    ")} ${chalk.gray("║")}
-${chalk.gray("║")} ${chalk.magenta.bold("    ██╔═════╝██║██║     ██║")} ${chalk.white.bold("██╔════╝    ██╔══██╗██║██╔════╝    ")} ${chalk.gray("║")}
-${chalk.gray("║")} ${chalk.magenta.bold("    █████╗  ██║██║     ██║")} ${chalk.white.bold("█████╗      ██║  ██║██║█████╗      ")} ${chalk.gray("║")}
-${chalk.gray("║")} ${chalk.magenta.bold("    ██╔══╝  ██║██║     ██║")} ${chalk.white.bold("██╔══╝      ██║  ██║██║██╔══╝      ")} ${chalk.gray("║")}
-${chalk.gray("║")} ${chalk.magenta.bold("    ███████╗██║███████╗██║")} ${chalk.white.bold("███████╗    ██████╔╝██║███████╗    ")} ${chalk.gray("║")}
-${chalk.gray("║")} ${chalk.magenta.bold("    ╚══════╝╚═╝╚══════╝╚═╝")} ${chalk.white.bold("╚══════╝    ╚═════╝ ╚═╝╚══════╝    ")} ${chalk.gray("║")}
+${chalk.gray("║")} ${chalk.magenta.bold("    ███████╗██╗██╗     ██╗")} ${chalk.red.bold("███████╗    ██████╗ ██╗███████╗    ")} ${chalk.gray("║")}
+${chalk.gray("║")} ${chalk.magenta.bold("    ██╔═════╝██║██║     ██║")} ${chalk.red.bold("██╔════╝    ██╔══██╗██║██╔════╝    ")} ${chalk.gray("║")}
+${chalk.gray("║")} ${chalk.magenta.bold("    █████╗  ██║██║     ██║")} ${chalk.red.bold("█████╗      ██║  ██║██║█████╗      ")} ${chalk.gray("║")}
+${chalk.gray("║")} ${chalk.magenta.bold("    ██╔══╝  ██║██║     ██║")} ${chalk.red.bold("██╔══╝      ██║  ██║██║██╔══╝      ")} ${chalk.gray("║")}
+${chalk.gray("║")} ${chalk.magenta.bold("    ███████╗██║███████╗██║")} ${chalk.red.bold("███████╗    ██████╔╝██║███████╗    ")} ${chalk.gray("║")}
+${chalk.gray("║")} ${chalk.magenta.bold("    ╚══════╝╚═╝╚══════╝╚═╝")} ${chalk.red.bold("╚══════╝    ╚═════╝ ╚═╝╚══════╝    ")} ${chalk.gray("║")}
 ${chalk.gray("║")}                                                                               ${chalk.gray("║")}
 ${chalk.gray("║")} ${chalk.cyan.bold("                    Where AI agents meet their destiny ⚡️                  ")} ${chalk.gray("║")}
 ${chalk.gray("╚═══════════════════════════════════════════════════════════════════════════════╝")}
@@ -426,12 +426,15 @@ export function spinnerMessage(message: string): string {
 }
 
 /**
- * Black terminal specific banner with improved ASCII art
+ * Black terminal specific banner with improved ASCII art and better Unicode support
  */
 function showBlackTerminalBanner(): void {
   const purple = chalk.hex('#9D4EDD');
   const crimson = chalk.hex('#DC143C');
   const white = chalk.white;
+  
+  // Clear screen and set terminal background
+  process.stdout.write('\x1b[2J\x1b[H\x1b[40m');
   
   console.log(purple.bold(
 `██████╗  ██████╗ ██████╗     ██████╗ ██████╗  ██████╗ ████████╗ ██████╗  ██████╗ ██████╗ ██╗     
@@ -448,12 +451,15 @@ function showBlackTerminalBanner(): void {
 }
 
 /**
- * Black terminal "Prompt or Die" banner
+ * Enhanced black terminal "Prompt or Die" banner with better Unicode support
  */
 function showBlackTerminalPromptOrDieBanner(): void {
   const purple = chalk.hex('#9D4EDD');
   const crimson = chalk.hex('#DC143C');
   const white = chalk.white;
+  
+  // Clear screen and set terminal background  
+  process.stdout.write('\x1b[2J\x1b[H\x1b[40m');
   
   console.log(purple(
 `╔═══════════════════════════════════════════════════════════════════════════════╗`
