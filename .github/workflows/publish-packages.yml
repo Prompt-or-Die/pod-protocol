@@ -42,24 +42,58 @@ jobs:
           
     - name: Install dependencies
       run: |
-        echo "📦 Installing dependencies..."
-        bun install --frozen-lockfile
-        echo "✅ Dependencies installed"
+        echo "📦 Installing root dependencies for publishing..."
+        set -e
+        bun install --frozen-lockfile || {
+          echo "❌ Failed to install root dependencies"
+          exit 1
+        }
+        echo "✅ Root dependencies installed successfully"
       
     - name: Build SDK
       run: |
-        echo "📦 Building SDK..."
+        echo "📦 Building SDK for publishing..."
+        set -e
         cd sdk
-        bun install --frozen-lockfile || echo "SDK dependencies installed"
-        bun run build:prod || bun run build || echo "SDK build completed"
+        
+        echo "🔧 Installing SDK dependencies..."
+        bun install --frozen-lockfile || {
+          echo "❌ Failed to install SDK dependencies"
+          exit 1
+        }
+        echo "✅ SDK dependencies installed successfully"
+        
+        echo "🏗️ Building SDK..."
+        if ! bun run build:prod; then
+          echo "⚠️ Production build failed, trying standard build..."
+          bun run build || {
+            echo "❌ SDK build failed"
+            exit 1
+          }
+        fi
         echo "✅ SDK built successfully"
         
     - name: Build CLI
       run: |
-        echo "📦 Building CLI..."
+        echo "📦 Building CLI for publishing..."
+        set -e
         cd cli
-        bun install --frozen-lockfile || echo "CLI dependencies installed"
-        bun run build:prod || bun run build || echo "CLI build completed"
+        
+        echo "🔧 Installing CLI dependencies..."
+        bun install --frozen-lockfile || {
+          echo "❌ Failed to install CLI dependencies"
+          exit 1
+        }
+        echo "✅ CLI dependencies installed successfully"
+        
+        echo "🏗️ Building CLI..."
+        if ! bun run build:prod; then
+          echo "⚠️ Production build failed, trying standard build..."
+          bun run build || {
+            echo "❌ CLI build failed"
+            exit 1
+          }
+        fi
         echo "✅ CLI built successfully"
         
     - name: Verify build artifacts
@@ -73,9 +107,13 @@ jobs:
       if: env.NPM_TOKEN != ''
       run: |
         echo "📦 Publishing SDK to NPM..."
+        set -e
         cd sdk
-        npm publish --access public
-        echo "✅ SDK published to NPM"
+        npm publish --access public || {
+          echo "❌ Failed to publish SDK to NPM"
+          exit 1
+        }
+        echo "✅ SDK published to NPM successfully"
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -84,9 +122,13 @@ jobs:
       if: env.NPM_TOKEN != ''
       run: |
         echo "📦 Publishing CLI to NPM..."
+        set -e
         cd cli
-        npm publish --access public
-        echo "✅ CLI published to NPM"
+        npm publish --access public || {
+          echo "❌ Failed to publish CLI to NPM"
+          exit 1
+        }
+        echo "✅ CLI published to NPM successfully"
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -94,22 +136,42 @@ jobs:
     - name: Publish SDK to GitHub Packages
       run: |
         echo "📦 Publishing SDK to GitHub Packages..."
+        set -e
         cd sdk
-        echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" > .npmrc
-        echo "@pod-protocol:registry=https://npm.pkg.github.com" >> .npmrc
-        npm publish --registry=https://npm.pkg.github.com
-        echo "✅ SDK published to GitHub Packages"
+        echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" > .npmrc || {
+          echo "❌ Failed to configure GitHub Packages authentication"
+          exit 1
+        }
+        echo "@pod-protocol:registry=https://npm.pkg.github.com" >> .npmrc || {
+          echo "❌ Failed to configure GitHub Packages registry"
+          exit 1
+        }
+        npm publish --registry=https://npm.pkg.github.com || {
+          echo "❌ Failed to publish SDK to GitHub Packages"
+          exit 1
+        }
+        echo "✅ SDK published to GitHub Packages successfully"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
     - name: Publish CLI to GitHub Packages  
       run: |
         echo "📦 Publishing CLI to GitHub Packages..."
+        set -e
         cd cli
-        echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" > .npmrc
-        echo "@pod-protocol:registry=https://npm.pkg.github.com" >> .npmrc
-        npm publish --registry=https://npm.pkg.github.com
-        echo "✅ CLI published to GitHub Packages"
+        echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" > .npmrc || {
+          echo "❌ Failed to configure GitHub Packages authentication"
+          exit 1
+        }
+        echo "@pod-protocol:registry=https://npm.pkg.github.com" >> .npmrc || {
+          echo "❌ Failed to configure GitHub Packages registry"
+          exit 1
+        }
+        npm publish --registry=https://npm.pkg.github.com || {
+          echo "❌ Failed to publish CLI to GitHub Packages"
+          exit 1
+        }
+        echo "✅ CLI published to GitHub Packages successfully"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         

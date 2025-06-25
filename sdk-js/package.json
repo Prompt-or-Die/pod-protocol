@@ -1,6 +1,6 @@
 {
   "name": "@pod-protocol/sdk-js",
-  "version": "1.5.0",
+  "version": "1.5.2",
   "description": "JavaScript SDK for PoD Protocol (Prompt or Die) AI Agent Communication Protocol",
   "type": "module",
   "main": "dist/index.js",

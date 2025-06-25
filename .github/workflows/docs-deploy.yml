@@ -38,19 +38,46 @@ jobs:
 
       - name: Install system dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y pkg-config build-essential libudev-dev
+          echo "📦 Installing system dependencies for documentation..."
+          set -e
+          sudo apt-get update || {
+            echo "❌ Failed to update package lists"
+            exit 1
+          }
+          sudo apt-get install -y pkg-config build-essential libudev-dev || {
+            echo "❌ Failed to install system dependencies"
+            exit 1
+          }
+          echo "✅ System dependencies installed successfully"
 
       - name: Install Solana CLI
         run: |
-          sh -c "$(curl -sSfL https://release.solana.com/v1.18.26/install)"
+          echo "⚙️ Installing Solana CLI for documentation..."
+          set -e
+          sh -c "$(curl -sSfL https://release.solana.com/v1.18.26/install)" || {
+            echo "❌ Failed to install Solana CLI"
+            exit 1
+          }
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+          echo "✅ Solana CLI installed successfully"
 
       - name: Install Anchor CLI
         run: |
-          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
-          avm install 0.31.1
-          avm use 0.31.1
+          echo "⚙️ Installing Anchor CLI for documentation..."
+          set -e
+          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force || {
+            echo "❌ Failed to install AVM"
+            exit 1
+          }
+          avm install 0.31.1 || {
+            echo "❌ Failed to install Anchor version 0.31.1"
+            exit 1
+          }
+          avm use 0.31.1 || {
+            echo "❌ Failed to use Anchor version 0.31.1"
+            exit 1
+          }
+          echo "✅ Anchor CLI installed and configured successfully"
 
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -68,32 +95,81 @@ jobs:
 
       - name: Install dependencies
         run: |
-          echo "📦 Installing dependencies..."
-          bun install --frozen-lockfile
-          cd sdk && bun install --frozen-lockfile || true
-          cd ../cli && bun install --frozen-lockfile || true
-          echo "✅ Dependencies installed"
+          echo "📦 Installing dependencies for documentation..."
+          set -e
+          
+          echo "🔧 Installing root dependencies..."
+          bun install --frozen-lockfile || {
+            echo "❌ Failed to install root dependencies"
+            exit 1
+          }
+          echo "✅ Root dependencies installed successfully"
+          
+          echo "🔧 Installing SDK dependencies..."
+          cd sdk
+          bun install --frozen-lockfile || {
+            echo "❌ Failed to install SDK dependencies"
+            exit 1
+          }
+          echo "✅ SDK dependencies installed successfully"
+          
+          echo "🔧 Installing CLI dependencies..."
+          cd ../cli
+          bun install --frozen-lockfile || {
+            echo "❌ Failed to install CLI dependencies"
+            exit 1
+          }
+          echo "✅ CLI dependencies installed successfully"
+          echo "🎉 All dependencies installed successfully"
 
       - name: Build Anchor program for IDL
         run: |
-          echo "⚙️ Building Anchor program..."
-          anchor build || echo "Anchor build completed with warnings"
+          echo "⚙️ Building Anchor program for IDL generation..."
+          set -e
+          anchor build || {
+            echo "❌ Failed to build Anchor program"
+            exit 1
+          }
+          echo "✅ Anchor program built successfully"
 
       - name: Generate TypeScript documentation
         run: |
-          echo "📝 Generating SDK documentation..."
-          cd sdk && bun run docs || echo "SDK docs completed"
-          echo "📝 Generating CLI documentation..."
-          cd ../cli && bun run docs || echo "CLI docs completed"
-          echo "✅ Documentation generation completed"
+          echo "📝 Generating TypeScript documentation..."
+          set -e
+          
+          echo "📚 Generating SDK documentation..."
+          cd sdk
+          bun run docs || {
+            echo "❌ Failed to generate SDK documentation"
+            exit 1
+          }
+          echo "✅ SDK documentation generated successfully"
+          
+          echo "📚 Generating CLI documentation..."
+          cd ../cli
+          bun run docs || {
+            echo "❌ Failed to generate CLI documentation"
+            exit 1
+          }
+          echo "✅ CLI documentation generated successfully"
+          echo "🎉 All documentation generated successfully"
 
       - name: Copy root index.html to docs
         run: |
-          echo "📄 Copying documentation files..."
+          echo "📄 Preparing documentation files..."
+          set -e
+          
           if [ -f "index.html" ]; then
-            cp index.html docs/index.html
+            echo "📋 Copying root index.html to docs..."
+            cp index.html docs/index.html || {
+              echo "❌ Failed to copy index.html"
+              exit 1
+            }
+            echo "✅ Root index.html copied successfully"
+          else
+            echo "ℹ️  No root index.html found, using default docs structure"
           fi
-          echo "✅ Documentation files prepared"
+          echo "✅ Documentation files prepared successfully"
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

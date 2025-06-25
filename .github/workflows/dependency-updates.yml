@@ -21,15 +21,40 @@ jobs:
 
       - name: Update dependencies
         run: |
-          echo "📦 Updating root dependencies..."
-          bun update
-          echo "📦 Updating SDK dependencies..."
-          cd sdk && bun update
-          echo "📦 Updating CLI dependencies..."
-          cd ../cli && bun update
-          echo "📦 Updating frontend dependencies..."
-          cd ../frontend && bun update
-          echo "✅ All dependencies updated"
+          echo "📦 Updating project dependencies..."
+          set -e
+          
+          echo "🔧 Updating root dependencies..."
+          bun update || {
+            echo "❌ Failed to update root dependencies"
+            exit 1
+          }
+          echo "✅ Root dependencies updated successfully"
+          
+          echo "🔧 Updating SDK dependencies..."
+          cd sdk
+          bun update || {
+            echo "❌ Failed to update SDK dependencies"
+            exit 1
+          }
+          echo "✅ SDK dependencies updated successfully"
+          
+          echo "🔧 Updating CLI dependencies..."
+          cd ../cli
+          bun update || {
+            echo "❌ Failed to update CLI dependencies"
+            exit 1
+          }
+          echo "✅ CLI dependencies updated successfully"
+          
+          echo "🔧 Updating frontend dependencies..."
+          cd ../frontend
+          bun update || {
+            echo "❌ Failed to update frontend dependencies"
+            exit 1
+          }
+          echo "✅ Frontend dependencies updated successfully"
+          echo "🎉 All dependencies updated successfully"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7

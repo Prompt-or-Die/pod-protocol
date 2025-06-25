@@ -19,10 +19,19 @@ jobs:
 
       - name: Install Solana CLI
         run: |
-          sh -c "$(curl -sSfL https://release.solana.com/v1.18.26/install)"
+          echo "⚙️ Installing Solana CLI..."
+          set -e
+          sh -c "$(curl -sSfL https://release.solana.com/v1.18.26/install)" || {
+            echo "❌ Failed to install Solana CLI"
+            exit 1
+          }
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
           export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
-          solana --version || echo "Solana CLI installed, continuing..."
+          solana --version || {
+            echo "❌ Failed to verify Solana CLI installation"
+            exit 1
+          }
+          echo "✅ Solana CLI installed and verified successfully"
 
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -41,32 +50,81 @@ jobs:
 
       - name: Install dependencies
         run: |
-          echo "📦 Installing workspace dependencies..."
-          bun install --frozen-lockfile || echo "Root dependencies installed"
-          echo "📦 Installing SDK dependencies..."
-          cd sdk && bun install --frozen-lockfile || echo "SDK dependencies installed"
-          echo "📦 Installing CLI dependencies..."
-          cd ../cli && bun install --frozen-lockfile || echo "CLI dependencies installed"
-          echo "📦 Installing frontend dependencies..."
-          cd ../frontend && bun install --frozen-lockfile || echo "Frontend dependencies installed"
-          echo "✅ All dependencies installed"
+          echo "📦 Installing workspace dependencies for linting..."
+          set -e
+          
+          echo "🔧 Installing root dependencies..."
+          bun install --frozen-lockfile || {
+            echo "❌ Failed to install root dependencies"
+            exit 1
+          }
+          echo "✅ Root dependencies installed successfully"
+          
+          echo "🔧 Installing SDK dependencies..."
+          cd sdk
+          bun install --frozen-lockfile || {
+            echo "❌ Failed to install SDK dependencies"
+            exit 1
+          }
+          echo "✅ SDK dependencies installed successfully"
+          
+          echo "🔧 Installing CLI dependencies..."
+          cd ../cli
+          bun install --frozen-lockfile || {
+            echo "❌ Failed to install CLI dependencies"
+            exit 1
+          }
+          echo "✅ CLI dependencies installed successfully"
+          
+          echo "🔧 Installing frontend dependencies..."
+          cd ../frontend
+          bun install --frozen-lockfile || {
+            echo "❌ Failed to install frontend dependencies"
+            exit 1
+          }
+          echo "✅ Frontend dependencies installed successfully"
+          echo "🎉 All dependencies installed successfully"
 
       - name: Lint TypeScript & Prettier
         run: |
           echo "🎨 Running TypeScript and Prettier linting..."
-          bun run lint:all
+          set -e
+          bun run lint:all || {
+            echo "❌ TypeScript and Prettier linting failed"
+            exit 1
+          }
+          echo "✅ TypeScript and Prettier linting passed"
 
       - name: Lint Frontend
         run: |
           echo "🎨 Running frontend linting..."
-          cd frontend && bun run lint
+          set -e
+          cd frontend
+          bun run lint || {
+            echo "❌ Frontend linting failed"
+            exit 1
+          }
+          echo "✅ Frontend linting passed"
 
       - name: Lint Rust
         run: |
           echo "🦀 Running Rust linting..."
+          set -e
           cd programs/pod-com
-          cargo fmt -- --check
-          cargo clippy -- -D warnings
+          
+          echo "🔧 Checking Rust formatting..."
+          cargo fmt -- --check || {
+            echo "❌ Rust formatting check failed"
+            exit 1
+          }
+          echo "✅ Rust formatting check passed"
+          
+          echo "🔧 Running Rust clippy..."
+          cargo clippy -- -D warnings || {
+            echo "❌ Rust clippy check failed"
+            exit 1
+          }
+          echo "✅ Rust clippy check passed"
 
   security-audit:
     name: "🔒 Security Audit (LOW-01)"
@@ -86,7 +144,14 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install cargo-audit
-        run: cargo install cargo-audit --locked
+        run: |
+          echo "🔒 Installing cargo-audit..."
+          set -e
+          cargo install cargo-audit --locked || {
+            echo "❌ Failed to install cargo-audit"
+            exit 1
+          }
+          echo "✅ cargo-audit installed successfully"
 
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -105,62 +170,116 @@ jobs:
 
       - name: Install dependencies
         run: |
-          echo "📦 Installing all workspace dependencies..."
-          bun install --frozen-lockfile || echo "Root dependencies installed"
-          echo "📦 Installing SDK dependencies..."
-          cd sdk && bun install --frozen-lockfile || echo "SDK dependencies installed"
-          echo "📦 Installing CLI dependencies..."
-          cd ../cli && bun install --frozen-lockfile || echo "CLI dependencies installed"
-          echo "📦 Installing frontend dependencies..."
-          cd ../frontend && bun install --frozen-lockfile || echo "Frontend dependencies installed"
-          echo "✅ All dependencies installed"
+          echo "📦 Installing workspace dependencies for security audit..."
+          set -e
+          
+          echo "🔧 Installing root dependencies..."
+          bun install --frozen-lockfile || {
+            echo "❌ Failed to install root dependencies"
+            exit 1
+          }
+          echo "✅ Root dependencies installed successfully"
+          
+          echo "🔧 Installing SDK dependencies..."
+          cd sdk
+          bun install --frozen-lockfile || {
+            echo "❌ Failed to install SDK dependencies"
+            exit 1
+          }
+          echo "✅ SDK dependencies installed successfully"
+          
+          echo "🔧 Installing CLI dependencies..."
+          cd ../cli
+          bun install --frozen-lockfile || {
+            echo "❌ Failed to install CLI dependencies"
+            exit 1
+          }
+          echo "✅ CLI dependencies installed successfully"
+          
+          echo "🔧 Installing frontend dependencies..."
+          cd ../frontend
+          bun install --frozen-lockfile || {
+            echo "❌ Failed to install frontend dependencies"
+            exit 1
+          }
+          echo "✅ Frontend dependencies installed successfully"
+          echo "🎉 All dependencies installed successfully"
 
       - name: Rust Security Audit
         run: |
           echo "🔒 Running Rust security audit..."
+          set -e
           cd programs/pod-com
-          cargo audit --deny warnings
+          cargo audit --deny warnings || {
+            echo "❌ Rust security audit failed"
+            exit 1
+          }
           echo "✅ Rust security audit passed"
 
       - name: Node.js Security Audit (Root)
         run: |
           echo "🔒 Running Node.js security audit for root workspace..."
-          bun audit --audit-level high
+          set -e
+          bun audit --audit-level high || {
+            echo "❌ Root workspace security audit failed"
+            exit 1
+          }
           echo "✅ Root workspace security audit passed"
 
       - name: Node.js Security Audit (SDK)
         run: |
           echo "🔒 Running Node.js security audit for SDK..."
+          set -e
           cd sdk
-          bun audit --audit-level high
+          bun audit --audit-level high || {
+            echo "❌ SDK security audit failed"
+            exit 1
+          }
           echo "✅ SDK security audit passed"
 
       - name: Node.js Security Audit (CLI)
         run: |
           echo "🔒 Running Node.js security audit for CLI..."
+          set -e
           cd cli
-          bun audit --audit-level high
+          bun audit --audit-level high || {
+            echo "❌ CLI security audit failed"
+            exit 1
+          }
           echo "✅ CLI security audit passed"
 
       - name: Node.js Security Audit (Frontend)
         run: |
           echo "🔒 Running Node.js security audit for Frontend..."
+          set -e
           cd frontend
-          bun audit --audit-level high
+          bun audit --audit-level high || {
+            echo "❌ Frontend security audit failed"
+            exit 1
+          }
           echo "✅ Frontend security audit passed"
 
       - name: npm Security Audit
         run: |
           echo "🔒 Running npm audit for all workspaces..."
+          set -e
           for dir in . sdk cli frontend; do
             if [ -f "$dir/package.json" ]; then
-              echo "📦 auditing $dir"
+              echo "📦 Auditing $dir..."
               cd $dir
-              npm install --package-lock-only --ignore-scripts
-              npm audit --audit-level=high
+              npm install --package-lock-only --ignore-scripts || {
+                echo "❌ Failed to create package-lock.json for $dir"
+                exit 1
+              }
+              npm audit --audit-level=high || {
+                echo "❌ npm security audit failed for $dir"
+                exit 1
+              }
+              echo "✅ npm security audit passed for $dir"
               cd ..
             fi
           done
+          echo "🎉 All npm security audits completed successfully"
 
       - name: Check for known vulnerabilities in dependencies
         run: |
@@ -194,14 +313,35 @@ jobs:
 
       - name: Install system dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y pkg-config build-essential libudev-dev
+          echo "📦 Installing system dependencies for build..."
+          set -e
+          sudo apt-get update || {
+            echo "❌ Failed to update package lists"
+            exit 1
+          }
+          sudo apt-get install -y pkg-config build-essential libudev-dev || {
+            echo "❌ Failed to install system dependencies"
+            exit 1
+          }
+          echo "✅ System dependencies installed successfully"
 
       - name: Install Anchor CLI via avm
         run: |
-          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
-          avm install 0.31.1 || echo "AVM install completed"
-          avm use 0.31.1 || echo "AVM use completed"
+          echo "⚙️ Installing Anchor CLI for build..."
+          set -e
+          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force || {
+            echo "❌ Failed to install AVM"
+            exit 1
+          }
+          avm install 0.31.1 || {
+            echo "❌ Failed to install Anchor version 0.31.1"
+            exit 1
+          }
+          avm use 0.31.1 || {
+            echo "❌ Failed to use Anchor version 0.31.1"
+            exit 1
+          }
+          echo "✅ Anchor CLI installed and configured successfully"
 
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -220,34 +360,70 @@ jobs:
 
       - name: Install dependencies
         run: |
-          echo "📦 Installing all workspace dependencies..."
-          bun install --frozen-lockfile
-          echo "📦 Installing frontend dependencies..."
-          cd frontend && bun install --frozen-lockfile
-          echo "�� All dependencies installed"
+          echo "📦 Installing workspace dependencies for build..."
+          set -e
+          
+          echo "🔧 Installing root dependencies..."
+          bun install --frozen-lockfile || {
+            echo "❌ Failed to install root dependencies"
+            exit 1
+          }
+          echo "✅ Root dependencies installed successfully"
+          
+          echo "🔧 Installing frontend dependencies..."
+          cd frontend
+          bun install --frozen-lockfile || {
+            echo "❌ Failed to install frontend dependencies"
+            exit 1
+          }
+          echo "✅ Frontend dependencies installed successfully"
+          echo "🎉 All dependencies installed successfully"
 
       - name: Build Solana Program
         run: |
           echo "⚓ Building Anchor program..."
-          anchor build
+          set -e
+          anchor build || {
+            echo "❌ Failed to build Anchor program"
+            exit 1
+          }
           echo "✅ Anchor program built successfully"
 
       - name: Build SDK
         run: |
           echo "📦 Building SDK..."
-          cd sdk && bun run build
+          set -e
+          cd sdk
+          bun run build || {
+            echo "❌ Failed to build SDK"
+            exit 1
+          }
           echo "✅ SDK built successfully"
 
       - name: Build CLI
         run: |
           echo "🔧 Building CLI..."
-          cd cli && bun run build
+          set -e
+          cd cli
+          bun run build || {
+            echo "❌ Failed to build CLI"
+            exit 1
+          }
           echo "✅ CLI built successfully"
 
       - name: Build Frontend
         run: |
           echo "🌐 Building Frontend..."
-          cd frontend && bun install --frozen-lockfile && bun run build
+          set -e
+          cd frontend
+          bun install --frozen-lockfile || {
+            echo "❌ Failed to install frontend dependencies"
+            exit 1
+          }
+          bun run build || {
+            echo "❌ Failed to build frontend"
+            exit 1
+          }
           echo "✅ Frontend built successfully"
 
       - name: Upload build artifacts
@@ -279,14 +455,35 @@ jobs:
 
       - name: Install system dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y pkg-config build-essential libudev-dev netcat-openbsd curl
+          echo "📦 Installing system dependencies for testing..."
+          set -e
+          sudo apt-get update || {
+            echo "❌ Failed to update package lists"
+            exit 1
+          }
+          sudo apt-get install -y pkg-config build-essential libudev-dev netcat-openbsd curl || {
+            echo "❌ Failed to install system dependencies"
+            exit 1
+          }
+          echo "✅ System dependencies installed successfully"
 
       - name: Install Anchor CLI via avm
         run: |
-          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
-          avm install 0.31.1
-          avm use 0.31.1
+          echo "⚙️ Installing Anchor CLI for testing..."
+          set -e
+          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force || {
+            echo "❌ Failed to install AVM"
+            exit 1
+          }
+          avm install 0.31.1 || {
+            echo "❌ Failed to install Anchor version 0.31.1"
+            exit 1
+          }
+          avm use 0.31.1 || {
+            echo "❌ Failed to use Anchor version 0.31.1"
+            exit 1
+          }
+          echo "✅ Anchor CLI installed and configured successfully"
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -310,16 +507,41 @@ jobs:
       - name: Install dependencies
         run: |
           echo "📦 Installing workspace dependencies for testing..."
-          bun install --frozen-lockfile
-          echo "📦 Installing frontend dependencies..."
-          cd frontend && bun install --frozen-lockfile
-          echo "✅ Dependencies installed"
+          set -e
+          
+          echo "🔧 Installing root dependencies..."
+          bun install --frozen-lockfile || {
+            echo "❌ Failed to install root dependencies"
+            exit 1
+          }
+          echo "✅ Root dependencies installed successfully"
+          
+          echo "🔧 Installing frontend dependencies..."
+          cd frontend
+          bun install --frozen-lockfile || {
+            echo "❌ Failed to install frontend dependencies"
+            exit 1
+          }
+          echo "✅ Frontend dependencies installed successfully"
+          echo "🎉 All dependencies installed successfully"
 
       - name: Setup Solana keypair
         run: |
-          mkdir -p ~/.config/solana
-          solana-keygen new --no-bip39-passphrase -o ~/.config/solana/id.json
-          solana config set --url localhost
+          echo "🔑 Setting up Solana keypair..."
+          set -e
+          mkdir -p ~/.config/solana || {
+            echo "❌ Failed to create Solana config directory"
+            exit 1
+          }
+          solana-keygen new --no-bip39-passphrase -o ~/.config/solana/id.json || {
+            echo "❌ Failed to generate Solana keypair"
+            exit 1
+          }
+          solana config set --url localhost || {
+            echo "❌ Failed to configure Solana URL"
+            exit 1
+          }
+          echo "✅ Solana keypair and configuration setup successfully"
 
       - name: Start and Wait for Solana Test Validator
         run: |
@@ -359,20 +581,44 @@ jobs:
           done
 
       - name: Run Anchor Tests
-        run: anchor test --skip-build
+        run: |
+          echo "🧪 Running Anchor tests..."
+          set -e
+          anchor test --skip-build || {
+            echo "❌ Anchor tests failed"
+            exit 1
+          }
+          echo "✅ Anchor tests passed"
 
       - name: Run SDK & CLI Tests
-        run: bun run test
+        run: |
+          echo "🧪 Running SDK & CLI tests..."
+          set -e
+          bun run test || {
+            echo "❌ SDK & CLI tests failed"
+            exit 1
+          }
+          echo "✅ SDK & CLI tests passed"
 
       - name: Run Compute Unit Benchmarks
         run: |
+          echo "⚡ Running compute unit benchmarks..."
+          set -e
           if [ -f tests/performance-benchmark.test.ts ]; then
+            echo "📊 Found performance benchmark, running..."
             cd tests
-            bun run performance-benchmark.test.ts
+            bun run performance-benchmark.test.ts || {
+              echo "❌ Performance benchmark failed"
+              exit 1
+            }
+            echo "✅ Performance benchmark completed"
             cd ..
           else
-            echo "ℹ️  No performance benchmark found"
+            echo "ℹ️  No performance benchmark found, skipping..."
           fi
 
       - name: Stop Solana test validator
-        run: pkill -f solana-test-validator || true
+        run: |
+          echo "🛑 Stopping Solana test validator..."
+          pkill -f solana-test-validator || echo "ℹ️  No validator process found to stop"
+          echo "✅ Validator cleanup completed"

@@ -1,9 +1,8 @@
 /** @type {import('jest').Config} */
 export default {
-  preset: 'jest-node-environment',
   testEnvironment: 'node',
   extensionsToTreatAsEsm: ['.js'],
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   transform: {

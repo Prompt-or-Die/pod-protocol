@@ -128,34 +128,34 @@ jobs:
           echo "✅ Package versions updated"
 
       - name: Configure npm authentication
-        if: env.NPM_TOKEN != ''
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-          echo "📝 NPM authentication configured"
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        if: env.NPM_TOKEN != ''
+        run: |
+          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
+          echo "📝 NPM authentication configured"
           
       - name: Publish SDK to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         if: env.NPM_TOKEN != ''
         working-directory: sdk
         run: |
           echo "📦 Publishing SDK to npm..."
           bun run build
           npm publish --access public --provenance
+
+      - name: Publish CLI to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish CLI to npm
         if: env.NPM_TOKEN != ''
         working-directory: cli
         run: |
           echo "📦 Publishing CLI to npm..."
           bun run build
           npm publish --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create release archive
         run: |
@@ -247,11 +247,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Notify Discord (if configured)
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         if: env.DISCORD_WEBHOOK != ''
         run: |
           curl -H "Content-Type: application/json" \
                -d "{\"content\":\"🚀 POD-COM Platform v${{ steps.version.outputs.version }} has been released! Check it out: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}\"}" \
-               ${{ secrets.DISCORD_WEBHOOK }}
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+               "$DISCORD_WEBHOOK"
         continue-on-error: true

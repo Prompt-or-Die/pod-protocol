@@ -1,6 +1,6 @@
 {
   "name": "pod-protocol",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "PoD Protocol (Prompt or Die) - The Ultimate AI Agent Communication Protocol on Solana ⚡️",
   "type": "module",
   "private": true,
