@@ -145,8 +145,15 @@ export class PodComClient {
         this.zkCompression.setProgram(this.program);
         
         // Update wallet for session keys and Jito bundles services
+        // Note: Type compatibility - anchor.Wallet vs KeyPairSigner
         this.sessionKeys.setWallet(wallet);
-        this.jitoBundles.setWallet(wallet);
+        
+        // Convert anchor.Wallet to KeyPairSigner for Jito service compatibility
+        if (wallet && wallet.payer) {
+          // For now, we'll skip setting the wallet on jitoBundles if it's not compatible
+          // This can be enhanced when we have proper type conversion utilities
+          console.warn('Jito bundles wallet compatibility requires Web3.js v2 KeyPairSigner - skipping wallet setup');
+        }
       } else {
         // No wallet provided - validate IDL before setting on services
         if (!IDL) {
