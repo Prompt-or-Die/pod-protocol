@@ -27,6 +27,8 @@ import { BaseService, BaseServiceConfig } from "./services/base";
 import { AgentService } from "./services/agent";
 import { MessageService } from "./services/message";
 import { ChannelService } from "./services/channel";
+import { SessionKeysService } from "./services/session-keys";
+import { JitoBundlesService } from "./services/jito-bundles";
 import { SecureKeyManager, SecureWalletOperations } from "./utils/secure-memory";
 import { EscrowService } from "./services/escrow";
 import { AnalyticsService } from "./services/analytics";
@@ -53,6 +55,8 @@ export class PodComClient {
   public discovery: DiscoveryService;
   public ipfs: IPFSService;
   public zkCompression: ZKCompressionService;
+  public sessionKeys: SessionKeysService;
+  public jitoBundles: JitoBundlesService;
 
   constructor(config: PodComConfig = {}) {
     this.connection = new Connection(
@@ -85,6 +89,12 @@ export class PodComClient {
       config.zkCompression || {},
       this.ipfs
     );
+    
+    // Initialize Session Keys service
+    this.sessionKeys = new SessionKeysService(serviceConfig);
+    
+    // Initialize Jito Bundles service
+    this.jitoBundles = new JitoBundlesService(serviceConfig, config.jitoRpcUrl);
   }
 
   /**
@@ -122,6 +132,10 @@ export class PodComClient {
         this.discovery.setProgram(this.program);
         this.ipfs.setProgram(this.program);
         this.zkCompression.setProgram(this.program);
+        
+        // Update wallet for session keys and Jito bundles services
+        this.sessionKeys.setWallet(wallet);
+        this.jitoBundles.setWallet(wallet);
       } else {
         // No wallet provided - validate IDL before setting on services
         if (!IDL) {

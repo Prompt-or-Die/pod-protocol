@@ -4,13 +4,13 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::pubkey::Pubkey;
 
-// Light Protocol ZK Compression imports - v0.6.0 API
-use light_compressed_token::program::LightCompressedToken;
-use light_system_program::program::LightSystemProgram;
-use light_hasher::{DataHasher, Hasher, Poseidon};
+// Native Solana State Compression imports - 2025 approach
+use spl_account_compression::{
+    program::SplAccountCompression,
+};
 
-// Secure memory handling for cryptographic operations
-use memsec::{memzero, memeq};
+// Cryptographic operations - native Solana compatible
+use blake3;
 
 declare_id!("HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps");
 
@@ -46,17 +46,18 @@ impl SecureBuffer {
         if self.data.len() != other.len() {
             return false;
         }
-        unsafe {
-            memeq(self.data.as_ptr(), other.as_ptr(), self.data.len())
-        }
+        // Use constant-time comparison
+        self.data.iter().zip(other.iter()).fold(0u8, |acc, (a, b)| acc | (a ^ b)) == 0
     }
 }
 
 impl Drop for SecureBuffer {
     fn drop(&mut self) {
-        unsafe {
-            // Securely zero the memory before deallocation
-            memzero(self.data.as_mut_ptr(), self.data.len());
+        // Securely zero the memory before deallocation using volatile writes
+        for byte in self.data.iter_mut() {
+            unsafe {
+                std::ptr::write_volatile(byte, 0);
+            }
         }
     }
 }
@@ -70,8 +71,9 @@ pub fn secure_hash_data(data: &[u8]) -> Result<[u8; 32]> {
     let secure_slice = secure_buf.as_mut_slice();
     secure_slice.copy_from_slice(data);
     
-    // Perform hash computation
-    Poseidon::hash(secure_slice).map_err(|_| PodComError::HashingFailed.into())
+    // Perform hash computation using native Solana-compatible Blake3
+    let hash = blake3::hash(secure_slice);
+    Ok(*hash.as_bytes())
 }
 
 /*
@@ -416,9 +418,9 @@ pub struct CompressedChannelMessage {
     pub reply_to: Option<Pubkey>,  // 33 bytes
 }
 
-// Implement DataHasher for Light Protocol v0.6.0 compatibility with secure memory
-impl DataHasher for CompressedChannelMessage {
-    fn hash<H: Hasher>(&self) -> std::result::Result<[u8; 32], light_hasher::errors::HasherError> {
+// Implement native Solana hashing for CompressedChannelMessage
+impl CompressedChannelMessage {
+    pub fn hash(&self) -> std::result::Result<[u8; 32], PodComError> {
         // Calculate required buffer size
         let mut size = 32 + 32 + 32 + self.ipfs_hash.len() + 1 + 8; // base fields
         if self.edited_at.is_some() { size += 8; }
@@ -464,8 +466,8 @@ impl DataHasher for CompressedChannelMessage {
             data[offset..offset+32].copy_from_slice(&reply_to.to_bytes());
         }
         
-        // Perform hash computation on secure data
-        H::hash(&data[..offset])
+        // Perform hash computation on secure data using Blake3
+        Ok(*blake3::hash(&data[..offset]).as_bytes())
     }
 }
 
@@ -480,9 +482,9 @@ pub struct CompressedChannelParticipant {
     pub metadata_hash: [u8; 32], // 32 bytes - Hash of extended metadata in IPFS
 }
 
-// Implement DataHasher for Light Protocol v0.6.0 compatibility with secure memory
-impl DataHasher for CompressedChannelParticipant {
-    fn hash<H: Hasher>(&self) -> std::result::Result<[u8; 32], light_hasher::errors::HasherError> {
+// Implement native Solana hashing for CompressedChannelParticipant
+impl CompressedChannelParticipant {
+    pub fn hash(&self) -> std::result::Result<[u8; 32], PodComError> {
         // Fixed size buffer for participant data: 32+32+8+8+8+32 = 120 bytes
         const BUFFER_SIZE: usize = 120;
         
@@ -505,8 +507,8 @@ impl DataHasher for CompressedChannelParticipant {
         offset += 8;
         data[offset..offset+32].copy_from_slice(&self.metadata_hash);
         
-        // Perform hash computation on secure data
-        H::hash(data)
+        // Perform hash computation on secure data using Blake3
+        Ok(*blake3::hash(data).as_bytes())
     }
 }
 
@@ -1308,7 +1310,7 @@ pub mod pod_com {
         
         // Additional security: Verify all Light Protocol accounts are legitimate
         // This helps prevent malicious account substitution in ZK operations
-        if ctx.accounts.light_system_program.key() != light_system_program::ID {
+        if ctx.accounts.system_program.key() != anchor_lang::system_program::ID {
             return Err(PodComError::Unauthorized.into());
         }
 
@@ -1470,7 +1472,7 @@ pub mod pod_com {
             }
 
             // Create Poseidon hash for Light Protocol compatibility
-            let compressed_hash = Poseidon::hash(hash).map_err(|_| PodComError::HashingFailed)?;
+            let compressed_hash = *blake3::hash(hash).as_bytes();
 
             // Store compressed account data
             compressed_data.push(compressed_hash);
@@ -1830,9 +1832,9 @@ pub struct BroadcastMessageCompressed<'info> {
     pub fee_payer: Signer<'info>,
     pub authority: Signer<'info>,
     /// CHECK: Light System Program
-    pub light_system_program: Program<'info, LightSystemProgram>,
+    pub system_program: Program<'info, System>,
     /// CHECK: Compressed Token Program (Light Protocol)
-    pub compressed_token_program: Program<'info, LightCompressedToken>,
+    pub compression_program: Program<'info, SplAccountCompression>,
     /// CHECK: Registered program PDA
     pub registered_program_id: AccountInfo<'info>,
     /// CHECK: Noop program for logging
@@ -1860,7 +1862,7 @@ pub struct JoinChannelCompressed<'info> {
     pub fee_payer: Signer<'info>,
     pub authority: Signer<'info>,
     /// CHECK: Light System Program
-    pub light_system_program: Program<'info, LightSystemProgram>,
+    pub system_program: Program<'info, System>,
     /// CHECK: Registered program PDA
     pub registered_program_id: AccountInfo<'info>,
     /// CHECK: Noop program for logging
@@ -1886,9 +1888,9 @@ pub struct BatchSyncCompressedMessages<'info> {
     pub fee_payer: Signer<'info>,
     pub authority: Signer<'info>,
     /// CHECK: Light System Program
-    pub light_system_program: Program<'info, LightSystemProgram>,
+    pub system_program: Program<'info, System>,
     /// CHECK: Compressed Token Program (Light Protocol)
-    pub compressed_token_program: Program<'info, LightCompressedToken>,
+    pub compression_program: Program<'info, SplAccountCompression>,
     /// CHECK: Registered program PDA
     pub registered_program_id: AccountInfo<'info>,
     /// CHECK: Noop program for logging

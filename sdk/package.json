@@ -64,18 +64,19 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@coral-xyz/anchor": "0.31.1",
-    "@helia/json": "4.0.6",
+    "@coral-xyz/anchor": "0.31.2",
+    "@helia/json": "4.0.6", 
     "@helia/unixfs": "5.0.3",
-    "@lightprotocol/compressed-token": "0.22.0",
-    "@lightprotocol/stateless.js": "0.22.0",
+    "@solana/spl-account-compression": "0.2.0",
     "@solana/spl-token": "0.4.13",
     "@solana/wallet-adapter-base": "0.9.27",
     "@solana/web3.js": "1.98.2",
     "helia": "5.4.2",
     "keccak": "3.0.4",
     "multiformats": "13.3.7",
-    "react-syntax-highlighter": "15.6.1"
+    "react-syntax-highlighter": "15.6.1",
+    "jito-ts": "^3.0.1",
+    "@gumhq/sdk": "^3.0.0"
   },
   "devDependencies": {
     "@rollup/plugin-alias": "5.1.1",

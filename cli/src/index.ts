@@ -13,6 +13,8 @@ import { ConfigCommands } from "./commands/config.js";
 import { AnalyticsCommands } from "./commands/analytics.js";
 import { DiscoveryCommands } from "./commands/discovery.js";
 import { createZKCompressionCommand } from "./commands/zk-compression.js";
+import { createSessionCommand } from "./commands/session.js";
+import { createBundleCommand } from "./commands/bundle.js";
 import {
   showBanner,
   showPromptOrDieBanner,
@@ -97,6 +99,12 @@ discoveryCommands.register(program);
 
 // Add ZK compression commands
 program.addCommand(createZKCompressionCommand());
+
+// Add session keys commands
+program.addCommand(createSessionCommand());
+
+// Add Jito bundle commands
+program.addCommand(createBundleCommand());
 
 // Enhanced status command
 program
@@ -196,6 +204,40 @@ program
         ],
       },
       {
+        category: `${ICONS.key} Session Keys`,
+        commands: [
+          {
+            cmd: "pod session create-messaging --duration 24",
+            desc: "Create session key for AI messaging (24 hours)",
+          },
+          {
+            cmd: "pod session list",
+            desc: "List all active session keys",
+          },
+          {
+            cmd: "pod session revoke --session-id <id>",
+            desc: "Revoke a specific session key",
+          },
+        ],
+      },
+      {
+        category: `${ICONS.lightning} Jito Bundles`,
+        commands: [
+          {
+            cmd: 'pod bundle message --recipients "addr1,addr2" --message "Hello"',
+            desc: "Send messages to multiple recipients in one bundle",
+          },
+          {
+            cmd: "pod bundle channel --channel <id> --action join",
+            desc: "Execute channel operations with MEV protection",
+          },
+          {
+            cmd: "pod bundle optimal-tip",
+            desc: "Get optimal tip amount for current network conditions",
+          },
+        ],
+      },
+      {
         category: `${ICONS.message} Messaging`,
         commands: [
           {
@@ -273,6 +315,8 @@ program.on("command:*", (operands) => {
     "analytics",
     "discover",
     "zk",
+    "session",
+    "bundle",
     "status",
   ];
   const suggestions = availableCommands.filter(

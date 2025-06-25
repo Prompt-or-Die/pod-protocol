@@ -4,14 +4,11 @@ members = [
 ]
 resolver = "2"
 
-# Force all workspace members to use compatible dependency versions
-[workspace.dependencies]
-zeroize = "1.8.1"
-
 [profile.release]
 overflow-checks = true
 lto = "fat"
 codegen-units = 1
+
 [profile.release.build-override]
 opt-level = 3
 incremental = false

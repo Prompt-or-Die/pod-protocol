@@ -220,6 +220,17 @@ export interface PodComConfig {
     /** Account Compression program */
     accountCompressionProgram?: PublicKey;
   };
+  /** Jito RPC URL for bundle transactions */
+  jitoRpcUrl?: string;
+  /** Session keys configuration */
+  sessionKeys?: {
+    /** Default session duration in hours */
+    defaultDurationHours?: number;
+    /** Maximum uses per session */
+    defaultMaxUses?: number;
+    /** Auto-cleanup expired sessions */
+    autoCleanup?: boolean;
+  };
 }
 
 /**
