@@ -1,4 +1,4 @@
-import { PublicKey, GetProgramAccountsFilter } from "@solana/web3.js";
+import { Address, KeyPairSigner, GetProgramAccountsFilter } from "@solana/web3.js";
 import { BaseService } from "./base";
 import {
   AgentAccount,

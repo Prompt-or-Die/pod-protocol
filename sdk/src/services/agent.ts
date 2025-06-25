@@ -1,4 +1,4 @@
-import { PublicKey, Signer } from "@solana/web3.js";
+import { Address, KeyPairSigner } from "@solana/web3.js";
 import anchor from "@coral-xyz/anchor";
 const { BN, AnchorProvider, web3, Program } = anchor;
 import { BaseService } from "./base";
@@ -10,10 +10,10 @@ import { findAgentPDA, retry, getAccountLastUpdated } from "../utils";
  */
 export class AgentService extends BaseService {
   async registerAgent(
-    wallet: Signer,
+    wallet: KeyPairSigner,
     options: CreateAgentOptions,
   ): Promise<string> {
-    const [agentPDA] = findAgentPDA(wallet.publicKey, this.programId);
+    const [agentPDA] = findAgentPDA(wallet.address, this.programId);
 
     return retry(async () => {
       // Always prefer using the pre-initialized program if available
@@ -62,10 +62,10 @@ export class AgentService extends BaseService {
   }
 
   async updateAgent(
-    wallet: Signer,
+    wallet: KeyPairSigner,
     options: UpdateAgentOptions,
   ): Promise<string> {
-    const [agentPDA] = findAgentPDA(wallet.publicKey, this.programId);
+    const [agentPDA] = findAgentPDA(wallet.address, this.programId);
 
     return retry(async () => {
       // Use the program if it was initialized with a wallet, otherwise create a fresh one
@@ -76,7 +76,7 @@ export class AgentService extends BaseService {
       } else {
         // Fallback: create a fresh provider with the actual wallet for this transaction
         const provider = new AnchorProvider(
-          this.connection,
+          this.rpc as any,
           wallet as any,
           {
             commitment: this.commitment,
@@ -100,12 +100,12 @@ export class AgentService extends BaseService {
         )
         .accounts({
           agentAccount: agentPDA,
-          signer: wallet.publicKey,
+          signer: wallet.address,
         })
         .rpc();
 
       return tx;
-    });
+    });       
   }
 
   async getAgent(walletPublicKey: PublicKey): Promise<AgentAccount | null> {

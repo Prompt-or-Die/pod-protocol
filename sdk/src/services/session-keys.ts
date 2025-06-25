@@ -5,7 +5,7 @@
  * Based on Gum session keys protocol
  */
 
-import { Connection, Keypair, PublicKey, Transaction, TransactionInstruction, Signer } from '@solana/web3.js';
+import { Connection, Keypair, Address, Transaction, TransactionInstruction, KeyPairSigner, SystemProgram } from '@solana/web3.js';
 import { BaseService, BaseServiceConfig } from './base.js';
 
 export interface SessionKeyConfig {

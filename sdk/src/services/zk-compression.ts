@@ -3,7 +3,7 @@ const { AnchorProvider } = anchor;
 import type { AnchorProvider as AnchorProviderType } from '@coral-xyz/anchor';
 import { BaseService, BaseServiceConfig } from './base.js';
 import { IPFSService, IPFSStorageResult } from './ipfs.js';
-import { Transaction, TransactionInstruction, PublicKey, Connection } from '@solana/web3.js';
+import { Transaction, TransactionInstruction, Address, Connection, KeyPairSigner } from '@solana/web3.js';
 import { createHash } from 'crypto';
 import { SecureHasher, SecureKeyManager } from '../utils/secure-memory.js';
 

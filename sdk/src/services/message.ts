@@ -1,6 +1,6 @@
 import {
-  PublicKey,
-  Signer,
+  Address,
+  KeyPairSigner,
   GetProgramAccountsFilter,
   SystemProgram,
 } from "@solana/web3.js";

@@ -1,4 +1,4 @@
-import { PublicKey } from "@solana/web3.js";
+import { Address } from "@solana/web3.js";
 import { BaseService } from "./base";
 import {
   AgentAccount,
