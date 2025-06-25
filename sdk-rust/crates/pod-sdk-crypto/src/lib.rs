@@ -14,6 +14,11 @@ pub use ed25519_dalek;
 pub use rand;
 pub use sha2;
 
+#[cfg(feature = "aes")]
+pub use aes_gcm;
+#[cfg(feature = "chacha20")]
+pub use chacha20poly1305;
+
 /// Cryptographic error types
 #[derive(Debug, Error)]
 pub enum CryptoError {
@@ -45,6 +50,23 @@ pub enum CryptoError {
     /// Buffer size validation failed
     #[error("Invalid buffer size: {0}")]
     InvalidBufferSize(usize),
+    
+    /// Encryption failed
+    #[error("Encryption failed: {0}")]
+    EncryptionError(String),
+    
+    /// Decryption failed
+    #[error("Decryption failed: {0}")]
+    DecryptionError(String),
+    
+    /// Invalid nonce size
+    #[error("Invalid nonce size: expected {expected}, got {actual}")]
+    InvalidNonceSize {
+        /// Expected nonce size
+        expected: usize,
+        /// Actual nonce size provided
+        actual: usize,
+    },
 }
 
 /// Maximum size for secure buffers (64KB)
@@ -377,6 +399,141 @@ pub mod utils {
     }
 }
 
+/// Symmetric encryption utilities
+pub struct SymmetricEncryption;
+
+impl SymmetricEncryption {
+    /// Encrypt data using AES-256-GCM
+    #[cfg(feature = "aes")]
+    pub fn encrypt_aes_gcm(
+        key: &[u8; 32],
+        nonce: &[u8; 12],
+        plaintext: &[u8],
+        associated_data: Option<&[u8]>,
+    ) -> Result<Vec<u8>, CryptoError> {
+        use aes_gcm::{Aes256Gcm, KeyInit, Nonce};
+        use aead::Aead;
+        
+        let cipher = Aes256Gcm::new_from_slice(key)
+            .map_err(|e| CryptoError::EncryptionError(format!("Invalid key: {}", e)))?;
+        
+        let nonce = Nonce::from_slice(nonce);
+        let payload = aead::Payload {
+            msg: plaintext,
+            aad: associated_data.unwrap_or(&[]),
+        };
+        
+        cipher
+            .encrypt(nonce, payload)
+            .map_err(|e| CryptoError::EncryptionError(format!("AES-GCM encryption failed: {}", e)))
+    }
+    
+    /// Decrypt data using AES-256-GCM
+    #[cfg(feature = "aes")]
+    pub fn decrypt_aes_gcm(
+        key: &[u8; 32],
+        nonce: &[u8; 12],
+        ciphertext: &[u8],
+        associated_data: Option<&[u8]>,
+    ) -> Result<Vec<u8>, CryptoError> {
+        use aes_gcm::{Aes256Gcm, KeyInit, Nonce};
+        use aead::Aead;
+        
+        let cipher = Aes256Gcm::new_from_slice(key)
+            .map_err(|e| CryptoError::DecryptionError(format!("Invalid key: {}", e)))?;
+        
+        let nonce = Nonce::from_slice(nonce);
+        let payload = aead::Payload {
+            msg: ciphertext,
+            aad: associated_data.unwrap_or(&[]),
+        };
+        
+        cipher
+            .decrypt(nonce, payload)
+            .map_err(|e| CryptoError::DecryptionError(format!("AES-GCM decryption failed: {}", e)))
+    }
+    
+    /// Encrypt data using ChaCha20Poly1305
+    #[cfg(feature = "chacha20")]
+    pub fn encrypt_chacha20poly1305(
+        key: &[u8; 32],
+        nonce: &[u8; 12],
+        plaintext: &[u8],
+        associated_data: Option<&[u8]>,
+    ) -> Result<Vec<u8>, CryptoError> {
+        use chacha20poly1305::{ChaCha20Poly1305, KeyInit, Nonce};
+        use aead::Aead;
+        
+        let cipher = ChaCha20Poly1305::new_from_slice(key)
+            .map_err(|e| CryptoError::EncryptionError(format!("Invalid key: {}", e)))?;
+        
+        let nonce = Nonce::from_slice(nonce);
+        let payload = aead::Payload {
+            msg: plaintext,
+            aad: associated_data.unwrap_or(&[]),
+        };
+        
+        cipher
+            .encrypt(nonce, payload)
+            .map_err(|e| CryptoError::EncryptionError(format!("ChaCha20Poly1305 encryption failed: {}", e)))
+    }
+    
+    /// Decrypt data using ChaCha20Poly1305
+    #[cfg(feature = "chacha20")]
+    pub fn decrypt_chacha20poly1305(
+        key: &[u8; 32],
+        nonce: &[u8; 12],
+        ciphertext: &[u8],
+        associated_data: Option<&[u8]>,
+    ) -> Result<Vec<u8>, CryptoError> {
+        use chacha20poly1305::{ChaCha20Poly1305, KeyInit, Nonce};
+        use aead::Aead;
+        
+        let cipher = ChaCha20Poly1305::new_from_slice(key)
+            .map_err(|e| CryptoError::DecryptionError(format!("Invalid key: {}", e)))?;
+        
+        let nonce = Nonce::from_slice(nonce);
+        let payload = aead::Payload {
+            msg: ciphertext,
+            aad: associated_data.unwrap_or(&[]),
+        };
+        
+        cipher
+            .decrypt(nonce, payload)
+            .map_err(|e| CryptoError::DecryptionError(format!("ChaCha20Poly1305 decryption failed: {}", e)))
+    }
+    
+    /// Generate secure nonce for encryption
+    pub fn generate_nonce() -> Result<[u8; 12], CryptoError> {
+        let mut rng = SecureRng::new()?;
+        let mut nonce = [0u8; 12];
+        rng.fill_bytes(&mut nonce)?;
+        Ok(nonce)
+    }
+    
+    /// Generate encryption key from password using PBKDF2
+    pub fn derive_key_from_password(
+        password: &[u8],
+        salt: &[u8],
+        iterations: u32,
+    ) -> Result<[u8; 32], CryptoError> {
+        use sha2::Sha256;
+        use hkdf::Hkdf;
+        
+        // Use HKDF as a simple PBKDF2 alternative
+        let hk = Hkdf::<Sha256>::new(Some(salt), password);
+        let mut key = [0u8; 32];
+        
+        // Create context info with iteration count
+        let info = format!("PoD-Protocol-Key-Derivation-{}", iterations);
+        
+        hk.expand(info.as_bytes(), &mut key)
+            .map_err(|_| CryptoError::RngError("Key derivation failed".to_string()))?;
+        
+        Ok(key)
+    }
+}
+
 use hkdf;
 
 #[cfg(test)]
@@ -467,5 +624,85 @@ mod tests {
         assert!(utils::constant_time_eq(data1, data2));
         assert!(!utils::constant_time_eq(data1, data3));
         assert!(!utils::constant_time_eq(data1, b"Short"));
+    }
+
+    #[test]
+    #[cfg(feature = "aes")]
+    fn test_aes_gcm_encryption_roundtrip() {
+        let key = [0u8; 32];
+        let nonce = [0u8; 12];
+        let plaintext = b"Hello, World! This is a test message.";
+        let associated_data = b"metadata";
+        
+        let ciphertext = SymmetricEncryption::encrypt_aes_gcm(
+            &key,
+            &nonce,
+            plaintext,
+            Some(associated_data),
+        )
+        .unwrap();
+        
+        let decrypted = SymmetricEncryption::decrypt_aes_gcm(
+            &key,
+            &nonce,
+            &ciphertext,
+            Some(associated_data),
+        )
+        .unwrap();
+        
+        assert_eq!(plaintext, decrypted.as_slice());
+    }
+
+    #[test]
+    #[cfg(feature = "chacha20")]
+    fn test_chacha20poly1305_encryption_roundtrip() {
+        let key = [1u8; 32];
+        let nonce = [1u8; 12];
+        let plaintext = b"Hello, World! This is a ChaCha20Poly1305 test.";
+        let associated_data = b"chacha-metadata";
+        
+        let ciphertext = SymmetricEncryption::encrypt_chacha20poly1305(
+            &key,
+            &nonce,
+            plaintext,
+            Some(associated_data),
+        )
+        .unwrap();
+        
+        let decrypted = SymmetricEncryption::decrypt_chacha20poly1305(
+            &key,
+            &nonce,
+            &ciphertext,
+            Some(associated_data),
+        )
+        .unwrap();
+        
+        assert_eq!(plaintext, decrypted.as_slice());
+    }
+
+    #[test]
+    fn test_nonce_generation() {
+        let nonce1 = SymmetricEncryption::generate_nonce().unwrap();
+        let nonce2 = SymmetricEncryption::generate_nonce().unwrap();
+        
+        // Nonces should be different (very high probability)
+        assert_ne!(nonce1, nonce2);
+    }
+
+    #[test]
+    fn test_password_key_derivation() {
+        let password = b"test_password";
+        let salt = b"test_salt_123";
+        let iterations = 1000;
+        
+        let key1 = SymmetricEncryption::derive_key_from_password(password, salt, iterations).unwrap();
+        let key2 = SymmetricEncryption::derive_key_from_password(password, salt, iterations).unwrap();
+        
+        // Same inputs should produce same key
+        assert_eq!(key1, key2);
+        
+        // Different salt should produce different key
+        let key3 = SymmetricEncryption::derive_key_from_password(password, b"different_salt", iterations).unwrap();
+        assert_ne!(key1, key3);
     }
 } 

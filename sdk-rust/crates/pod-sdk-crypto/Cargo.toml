@@ -23,6 +23,11 @@ sha2 = { workspace = true }
 rand = { workspace = true }
 rand_core = { workspace = true }
 
+# Symmetric encryption - Made optional
+aes-gcm = { version = "0.10", optional = true }
+chacha20poly1305 = { version = "0.10", optional = true }
+aead = "0.5"
+
 # Error handling
 thiserror = { workspace = true }
 
@@ -34,5 +39,7 @@ hex = "0.4"
 pretty_assertions = { workspace = true }
 
 [features]
-default = []
-std = [] 
+default = ["aes", "chacha20"]
+std = []
+aes = ["dep:aes-gcm"]
+chacha20 = ["dep:chacha20poly1305"] 

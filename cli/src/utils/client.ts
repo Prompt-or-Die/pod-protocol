@@ -3,7 +3,7 @@ import { homedir } from "os";
 import { join } from "path";
 import { generateKeyPairSigner, address, createSolanaRpc, createKeyPairSignerFromPrivateKeyBytes } from "@solana/web3.js";
 import type { KeyPairSigner, Address, Rpc } from "@solana/web3.js";
-import { PodComClient } from "@pod-protocol/sdk";
+// import { PodComClient } from "@pod-protocol/sdk"; // Disabled during Web3.js v2 migration
 import { safeParseKeypair } from "./safe-json.js";
 
 export interface ClientConfig {
@@ -24,18 +24,21 @@ const NETWORK_URLS = {
   mainnet: "https://api.mainnet-beta.solana.com"
 };
 
-export function createClient(networkOrConfig: string | Partial<ClientConfig> = {}): PodComClient {
+export function createClient(networkOrConfig: string | Partial<ClientConfig> = {}): any {
   const finalConfig = typeof networkOrConfig === 'string' 
     ? { ...DEFAULT_CONFIG, network: networkOrConfig }
     : { ...DEFAULT_CONFIG, ...networkOrConfig };
     
   const rpcUrl = NETWORK_URLS[finalConfig.network as keyof typeof NETWORK_URLS] || finalConfig.rpcUrl;
   
-  return new PodComClient({
+  // Mock client during Web3.js v2 migration
+  return {
     endpoint: rpcUrl,
     commitment: 'confirmed',
-    programId: address('PoD1111111111111111111111111111111111111111')
-  });
+    programId: 'PoD1111111111111111111111111111111111111111',
+    // Mock methods for development
+    mockClient: true
+  };
 }
 
 export async function getWallet(keypairPath: string = DEFAULT_CONFIG.keypairPath): Promise<KeyPairSigner> {

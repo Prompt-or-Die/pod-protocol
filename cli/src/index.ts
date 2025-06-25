@@ -17,6 +17,7 @@ import {
 import { errorHandler } from "./utils/enhanced-error-handler.js";
 import { AIAssistant } from "./utils/ai-assistant.js";
 import { createStandaloneClient, mockAgentRegistration, mockMessageSend } from "./utils/standalone-client.js";
+import { createZKCompressionCommand } from "./commands/zk-compression.js";
 
 // Get current version from package.json
 const __filename = fileURLToPath(import.meta.url);
@@ -204,6 +205,9 @@ program
     
     console.log(`${BRAND_COLORS.muted("\nNote: This is a demo mode during Web3.js v2 migration")}`);
   });
+
+// Register ZK Compression commands
+program.addCommand(createZKCompressionCommand());
 
 // Enhanced status command
 program

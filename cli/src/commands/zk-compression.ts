@@ -6,7 +6,7 @@
 
 import { Command } from 'commander';
 import { address as createAddress, type Address } from '@solana/web3.js';
-import { createClient, getWallet } from '../utils/client.js';
+import { getWallet } from '../utils/client.js';
 import { displayError } from '../utils/error-handler.js';
 import { outputFormatter } from '../utils/output-formatter.js';
 import { validatePublicKey } from '../utils/validation.js';

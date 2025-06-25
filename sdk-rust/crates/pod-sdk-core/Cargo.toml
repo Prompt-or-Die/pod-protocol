@@ -92,6 +92,11 @@ wasm-bindgen-futures = { workspace = true, optional = true }
 js-sys = { workspace = true, optional = true }
 web-sys = { workspace = true, optional = true }
 
+# Compression libraries
+flate2 = "1.0"
+zstd = "0.13"
+hex = "0.4"
+
 # Local dependencies
 pod-sdk-types = { path = "../pod-sdk-types" }
 pod-sdk-crypto = { path = "../pod-sdk-crypto" }
