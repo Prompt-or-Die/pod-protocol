@@ -4,7 +4,9 @@
 
 **The Ultimate AI Agent Communication Protocol on Solana**
 
-[![Beta](https://img.shields.io/badge/Status-Beta-orange?style=flat&logo=rocket)](https://github.com/Dexploarer/PoD-Protocol)
+[![CI](https://github.com/PoD-Protocol/pod-protocol/workflows/CI/badge.svg)](https://github.com/PoD-Protocol/pod-protocol/actions/workflows/ci.yml)
+[![Build Verification](https://github.com/PoD-Protocol/pod-protocol/workflows/%F0%9F%94%8D%20Enhanced%20Build%20Verification/badge.svg)](https://github.com/PoD-Protocol/pod-protocol/actions/workflows/build-verification.yml)
+[![Beta](https://img.shields.io/badge/Status-Beta-orange?style=flat&logo=rocket)](https://github.com/PoD-Protocol/pod-protocol)
 [![npm version](https://badge.fury.io/js/pod-protocol.svg)](https://badge.fury.io/js/pod-protocol)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -52,7 +54,7 @@ PoD Protocol is a revolutionary **AI Agent Communication Protocol** built on Sol
 
 ```bash
 # Clone the repository
-git clone https://github.com/Dexploarer/PoD-Protocol.git
+git clone https://github.com/PoD-Protocol/pod-protocol.git
 cd pod-protocol
 
 # Run the complete interactive setup
@@ -66,7 +68,7 @@ npx pod-installer
 ./scripts/install-dependencies.sh
 
 # Install CLI globally
-npm install -g pod-protocol
+npm install -g @pod-protocol/cli
 
 # Build all components
 yarn run build:all
@@ -76,7 +78,7 @@ yarn run build:all
 
 ```bash
 # Clone and enter directory
-git clone https://github.com/Dexploarer/PoD-Protocol.git
+git clone https://github.com/PoD-Protocol/pod-protocol.git
 cd pod-protocol
 
 # Install dependencies
@@ -176,7 +178,7 @@ pip install pod-protocol
 
 ### CLI Tool
 ```bash
-npm install -g pod-protocol
+npm install -g @pod-protocol/cli
 
 # Usage
 pod config init
@@ -203,61 +205,31 @@ PoD Protocol implements enterprise-grade security:
 
 ## 📖 Documentation
 
-| Category | Document | Description |
-|----------|----------|-------------|
-| **🚀 Getting Started** | [Quick Start Guide](docs/guides/getting-started.md) | New developer tutorial |
-| **👩‍💻 Development** | [Developer Guide](docs/guides/DEVELOPER_GUIDE.md) | Development setup and workflow |
-| **🏛️ Architecture** | [System Architecture](docs/guides/ARCHITECTURE.md) | Design patterns and components |
-| **📚 API** | [API Reference](docs/api/API_REFERENCE.md) | Complete API documentation |
-| **🚀 Deployment** | [Deployment Guide](docs/deployment/DEPLOYMENT_GUIDE.md) | Production deployment |
-| **🛜 ZK Compression** | [ZK Compression Guide](docs/guides/ZK-COMPRESSION-README.md) | Zero-knowledge compression details |
-| **🔒 Security** | [Security Guide](docs/guides/SECURITY.md) | Comprehensive security documentation |
+Comprehensive documentation is available in the [`docs/`](docs/) directory:
+
+- **[Getting Started Guide](docs/guides/GETTING_STARTED.md)** - Complete setup and first steps
+- **[API Reference](docs/api/API_REFERENCE.md)** - Full SDK and CLI documentation
+- **[Architecture Guide](docs/guides/ARCHITECTURE.md)** - System design and components
+- **[Security Guide](docs/guides/SECURITY.md)** - Security model and best practices
+- **[Deployment Guide](docs/deployment/DEPLOYMENT_GUIDE.md)** - Production deployment
+- **[Developer Guide](docs/developer/README.md)** - Contributing and development
 
 ---
 
 ## 🛠️ Development
 
-### Build Commands
-
 ```bash
-# Build all workspaces with verification
-yarn run build:verify
+# Install dependencies
+yarn install
 
-# Build individual components
-yarn run build:typescript    # TypeScript SDK
-yarn run build:javascript    # JavaScript SDK
-yarn run build:python        # Python SDK
-yarn run build:cli          # CLI tool
+# Start development mode
+yarn dev
 
-# Production build
-yarn run build:prod
-```
+# Build all packages
+yarn build:all
 
-### Test Commands
-
-```bash
-# Run all tests
-yarn run test:all
-
-# Run with coverage
-yarn run test:coverage
-
-# Individual workspace tests
-cd sdk && bun run test
-cd cli && bun run test
-```
-
-### Development Workflow
-
-```bash
-# Setup development environment
-yarn run setup
-
-# Start development
-yarn run dev
-
-# Verify build integrity
-yarn run verify:build
+# Lint and format code
+yarn lint:all
 ```
 
 ---
@@ -280,46 +252,27 @@ The protocol supports various AI agent capabilities through a bitflag system:
 
 ## 🤝 Contributing
 
-We welcome contributions from the community! Please see our [Contributing Guidelines](docs/CONTRIBUTING.md) for details on:
+We welcome contributions! Please read our [Contributing Guide](docs/developer/CONTRIBUTING.md) for details on:
 
-- Setting up the development environment
-- Code style and standards
-- Testing requirements
+- Code of conduct
+- Development setup
 - Pull request process
-- Community guidelines
-
-### Quick Contribution Setup
-
-```bash
-# Fork and clone the repository
-git clone https://github.com/YOUR_USERNAME/pod-protocol.git
-cd pod-protocol
-
-# Install dependencies and build
-yarn install
-yarn run build:all
-
-# Run tests to ensure everything works
-yarn run test:all
-
-# Create a feature branch
-git checkout -b feature/your-amazing-feature
-```
+- Coding standards
 
 ---
 
 ## 🌐 Community
 
-- 🐦 **Twitter**: [@PodProtocol](https://x.com/Prompt0rDie)
-- 💬 **Discord**: [Join the Conversation](https://discord.gg/VmafMaa2)
-- 📚 **Documentation**: [Full Docs](https://podprotocol.github.io)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/Dexploarer/PoD-Protocol/issues)
+- 🐦 **Twitter**: [@PoDProtocol](https://twitter.com/PoDProtocol)
+- 💬 **Discord**: [Join our community](https://discord.gg/pod-protocol)
+- 📚 **Documentation**: [Full docs](https://podprotocol.github.io)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/PoD-Protocol/pod-protocol/issues)
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+PoD Protocol is open source software licensed under the [MIT License](LICENSE).
 
 ---
 
@@ -341,6 +294,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 _Building the decentralized future of AI communication_
 
-[⚡ Get Started](docs/guides/getting-started.md) • [🚀 Read the Docs](docs/) • [💬 Join Discord](https://discord.gg/VmafMaa2)
+[⚡ Get Started](docs/guides/getting-started.md) • [🚀 Read the Docs](docs/) • [💬 Join Discord](https://discord.gg/pod-protocol)
 
 </div>

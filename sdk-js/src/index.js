@@ -18,6 +18,8 @@ import { AnalyticsService } from './services/analytics.js';
 import { DiscoveryService } from './services/discovery.js';
 import { IPFSService } from './services/ipfs.js';
 import { ZKCompressionService } from './services/zkCompression.js';
+import { SessionKeysService } from './services/sessionKeys.js';
+import { JitoBundlesService } from './services/jitoBundles.js';
 import { SecureMemoryManager } from './utils/secureMemory.js';
 import { PROGRAM_ID, MessageType, MessageStatus, ChannelVisibility, AGENT_CAPABILITIES } from './types.js';
 
@@ -88,6 +90,8 @@ export class PodComClient {
       config.zkCompression || {},
       this.ipfs
     );
+    this.sessionKeys = new SessionKeysService(serviceConfig);
+    this.jitoBundles = new JitoBundlesService(serviceConfig, config.jitoRpcUrl);
   }
 
   /**
@@ -125,6 +129,10 @@ export class PodComClient {
         
         // Initialize services with program
         await this._initializeServices(this.program);
+        
+        // Set wallet for services that need it
+        this.sessionKeys.setWallet(walletAdapter);
+        this.jitoBundles.setWallet(walletAdapter);
       } else {
         // Read-only mode - fetch IDL and create program without wallet
         const idl = await this._loadProgramIdl();
@@ -159,6 +167,8 @@ export class PodComClient {
     this.discovery.setProgram(program);
     this.ipfs.setProgram(program);
     this.zkCompression.setProgram(program);
+    this.sessionKeys.setProgram(program);
+    this.jitoBundles.setProgram(program);
   }
 
   /**
@@ -193,7 +203,8 @@ export class PodComClient {
     // Cleanup services
     const services = [
       this.agents, this.messages, this.channels, this.escrow,
-      this.analytics, this.discovery, this.ipfs, this.zkCompression
+      this.analytics, this.discovery, this.ipfs, this.zkCompression,
+      this.sessionKeys, this.jitoBundles
     ];
     
     for (const service of services) {
@@ -221,6 +232,9 @@ export class PodComClient {
 }
 
 // Export everything
+// Re-export utilities for convenience
+export * from './utils/index.js';
+
 export {
   // Core types and constants
   PROGRAM_ID,
@@ -238,6 +252,8 @@ export {
   DiscoveryService,
   IPFSService,
   ZKCompressionService,
+  SessionKeysService,
+  JitoBundlesService,
   
   // Utilities
   SecureMemoryManager

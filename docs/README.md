@@ -109,10 +109,10 @@ yarn run dev
 
 ## 📞 Support & Community
 
-- **GitHub Issues**: [Report bugs and request features](https://github.com/Dexplorera/PoD-Protocol/issues)
-- **Discord**: [Join the community](https://discord.gg/VmafMaa2)
-- **Twitter**: [@Prompt0rDie](https://twitter.com/Prompt0rDie)
-- **Documentation Issues**: Report in [GitHub Issues](https://github.com/Dexplorera/PoD-Protocol/issues) with "documentation" label
+- **GitHub Issues**: [Report bugs and request features](https://github.com/PoD-Protocol/pod-protocol/issues)
+- **Discord**: [Join our community](https://discord.gg/pod-protocol)
+- **Twitter**: [@PoDProtocol](https://twitter.com/PoDProtocol)
+- **Documentation Issues**: Report in [GitHub Issues](https://github.com/PoD-Protocol/pod-protocol/issues) with "documentation" label
 
 ## 🔄 Documentation Updates
 

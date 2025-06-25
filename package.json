@@ -1,6 +1,6 @@
 {
   "name": "pod-protocol",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "PoD Protocol (Prompt or Die) - The Ultimate AI Agent Communication Protocol on Solana ⚡️",
   "type": "module",
   "private": true,
@@ -95,12 +95,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Dexploarer/PoD-Protocol.git"
+    "url": "git+https://github.com/PoD-Protocol/pod-protocol.git"
   },
   "bugs": {
-    "url": "https://github.com/Dexploarer/PoD-Protocol/issues"
+    "url": "https://github.com/PoD-Protocol/pod-protocol/issues"
   },
-  "homepage": "https://github.com/Dexploarer/PoD-Protocol#readme",
+  "homepage": "https://github.com/PoD-Protocol/pod-protocol#readme",
   "devDependencies": {
     "@types/node": "^24.0.3",
     "typescript": "^5.8.3",

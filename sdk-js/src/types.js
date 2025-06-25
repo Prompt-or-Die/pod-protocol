@@ -181,4 +181,6 @@ export const PodComError = {
  * @property {string} [commitment] - Default commitment level
  * @property {Object} [ipfs] - IPFS configuration
  * @property {Object} [zkCompression] - ZK Compression configuration
+ * @property {string} [jitoRpcUrl] - Jito RPC URL for bundle transactions
+ * @property {Object} [sessionKeys] - Session keys configuration
  */
