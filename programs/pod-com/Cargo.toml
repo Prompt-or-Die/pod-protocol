@@ -21,7 +21,6 @@ no-log-ix-name = []
 [dependencies]
 # Core Solana dependencies - latest stable versions for 2025
 anchor-lang = { version = "0.31.1", default-features = false, features = ["init-if-needed"] }
-solana-program = { version = "2.3.0", default-features = false }
 
 # Native Solana State Compression - the modern alternative to Light Protocol
 spl-account-compression = { version = "1.0.0", features = ["cpi"], default-features = false }
