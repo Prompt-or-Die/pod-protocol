@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import inquirer from "inquirer";
 import { table } from "table";
-import { PublicKey, Signer } from "@solana/web3.js";
+import { address as createAddress, type Address, type KeyPairSigner } from "@solana/web3.js";
 import { PodComClient, lamportsToSol, solToLamports } from "@pod-protocol/sdk";
 import {
   createCommandHandler,
@@ -40,7 +40,7 @@ async function promptChannelAndAmount({
         message: "Channel ID:",
         validate: (input: string) => {
           try {
-            new PublicKey(input);
+            createAddress(input);
             return true;
           } catch {
             return "Please enter a valid channel ID";
@@ -202,7 +202,7 @@ export class EscrowCommands {
 
   private async handleDeposit(
     client: PodComClient,
-    wallet: Signer,
+    wallet: KeyPairSigner,
     globalOpts: GlobalOptions,
     options: Record<string, any>,
   ) {
@@ -236,7 +236,7 @@ export class EscrowCommands {
 
   private async handleWithdraw(
     client: PodComClient,
-    wallet: Signer,
+    wallet: KeyPairSigner,
     globalOpts: GlobalOptions,
     options: Record<string, any>,
   ) {
@@ -257,7 +257,7 @@ export class EscrowCommands {
     // If withdrawing all, get current balance first
     let amount = promptAmount;
     if (withdrawAll) {
-      const escrowData = await client.getEscrow(channelKey, wallet.publicKey);
+      const escrowData = await client.getEscrow(channelKey, wallet.address);
       if (!escrowData) {
         spinner.fail("No escrow account found for this channel");
         return;
@@ -287,7 +287,7 @@ export class EscrowCommands {
 
   private async handleBalance(
     client: PodComClient,
-    wallet: Signer,
+    wallet: KeyPairSigner,
     options: Record<string, any>,
   ) {
     if (!options.channel) {
@@ -301,7 +301,7 @@ export class EscrowCommands {
     if (options.agent) {
       agentAddress = validatePublicKey(options.agent, "agent address");
     } else {
-      agentAddress = wallet.publicKey;
+      agentAddress = wallet.address;
     }
 
     const escrowData = await client.getEscrow(channelKey, agentAddress);
@@ -314,8 +314,8 @@ export class EscrowCommands {
     spinner.succeed("Escrow balance retrieved");
 
     const data = [
-      ["Channel", formatValue(escrowData.channel.toBase58(), "address")],
-      ["Depositor", formatValue(escrowData.depositor.toBase58(), "address")],
+      ["Channel", formatValue(String(escrowData.channel), "address")],
+      ["Depositor", formatValue(String(escrowData.depositor), "address")],
       [
         "Balance",
         formatValue(`${lamportsToSol(escrowData.balance)} SOL`, "number"),
@@ -338,13 +338,13 @@ export class EscrowCommands {
 
   private async handleList(
     client: PodComClient,
-    wallet: Signer,
+    wallet: KeyPairSigner,
     options: Record<string, any>,
   ) {
     const limit = validatePositiveInteger(options.limit, "limit");
     const spinner = createSpinner("Fetching escrow accounts...");
 
-    const escrows = await client.getEscrowsByDepositor(wallet.publicKey, limit);
+    const escrows = await client.getEscrowsByDepositor(wallet.address, limit);
 
     if (escrows.length === 0) {
       spinner.succeed("No escrow accounts found");
@@ -354,7 +354,7 @@ export class EscrowCommands {
     spinner.succeed(`Found ${escrows.length} escrow accounts`);
 
     const data = escrows.map((escrow: Record<string, any>) => [
-      formatValue(escrow.channel.toBase58().slice(0, 8) + "...", "address"),
+      formatValue(String(escrow.channel).slice(0, 8) + "...", "address"),
       formatValue(`${lamportsToSol(escrow.balance)} SOL`, "number"),
       formatValue(escrow.balance.toString(), "number"),
       formatValue(

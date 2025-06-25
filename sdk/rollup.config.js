@@ -71,6 +71,9 @@ export default {
   ],
   external: [
     "@solana/web3.js",
+    "@solana-program/system", 
+    "@solana-program/token",
+    "@solana-program/compute-budget",
     "@solana/spl-token",
     "@coral-xyz/anchor",
     "@coral-xyz/borsh",

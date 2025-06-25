@@ -1,4 +1,4 @@
-import { address, type Address } from "@solana/web3.js";
+import { address as createAddress, type Address } from "@solana/web3.js";
 import { MessageStatus } from "@pod-protocol/sdk";
 import {
   validatePublicKey,
@@ -6,6 +6,15 @@ import {
   validateEnum,
   validatePositiveInteger,
 } from "../../utils/validation.js";
+
+// Helper function to validate addresses
+function validateAddress(addressString: string, fieldName: string): Address {
+  try {
+    return createAddress(addressString);
+  } catch {
+    throw new Error(`Invalid ${fieldName}: must be a valid Solana address`);
+  }
+}
 
 export class MessageValidators {
   static validateRecipient(recipient: string): Address {
@@ -43,7 +52,7 @@ export class MessageValidators {
 
   static validateRecipientInteractive(input: string): boolean | string {
     try {
-      address(input);
+      createAddress(input);
       return true;
     } catch {
       return "Please enter a valid Solana address";

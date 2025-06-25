@@ -1,4 +1,4 @@
-import { PublicKey } from "@solana/web3.js";
+import { address as createAddress, type Address } from "@solana/web3.js";
 import { AGENT_CAPABILITIES, getCapabilityNames } from "@pod-protocol/sdk";
 import { input, select, checkbox, confirm } from '@inquirer/prompts';
 import { AgentDisplayer } from "./displayer.js";
@@ -143,7 +143,7 @@ export class AgentHandlers {
               return 'Agent address is required.';
             }
             try {
-              new PublicKey(value);
+              createAddress(value);
               return true;
             } catch {
               return 'Please enter a valid Solana address.';
@@ -160,7 +160,7 @@ export class AgentHandlers {
       }).start();
 
       try {
-        const agentData = await this.context.client.agents.getAgent(new PublicKey(agentAddress));
+        const agentData = await this.context.client.agents.getAgent(createAddress(agentAddress));
         
         spinner.succeed(`${ICONS.success} Agent data retrieved successfully!`);
         console.log();
@@ -188,7 +188,7 @@ export class AgentHandlers {
             return 'Agent address is required.';
           }
           try {
-            new PublicKey(value);
+            createAddress(value);
             return true;
           } catch {
             return 'Please enter a valid Solana address.';
@@ -198,7 +198,7 @@ export class AgentHandlers {
 
       // Fetch current agent data
       const spinner = ora('Fetching current agent data...').start();
-      const currentAgent = await this.context.client.agents.getAgent(new PublicKey(agentAddress));
+      const currentAgent = await this.context.client.agents.getAgent(createAddress(agentAddress));
       spinner.succeed('Current agent data loaded');
 
       console.log();
@@ -335,8 +335,8 @@ export class AgentHandlers {
             const selectedAgent = await select({
               message: `${ICONS.search} Select an agent to view details:`,
               choices: agents.map(agent => ({
-                name: `${agent.pubkey.toBase58().slice(0, 8)}... - ${getCapabilityNames(agent.capabilities).slice(0, 2).join(", ")}`,
-                value: agent.pubkey.toBase58()
+                name: `${String(agent.pubkey).slice(0, 8)}... - ${getCapabilityNames(agent.capabilities).slice(0, 2).join(", ")}`,
+                value: String(agent.pubkey)
               }))
             });
 

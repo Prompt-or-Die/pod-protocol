@@ -1,4 +1,4 @@
-import { PublicKey } from "@solana/web3.js";
+import { address as createAddress, type Address } from "@solana/web3.js";
 import { ChannelVisibility } from "@pod-protocol/sdk";
 import { createSpinner } from "../../utils/shared.js";
 import { BaseChannelHandler } from "./base-handler.js";
@@ -38,11 +38,11 @@ export class ChannelHandlers extends BaseChannelHandler {
         },
       );
 
-      if (result) {
+      if (result !== undefined) {
         this.showSuccessWithTransaction(
           spinner,
           "Channel created successfully!",
-          result as string,
+          String(result),
           {
             Name: channelData.name,
             Description: channelData.description,
@@ -57,7 +57,7 @@ export class ChannelHandlers extends BaseChannelHandler {
 
   async handleInfo(channelId: string): Promise<void> {
     try {
-      const channelPubkey = new PublicKey(channelId);
+      const channelPubkey = createAddress(channelId);
       const spinner = createSpinner("Fetching channel information...");
 
       const channelData = await this.context.client.getChannel(channelPubkey);
@@ -109,7 +109,7 @@ export class ChannelHandlers extends BaseChannelHandler {
 
   async handleJoin(channelId: string): Promise<void> {
     try {
-      const channelPubkey = new PublicKey(channelId);
+      const channelPubkey = createAddress(channelId);
 
       const result = await this.executeWithSpinner(
         "Joining channel...",
@@ -118,12 +118,12 @@ export class ChannelHandlers extends BaseChannelHandler {
         { Channel: channelId },
       );
 
-      if (result) {
+      if (result !== undefined) {
         const spinner = createSpinner("");
         this.showSuccessWithTransaction(
           spinner,
           "Successfully joined channel!",
-          result as string,
+          String(result),
         );
       }
     } catch (error: any) {
@@ -133,7 +133,7 @@ export class ChannelHandlers extends BaseChannelHandler {
 
   async handleLeave(channelId: string): Promise<void> {
     try {
-      const channelPubkey = new PublicKey(channelId);
+      const channelPubkey = createAddress(channelId);
 
       const result = await this.executeWithSpinner(
         "Leaving channel...",
@@ -142,12 +142,12 @@ export class ChannelHandlers extends BaseChannelHandler {
         { Channel: channelId },
       );
 
-      if (result) {
+      if (result !== undefined) {
         const spinner = createSpinner("");
         this.showSuccessWithTransaction(
           spinner,
           "Successfully left channel!",
-          result as string,
+          String(result),
         );
       }
     } catch (error: any) {
@@ -162,10 +162,10 @@ export class ChannelHandlers extends BaseChannelHandler {
   ): Promise<void> {
     try {
       ChannelValidators.validateMessage(message);
-      const channelPubkey = new PublicKey(channelId);
+      const channelPubkey = createAddress(channelId);
       const messageType = ChannelValidators.parseMessageType(options.type);
       const replyTo = options.replyTo
-        ? new PublicKey(options.replyTo)
+        ? createAddress(options.replyTo)
         : undefined;
 
       const dryRunData: Record<string, string> = {
@@ -174,7 +174,7 @@ export class ChannelHandlers extends BaseChannelHandler {
         Type: messageType,
       };
       if (replyTo) {
-        dryRunData["Reply to"] = replyTo.toBase58();
+        dryRunData["Reply to"] = String(replyTo);
       }
 
       const result = await this.executeWithSpinner(
@@ -190,12 +190,12 @@ export class ChannelHandlers extends BaseChannelHandler {
         dryRunData,
       );
 
-      if (result) {
+      if (result !== undefined) {
         const spinner = createSpinner("");
         this.showSuccessWithTransaction(
           spinner,
           "Message broadcast successfully!",
-          result as string,
+          String(result),
         );
       }
     } catch (error: any) {
@@ -205,8 +205,8 @@ export class ChannelHandlers extends BaseChannelHandler {
 
   async handleInvite(channelId: string, invitee: string): Promise<void> {
     try {
-      const channelPubkey = new PublicKey(channelId);
-      const inviteePubkey = new PublicKey(invitee);
+      const channelPubkey = createAddress(channelId);
+      const inviteePubkey = createAddress(invitee);
 
       const result = await this.executeWithSpinner(
         "Sending invitation...",
@@ -222,12 +222,12 @@ export class ChannelHandlers extends BaseChannelHandler {
         },
       );
 
-      if (result) {
+      if (result !== undefined) {
         const spinner = createSpinner("");
         this.showSuccessWithTransaction(
           spinner,
           "Invitation sent successfully!",
-          result as string,
+          String(result),
         );
       }
     } catch (error: any) {
@@ -240,7 +240,7 @@ export class ChannelHandlers extends BaseChannelHandler {
     options: ParticipantsOptions,
   ): Promise<void> {
     try {
-      const channelPubkey = new PublicKey(channelId);
+      const channelPubkey = createAddress(channelId);
       const limit = parseInt(options.limit, 10) || 20;
       const spinner = createSpinner("Fetching participants...");
 
@@ -266,7 +266,7 @@ export class ChannelHandlers extends BaseChannelHandler {
     options: MessagesOptions,
   ): Promise<void> {
     try {
-      const channelPubkey = new PublicKey(channelId);
+      const channelPubkey = createAddress(channelId);
       const limit = parseInt(options.limit, 10) || 20;
       const spinner = createSpinner("Fetching messages...");
 

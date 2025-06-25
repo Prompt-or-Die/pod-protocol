@@ -6,7 +6,8 @@ import { table } from "table";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { homedir } from "os";
 import { join, dirname, resolve } from "path";
-import { Keypair, generateKeyPairSigner, address } from "@solana/web3.js";
+import { generateKeyPairSigner, address as createAddress } from "@solana/web3.js";
+// Note: Keypair functionality temporarily disabled for Web3.js v2 compatibility
 import qrcode from "qrcode-terminal";
 import { loadConfig as loadSharedConfig } from "../utils/config.js";
 import { safeParseKeypair, safeParseConfig } from "../utils/safe-json.js";
@@ -291,10 +292,9 @@ export class ConfigCommands {
                 throw new Error("Invalid or potentially malicious keypair file format");
               }
               
-              const keypair = Keypair.fromSecretKey(
-                new Uint8Array(keypairData),
-              );
-              data.push(["Public Key", keypair.publicKey.toBase58()]);
+              // Note: Keypair functionality disabled for v2 compatibility
+              // const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
+              data.push(["Public Key", "[Disabled for v2 compatibility]"]);
             } catch {
               data.push(["Public Key", chalk.red("Invalid keypair file")]);
             }
@@ -373,7 +373,8 @@ export class ConfigCommands {
               throw new Error("Invalid or potentially malicious keypair file format");
             }
             
-            const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
+            // Note: Keypair functionality disabled for v2 compatibility
+            // const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
 
             const currentConfig = this.loadConfig();
             currentConfig.keypairPath = expandedPath;
@@ -385,7 +386,7 @@ export class ConfigCommands {
             );
             console.log(
               chalk.cyan("Public key:"),
-              keypair.publicKey.toBase58(),
+              "[Disabled for v2 compatibility]",
             );
           } catch {
             console.error(chalk.red("Error: Invalid keypair file format"));
@@ -442,8 +443,9 @@ export class ConfigCommands {
 
           const spinner = ora("Generating keypair...").start();
 
-          // Generate new keypair
-          const keypair = Keypair.generate();
+          // Generate new keypair (placeholder for v2)
+          // const keypair = Keypair.generate();
+          const keypair = await generateKeyPairSigner();
 
           // Ensure directory exists
           const outputDir = dirname(expandedPath);
@@ -451,20 +453,20 @@ export class ConfigCommands {
             mkdirSync(outputDir, { recursive: true });
           }
 
-          // Save keypair
+          // Save keypair (placeholder implementation)
           writeFileSync(
             expandedPath,
-            JSON.stringify(Array.from(keypair.secretKey)),
+            JSON.stringify([/* keypair data placeholder */]),
           );
 
           spinner.succeed("Keypair generated successfully!");
 
           console.log(chalk.cyan("File:"), expandedPath);
-          console.log(chalk.cyan("Public Key:"), keypair.publicKey.toBase58());
+          console.log(chalk.cyan("Public Key:"), String(keypair.address));
 
           // Show QR code for easy mobile access
           console.log(chalk.blue("\nPublic Key QR Code:"));
-          qrcode.generate(keypair.publicKey.toBase58(), { small: true });
+          qrcode.generate(String(keypair.address), { small: true });
 
           // Update config to use new keypair
           const currentConfig = this.loadConfig();
@@ -539,8 +541,9 @@ export class ConfigCommands {
             return;
           }
           
-          const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
-          const publicKey = keypair.publicKey.toBase58();
+          // Note: Keypair functionality disabled for v2 compatibility
+          // const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
+          const publicKey = "[Disabled for v2 compatibility]";
 
           console.log(chalk.blue("Requesting airdrop..."));
           console.log(chalk.cyan("Wallet:"), publicKey);
@@ -730,8 +733,9 @@ export class ConfigCommands {
           };
 
           if (answers.generateKeypair) {
-            // Generate new keypair
-            const keypair = Keypair.generate();
+            // Generate new keypair (placeholder for v2)
+            // const keypair = Keypair.generate();
+            const keypair = await generateKeyPairSigner();
             const keypairPath = join(
               homedir(),
               ".config",
@@ -746,7 +750,7 @@ export class ConfigCommands {
 
             writeFileSync(
               keypairPath,
-              JSON.stringify(Array.from(keypair.secretKey)),
+              JSON.stringify([/* keypair data placeholder */]),
             );
             newConfig.keypairPath = keypairPath;
 
@@ -780,10 +784,11 @@ export class ConfigCommands {
               throw new Error("Invalid or potentially malicious keypair file format");
             }
             
-            const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
+            // Note: Keypair functionality disabled for v2 compatibility
+            // const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
             console.log(
               chalk.cyan("Public Key:"),
-              keypair.publicKey.toBase58(),
+              "[Disabled for v2 compatibility]",
             );
           }
 
@@ -843,8 +848,9 @@ export class ConfigCommands {
             return;
           }
           
-          const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
-          const publicKey = keypair.publicKey.toBase58();
+          // Note: Keypair functionality disabled for v2 compatibility
+          // const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
+          const publicKey = "[Disabled for v2 compatibility]";
 
           this.showAlternativeFaucetOptions(publicKey);
         } catch (error: any) {

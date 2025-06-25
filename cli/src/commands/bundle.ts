@@ -5,7 +5,9 @@
 
 import { Command } from 'commander';
 import { PodComClient } from '@pod-protocol/sdk';
-import { PublicKey, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { address as createAddress, type Address } from '@solana/web3.js';
+// Note: Using placeholder values for v2 compatibility
+const LAMPORTS_PER_SOL = 1000000000;
 import { createClient, getWallet } from '../utils/client.js';
 import { createSpinner, showSuccess, formatValue } from '../utils/shared.js';
 import chalk from 'chalk';
@@ -27,7 +29,7 @@ export function createBundleCommand(): Command {
       try {
         const globalOpts = cmd.parent?.opts() || {};
         const client = await createClient(globalOpts.network);
-        const wallet = getWallet(globalOpts.keypair);
+        const wallet = await getWallet(globalOpts.keypair);
         await client.initialize(wallet);
 
         const recipients = options.recipients.split(',').map((r: string) => r.trim());
@@ -50,18 +52,23 @@ export function createBundleCommand(): Command {
         
         for (const recipientStr of recipients) {
           try {
-            const recipient = new PublicKey(recipientStr);
+            const recipient = createAddress(recipientStr);
             
             // This would create actual send message instruction
-            // For demonstration, create a simple transfer instruction
-            const instruction = SystemProgram.transfer({
-              fromPubkey: wallet.publicKey!,
-              toPubkey: recipient,
-              lamports: 1000 // Minimal transfer to simulate message
-            });
+            // For demonstration, create a placeholder instruction
+            const instruction = {
+              programId: 'SystemProgram',
+              keys: [wallet.address, recipient],
+              data: Buffer.from('transfer'),
+              accounts: {
+                source: wallet.address,
+                destination: recipient,
+                lamports: 1000
+              }
+            };
             
             messageInstructions.push(instruction);
-            console.log(`Added message instruction for: ${recipient.toBase58()}`);
+            console.log(`Added message instruction for: ${String(recipient)}`);
             
           } catch (err) {
             console.error(chalk.red(`Invalid recipient address: ${recipientStr}`));
@@ -118,16 +125,16 @@ export function createBundleCommand(): Command {
       try {
         const globalOpts = cmd.parent?.opts() || {};
         const client = await createClient(globalOpts.network);
-        const wallet = getWallet(globalOpts.keypair);
+        const wallet = await getWallet(globalOpts.keypair);
         await client.initialize(wallet);
 
-        const channelPubkey = new PublicKey(options.channel);
+        const channelPubkey = createAddress(options.channel);
         const action = options.action;
         const tipLamports = parseInt(options.tip);
         const priorityFee = parseInt(options.priorityFee);
 
         console.log(chalk.blue(`Preparing channel ${action} bundle...`));
-        console.log(`Channel: ${channelPubkey.toBase58()}`);
+        console.log(`Channel: ${String(channelPubkey)}`);
 
         // Create channel operation instructions
         const channelInstructions = [];
@@ -136,22 +143,33 @@ export function createBundleCommand(): Command {
           case 'join':
             // This would create actual join channel instruction
             // For demonstration, create a placeholder instruction
-            const joinInstruction = SystemProgram.transfer({
-              fromPubkey: wallet.publicKey!,
-              toPubkey: channelPubkey,
-              lamports: 1000
-            });
+            const joinInstruction = {
+              programId: 'SystemProgram',
+              keys: [wallet.address, channelPubkey],
+              data: Buffer.from('join'),
+              accounts: {
+                source: wallet.address,
+                destination: channelPubkey,
+                lamports: 1000
+              }
+            };
             channelInstructions.push(joinInstruction);
             console.log('Added join channel instruction');
             break;
             
           case 'leave':
             // This would create actual leave channel instruction
-            const leaveInstruction = SystemProgram.transfer({
-              fromPubkey: wallet.publicKey!,
-              toPubkey: channelPubkey,
-              lamports: 1000
-            });
+            // For demonstration, create a placeholder instruction
+            const leaveInstruction = {
+              programId: 'SystemProgram',
+              keys: [wallet.address, channelPubkey],
+              data: Buffer.from('leave'),
+              accounts: {
+                source: wallet.address,
+                destination: channelPubkey,
+                lamports: 1000
+              }
+            };
             channelInstructions.push(leaveInstruction);
             console.log('Added leave channel instruction');
             break;
@@ -162,11 +180,17 @@ export function createBundleCommand(): Command {
               return;
             }
             // This would create actual broadcast message instruction
-            const broadcastInstruction = SystemProgram.transfer({
-              fromPubkey: wallet.publicKey!,
-              toPubkey: channelPubkey,
-              lamports: 1000
-            });
+            // For demonstration, create a placeholder instruction
+            const broadcastInstruction = {
+              programId: 'SystemProgram',
+              keys: [wallet.address, channelPubkey],
+              data: Buffer.from('broadcast'),
+              accounts: {
+                source: wallet.address,
+                destination: channelPubkey,
+                lamports: 1000
+              }
+            };
             channelInstructions.push(broadcastInstruction);
             console.log(`Added broadcast message instruction: "${options.message}"`);
             break;

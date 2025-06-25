@@ -2,7 +2,7 @@ import { Command } from "commander";
 import chalk from "chalk";
 import inquirer from "inquirer";
 import { table } from "table";
-import { PublicKey } from "@solana/web3.js";
+import { address as createAddress, type Address } from "@solana/web3.js";
 import {
   PodComClient,
   ChannelVisibility,
@@ -292,7 +292,7 @@ export class DiscoveryCommands {
         limit,
         includeReason: options.includeReason,
         forAgent: options.forAgent
-          ? new PublicKey(options.forAgent)
+          ? createAddress(options.forAgent)
           : undefined,
       };
 
@@ -332,7 +332,7 @@ export class DiscoveryCommands {
 
     try {
       const targetAgent = await client.agents.getAgent(
-        new PublicKey(targetAddress),
+        createAddress(targetAddress),
       );
       if (!targetAgent) {
         spinner.fail("Target agent not found");
@@ -433,11 +433,11 @@ export class DiscoveryCommands {
     };
 
     if (options.sender) {
-      filters.sender = new PublicKey(options.sender);
+      filters.sender = createAddress(options.sender);
     }
 
     if (options.recipient) {
-      filters.recipient = new PublicKey(options.recipient);
+      filters.recipient = createAddress(options.recipient);
     }
 
     if (options.status) {
@@ -476,7 +476,7 @@ export class DiscoveryCommands {
     };
 
     if (options.creator) {
-      filters.creator = new PublicKey(options.creator);
+      filters.creator = createAddress(options.creator);
     }
 
     if (options.visibility) {
@@ -581,14 +581,14 @@ export class DiscoveryCommands {
         type: "input",
         name: "sender",
         message: "Sender address (optional):",
-        default: initialFilters.sender?.toBase58(),
+        default: initialFilters.sender ? String(initialFilters.sender) : undefined,
         validate: (input: string) => !input || this.isValidAddress(input),
       },
       {
         type: "input",
         name: "recipient",
         message: "Recipient address (optional):",
-        default: initialFilters.recipient?.toBase58(),
+        default: initialFilters.recipient ? String(initialFilters.recipient) : undefined,
         validate: (input: string) => !input || this.isValidAddress(input),
       },
       {
@@ -615,10 +615,10 @@ export class DiscoveryCommands {
 
     // Convert answers
     if (answers.sender) {
-      answers.sender = new PublicKey(answers.sender);
+      answers.sender = createAddress(answers.sender);
     }
     if (answers.recipient) {
-      answers.recipient = new PublicKey(answers.recipient);
+      answers.recipient = createAddress(answers.recipient);
     }
     if (answers.status && answers.status !== "Any") {
       answers.status = [
@@ -700,7 +700,7 @@ export class DiscoveryCommands {
     );
 
     const data = results.items.map((agent: any) => [
-      formatValue(agent.pubkey.toBase58().slice(0, 8) + "...", "address"),
+      formatValue(String(agent.pubkey).slice(0, 8) + "...", "address"),
       formatValue(getCapabilityNames(agent.capabilities).join(", "), "text"),
       formatValue(agent.reputation.toString(), "number"),
       formatValue(
@@ -740,8 +740,8 @@ export class DiscoveryCommands {
     );
 
     const data = results.items.map((message: any) => [
-      formatValue(message.sender.toBase58().slice(0, 8) + "...", "address"),
-      formatValue(message.recipient.toBase58().slice(0, 8) + "...", "address"),
+      formatValue(String(message.sender).slice(0, 8) + "...", "address"),
+      formatValue(String(message.recipient).slice(0, 8) + "...", "address"),
       formatValue(message.messageType.toString(), "text"),
       formatValue(message.status, "text"),
       formatValue(
@@ -845,7 +845,7 @@ export class DiscoveryCommands {
     if (type === "agents") {
       const data = recommendations.map((rec, index) => [
         `#${index + 1}`,
-        formatValue(rec.item.pubkey.toBase58().slice(0, 8) + "...", "address"),
+        formatValue(String(rec.item.pubkey).slice(0, 8) + "...", "address"),
         formatValue(rec.item.reputation.toString(), "number"),
         formatValue(
           getCapabilityNames(rec.item.capabilities).join(", "),
@@ -898,13 +898,13 @@ export class DiscoveryCommands {
     console.log(chalk.cyan.bold("\n🔍 Similar Agents"));
     console.log(
       chalk.gray(
-        `Target: ${targetAgent.pubkey.toBase58().slice(0, 8)}... (${getCapabilityNames(targetAgent.capabilities).join(", ")})`,
+        `Target: ${String(targetAgent.pubkey).slice(0, 8)}... (${getCapabilityNames(targetAgent.capabilities).join(", ")})`,
       ),
     );
 
     const data = similarAgents.map((agent, index) => [
       `#${index + 1}`,
-      formatValue(agent.pubkey.toBase58().slice(0, 8) + "...", "address"),
+      formatValue(String(agent.pubkey).slice(0, 8) + "...", "address"),
       formatValue(getCapabilityNames(agent.capabilities).join(", "), "text"),
       formatValue(agent.reputation.toString(), "number"),
       formatValue(
@@ -964,9 +964,9 @@ export class DiscoveryCommands {
   // Helper Methods
   // ============================================================================
 
-  private isValidAddress(address: string): boolean {
+  private isValidAddress(addressString: string): boolean {
     try {
-      new PublicKey(address);
+      createAddress(addressString);
       return true;
     } catch {
       return false;

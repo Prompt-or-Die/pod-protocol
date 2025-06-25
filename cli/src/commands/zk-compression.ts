@@ -4,7 +4,7 @@
  */
 
 import { Command } from 'commander';
-import { PublicKey } from '@solana/web3.js';
+import { address as createAddress, type Address } from '@solana/web3.js';
 import { createClient, getWallet } from '../utils/client.js';
 import { displayError } from '../utils/error-handler.js';
 import { outputFormatter } from '../utils/output-formatter.js';
@@ -37,15 +37,15 @@ export function createZKCompressionCommand(): Command {
     .option('--ipfs-url <url>', 'Custom IPFS node URL')
     .action(async (channelId, content, options) => {
       try {
-        const wallet = getWallet(options.keypair);
+        const wallet = await getWallet(options.keypair);
         const client = await createClient(undefined, wallet);
         
         if (!validatePublicKey(channelId)) {
           throw new Error('Invalid channel ID');
         }
 
-        const channel = new PublicKey(channelId);
-        const replyTo = options.replyTo ? new PublicKey(options.replyTo) : undefined;
+        const channel = createAddress(channelId);
+        const replyTo = options.replyTo ? createAddress(options.replyTo) : undefined;
         const attachments = options.attachments || [];
         const metadata = options.metadata ? safeParseConfig(options.metadata) : {};
     
@@ -99,14 +99,14 @@ export function createZKCompressionCommand(): Command {
     .option('--verify-content', 'Verify IPFS content against hashes')
     .action(async (channelId, options) => {
       try {
-        const wallet = getWallet(options.keypair);
+        const wallet = await getWallet(options.keypair);
         const client = await createClient(undefined, wallet);
         
         if (!validatePublicKey(channelId)) {
           throw new Error('Invalid channel ID');
         }
 
-        const channel = new PublicKey(channelId);
+        const channel = createAddress(channelId);
         const queryOptions: any = {
           limit: parseInt(options.limit),
           offset: parseInt(options.offset)
@@ -116,7 +116,7 @@ export function createZKCompressionCommand(): Command {
           if (!validatePublicKey(options.sender)) {
             throw new Error('Invalid sender public key');
           }
-          queryOptions.sender = new PublicKey(options.sender);
+          queryOptions.sender = createAddress(options.sender);
         }
 
         if (options.after) {
@@ -177,7 +177,7 @@ export function createZKCompressionCommand(): Command {
     .option('--verify-hash <hash>', 'Verify against on-chain content hash')
     .action(async (ipfsHash, options) => {
       try {
-        const wallet = getWallet(options.keypair);
+        const wallet = await getWallet(options.keypair);
         const client = await createClient(undefined, wallet);
         
         console.log('📥 Retrieving content from IPFS...');
@@ -231,18 +231,18 @@ export function createZKCompressionCommand(): Command {
     )
     .action(async (channelId, options) => {
       try {
-        const wallet = getWallet(options.keypair);
+        const wallet = await getWallet(options.keypair);
         const client = await createClient(undefined, wallet);
         
         if (!validatePublicKey(channelId)) {
           throw new Error('Invalid channel ID');
         }
 
-        const channel = new PublicKey(channelId);
+        const channel = createAddress(channelId);
 
         const participant = options.participant
           ? validatePublicKey(options.participant, 'participant')
-          : findAgentPDA(wallet.publicKey)[0];
+          : findAgentPDA(wallet.address)[0];
         
         console.log('🤝 Joining channel with compression...');
         
@@ -292,7 +292,7 @@ export function createZKCompressionCommand(): Command {
     .option('-t, --timestamp <timestamp>', 'Custom sync timestamp')
     .action(async (channelId, messageHashes, options) => {
       try {
-        const wallet = getWallet(options.keypair);
+        const wallet = await getWallet(options.keypair);
         const client = await createClient(undefined, wallet);
         
         if (!validatePublicKey(channelId)) {
@@ -327,7 +327,7 @@ export function createZKCompressionCommand(): Command {
           }
         }
 
-        const channel = new PublicKey(channelId);
+        const channel = createAddress(channelId);
         const timestamp = options.timestamp ? parseInt(options.timestamp) : Date.now();
         
         console.log('🔄 Batch syncing compressed messages...');
@@ -368,14 +368,14 @@ export function createZKCompressionCommand(): Command {
     .argument('<channel-id>', 'Channel public key')
     .action(async (channelId, options) => {
       try {
-        const wallet = getWallet(options.keypair);
+        const wallet = await getWallet(options.keypair);
         const client = await createClient(undefined, wallet);
         
         if (!validatePublicKey(channelId)) {
           throw new Error('Invalid channel ID');
         }
 
-        const channel = new PublicKey(channelId);
+        const channel = createAddress(channelId);
         
         console.log('📊 Fetching channel statistics...');
         
@@ -516,7 +516,7 @@ export function createZKCompressionCommand(): Command {
     .option('--test', 'Test IPFS connection')
     .action(async (options) => {
       try {
-        const wallet = getWallet(options.keypair);
+        const wallet = await getWallet(options.keypair);
         const client = await createClient(undefined, wallet);
         
         if (options.test) {

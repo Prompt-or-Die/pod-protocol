@@ -1,11 +1,11 @@
-import { PublicKey } from "@solana/web3.js";
+import { address as createAddress, type Address } from "@solana/web3.js";
 
 export class AgentValidators {
-  static validateAgentAddress = (address: string): void => {
+  static validateAgentAddress = (addressString: string): Address => {
     try {
-      new PublicKey(address);
+      return createAddress(addressString);
     } catch {
-      throw new Error(`Invalid agent address: ${address}`);
+      throw new Error(`Invalid agent address: ${addressString}`);
     }
   };
 

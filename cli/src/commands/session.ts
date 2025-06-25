@@ -5,7 +5,7 @@
 
 import { Command } from 'commander';
 import { PodComClient } from '@pod-protocol/sdk';
-import { PublicKey } from '@solana/web3.js';
+import { address as createAddress, type Address } from '@solana/web3.js';
 import { createClient, getWallet } from '../utils/client.js';
 import { getCliConfig } from '../utils/config.js';
 import { createSpinner, showSuccess, formatValue } from '../utils/shared.js';
@@ -26,7 +26,7 @@ export function createSessionCommand(): Command {
       try {
         const globalOpts = cmd.parent?.opts() || {};
         const client = await createClient(globalOpts.network);
-        const wallet = getWallet(globalOpts.keypair);
+        const wallet = await getWallet(globalOpts.keypair);
         await client.initialize(wallet);
 
         const duration = parseInt(options.duration);
@@ -34,7 +34,7 @@ export function createSessionCommand(): Command {
         
         // Parse program IDs
         const targetPrograms = options.programs 
-          ? options.programs.split(',').map((p: string) => new PublicKey(p.trim()))
+          ? options.programs.split(',').map((p: string) => createAddress(p.trim()))
           : [client.getProgramId()];
 
         const sessionConfig = {
@@ -53,10 +53,10 @@ export function createSessionCommand(): Command {
         const session = await client.sessionKeys.createSessionKey(sessionConfig);
         
         showSuccess(spinner, 'Session key created successfully!', {
-          'Session ID': session.sessionKeypair.publicKey.toBase58(),
+          'Session ID': String(session.sessionKeypair.address),
           'Expires': new Date(session.config.expiryTime).toLocaleString(),
           'Max Uses': session.usesRemaining || 'unlimited',
-          'Session Token Account': session.sessionTokenAccount.toBase58()
+          'Session Token Account': String(session.sessionTokenAccount)
         });
         
         console.log(chalk.blue('Session key saved to local config for CLI usage'));
@@ -75,7 +75,7 @@ export function createSessionCommand(): Command {
       try {
         const globalOpts = cmd.parent?.opts() || {};
         const client = await createClient(globalOpts.network);
-        const wallet = getWallet(globalOpts.keypair);
+        const wallet = await getWallet(globalOpts.keypair);
         await client.initialize(wallet);
 
         const sessions = client.sessionKeys.getActiveSessions();
@@ -88,10 +88,10 @@ export function createSessionCommand(): Command {
         console.log(chalk.green(`Found ${sessions.length} active session(s):`));
         
         sessions.forEach((session, index) => {
-          console.log(`\n${index + 1}. Session ID: ${formatValue(session.sessionKeypair.publicKey.toBase58(), 'address')}`);
+          console.log(`\n${index + 1}. Session ID: ${formatValue(String(session.sessionKeypair.address), 'address')}`);
           console.log(`   Expires: ${new Date(session.config.expiryTime).toLocaleString()}`);
           console.log(`   Uses Remaining: ${session.usesRemaining || 'unlimited'}`);
-          console.log(`   Token Account: ${formatValue(session.sessionTokenAccount.toBase58(), 'address')}`);
+          console.log(`   Token Account: ${formatValue(String(session.sessionTokenAccount), 'address')}`);
         });
         
       } catch (err: any) {
@@ -169,7 +169,7 @@ export function createSessionCommand(): Command {
       try {
         const globalOpts = cmd.parent?.opts() || {};
         const client = await createClient(globalOpts.network);
-        const wallet = getWallet(globalOpts.keypair);
+        const wallet = await getWallet(globalOpts.keypair);
         await client.initialize(wallet);
 
         const sessionId = options.sessionId;
@@ -196,7 +196,7 @@ export function createSessionCommand(): Command {
       try {
         const globalOpts = cmd.parent?.opts() || {};
         const client = await createClient(globalOpts.network);
-        const wallet = getWallet(globalOpts.keypair);
+        const wallet = await getWallet(globalOpts.keypair);
         await client.initialize(wallet);
 
         const duration = parseInt(options.duration);
@@ -205,7 +205,7 @@ export function createSessionCommand(): Command {
         const session = await client.sessionKeys.createMessagingSession(duration);
         
         showSuccess(spinner, 'Messaging session key created successfully!', {
-          'Session ID': session.sessionKeypair.publicKey.toBase58(),
+          'Session ID': String(session.sessionKeypair.address),
           'Expires': new Date(session.config.expiryTime).toLocaleString(),
           'Max Uses': `${session.usesRemaining} messages`
         });

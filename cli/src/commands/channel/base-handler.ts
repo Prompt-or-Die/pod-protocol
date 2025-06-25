@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { PublicKey } from "@solana/web3.js";
+import { address as createAddress, type Address } from "@solana/web3.js";
 import {
   handleDryRun,
   createSpinner,
@@ -14,11 +14,11 @@ export abstract class BaseChannelHandler {
     this.context = context;
   }
 
-  protected createPublicKey(id: string): PublicKey {
+  protected createAddress(id: string): Address {
     try {
-      return new PublicKey(id);
+      return createAddress(id);
     } catch {
-      throw new Error(`Invalid public key: ${id}`);
+      throw new Error(`Invalid address: ${id}`);
     }
   }
 

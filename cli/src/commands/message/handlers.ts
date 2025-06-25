@@ -53,7 +53,7 @@ export class MessageHandlers {
 
     if (
       handleDryRun(this.context.globalOpts, spinner, "Message send", {
-        Recipient: recipientKey.toBase58(),
+        Recipient: String(recipientKey),
         Type: messageType,
         Content:
           validatedPayload.slice(0, 100) +
@@ -73,7 +73,7 @@ export class MessageHandlers {
 
     showSuccess(spinner, "Message sent successfully!", {
       Transaction: signature,
-      Recipient: recipientKey.toBase58(),
+      Recipient: String(recipientKey),
       Type: messageType,
     });
   }
