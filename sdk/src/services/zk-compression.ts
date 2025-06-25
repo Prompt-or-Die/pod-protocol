@@ -867,4 +867,177 @@ export class ZKCompressionService extends BaseService {
       this.batchTimer = undefined;
     }
   }
+
+  /**
+   * Compress a message (wrapper for broadcastCompressedMessage)
+   * @param channelId Channel ID to send message to
+   * @param content Message content
+   * @param options Optional compression options
+   * @returns Compression result with signature and IPFS hash
+   */
+  async compressMessage(
+    channelId: string,
+    content: string,
+    options: {
+      messageType?: string;
+      attachments?: string[];
+      metadata?: Record<string, any>;
+      replyTo?: string;
+    } = {}
+  ): Promise<{
+    signature: string;
+    ipfsHash: string;
+    compressedHash: string;
+  }> {
+    if (!this.wallet) {
+      throw new Error('Wallet not set. Call setWallet() first.');
+    }
+
+    const result = await this.broadcastCompressedMessage(
+      channelId,
+      content,
+      this.wallet,
+      options.messageType || 'Text',
+      options.attachments || [],
+      options.metadata || {},
+      options.replyTo
+    );
+
+    return {
+      signature: result.signature,
+      ipfsHash: result.ipfsResult.hash,
+      compressedHash: result.compressedAccount.hash
+    };
+  }
+
+  /**
+   * Get compressed messages (wrapper for queryCompressedMessages)
+   * @param channelId Channel ID to query
+   * @param options Query options
+   * @returns Array of compressed messages
+   */
+  async getCompressedMessages(
+    channelId: string,
+    options: {
+      limit?: number;
+      offset?: number;
+      sender?: string;
+      after?: Date;
+      before?: Date;
+    } = {}
+  ): Promise<{
+    messages: CompressedChannelMessage[];
+    totalCount: number;
+    hasMore: boolean;
+  }> {
+    const messages = await this.queryCompressedMessages(channelId, options);
+    
+    return {
+      messages,
+      totalCount: messages.length,
+      hasMore: messages.length === (options.limit || 10)
+    };
+  }
+
+  /**
+   * Join a channel (wrapper for joinChannelCompressed)
+   * @param options Channel join options
+   * @returns Join result
+   */
+  async joinChannel(options: {
+    channelPDA: string;
+    displayName?: string;
+    avatar?: string;
+    permissions?: string[];
+  }): Promise<{
+    signature: string;
+    compressedAccount: CompressedAccount;
+  }> {
+    if (!this.wallet) {
+      throw new Error('Wallet not set. Call setWallet() first.');
+    }
+
+    const result = await this.joinChannelCompressed(
+      options.channelPDA,
+      this.wallet.address || this.wallet.publicKey?.toString() || 'participant',
+      this.wallet,
+      options.displayName,
+      options.avatar,
+      options.permissions || []
+    );
+
+    return {
+      signature: result.signature,
+      compressedAccount: result.compressedAccount
+    };
+  }
+
+  /**
+   * Sync messages to the blockchain
+   * @param options Sync options
+   * @returns Sync result
+   */
+  async syncMessages(options: {
+    channel: string;
+    messageHashes: string[];
+    timestamp?: number;
+  }): Promise<BatchCompressionResult> {
+    if (!this.wallet) {
+      throw new Error('Wallet not set. Call setWallet() first.');
+    }
+
+    return await this.batchSyncMessages(
+      options.channel,
+      options.messageHashes,
+      this.wallet,
+      options.timestamp
+    );
+  }
+
+  /**
+   * Get channel statistics
+   * @param channelId Channel ID
+   * @returns Channel statistics
+   */
+  async getStats(channelId: string): Promise<{
+    totalMessages: number;
+    totalParticipants: number;
+    storageSize: number;
+    compressionRatio: number;
+  }> {
+    return await this.getChannelStats(channelId);
+  }
+
+  /**
+   * Get compression service status
+   * @returns Service status
+   */
+  getStatus(): {
+    queueSize: number;
+    maxBatchSize: number;
+    enableBatching: boolean;
+    nextBatchIn?: number;
+  } {
+    return this.getBatchStatus();
+  }
+
+  /**
+   * Flush pending batch operations
+   * @returns Flush result
+   */
+  async flush(): Promise<any> {
+    return await this.flushBatch();
+  }
+
+  /**
+   * Get message data with content verification
+   * @param message Compressed message
+   * @returns Message data with verification status
+   */
+  async getMessageData(message: CompressedChannelMessage): Promise<{
+    content: any;
+    verified: boolean;
+  }> {
+    return await this.getMessageContent(message);
+  }
 }

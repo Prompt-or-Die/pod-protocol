@@ -71,7 +71,7 @@ export async function generateNewKeyPair(): Promise<KeyPairSigner> {
 
 // Wallet adapter for Web3.js v2.0 compatibility with Anchor
 export interface NodeWallet {
-  payer: KeyPairSigner;
+  payer: any; // Compatibility layer for legacy Keypair interface
   publicKey: Address;
   signTransaction(transaction: any): Promise<any>;
   signAllTransactions(transactions: any[]): Promise<any[]>;
@@ -81,8 +81,15 @@ export interface NodeWallet {
  * Create a NodeWallet-compatible adapter from Web3.js v2.0 KeyPairSigner
  */
 export function createWalletAdapter(keypair: KeyPairSigner): NodeWallet {
+  // Create a legacy-compatible payer object
+  const legacyPayer = {
+    _keypair: keypair,
+    publicKey: keypair.address,
+    secretKey: new Uint8Array(64) // Placeholder for compatibility
+  };
+
   return {
-    payer: keypair,
+    payer: legacyPayer,
     publicKey: keypair.address,
     
     async signTransaction(transaction: any): Promise<any> {

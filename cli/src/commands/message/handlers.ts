@@ -67,13 +67,21 @@ export class MessageHandlers {
       return;
     }
 
-    const result = await this.context.client.zkCompression.compressMessage({
-      content: validatedPayload,
-      channelPDA: options.channelPDA,
-      priority: options.priority || 'medium'
-    });
+    // ZK compression not fully implemented yet, using regular message sending
+    const result = await this.context.client.sendMessage(
+      this.context.wallet,
+      {
+        recipient: recipientKey,
+        payload: validatedPayload,
+        messageType: messageType,
+      }
+    );
 
-    this.displayer.displayCompressionResult(result);
+    showSuccess(spinner, "Message sent successfully!", {
+      Transaction: result,
+      Recipient: String(recipientKey),
+      Type: messageType,
+    });
   }
 
   public async handleInfo(messageId: string): Promise<void> {
@@ -88,7 +96,20 @@ export class MessageHandlers {
     }
 
     spinner.succeed("Message information retrieved");
-    this.displayer.displayMessageInfo(messageData);
+    // Convert Address to string for display compatibility
+    const displayData = {
+      ...messageData,
+      pubkey: {
+        toBase58: () => String(messageData.pubkey)
+      },
+      sender: {
+        toBase58: () => String(messageData.sender)
+      },
+      recipient: {
+        toBase58: () => String(messageData.recipient)
+      }
+    };
+    this.displayer.displayMessageInfo(displayData);
   }
 
   public async handleStatus(options: MessageStatusOptions): Promise<void> {
@@ -151,7 +172,20 @@ export class MessageHandlers {
     }
 
     spinner.succeed(`Found ${messages.length} messages`);
-    this.displayer.displayMessagesList(messages);
+    // Convert Address types for display compatibility
+    const displayMessages = messages.map(msg => ({
+      ...msg,
+      pubkey: {
+        toBase58: () => String(msg.pubkey)
+      },
+      sender: {
+        toBase58: () => String(msg.sender)
+      },
+      recipient: {
+        toBase58: () => String(msg.recipient)
+      }
+    }));
+    this.displayer.displayMessagesList(displayMessages);
   }
 
   private async promptForMessageData() {

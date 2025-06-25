@@ -456,4 +456,70 @@ export class IPFSService extends BaseService {
       return false;
     }
   }
+
+  /**
+   * Get content from IPFS (wrapper for retrieveJSON)
+   * @param hash IPFS hash to retrieve
+   * @returns Content data
+   */
+  async getContent(hash: string): Promise<any> {
+    try {
+      return await this.retrieveJSON(hash);
+    } catch (error) {
+      // If JSON retrieval fails, try to get as raw file
+      try {
+        const buffer = await this.retrieveFile(hash);
+        return buffer.toString('utf8');
+      } catch (fileError) {
+        throw new Error(`Failed to get content from IPFS: ${error}`);
+      }
+    }
+  }
+
+  /**
+   * Create a hash for content (wrapper for createContentHash)
+   * @param content Content to hash
+   * @returns Hash string
+   */
+  createHash(content: string): string {
+    return IPFSService.createContentHash(content);
+  }
+
+  /**
+   * Get IPFS service information
+   * @returns Service information
+   */
+  async getInfo(): Promise<{
+    version: string;
+    status: string;
+    nodes: number;
+    storage: {
+      used: number;
+      available: number;
+    };
+  }> {
+    try {
+      const nodeInfo = await this.getNodeInfo();
+      
+      return {
+        version: nodeInfo?.agentVersion || 'helia',
+        status: this.config.disabled ? 'disabled' : 'active',
+        nodes: 1,
+        storage: {
+          used: 0, // Would need to implement actual storage calculation
+          available: -1 // Unlimited for now
+        }
+      };
+    } catch (error) {
+      return {
+        version: 'unknown',
+        status: this.config.disabled ? 'disabled' : 'error',
+        nodes: 0,
+        storage: {
+          used: 0,
+          available: 0
+        }
+      };
+    }
+  }
 }

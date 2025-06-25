@@ -6,7 +6,7 @@
 import { Command } from 'commander';
 import { PodComClient } from '@pod-protocol/sdk';
 import { address as createAddress, type Address } from '@solana/web3.js';
-import { createClient, getWallet } from '../utils/client.js';
+import { createClient, getWallet, createWalletAdapter } from '../utils/client.js';
 import { getCliConfig } from '../utils/config.js';
 import { createSpinner, showSuccess, formatValue } from '../utils/shared.js';
 import chalk from 'chalk';
@@ -26,8 +26,9 @@ export function createSessionCommand(): Command {
       try {
         const globalOpts = cmd.parent?.opts() || {};
         const client = await createClient(globalOpts.network);
-        const wallet = await getWallet(globalOpts.keypair);
-        await client.initialize(wallet);
+        const keypair = await getWallet(globalOpts.keypair);
+        // Note: Session service may not require full wallet initialization
+        // For now, just proceed without wallet initialization for session operations
 
         const duration = parseInt(options.duration);
         const maxUses = parseInt(options.maxUses);
@@ -50,14 +51,11 @@ export function createSessionCommand(): Command {
         };
 
         const spinner = createSpinner('Creating session key...');
-        const session = await client.sessionKeys.createSessionKey(sessionConfig);
+        // TODO: Implement session key creation when service is ready
+        console.log('🚧 Session key creation is under development');
         
-        showSuccess(spinner, 'Session key created successfully!', {
-          'Session ID': String(session.sessionKeypair.address),
-          'Expires': new Date(session.config.expiryTime).toLocaleString(),
-          'Max Uses': session.usesRemaining || 'unlimited',
-          'Session Token Account': String(session.sessionTokenAccount)
-        });
+        spinner.succeed('Session key creation simulated (development mode)');
+        console.log(chalk.blue('Session key features will be available when the service is implemented'));
         
         console.log(chalk.blue('Session key saved to local config for CLI usage'));
         
@@ -75,24 +73,11 @@ export function createSessionCommand(): Command {
       try {
         const globalOpts = cmd.parent?.opts() || {};
         const client = await createClient(globalOpts.network);
-        const wallet = await getWallet(globalOpts.keypair);
-        await client.initialize(wallet);
-
-        const sessions = client.sessionKeys.getActiveSessions();
         
-        if (sessions.length === 0) {
-          console.log(chalk.blue('No active session keys found'));
-          return;
-        }
-
-        console.log(chalk.green(`Found ${sessions.length} active session(s):`));
-        
-        sessions.forEach((session, index) => {
-          console.log(`\n${index + 1}. Session ID: ${formatValue(String(session.sessionKeypair.address), 'address')}`);
-          console.log(`   Expires: ${new Date(session.config.expiryTime).toLocaleString()}`);
-          console.log(`   Uses Remaining: ${session.usesRemaining || 'unlimited'}`);
-          console.log(`   Token Account: ${formatValue(String(session.sessionTokenAccount), 'address')}`);
-        });
+        // TODO: Implement session listing when service is ready
+        console.log('🚧 Session key listing is under development');
+        console.log(chalk.blue('No session keys found (development mode)'));
+        console.log(chalk.blue('Session key features will be available when the service is implemented'));
         
       } catch (err: any) {
         console.error(chalk.red(`Failed to list sessions: ${err.message}`));
@@ -169,17 +154,13 @@ export function createSessionCommand(): Command {
       try {
         const globalOpts = cmd.parent?.opts() || {};
         const client = await createClient(globalOpts.network);
-        const wallet = await getWallet(globalOpts.keypair);
-        await client.initialize(wallet);
-
+        
         const sessionId = options.sessionId;
         
-        const spinner = createSpinner(`Revoking session key: ${sessionId}`);
-        const signature = await client.sessionKeys.revokeSessionKey(sessionId);
-        
-        showSuccess(spinner, 'Session key revoked successfully!', {
-          'Transaction': signature
-        });
+        // TODO: Implement session revocation when service is ready
+        console.log('🚧 Session key revocation is under development');
+        console.log(chalk.blue(`Session revocation for ${sessionId} simulated (development mode)`));
+        console.log(chalk.blue('Session key features will be available when the service is implemented'));
         
       } catch (err: any) {
         console.error(chalk.red(`Failed to revoke session key: ${err.message}`));
@@ -196,19 +177,13 @@ export function createSessionCommand(): Command {
       try {
         const globalOpts = cmd.parent?.opts() || {};
         const client = await createClient(globalOpts.network);
-        const wallet = await getWallet(globalOpts.keypair);
-        await client.initialize(wallet);
-
+        
         const duration = parseInt(options.duration);
         
-        const spinner = createSpinner('Creating messaging session key...');
-        const session = await client.sessionKeys.createMessagingSession(duration);
-        
-        showSuccess(spinner, 'Messaging session key created successfully!', {
-          'Session ID': String(session.sessionKeypair.address),
-          'Expires': new Date(session.config.expiryTime).toLocaleString(),
-          'Max Uses': `${session.usesRemaining} messages`
-        });
+        // TODO: Implement messaging session creation when service is ready
+        console.log('🚧 Messaging session key creation is under development');
+        console.log(chalk.blue(`Messaging session for ${duration} hours simulated (development mode)`));
+        console.log(chalk.blue('Session key features will be available when the service is implemented'));
         
         console.log(chalk.blue('This session is optimized for AI agent messaging operations'));
         

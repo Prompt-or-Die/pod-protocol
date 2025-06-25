@@ -160,9 +160,9 @@ export function createBundleCommand(): Command {
   bundleCmd
     .command('tip')
     .description('Get optimal bundle tip amount')
-    .action(async (cmd) => {
+    .action(async (options, cmd) => {
       try {
-        const globalOpts = cmd.optsWithGlobals();
+        const globalOpts = cmd?.parent?.opts() || {};
         const client = createClient(globalOpts.network || 'devnet');
 
         // Mock priority fee since the method doesn't exist yet
@@ -174,7 +174,7 @@ export function createBundleCommand(): Command {
       } catch (error: any) {
         console.error(chalk.red('Error getting tip amount:'), error.message);
       }
-    })
+    });
 
   // Check bundle status
   bundleCmd
@@ -183,7 +183,7 @@ export function createBundleCommand(): Command {
     .requiredOption('-b, --bundle-id <bundleId>', 'Bundle ID to check')
     .action(async (options, cmd) => {
       try {
-        const globalOpts = cmd.optsWithGlobals();
+        const globalOpts = cmd?.parent?.opts() || {};
         const bundleId = options.bundleId;
         
         // Get bundle status

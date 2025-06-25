@@ -101,6 +101,21 @@ export function showSuccess(
 }
 
 /**
+ * Show error message with spinner
+ */
+export function showError(
+  spinner: Ora,
+  message: string,
+  error?: Error | string,
+): void {
+  spinner.fail(message);
+  if (error) {
+    const errorMessage = error instanceof Error ? error.message : error;
+    console.log(chalk.red(`Error: ${errorMessage}`));
+  }
+}
+
+/**
  * Common table configuration
  */
 export const getTableConfig = (title: string) => ({
