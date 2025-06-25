@@ -126,7 +126,7 @@ export class AgentCommands {
           const spinner = ora("Updating agent...").start();
           const wallet = await getWallet(globalOpts.keypair);
           const keypair = await getKeypair(globalOpts.keypair);
-          const client = await createClient(globalOpts.network, wallet);
+          const client = createClient({ network: globalOpts.network });
           const updateOptions = this.prepareUpdateOptions(options);
 
           if (Object.keys(updateOptions).length === 0) {

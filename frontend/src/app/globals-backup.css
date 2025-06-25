@@ -189,6 +189,11 @@
     opacity: 0.1;
   }
 
+  /* Enhanced focus styles */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:ring-offset-2 focus:ring-offset-gray-900;
+  }
+
   /* Utility animations */
   .animate-slide-up {
     animation: slideUp 0.3s ease-out;
@@ -273,18 +278,117 @@
   }
 }
 
-/* Mobile responsiveness */
+/* Wallet adapter customization */
+.wallet-adapter-button {
+  @apply !bg-gradient-to-r !from-purple-600 !to-blue-600 !hover:from-purple-700 !hover:to-blue-700 !border-0 !rounded-lg !font-medium !transition-all !duration-200;
+}
+
+.wallet-adapter-button-trigger {
+  @apply !bg-gradient-to-r !from-purple-600 !to-blue-600 !hover:from-purple-700 !hover:to-blue-700;
+}
+
+/* React Hot Toast customization */
+.react-hot-toast > div {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Enhanced mobile responsiveness */
 @media (max-width: 768px) {
   .mobile-padding {
-    padding-left: 1rem;
-    padding-right: 1rem;
+    @apply px-4;
   }
   
   .mobile-text {
-    font-size: 0.875rem;
+    @apply text-sm;
   }
   
   .mobile-hidden {
-    display: none;
+    @apply hidden;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+  }
+}
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-pod-surface;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-pod-violet rounded;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-pod-violet-light;
+  }
+
+  /* PoD Protocol specific component styles */
+  .btn-primary {
+    @apply bg-gradient-to-r from-pod-violet to-pod-blue text-white border-0 px-6 py-3 rounded-lg font-medium transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-lg;
+    box-shadow: 0 4px 12px rgba(107, 70, 193, 0.3);
+  }
+
+  .btn-secondary {
+    @apply bg-pod-surface text-pod-text border border-pod-border px-6 py-3 rounded-lg font-medium transition-all duration-200 cursor-pointer hover:bg-pod-surface-light hover:border-pod-border-light;
+  }
+
+  .card {
+    @apply bg-pod-surface border border-pod-border rounded-xl p-6 transition-all duration-200 hover:border-pod-border-light;
+  }
+
+  .input-field {
+    @apply bg-pod-surface border border-pod-border rounded-lg px-4 py-3 text-pod-text placeholder-pod-text-muted focus:outline-none focus:border-pod-violet focus:ring-2 focus:ring-pod-violet/20 transition-all duration-200;
+  }
+
+  /* Status indicators */
+  .status-online {
+    @apply text-pod-green;
+  }
+
+  .status-offline {
+    @apply text-pod-gray;
+  }
+
+  .status-busy {
+    @apply text-pod-yellow;
+  }
+
+  .status-error {
+    @apply text-pod-red;
+  }
+
+  /* Loading states */
+  .loading {
+    @apply opacity-60 pointer-events-none;
+  }
+
+  .skeleton {
+    @apply bg-gradient-to-r from-pod-surface via-pod-surface-light to-pod-surface bg-[length:200%_100%] animate-pulse;
+  }
+
+  /* Typography */
+  .text-gradient {
+    @apply bg-gradient-to-r from-pod-violet to-pod-blue bg-clip-text text-transparent;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+  }
+
+  /* Simple spinner */
+  .spinner {
+    @apply w-8 h-8 border-4 border-pod-violet border-t-transparent rounded-full animate-spin;
   }
 }

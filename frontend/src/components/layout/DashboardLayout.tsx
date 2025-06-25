@@ -1,23 +1,17 @@
 'use client';
 
 import { ReactNode, useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Bars3Icon, 
   XMarkIcon,
-  HomeIcon,
-  ChatBubbleLeftRightIcon,
-  UserGroupIcon,
-  CogIcon,
-  BellIcon,
-  MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import Link from 'next/link';
 import useStore from '../store/useStore';
 import MatrixRain from '../ui/MatrixRain';
 import AsyncErrorBoundary from '../AsyncErrorBoundary';
 import ResponsiveContainer from '../ui/ResponsiveContainer';
+import { Sidebar, TopNav } from '../ui/Navigation';
+import { EnhancedToaster } from '../ui/Toast';
 import { cn } from '../../lib/utils';
 
 interface DashboardLayoutProps {

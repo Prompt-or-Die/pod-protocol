@@ -46,7 +46,7 @@ export function createCommandHandler<T extends any[]>(
       if (!globalOpts.dryRun) {
         wallet = await getWallet(globalOpts.keypair);
         keypair = await getKeypair(globalOpts.keypair);
-        client = await createClient(globalOpts.network, wallet);
+        client = createClient({ network: globalOpts.network });
       }
 
       await handler(client as any, keypair, globalOpts, ...commandArgs);
@@ -181,7 +181,7 @@ export function createSafeCommandHandler(
     const globalOpts = getCommandOpts(cmd);
 
     await safeExecute(async () => {
-      const client = await createClient(globalOpts.network);
+      const client = createClient({ network: globalOpts.network });
       const wallet = await getWallet(globalOpts.keypair);
       await handler(client as any, wallet, globalOpts, ...args.slice(0, -1));
     }, description);

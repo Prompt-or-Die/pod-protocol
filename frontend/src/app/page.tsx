@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/router';
 import { 
   PlusIcon,
   MagnifyingGlassIcon,
@@ -13,13 +12,18 @@ import {
   LockClosedIcon,
   ClockIcon,
 } from '@heroicons/react/24/outline';
-import DashboardLayout from '../components/layout/DashboardLayout';
+import EnhancedDashboardLayout from '../components/layout/EnhancedDashboardLayout';
 import useStore from '../components/store/useStore';
 import { Channel, ChannelType } from '../components/store/types';
 import usePodClient from '../hooks/usePodClient';
 import LoadingState from '../components/ui/LoadingState';
 import { SkeletonChannelList } from '../components/ui/SkeletonLoader';
 import ResponsiveContainer from '../components/ui/ResponsiveContainer';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import Modal, { ModalContent, ModalFooter } from '../components/ui/Modal';
+import { showToast } from '../components/ui/Toast';
 import { cn } from '../lib/utils';
 
 const ChannelsPage = () => {
