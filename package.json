@@ -7,10 +7,11 @@
   "main": "index.js",
   "bin": {
     "pod": "cli/dist/index.js",
-    "pod-protocol-setup": "interactive-setup.js"
+    "pod-protocol-setup": "interactive-setup.js",
+    "pod-installer": "pod-installer.js"
   },
   "scripts": {
-    "postinstall": "node -e \"console.log('\\n🎉 PoD Protocol initiated successfully!\\n'); console.log('To complete setup and select your SDK, run: npx pod-protocol-setup\\n');\"",
+    "postinstall": "node -e \"console.log('\\n🚀 PoD Protocol BADASS Installation Complete!\\n'); console.log('🔥 For the ULTIMATE setup experience, run: npx pod-installer\\n'); console.log('⚡ Or for quick setup: npx pod-protocol-setup\\n');\"",
     "setup": "node scripts/setup-package-managers.js",
     "build": "node scripts/build.js",
     "build:safe": "node scripts/build.js anchor",
@@ -85,7 +86,7 @@
     "frontend"
   ],
   "dependencies": {
-    "@coral-xyz/anchor": "0.31.2",
+    "@coral-xyz/anchor": "0.31.1",
     "@inquirer/checkbox": "4.1.8",
     "@inquirer/core": "10.1.13",
     "@pod-protocol/cli": "1.4.4",
@@ -97,6 +98,8 @@
     "commander": "14.0.0",
     "eslint": "9.29.0",
     "eslint-config-next": "15.3.4",
+    "figlet": "^1.7.0",
+    "gradient-string": "^2.0.2",
     "inquirer": "12.6.3",
     "keccak": "3.0.4",
     "ora": "8.2.0",
@@ -107,7 +110,7 @@
     "yaml": "^2.3.5"
   },
   "devDependencies": {
-    "@coral-xyz/anchor-cli": "0.31.2",
+    "@coral-xyz/anchor-cli": "0.31.1",
     "@jest/globals": "30.0.2",
     "@rollup/plugin-commonjs": "28.0.6",
     "@rollup/plugin-json": "6.1.0",

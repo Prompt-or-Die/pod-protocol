@@ -81,6 +81,21 @@ export enum BannerSize {
   NONE = "none",
 }
 
+// Black terminal styling with white, purple, and crimson colors
+export const BLACK_TERMINAL_COLORS = {
+  primary: chalk.hex('#9D4EDD'), // Purple
+  secondary: chalk.hex('#DC143C'), // Crimson
+  success: chalk.hex('#00FF7F'), // Spring green for visibility
+  warning: chalk.hex('#FFD700'), // Gold for visibility
+  error: chalk.hex('#DC143C'), // Crimson
+  info: chalk.hex('#9D4EDD'), // Purple
+  muted: chalk.hex('#808080'), // Gray
+  accent: chalk.white.bold, // White
+  dim: chalk.hex('#696969'), // Dim gray
+  background: '\x1b[40m', // Black background ANSI code
+  reset: '\x1b[0m', // Reset ANSI code
+} as const;
+
 export const BRAND_COLORS = {
   primary: chalk.magenta,
   secondary: chalk.cyan,
@@ -127,11 +142,50 @@ export const DIVIDERS = {
 /**
  * Display the original working banner
  */
+/**
+ * Enable black terminal mode with proper styling
+ */
+let blackTerminalMode = false;
+
+export function enableBlackTerminal(): void {
+  blackTerminalMode = true;
+  // Try to set terminal background to black
+  process.stdout.write('\x1b[40m\x1b[2J\x1b[H');
+}
+
+export function disableBlackTerminal(): void {
+  blackTerminalMode = false;
+  process.stdout.write('\x1b[0m');
+}
+
+export function isBlackTerminalMode(): boolean {
+  return blackTerminalMode;
+}
+
+/**
+ * Get appropriate colors based on terminal mode
+ */
+export function getColors() {
+  return blackTerminalMode ? BLACK_TERMINAL_COLORS : BRAND_COLORS;
+}
+
 export function showBanner(size: BannerSize = BannerSize.FULL): void {
+  const colors = getColors();
+  
+  if (blackTerminalMode) {
+    // Clear screen and set black background
+    console.clear();
+    process.stdout.write('\x1b[40m\x1b[2J\x1b[H');
+  }
+  
   switch (size) {
     case BannerSize.FULL:
-      console.log(POD_BANNER);
-      console.log(DIVIDERS.thin);
+      if (blackTerminalMode) {
+        showBlackTerminalBanner();
+      } else {
+        console.log(POD_BANNER);
+        console.log(DIVIDERS.thin);
+      }
       break;
     case BannerSize.COMPACT:
       console.log(PROMPT_OR_DIE_COMPACT);
@@ -208,12 +262,13 @@ export function statusMessage(
   message: string,
   details?: string,
 ): string {
-  const color = BRAND_COLORS[type];
+  const colors = getColors();
+  const color = colors[type];
   const icon = ICONS[type];
 
   let output = `${icon} ${color(message)}`;
   if (details) {
-    output += `\n   ${BRAND_COLORS.dim(details)}`;
+    output += `\n   ${colors.dim(details)}`;
   }
 
   return output;
@@ -286,5 +341,105 @@ export function commandExample(command: string, description: string): string {
  * Create a branded spinner message
  */
 export function spinnerMessage(message: string): string {
-  return `${ICONS.loading} ${BRAND_COLORS.info(message)}`;
+  const colors = getColors();
+  return `${ICONS.loading} ${colors.info(message)}`;
+}
+
+/**
+ * Black terminal specific banner
+ */
+function showBlackTerminalBanner(): void {
+  const purple = chalk.hex('#9D4EDD');
+  const crimson = chalk.hex('#DC143C');
+  const white = chalk.white;
+  
+  console.log(purple.bold(
+`██████╗  ██████╗ ██████╗     ██████╗ ██████╗  ██████╗ ████████╗ ██████╗  ██████╗ ██████╗ ██╗     
+██╔══██╗██╔═══██╗██╔══██╗    ██╔══██╗██╔══██╗██╔═══██╗╚══██╔══╝██╔═══██╗██╔════╝██╔═══██╗██║     
+██████╔╝██║   ██║██║  ██║    ██████╔╝██████╔╝██║   ██║   ██║   ██║   ██║██║     ██║   ██║██║     
+██╔═══╝ ██║   ██║██║  ██║    ██╔═══╝ ██╔══██╗██║   ██║   ██║   ██║   ██║██║     ██║   ██║██║     
+██║     ╚██████╔╝██████╔╝    ██║     ██║  ██║╚██████╔╝   ██║   ╚██████╔╝╚██████╗╚██████╔╝███████╗
+╚═╝      ╚═════╝ ╚═════╝     ╚═╝     ╚═╝  ╚═╝ ╚═════╝    ╚═╝    ╚═════╝  ╚═════╝ ╚═════╝ ╚══════╝`
+  ));
+  
+  console.log(white.bold("\n                    The Ultimate AI Agent Communication Protocol"));
+  console.log(crimson("                          Where prompts become prophecy ⚡️"));
+  console.log(purple("─".repeat(80)));
+}
+
+/**
+ * Enhanced status message for black terminal
+ */
+export function blackTerminalStatus(
+  type: "success" | "error" | "warning" | "info",
+  message: string,
+  details?: string,
+): string {
+  if (!blackTerminalMode) {
+    return statusMessage(type, message, details);
+  }
+  
+  const colors = BLACK_TERMINAL_COLORS;
+  const color = colors[type];
+  const icon = ICONS[type];
+
+  let output = `${icon} ${color(message)}`;
+  if (details) {
+    output += `\n   ${colors.dim(details)}`;
+  }
+
+  return output;
+}
+
+/**
+ * Enhanced command header for black terminal
+ */
+export function blackTerminalCommandHeader(command: string, subtitle?: string): void {
+  if (!blackTerminalMode) {
+    showCommandHeader(command, subtitle);
+    return;
+  }
+  
+  const purple = chalk.hex('#9D4EDD');
+  const crimson = chalk.hex('#DC143C');
+  const white = chalk.white;
+  
+  console.log(purple("▄▄▄") + " " + white.bold(`🚀 ${command.toUpperCase()} COMMAND`) + " " + crimson("▄▄▄"));
+  if (subtitle) {
+    console.log(purple("│") + " " + white(subtitle) + " " + purple("│"));
+  }
+  console.log(purple("▀".repeat(30)));
+  console.log();
+}
+
+/**
+ * Black terminal compatible info box
+ */
+export function blackTerminalInfoBox(
+  title: string,
+  content: string[],
+  type: "info" | "warning" | "error" = "info",
+): string {
+  if (!blackTerminalMode) {
+    return infoBox(title, content, type);
+  }
+  
+  const colors = BLACK_TERMINAL_COLORS;
+  const color = colors[type];
+  const icon = ICONS[type];
+
+  const maxWidth = Math.max(title.length, ...content.map((line) => line.length)) + 4;
+  const border = "─".repeat(maxWidth);
+
+  let box = `${color("┌" + border + "┐")}\n`;
+  box += `${color("│")} ${icon} ${chalk.white.bold(title)}${" ".repeat(maxWidth - title.length - 2)} ${color("│")}\n`;
+  box += `${color("├" + border + "┤")}\n`;
+
+  content.forEach((line) => {
+    box += `${color("│")} ${chalk.white(line)}${" ".repeat(maxWidth - line.length - 1)} ${color("│")}\n`;
+  });
+
+  box += `${color("└" + border + "┘")}`;
+
+  return box;
 }

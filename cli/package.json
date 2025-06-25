@@ -61,7 +61,7 @@
   "license": "MIT",
   "dependencies": {
     "@coral-xyz/anchor": "0.31.1",
-    "@coral-xyz/anchor-cli": "0.31.2",
+    "@coral-xyz/anchor-cli": "0.31.1",
     "@inquirer/checkbox": "4.1.8",
     "@inquirer/core": "10.1.13",
     "@lightprotocol/compressed-token": "0.22.0",
@@ -72,6 +72,8 @@
     "@solana/web3.js": "1.98.2",
     "chalk": "5.4.1",
     "commander": "14.0.0",
+    "figlet": "^1.7.0",
+    "gradient-string": "^2.0.2",
     "inquirer": "12.6.3",
     "keccak": "3.0.4",
     "multiformats": "13.3.7",

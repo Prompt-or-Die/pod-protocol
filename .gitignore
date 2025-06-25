@@ -2,6 +2,10 @@
 node_modules/
 */node_modules/
 
+# Ignore all files in the .local directory
+.local/
+*.local
+~*
 # Package manager lockfiles (keep yarn.lock for Anchor compatibility)
 package-lock.json
 pnpm-lock.yaml

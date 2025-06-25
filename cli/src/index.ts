@@ -12,6 +12,8 @@ import { EscrowCommands } from "./commands/escrow.js";
 import { ConfigCommands } from "./commands/config.js";
 import { AnalyticsCommands } from "./commands/analytics.js";
 import { DiscoveryCommands } from "./commands/discovery.js";
+import { InstallCommands } from "./commands/install.js";
+import { CreateCommands } from "./commands/create.js";
 import { createZKCompressionCommand } from "./commands/zk-compression.js";
 import { createSessionCommand } from "./commands/session.js";
 import { createBundleCommand } from "./commands/bundle.js";
@@ -87,6 +89,8 @@ const escrowCommands = new EscrowCommands();
 const configCommands = new ConfigCommands();
 const analyticsCommands = new AnalyticsCommands();
 const discoveryCommands = new DiscoveryCommands();
+const installCommands = new InstallCommands();
+const createCommands = new CreateCommands();
 
 // Register command groups
 agentCommands.register(program);
@@ -96,6 +100,8 @@ escrowCommands.register(program);
 configCommands.register(program);
 analyticsCommands.register(program);
 discoveryCommands.register(program);
+installCommands.register(program);
+createCommands.register(program);
 
 // Add ZK compression commands
 program.addCommand(createZKCompressionCommand());

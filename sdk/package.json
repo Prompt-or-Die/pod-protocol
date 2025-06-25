@@ -64,7 +64,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@coral-xyz/anchor": "0.31.2",
+    "@coral-xyz/anchor": "0.31.1",
     "@helia/json": "4.0.6", 
     "@helia/unixfs": "5.0.3",
     "@solana/spl-account-compression": "0.2.0",
