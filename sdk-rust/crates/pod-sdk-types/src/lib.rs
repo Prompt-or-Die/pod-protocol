@@ -58,8 +58,8 @@ pub struct AgentAccount {
     pub bump: u8,
 }
 
-/// Separate struct for borsh serialization without DateTime fields
-#[derive(Debug, Clone, BorshSerialize, BorshDeserialize)]
+/// Agent account structure for Borsh serialization (without DateTime fields)
+#[derive(Debug, Clone, BorshSerialize, BorshDeserialize, PartialEq, Eq)]
 pub struct AgentAccountBorsh {
     /// The agent's public key (PDA)
     pub pubkey: Pubkey,
@@ -73,10 +73,6 @@ pub struct AgentAccountBorsh {
     pub reputation_score: u64,
     /// Last time the agent was updated (Unix timestamp)
     pub last_updated: i64,
-    /// Last time the agent was updated (Unix timestamp)
-    pub updated_at: i64,
-    /// Agent creation timestamp (Unix timestamp)
-    pub created_at: i64,
     /// URI pointing to agent metadata (IPFS, HTTPS, etc.)
     pub metadata_uri: String,
     /// Number of invites sent by this agent
@@ -96,8 +92,6 @@ impl From<AgentAccount> for AgentAccountBorsh {
             reputation: account.reputation,
             reputation_score: account.reputation_score,
             last_updated: account.last_updated,
-            updated_at: account.updated_at,
-            created_at: account.created_at,
             metadata_uri: account.metadata_uri,
             invites_sent: account.invites_sent,
             last_invite_at: account.last_invite_at,
@@ -115,8 +109,8 @@ impl From<AgentAccountBorsh> for AgentAccount {
             reputation: borsh.reputation,
             reputation_score: borsh.reputation_score,
             last_updated: borsh.last_updated,
-            updated_at: borsh.updated_at,
-            created_at: borsh.created_at,
+            updated_at: chrono::Utc::now().timestamp(),
+            created_at: chrono::Utc::now().timestamp(),
             metadata_uri: borsh.metadata_uri,
             invites_sent: borsh.invites_sent,
             last_invite_at: borsh.last_invite_at,
@@ -228,8 +222,8 @@ pub struct ChannelAccount {
     pub bump: u8,
 }
 
-/// Separate struct for borsh serialization
-#[derive(Debug, Clone, BorshSerialize, BorshDeserialize)]
+/// Channel account structure for Borsh serialization (without DateTime fields)
+#[derive(Debug, Clone, BorshSerialize, BorshDeserialize, PartialEq, Eq)]
 pub struct ChannelAccountBorsh {
     /// Channel creator
     pub creator: Pubkey,
@@ -249,10 +243,8 @@ pub struct ChannelAccountBorsh {
     pub is_active: bool,
     /// Fee per message in lamports
     pub fee_per_message: u64,
-    /// Channel creation timestamp (Unix timestamp)
+    /// Channel creation timestamp
     pub created_at: i64,
-    /// Channel creation timestamp (Unix timestamp)
-    pub created_at_dt: i64,
     /// Last activity timestamp
     pub last_activity: i64,
     /// PDA bump seed
@@ -272,7 +264,6 @@ impl From<ChannelAccount> for ChannelAccountBorsh {
             is_active: account.is_active,
             fee_per_message: account.fee_per_message,
             created_at: account.created_at,
-            created_at_dt: account.created_at_dt,
             last_activity: account.last_activity,
             bump: account.bump,
         }
@@ -292,7 +283,7 @@ impl From<ChannelAccountBorsh> for ChannelAccount {
             is_active: borsh.is_active,
             fee_per_message: borsh.fee_per_message,
             created_at: borsh.created_at,
-            created_at_dt: borsh.created_at_dt,
+            created_at_dt: chrono::Utc::now().timestamp(),
             last_activity: borsh.last_activity,
             bump: borsh.bump,
         }
@@ -366,8 +357,8 @@ pub struct EscrowAccount {
     pub bump: u8,
 }
 
-/// Separate struct for borsh serialization
-#[derive(Debug, Clone, BorshSerialize, BorshDeserialize)]
+/// Escrow account structure for Borsh serialization (without DateTime fields)
+#[derive(Debug, Clone, BorshSerialize, BorshDeserialize, PartialEq, Eq)]
 pub struct EscrowAccountBorsh {
     /// Channel this escrow belongs to
     pub channel: Pubkey,
@@ -383,12 +374,6 @@ pub struct EscrowAccountBorsh {
     pub status: EscrowStatus,
     /// Timestamp when deposit was made
     pub deposited_at: i64,
-    /// Timestamp when deposit was made (Unix timestamp)
-    pub created_at: i64,
-    /// Timeout timestamp (Unix timestamp, optional)
-    pub timeout_at: Option<i64>,
-    /// Disputed timestamp (Unix timestamp, optional)
-    pub disputed_at: Option<i64>,
     /// Release conditions
     pub conditions: Vec<EscrowCondition>,
     /// Optional arbitrators list
@@ -407,9 +392,6 @@ impl From<EscrowAccount> for EscrowAccountBorsh {
             amount: account.amount,
             status: account.status,
             deposited_at: account.deposited_at,
-            created_at: account.created_at,
-            timeout_at: account.timeout_at,
-            disputed_at: account.disputed_at,
             conditions: account.conditions,
             arbitrators: account.arbitrators,
             bump: account.bump,
@@ -427,9 +409,9 @@ impl From<EscrowAccountBorsh> for EscrowAccount {
             amount: borsh.amount,
             status: borsh.status,
             deposited_at: borsh.deposited_at,
-            created_at: borsh.created_at,
-            timeout_at: borsh.timeout_at,
-            disputed_at: borsh.disputed_at,
+            created_at: chrono::Utc::now().timestamp(),
+            timeout_at: None,
+            disputed_at: None,
             conditions: borsh.conditions,
             arbitrators: borsh.arbitrators,
             bump: borsh.bump,

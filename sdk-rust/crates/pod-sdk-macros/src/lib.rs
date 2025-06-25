@@ -146,9 +146,9 @@ pub fn requires_auth(_args: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn with_retry(_args: TokenStream, input: TokenStream) -> TokenStream {
     let function = parse_macro_input!(input as syn::ItemFn);
-    let function_name = &function.sig.ident;
-    let inputs = &function.sig.inputs;
-    let output = &function.sig.output;
+    let _function_name = &function.sig.ident;
+    let _inputs = &function.sig.inputs;
+    let _output = &function.sig.output;
     let original_block = &function.block;
     
     let expanded = quote! {
