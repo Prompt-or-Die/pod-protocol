@@ -101,8 +101,7 @@ hex = "0.4"
 pod-sdk-types = { path = "../pod-sdk-types" }
 pod-sdk-crypto = { path = "../pod-sdk-crypto" }
 
-# UUID generation
-uuid = { workspace = true }
+# UUID generation replaced with rand-based ID generation
 
 # PoD Protocol Program
 pod-com = { workspace = true }

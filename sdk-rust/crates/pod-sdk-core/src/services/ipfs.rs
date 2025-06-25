@@ -7,6 +7,7 @@ use std::sync::Arc;
 use std::collections::HashMap;
 
 use anchor_client::Program;
+use rand::{distributions::Alphanumeric, Rng};
 use async_trait::async_trait;
 use solana_sdk::{
     pubkey::Pubkey,
@@ -86,7 +87,11 @@ impl IPFSService {
             }
             
             // Create metadata account on-chain
-            let metadata_id = uuid::Uuid::new_v4().to_string();
+            let metadata_id: String = rand::thread_rng()
+                .sample_iter(&rand::distributions::Alphanumeric)
+                .take(32)
+                .map(char::from)
+                .collect();
             let (metadata_pda, _bump) = derive_ipfs_metadata_pda(&uploader.pubkey(), &metadata_id)?;
             
             // Build instruction - Note: pod-com doesn't have IPFS functionality, this would need custom implementation

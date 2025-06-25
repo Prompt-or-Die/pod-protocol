@@ -6,6 +6,7 @@
 use std::sync::Arc;
 
 use anchor_client::Program;
+use rand::{distributions::Alphanumeric, Rng};
 use async_trait::async_trait;
 use solana_sdk::{
     pubkey::Pubkey,
@@ -57,7 +58,11 @@ impl EscrowService {
             let _beneficiary_account = program.account::<AgentAccount>(params.beneficiary)?;
             
             // Generate escrow ID and derive PDA
-            let escrow_id = uuid::Uuid::new_v4().to_string();
+            let escrow_id: String = rand::thread_rng()
+                .sample_iter(&rand::distributions::Alphanumeric)
+                .take(32)
+                .map(char::from)
+                .collect();
             let (escrow_pda, _bump) = derive_escrow_pda(&payer.pubkey(), &escrow_id)?;
             
             // Build instruction

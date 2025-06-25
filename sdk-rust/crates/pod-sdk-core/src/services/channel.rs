@@ -7,6 +7,7 @@ use std::sync::Arc;
 use std::collections::HashSet;
 
 use anchor_client::Program;
+use rand::{distributions::Alphanumeric, Rng};
 use async_trait::async_trait;
 use solana_sdk::{
     pubkey::Pubkey,
@@ -71,7 +72,11 @@ impl ChannelService {
             }
             
             // Generate channel ID and derive PDA
-            let channel_id = uuid::Uuid::new_v4().to_string();
+            let channel_id: String = rand::thread_rng()
+                .sample_iter(&rand::distributions::Alphanumeric)
+                .take(32)
+                .map(char::from)
+                .collect();
             let (channel_pda, _bump) = derive_channel_pda(&creator.pubkey(), &channel_id)?;
             
             // Generate encryption key for the channel

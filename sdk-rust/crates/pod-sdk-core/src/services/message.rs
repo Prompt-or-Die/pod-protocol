@@ -14,7 +14,7 @@ use solana_sdk::{
 };
 
 // Import UUID for message ID generation
-use uuid::Uuid;
+use rand::{distributions::Alphanumeric, Rng};
 
 // Import the actual program types
 use pod_com::{MessageAccount, ChannelAccount, AgentAccount, MessageType, MessageStatus};
@@ -68,7 +68,11 @@ impl MessageService {
             }
             
             // Generate message ID and derive PDA
-            let message_id = uuid::Uuid::new_v4().to_string();
+            let message_id: String = rand::thread_rng()
+                .sample_iter(&Alphanumeric)
+                .take(32)
+                .map(char::from)
+                .collect();
             let (message_pda, _bump) = derive_message_pda(channel_address, &message_id)?;
             
             // Encrypt message content

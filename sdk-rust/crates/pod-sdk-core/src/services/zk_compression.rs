@@ -7,6 +7,7 @@ use std::sync::Arc;
 use std::collections::HashMap;
 
 use anchor_client::Program;
+use rand::{distributions::Alphanumeric, Rng};
 use async_trait::async_trait;
 use solana_sdk::{
     pubkey::Pubkey,
@@ -86,7 +87,11 @@ impl ZKCompressionService {
             let data_commitment = generate_commitment(&data, &compression_result.randomness)?;
             
             // Create on-chain account for compression metadata
-            let compression_id = uuid::Uuid::new_v4().to_string();
+            let compression_id: String = rand::thread_rng()
+                .sample_iter(&rand::distributions::Alphanumeric)
+                .take(32)
+                .map(char::from)
+                .collect();
             let (compression_pda, _bump) = derive_zk_compression_pda(&compressor.pubkey(), &compression_id)?;
             
             // Build instruction - Note: pod-com doesn't have separate ZK compression functionality
