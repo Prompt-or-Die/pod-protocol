@@ -1,4 +1,4 @@
-import { PublicKey } from "@solana/web3.js";
+import { address, type Address } from "@solana/web3.js";
 import { MessageStatus } from "@pod-protocol/sdk";
 import {
   validatePublicKey,
@@ -8,16 +8,16 @@ import {
 } from "../../utils/validation.js";
 
 export class MessageValidators {
-  static validateRecipient(recipient: string): PublicKey {
-    return validatePublicKey(recipient, "recipient");
+  static validateRecipient(recipient: string): Address {
+    return validateAddress(recipient, "recipient");
   }
 
-  static validateMessageId(messageId: string): PublicKey {
-    return validatePublicKey(messageId, "message ID");
+  static validateMessageId(messageId: string): Address {
+    return validateAddress(messageId, "message ID");
   }
 
-  static validateAgentAddress(address: string): PublicKey {
-    return validatePublicKey(address, "agent address");
+  static validateAgentAddress(addressString: string): Address {
+    return validateAddress(addressString, "agent address");
   }
 
   static validateMessageContent(payload: string): string {
@@ -43,10 +43,10 @@ export class MessageValidators {
 
   static validateRecipientInteractive(input: string): boolean | string {
     try {
-      new PublicKey(input);
+      address(input);
       return true;
     } catch {
-      return "Please enter a valid Solana public key";
+      return "Please enter a valid Solana address";
     }
   }
 }

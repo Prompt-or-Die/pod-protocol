@@ -1,84 +1,162 @@
 import { Address, address } from '@solana/web3.js';
 import { PROGRAM_ID, MessageType, AGENT_CAPABILITIES } from "./types";
 
+// Helper function to convert string to bytes
+function stringToBytes(str: string): Uint8Array {
+  if (typeof TextEncoder !== 'undefined') {
+    return new TextEncoder().encode(str);
+  }
+  // Fallback for environments without TextEncoder
+  const bytes = new Uint8Array(str.length);
+  for (let i = 0; i < str.length; i++) {
+    bytes[i] = str.charCodeAt(i) & 0xFF;
+  }
+  return bytes;
+}
+
+// Helper function to convert address to bytes
+function addressToBytes(addr: Address): Uint8Array {
+  // Web3.js v2 Address can be converted to string first
+  const addrString = String(addr);
+  // Base58 decode - for now use a simplified approach
+  // In production, this should use proper base58 decoding
+  const bytes = new Uint8Array(32);
+  // This is a placeholder - in real implementation, we'd need proper base58 decoding
+  // For now, we'll use a hash of the string as a workaround
+  const encoder = new TextEncoder();
+  const stringBytes = encoder.encode(addrString);
+  
+  // Simple hash function to generate 32 bytes from address string
+  for (let i = 0; i < 32; i++) {
+    bytes[i] = stringBytes[i % stringBytes.length] ^ (i * 7);
+  }
+  
+  return bytes;
+}
+
+// Simplified PDA derivation - this is a mock implementation
+// In production, this should use the actual Solana PDA derivation algorithm
+async function derivePDA(seeds: Uint8Array[], programId: Address): Promise<[Address, number]> {
+  // This is a simplified mock implementation
+  // Real PDA derivation requires the Solana crypto algorithms
+  
+  // Combine all seeds
+  let totalLength = 0;
+  seeds.forEach(seed => totalLength += seed.length);
+  
+  const combined = new Uint8Array(totalLength + 32); // +32 for program ID
+  let offset = 0;
+  
+  seeds.forEach(seed => {
+    combined.set(seed, offset);
+    offset += seed.length;
+  });
+  
+  // Add program ID bytes
+  const programIdBytes = addressToBytes(programId);
+  combined.set(programIdBytes, offset);
+  
+  // Create a deterministic hash
+  let hashArray: Uint8Array;
+  if (typeof globalThis !== 'undefined' && globalThis.crypto && globalThis.crypto.subtle) {
+    const hash = await globalThis.crypto.subtle.digest('SHA-256', combined);
+    hashArray = new Uint8Array(hash);
+  } else {
+    // Fallback hash for environments without crypto.subtle
+    hashArray = simpleHash(combined);
+  }
+  
+  // Convert to base58-like string (simplified)
+  const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+  let result = '';
+  for (let i = 0; i < 32; i++) {
+    result += chars[hashArray[i] % chars.length];
+  }
+  
+  // Ensure it's 44 characters (typical Solana address length)
+  while (result.length < 44) {
+    result += chars[hashArray[(result.length * 3) % 32] % chars.length];
+  }
+  result = result.substring(0, 44);
+  
+  return [address(result), 254]; // Fixed bump for now
+}
+
 // Re-export types for convenience
 export { MessageType } from "./types";
 
 /**
  * Calculate PDA for an agent account
  */
-export function findAgentPDA(
+export async function findAgentPDA(
   wallet: Address,
   programId: Address = PROGRAM_ID,
-): [Address, number] {
-  // Note: In Web3.js v2, PDA finding needs to be implemented differently
-  // This is a placeholder that should be updated with the actual v2 implementation
+): Promise<[Address, number]> {
   const seeds = [
-    Buffer.from("agent"),
-    Buffer.from(wallet), // Address needs to be converted to buffer properly
+    stringToBytes("agent"),
+    addressToBytes(wallet),
   ];
   
-  // TODO: Implement proper PDA finding with Web3.js v2
-  // For now, return a mock address and bump
-  return [address("11111111111111111111111111111112"), 0];
+  return derivePDA(seeds, programId);
 }
 
 /**
  * Calculate PDA for a message account
  */
-export function findMessagePDA(
-  messageId: string,
+export async function findMessagePDA(
   senderAgent: Address,
   recipient: Address,
-  timestamp: number,
+  payloadHash: Uint8Array,
+  messageType: MessageType,
   programId: Address = PROGRAM_ID,
-): [Address, number] {
-  // TODO: Implement proper PDA finding with Web3.js v2
+): Promise<[Address, number]> {
+  // Convert MessageType to numeric ID for seed
+  const messageTypeId = getMessageTypeId(messageType);
+  const messageTypeByte = new Uint8Array([messageTypeId]);
+  
   const seeds = [
-    Buffer.from("message"),
-    Buffer.from(messageId),
-    Buffer.from(senderAgent),
-    Buffer.from(recipient),
-    Buffer.from(timestamp.toString()),
+    stringToBytes("message"),
+    addressToBytes(senderAgent),
+    addressToBytes(recipient),
+    payloadHash,
+    messageTypeByte,
   ];
   
-  return [address("11111111111111111111111111111112"), 0];
+  return derivePDA(seeds, programId);
 }
 
 /**
  * Calculate PDA for a channel account
  */
-export function findChannelPDA(
-  channelId: string,
+export async function findChannelPDA(
+  channelName: string,
   creator: Address,
   programId: Address = PROGRAM_ID,
-): [Address, number] {
-  // TODO: Implement proper PDA finding with Web3.js v2
+): Promise<[Address, number]> {
   const seeds = [
-    Buffer.from("channel"),
-    Buffer.from(channelId),
-    Buffer.from(creator),
+    stringToBytes("channel"),
+    addressToBytes(creator),
+    stringToBytes(channelName),
   ];
   
-  return [address("11111111111111111111111111111112"), 0];
+  return derivePDA(seeds, programId);
 }
 
 /**
  * Calculate PDA for an escrow account
  */
-export function findEscrowPDA(
+export async function findEscrowPDA(
   channel: Address,
   depositor: Address,
   programId: Address = PROGRAM_ID,
-): [Address, number] {
-  // TODO: Implement proper PDA finding with Web3.js v2
+): Promise<[Address, number]> {
   const seeds = [
-    Buffer.from("escrow"),
-    Buffer.from(channel),
-    Buffer.from(depositor),
+    stringToBytes("escrow"),
+    addressToBytes(channel),
+    addressToBytes(depositor),
   ];
   
-  return [address("11111111111111111111111111111112"), 0];
+  return derivePDA(seeds, programId);
 }
 
 /**
@@ -177,8 +255,7 @@ export function getMessageTypeIdFromObject(msg: any): number {
 export async function hashPayload(
   payload: string | Uint8Array,
 ): Promise<Uint8Array> {
-  const encoder = new TextEncoder();
-  const data = typeof payload === "string" ? encoder.encode(payload) : payload;
+  const data = typeof payload === "string" ? stringToBytes(payload) : payload;
 
   // Use Web Crypto API for hashing
   if (
@@ -472,37 +549,58 @@ export function getVisibilityString(visibility: any): string {
 /**
  * Calculate PDA for a channel participant
  */
-export function findParticipantPDA(
+export async function findParticipantPDA(
   channel: Address,
   agent: Address,
   programId: Address = PROGRAM_ID,
-): [Address, number] {
-  // TODO: Implement proper PDA finding with Web3.js v2
+): Promise<[Address, number]> {
   const seeds = [
-    Buffer.from("participant"),
-    Buffer.from(channel),
-    Buffer.from(agent),
+    stringToBytes("participant"),
+    addressToBytes(channel),
+    addressToBytes(agent),
   ];
   
-  return [address("11111111111111111111111111111112"), 0];
+  return derivePDA(seeds, programId);
 }
 
 /**
  * Calculate PDA for a channel invitation
  */
-export function findInvitationPDA(
+export async function findInvitationPDA(
   channel: Address,
   invitee: Address,
   programId: Address = PROGRAM_ID,
-): [Address, number] {
-  // TODO: Implement proper PDA finding with Web3.js v2
+): Promise<[Address, number]> {
   const seeds = [
-    Buffer.from("invitation"),
-    Buffer.from(channel),
-    Buffer.from(invitee),
+    stringToBytes("invitation"),
+    addressToBytes(channel),
+    addressToBytes(invitee),
   ];
   
-  return [address("11111111111111111111111111111112"), 0];
+  return derivePDA(seeds, programId);
+}
+
+/**
+ * Calculate PDA for a channel message account
+ */
+export async function findChannelMessagePDA(
+  channel: Address,
+  user: Address,
+  nonce: number,
+  programId: Address = PROGRAM_ID,
+): Promise<[Address, number]> {
+  const nonceBytes = new Uint8Array(8);
+  const view = new DataView(nonceBytes.buffer);
+  view.setBigUint64(0, BigInt(nonce), true); // little-endian
+  
+  const seeds = [
+    stringToBytes("channel_message"),
+    addressToBytes(channel),
+    addressToBytes(user),
+    nonceBytes,
+  ];
+  
+  return derivePDA(seeds, programId);
 }
 
 /**

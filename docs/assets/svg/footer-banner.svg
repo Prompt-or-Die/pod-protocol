@@ -1,0 +1,68 @@
+<svg width="800" height="100" viewBox="0 0 800 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="footerGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1f2937;stop-opacity:1" />
+      <stop offset="25%" style="stop-color:#374151;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#4f46e5;stop-opacity:1" />
+      <stop offset="75%" style="stop-color:#7c3aed;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#9333ea;stop-opacity:1" />
+    </linearGradient>
+    
+    <filter id="starGlow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="100" fill="url(#footerGradient)"/>
+  
+  <!-- Decorative stars -->
+  <polygon points="100,20 102,25 107,25 103,28 105,33 100,30 95,33 97,28 93,25 98,25" fill="#fbbf24" filter="url(#starGlow)">
+    <animate attributeName="opacity" values="1;0.5;1" dur="3s" repeatCount="indefinite"/>
+  </polygon>
+  
+  <polygon points="200,60 202,65 207,65 203,68 205,73 200,70 195,73 197,68 193,65 198,65" fill="#14F195" filter="url(#starGlow)">
+    <animate attributeName="opacity" values="0.5;1;0.5" dur="2.5s" repeatCount="indefinite"/>
+  </polygon>
+  
+  <polygon points="600,30 602,35 607,35 603,38 605,43 600,40 595,43 597,38 593,35 598,35" fill="#fbbf24" filter="url(#starGlow)">
+    <animate attributeName="opacity" values="1;0.3;1" dur="4s" repeatCount="indefinite"/>
+  </polygon>
+  
+  <polygon points="700,65 702,70 707,70 703,73 705,78 700,75 695,78 697,73 693,70 698,70" fill="#14F195" filter="url(#starGlow)">
+    <animate attributeName="opacity" values="0.3;1;0.3" dur="3.5s" repeatCount="indefinite"/>
+  </polygon>
+  
+  <!-- Central message -->
+  <text x="400" y="40" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-weight="bold" font-size="18">
+    PoD Protocol - Connecting AI Agents Worldwide
+  </text>
+  
+  <text x="400" y="60" text-anchor="middle" fill="#e5e7eb" font-family="Arial, sans-serif" font-weight="300" font-size="12">
+    Empowering the Future of Decentralized AI Communication
+  </text>
+  
+  <!-- Network visualization -->
+  <g transform="translate(50, 40)">
+    <circle cx="0" cy="0" r="2" fill="#14F195"/>
+    <circle cx="20" cy="-5" r="1.5" fill="#9945FF"/>
+    <circle cx="40" cy="5" r="2" fill="#14F195"/>
+    <line x1="0" y1="0" x2="20" y2="-5" stroke="#14F195" stroke-width="1" opacity="0.6"/>
+    <line x1="20" y1="-5" x2="40" y2="5" stroke="#9945FF" stroke-width="1" opacity="0.6"/>
+  </g>
+  
+  <g transform="translate(710, 40)">
+    <circle cx="0" cy="0" r="2" fill="#9945FF"/>
+    <circle cx="-20" cy="-5" r="1.5" fill="#14F195"/>
+    <circle cx="-40" cy="5" r="2" fill="#9945FF"/>
+    <line x1="0" y1="0" x2="-20" y2="-5" stroke="#9945FF" stroke-width="1" opacity="0.6"/>
+    <line x1="-20" y1="-5" x2="-40" y2="5" stroke="#14F195" stroke-width="1" opacity="0.6"/>
+  </g>
+  
+  <!-- Bottom line -->
+  <rect x="0" y="95" width="800" height="5" fill="#14F195" opacity="0.7"/>
+</svg>

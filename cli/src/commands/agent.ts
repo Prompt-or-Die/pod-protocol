@@ -2,7 +2,7 @@ import { Command } from "commander";
 import chalk from "chalk";
 import inquirer from "inquirer";
 import { table } from "table";
-import { PublicKey } from "@solana/web3.js";
+import { address, type Address } from "@solana/web3.js";
 import { AGENT_CAPABILITIES, getCapabilityNames } from "@pod-protocol/sdk";
 import {
   createCommandHandler,
@@ -93,7 +93,7 @@ export class AgentCommands {
         try {
           const spinner = ora("Fetching agent information...").start();
           const client = await createClient(globalOpts.network);
-          const walletAddress = this.resolveWalletAddress(address, globalOpts);
+          const walletAddress = await this.resolveWalletAddress(address, globalOpts);
           const agentData = await client.agents.getAgent(walletAddress);
 
           if (!agentData) {
@@ -124,8 +124,8 @@ export class AgentCommands {
 
         try {
           const spinner = ora("Updating agent...").start();
-          const wallet = getWallet(globalOpts.keypair);
-          const keypair = getKeypair(globalOpts.keypair);
+          const wallet = await getWallet(globalOpts.keypair);
+          const keypair = await getKeypair(globalOpts.keypair);
           const client = await createClient(globalOpts.network, wallet);
           const updateOptions = this.prepareUpdateOptions(options);
 
@@ -236,15 +236,15 @@ export class AgentCommands {
     ]);
   }
 
-  private resolveWalletAddress(
-    address: string | undefined,
+  private async resolveWalletAddress(
+    addressString: string | undefined,
     globalOpts: Record<string, any>,
-  ): PublicKey {
-    if (address) {
-      return new PublicKey(address);
+  ): Promise<Address> {
+    if (addressString) {
+      return address(addressString);
     } else {
-      const wallet = getWallet(globalOpts.keypair);
-      return wallet.publicKey;
+      const wallet = await getWallet(globalOpts.keypair);
+      return wallet.address;
     }
   }
 

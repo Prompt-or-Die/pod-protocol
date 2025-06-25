@@ -1,14 +1,21 @@
 import { 
-  Address, 
-  address, 
-  KeyPairSigner, 
-  generateKeyPairSigner
+  PublicKey,
+  Keypair
 } from "@solana/web3.js";
 import { BaseService, BaseServiceConfig } from './base.js';
+import anchor from "@coral-xyz/anchor";
+const { BN, web3 } = anchor;
+
+// Define the instruction type that matches what other services expect
+export interface anyInstruction {
+  programId: PublicKey;
+  accounts: Array<{ pubkey: PublicKey; isSigner: boolean; isWritable: boolean }>;
+  data: Buffer;
+}
 
 export interface SessionKeyConfig {
   /** Target programs this session key can interact with */
-  targetPrograms: Address[];
+  targetPrograms: PublicKey[];
   /** Session expiry timestamp */
   expiryTime: number;
   /** Maximum number of uses for this session */
@@ -19,11 +26,11 @@ export interface SessionKeyConfig {
 
 export interface SessionToken {
   /** Ephemeral keypair for this session */
-  sessionKeyPairSigner: KeyPairSigner;
+  sessionKeyPairSigner: Keypair;
   /** Session configuration */
   config: SessionKeyConfig;
   /** Session token account address */
-  sessionTokenAccount: Address;
+  sessionTokenAccount: PublicKey;
   /** Number of uses remaining */
   usesRemaining?: number;
 }
@@ -47,29 +54,20 @@ export class SessionKeysService extends BaseService {
     return this.wallet;
   }
 
-  private async sendTransaction(transaction: any, signers: KeyPairSigner[] = []): Promise<string> {
-    const wallet = this.ensureWallet();
-    const { blockhash } = await this.rpc.getLatestBlockhash().send();
+  private async sendTransactionWithAnchor(methodName: string, methodArgs: any[], accounts: any, signers: KeyPairSigner[] = []): Promise<string> {
+    const program = this.ensureInitialized();
     
-    // transaction.recentBlockhash = blockhash;
-    // transaction.feePayer = wallet.publicKey;
+    // Build the transaction using Anchor's method chaining
+    let txBuilder = (program.methods as any)[methodName](...methodArgs)
+      .accounts(accounts);
     
-    // Sign with provided signers
+    // Add signers if provided
     if (signers.length > 0) {
-      // transaction.partialSign(...signers);
+      txBuilder = txBuilder.signers(signers);
     }
     
-    // Sign with wallet
-    if ('signTransaction' in wallet && typeof wallet.signTransaction === 'function') {
-      transaction = await wallet.signTransaction(transaction);
-    } else {
-      // transaction.partialSign(wallet as KeyPairSigner);
-    }
-    
-    const signature = await this.rpc.sendRawTransaction("mockTransaction");
-    await this.rpc.confirmTransaction(signature);
-    
-    return signature;
+    // Execute the transaction
+    return await txBuilder.rpc({ commitment: this.commitment });
   }
 
   /**
@@ -82,28 +80,42 @@ export class SessionKeysService extends BaseService {
       
       // Create session token account (PDA)
       const wallet = this.ensureWallet();
-      // Generate session token account deterministically  
-      const sessionTokenAccount = address(wallet.publicKey + sessionKeyPairSigner.address + "session");
-
-      // Create session token instruction
-      const instruction = await this.createSessionTokenInstruction(
-        sessionKeyPairSigner.publicKey,
-        sessionTokenAccount,
-        config
+      
+      // Generate session token account deterministically using PDA
+      const [sessionTokenAccount] = web3.PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("session"),
+          new web3.PublicKey(wallet.publicKey || wallet.address).toBuffer(),
+          new web3.PublicKey(sessionKeyPairSigner.address).toBuffer(),
+        ],
+        new web3.PublicKey(this.programId)
       );
+      
+      const sessionTokenAccountAddr = address(sessionTokenAccount.toString());
 
-      // Create and send transaction - mock implementation
-      const signature = await this.sendTransaction(null as any, [sessionKeyPairSigner]);
+      // Create and send session token transaction
+      const signature = await this.sendTransactionWithAnchor(
+        'createSession',
+        [new BN(config.expiryTime), config.maxUses ? new BN(config.maxUses) : null],
+        {
+          sessionTokenAccount: sessionTokenAccountAddr,
+          sessionKey: sessionKeyPairSigner.address,
+          authority: wallet.publicKey || wallet.address,
+          systemProgram: address("11111111111111111111111111111112"),
+          rent: address("SysvarRent111111111111111111111111111111111"),
+        },
+        [sessionKeyPairSigner]
+      );
 
       const sessionToken: SessionToken = {
         sessionKeyPairSigner,
         config,
-        sessionTokenAccount,
+        sessionTokenAccount: sessionTokenAccountAddr,
         usesRemaining: config.maxUses,
       };
 
       // Store session locally
-      const sessionId = sessionKeyPairSigner.publicKey;
+      const sessionId = sessionKeyPairSigner.address;
       this.sessions.set(sessionId, sessionToken);
 
       console.log(`Session key created: ${sessionId}`);
@@ -145,8 +157,18 @@ export class SessionKeysService extends BaseService {
         }
       }
 
-      // Create transaction with session key - mock implementation
-      const signature = await this.sendTransaction(null as any, [session.sessionKeyPairSigner]);
+      // Use session key to execute instructions
+      const wallet = this.ensureWallet();
+      const signature = await this.sendTransactionWithAnchor(
+        'useSession',
+        [new BN(instructions.length)],
+        {
+          sessionTokenAccount: session.sessionTokenAccount,
+          sessionKey: session.sessionKeyPairSigner.address,
+          authority: wallet.publicKey || wallet.address,
+        },
+        [session.sessionKeyPairSigner]
+      );
 
       // Decrement uses
       if (session.usesRemaining !== undefined) {
@@ -171,13 +193,16 @@ export class SessionKeysService extends BaseService {
     }
 
     try {
-      // Create revoke instruction
-      const instruction = await this.createRevokeSessionInstruction(
-        session.sessionTokenAccount
+      // Revoke session key
+      const wallet = this.ensureWallet();
+      const signature = await this.sendTransactionWithAnchor(
+        'revokeSession',
+        [],
+        {
+          sessionTokenAccount: session.sessionTokenAccount,
+          authority: wallet.publicKey || wallet.address,
+        }
       );
-
-      // Mock implementation
-      const signature = await this.sendTransaction(null as any);
 
       // Remove from local storage
       this.sessions.delete(sessionId);
@@ -195,9 +220,13 @@ export class SessionKeysService extends BaseService {
    */
   getActiveSessions(): SessionToken[] {
     const now = Date.now();
-    return Array.from(this.sessions.values()).filter(
-      session => session.config.expiryTime > now
-    );
+    const sessions: SessionToken[] = [];
+    for (const session of this.sessions.values()) {
+      if (session.config.expiryTime > now) {
+        sessions.push(session);
+      }
+    }
+    return sessions;
   }
 
   /**
@@ -219,38 +248,6 @@ export class SessionKeysService extends BaseService {
     return this.createSessionKey(config);
   }
 
-  private async createSessionTokenInstruction(
-    sessionAddress: Address,
-    sessionTokenAccount: Address,
-    config: SessionKeyConfig
-  ): Promise<TransactionInstruction> {
-    // This would create the actual session token instruction
-    // For now, return a placeholder instruction
-    const wallet = this.ensureWallet();
-    return ({ keys: [], programId: this.programId, data: Buffer.from([0]) } as any)({
-      keys: [
-        { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
-        { pubkey: sessionTokenAccount, isSigner: false, isWritable: true },
-        { pubkey: sessionAddress, isSigner: true, isWritable: false },
-      ],
-      programId: this.programId,
-      data: Buffer.from([0]), // Placeholder instruction data
-    });
-  }
-
-  private async createRevokeSessionInstruction(
-    sessionTokenAccount: Address
-  ): Promise<TransactionInstruction> {
-    const wallet = this.ensureWallet();
-    return ({ keys: [], programId: this.programId, data: Buffer.from([0]) } as any)({
-      keys: [
-        { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
-        { pubkey: sessionTokenAccount, isSigner: false, isWritable: true },
-      ],
-      programId: this.programId,
-      data: Buffer.from([1]), // Placeholder instruction data
-    });
-  }
 
   private isInstructionAllowed(
     instruction: anyInstruction,
@@ -258,7 +255,11 @@ export class SessionKeysService extends BaseService {
   ): boolean {
     // Check if program is allowed
     const programAllowed = config.targetPrograms.some(
-      program => program.equals(instruction.programId)
+      program => {
+        const programAddr = typeof program === 'string' ? address(program) : program;
+        const instructionProgramAddr = typeof instruction.programId === 'string' ? address(instruction.programId) : instruction.programId;
+        return programAddr === instructionProgramAddr;
+      }
     );
 
     if (!programAllowed) {

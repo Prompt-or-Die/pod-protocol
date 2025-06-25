@@ -1,4 +1,4 @@
-import { PublicKey } from "@solana/web3.js";
+import { type Address } from "@solana/web3.js";
 import { MessageType } from "@pod-protocol/sdk";
 import inquirer from "inquirer";
 import {
@@ -133,12 +133,12 @@ export class MessageHandlers {
       : 10;
     const spinner = createSpinner("Fetching messages...");
 
-    let agentAddress: PublicKey;
+    let agentAddress: Address;
     if (options.agent) {
       agentAddress = MessageValidators.validateAgentAddress(options.agent);
     } else {
-      const wallet = getWallet(this.context.globalOpts.keypair);
-      agentAddress = wallet.publicKey;
+      const wallet = await getWallet(this.context.globalOpts.keypair);
+      agentAddress = wallet.address;
     }
 
     const messages = await this.context.client.getAgentMessages(

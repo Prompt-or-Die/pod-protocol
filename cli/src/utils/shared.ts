@@ -44,8 +44,8 @@ export function createCommandHandler<T extends any[]>(
       let keypair: any = null;
 
       if (!globalOpts.dryRun) {
-        wallet = getWallet(globalOpts.keypair);
-        keypair = getKeypair(globalOpts.keypair);
+        wallet = await getWallet(globalOpts.keypair);
+        keypair = await getKeypair(globalOpts.keypair);
         client = await createClient(globalOpts.network, wallet);
       }
 
@@ -134,14 +134,22 @@ export function formatValue(
 }
 
 /**
- * Common validation for public key addresses
+ * Common validation for addresses
  */
-export function validatePublicKey(address: string, fieldName: string): void {
+export function validateAddress(addressString: string, fieldName: string): void {
   try {
-    new (require("@solana/web3.js").PublicKey)(address);
+    require("@solana/web3.js").address(addressString);
   } catch {
-    throw new Error(`Invalid ${fieldName}: ${address}`);
+    throw new Error(`Invalid ${fieldName}: ${addressString}`);
   }
+}
+
+/**
+ * Legacy function name for backward compatibility
+ * @deprecated Use validateAddress instead
+ */
+export function validatePublicKey(addressString: string, fieldName: string): void {
+  validateAddress(addressString, fieldName);
 }
 
 /**
@@ -174,7 +182,7 @@ export function createSafeCommandHandler(
 
     await safeExecute(async () => {
       const client = await createClient(globalOpts.network);
-      const wallet = getWallet(globalOpts.keypair);
+      const wallet = await getWallet(globalOpts.keypair);
       await handler(client as any, wallet, globalOpts, ...args.slice(0, -1));
     }, description);
   };

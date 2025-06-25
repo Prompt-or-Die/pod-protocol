@@ -1,0 +1,56 @@
+<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="rocketGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#d97706;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#92400e;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="flameGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#f59e0b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#dc2626;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Rocket body -->
+  <ellipse cx="40" cy="35" rx="8" ry="25" fill="url(#rocketGradient)"/>
+  
+  <!-- Rocket nose -->
+  <path d="M 40 10 L 32 25 L 48 25 Z" fill="#f59e0b"/>
+  
+  <!-- Rocket fins -->
+  <path d="M 32 45 L 25 55 L 32 55 Z" fill="#92400e"/>
+  <path d="M 48 45 L 55 55 L 48 55 Z" fill="#92400e"/>
+  
+  <!-- Window -->
+  <circle cx="40" cy="25" r="4" fill="#3b82f6" stroke="#ffffff" stroke-width="1"/>
+  <circle cx="40" cy="25" r="2" fill="#93c5fd"/>
+  
+  <!-- Exhaust flames -->
+  <path d="M 35 60 Q 40 70 45 60" fill="url(#flameGradient)">
+    <animateTransform attributeName="transform" type="scale" 
+                      values="1,1;1.2,1.3;1,1" dur="0.5s" repeatCount="indefinite"/>
+  </path>
+  <path d="M 37 60 Q 40 67 43 60" fill="#fbbf24" opacity="0.8">
+    <animateTransform attributeName="transform" type="scale" 
+                      values="1,1;1.1,1.2;1,1" dur="0.3s" repeatCount="indefinite"/>
+  </path>
+  
+  <!-- Speed lines -->
+  <line x1="20" y1="30" x2="15" y2="30" stroke="#14F195" stroke-width="2" opacity="0.6"/>
+  <line x1="60" y1="30" x2="65" y2="30" stroke="#14F195" stroke-width="2" opacity="0.6"/>
+  <line x1="22" y1="35" x2="15" y2="35" stroke="#14F195" stroke-width="1.5" opacity="0.4"/>
+  <line x1="58" y1="35" x2="65" y2="35" stroke="#14F195" stroke-width="1.5" opacity="0.4"/>
+  
+  <!-- Stars -->
+  <circle cx="20" cy="15" r="1" fill="#fbbf24">
+    <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="60" cy="20" r="1" fill="#fbbf24">
+    <animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="65" cy="50" r="1" fill="#fbbf24">
+    <animate attributeName="opacity" values="1;0.5;1" dur="2.5s" repeatCount="indefinite"/>
+  </circle>
+</svg>

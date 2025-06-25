@@ -1,7 +1,7 @@
 import { readFileSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
-import { generateKeyPairSigner, address, createSolanaRpc } from "@solana/web3.js";
+import { generateKeyPairSigner, address, createSolanaRpc, createKeyPairSignerFromPrivateKeyBytes } from "@solana/web3.js";
 import type { KeyPairSigner, Address, Rpc } from "@solana/web3.js";
 import { safeParseKeypair } from "./safe-json.js";
 
@@ -30,7 +30,7 @@ export function createClient(config: Partial<ClientConfig> = {}): Rpc {
   return createSolanaRpc(rpcUrl);
 }
 
-export function getWallet(keypairPath: string = DEFAULT_CONFIG.keypairPath): KeyPairSigner {
+export async function getWallet(keypairPath: string = DEFAULT_CONFIG.keypairPath): Promise<KeyPairSigner> {
   const expandedPath = keypairPath.replace("~", homedir());
   
   try {
@@ -42,21 +42,21 @@ export function getWallet(keypairPath: string = DEFAULT_CONFIG.keypairPath): Key
     
     // Convert array to Uint8Array for Web3.js v2
     const secretKey = new Uint8Array(keypairData);
-    return generateKeyPairSigner(); // Web3.js v2 pattern
+    return await createKeyPairSignerFromPrivateKeyBytes(secretKey);
     
   } catch (error) {
     throw new Error(`Failed to load keypair from ${keypairPath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
-export function getKeypair(keypairPath: string = DEFAULT_CONFIG.keypairPath): KeyPairSigner {
-  return getWallet(keypairPath);
+export async function getKeypair(keypairPath: string = DEFAULT_CONFIG.keypairPath): Promise<KeyPairSigner> {
+  return await getWallet(keypairPath);
 }
 
 export function createAddress(addressString: string): Address {
   return address(addressString);
 }
 
-export function generateNewKeyPair(): KeyPairSigner {
-  return generateKeyPairSigner();
+export async function generateNewKeyPair(): Promise<KeyPairSigner> {
+  return await generateKeyPairSigner();
 }

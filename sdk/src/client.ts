@@ -1,15 +1,8 @@
 import { 
-  createSolanaRpc, 
-  address, 
-  Address,
-  Rpc,
-  RpcApi,
-  Commitment
-} from '@solana/web3.js';
-import { 
-  KeyPairSigner, 
-  generateKeyPairSigner,
-  createKeyPairSignerFromBytes 
+  PublicKey,
+  Connection,
+  Commitment,
+  Keypair
 } from '@solana/web3.js';
 import anchor from "@coral-xyz/anchor";
 const { Program, AnchorProvider } = anchor;

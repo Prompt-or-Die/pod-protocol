@@ -1,7 +1,6 @@
-import resolve from "@rollup/plugin-node-resolve";
+import { nodeResolve } from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
-import { nodeResolve } from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
 import replace from "@rollup/plugin-replace";
 
@@ -19,6 +18,8 @@ export default {
     "services/discovery": "src/services/discovery.ts",
     "services/ipfs": "src/services/ipfs.ts",
     "services/zk-compression": "src/services/zk-compression.ts",
+    "services/jito-bundles": "src/services/jito-bundles.ts",
+    "services/session-keys": "src/services/session-keys.ts",
   },
   output: [
     {

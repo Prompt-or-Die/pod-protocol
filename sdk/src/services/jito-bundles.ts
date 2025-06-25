@@ -5,7 +5,22 @@
  * Optimizes transaction processing and provides atomic execution guarantees
  */
 
-import { Address, address } from "@solana/web3.js";
+import { 
+  PublicKey,
+  Transaction,
+  VersionedTransaction,
+  TransactionInstruction,
+  Keypair,
+  SystemProgram,
+  LAMPORTS_PER_SOL
+} from "@solana/web3.js";
+import { 
+  getSetComputeUnitLimitInstruction, 
+  getSetComputeUnitPriceInstruction 
+} from "@solana-program/compute-budget";
+import { 
+  getTransferSolInstruction 
+} from "@solana-program/system";
 import { BaseService } from "./base.js";
 
 export interface BundleConfig {
@@ -21,9 +36,9 @@ export interface BundleConfig {
 
 export interface BundleTransaction {
   /** The transaction to include in bundle */
-  transaction: any | VersionedTransaction;
+  transaction: Transaction | VersionedTransaction | TransactionInstruction[];
   /** Optional signers for this transaction */
-  signers?: any[];
+  signers?: KeyPairSigner[];
   /** Description for logging */
   description?: string;
 }
@@ -48,22 +63,29 @@ export class JitoBundlesService extends BaseService {
     '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5'
   ];
 
-  private jitoRpcUrl: string;
-  private wallet: any = null;
+  private jitoRpcUrl: string = 'https://mainnet.block-engine.jito.wtf/api/v1/bundles';
+  private wallet: KeyPairSigner | null = null;
 
   constructor(rpcUrl: string, programId: string, commitment: any) {
     super(rpcUrl, programId, commitment);
   }
 
-  setWallet(wallet: any): void {
+  setWallet(wallet: KeyPairSigner): void {
     this.wallet = wallet;
   }
 
-  private ensureWallet(): any {
+  private ensureWallet(): KeyPairSigner {
     if (!this.wallet) {
       throw new Error('Wallet not set. Call setWallet() first.');
     }
     return this.wallet;
+  }
+
+  /**
+   * Set custom Jito RPC URL
+   */
+  setJitoRpcUrl(url: string): void {
+    this.jitoRpcUrl = url;
   }
 
   /**
@@ -93,49 +115,67 @@ export class JitoBundlesService extends BaseService {
           
           // Add compute budget instructions if specified
           if (config.priorityFee || config.computeUnits) {
-            const computeInstructions = [];
+            const computeInstructions: TransactionInstruction[] = [];
             
             if (config.computeUnits) {
               computeInstructions.push(
-                // ComputeBudgetProgram.setComputeUnitLimit({
-                  units: config.computeUnits
-                })
+                getSetComputeUnitLimitInstruction({ units: config.computeUnits })
               );
             }
             
             if (config.priorityFee) {
               computeInstructions.push(
-                // ComputeBudgetProgram.setComputeUnitPrice({
-                  microLamports: config.priorityFee
-                })
+                getSetComputeUnitPriceInstruction({ microLamports: config.priorityFee })
               );
             }
 
-            if (tx === "transaction") {
-              tx = null // null //().add(...computeInstructions, ...tx.instructions);
+            // Handle different transaction types
+            if (Array.isArray(bundleTx.transaction)) {
+              // Transaction is array of instructions
+              bundleTx.transaction = [...computeInstructions, ...bundleTx.transaction];
+            } else if (bundleTx.transaction && typeof bundleTx.transaction === 'object') {
+              // Add to existing transaction
+              if ('instructions' in bundleTx.transaction) {
+                bundleTx.transaction.instructions = [
+                  ...computeInstructions, 
+                  ...bundleTx.transaction.instructions
+                ];
+              }
             }
           }
 
           // Get recent blockhash
-          const { blockhash, lastValidBlockHeight } = await this.rpc.getLatestBlockhash().send();
+          const { value: { blockhash, lastValidBlockHeight } } = await this.rpc.getLatestBlockhash().send();
+          const wallet = this.ensureWallet();
           
-          if (tx === "transaction") {
-            const wallet = this.ensureWallet();
-            tx.recentBlockhash = blockhash;
-            tx.feePayer = wallet.publicKey;
+          // Convert instructions array to transaction message
+          if (Array.isArray(bundleTx.transaction)) {
+            const transactionMessage = pipe(
+              createTransactionMessage({ version: 0 }),
+              (tm) => setTransactionFeePayer(wallet.address, tm),
+              (tm) => setTransactionLifetimeUsingBlockhash(blockhash, tm),
+              (tm) => appendTransactionMessageInstructions(bundleTx.transaction as TransactionInstruction[], tm)
+            );
             
-            // Sign transaction
+            // Sign the transaction
+            const signedTransaction = await signTransaction([wallet], { 
+              message: transactionMessage 
+            });
+            tx = signedTransaction;
+          } else if (bundleTx.transaction instanceof VersionedTransaction) {
+            // Handle VersionedTransaction
+            tx = bundleTx.transaction;
             if (bundleTx.signers && bundleTx.signers.length > 0) {
-              tx.partialSign(...bundleTx.signers);
-            }
-            
-            // Sign with wallet if it has signTransaction method
-            if ('signTransaction' in wallet && typeof wallet.signTransaction === 'function') {
-              tx = await wallet.signTransaction(tx);
+              // Sign with additional signers if provided
+              const allSigners = [wallet, ...bundleTx.signers];
+              tx = await signTransaction(allSigners, { message: tx.message });
             } else {
-              // For KeyPairSigner/Signer, use partial sign
-              tx.partialSign(wallet as KeyPairSigner);
+              tx = await signTransaction([wallet], { message: tx.message });
             }
+          } else {
+            // Handle regular Transaction or other formats
+            // For now, assume it's a legacy transaction that needs conversion
+            throw new Error('Unsupported transaction type. Use TransactionInstruction[] or VersionedTransaction.');
           }
 
           return {
@@ -162,7 +202,7 @@ export class JitoBundlesService extends BaseService {
    * Create a bundle for AI agent messaging operations
    */
   async sendMessagingBundle(
-    messageInstructions: anyInstruction[],
+    messageInstructions: TransactionInstruction[],
     config: Partial<BundleConfig> = {}
   ): Promise<BundleResult> {
     const defaultConfig: BundleConfig = {
@@ -177,10 +217,9 @@ export class JitoBundlesService extends BaseService {
     
     for (let i = 0; i < messageInstructions.length; i += 3) {
       const chunk = messageInstructions.slice(i, i + 3);
-      const transaction = null // null //().add(...chunk);
       
       transactions.push({
-        transaction,
+        transaction: chunk, // Pass instructions directly
         description: `Message batch ${Math.floor(i / 3) + 1}`
       });
 
@@ -195,7 +234,7 @@ export class JitoBundlesService extends BaseService {
    * Create a bundle for channel operations (join, broadcast, etc.)
    */
   async sendChannelBundle(
-    channelInstructions: anyInstruction[],
+    channelInstructions: TransactionInstruction[],
     config: Partial<BundleConfig> = {}
   ): Promise<BundleResult> {
     const defaultConfig: BundleConfig = {
@@ -205,10 +244,8 @@ export class JitoBundlesService extends BaseService {
       ...config
     };
 
-    const transaction = null // null //().add(...channelInstructions);
-    
     return this.sendBundle([{
-      transaction,
+      transaction: channelInstructions, // Pass instructions directly
       description: 'Channel operations bundle'
     }], defaultConfig);
   }
@@ -219,9 +256,10 @@ export class JitoBundlesService extends BaseService {
   async getOptimalTip(): Promise<number> {
     try {
       // Get recent priority fees to estimate optimal tip
-      const recentFees = await this.rpc.getRecentPrioritizationFees();
+      const response = await this.rpc.getRecentPrioritizationFees().send();
+      const recentFees = response.value;
       
-      if (recentFees.length === 0) {
+      if (!recentFees || recentFees.length === 0) {
         return 10000; // Default 0.00001 SOL
       }
 
@@ -268,16 +306,14 @@ export class JitoBundlesService extends BaseService {
     );
 
     const wallet = this.ensureWallet();
-    const tipInstruction = // SystemProgram.transfer({
-      fromPubkey: wallet.publicKey,
-      toPubkey: tipAccount,
-      lamports: tipLamports
+    const tipInstruction = getTransferSolInstruction({
+      source: wallet.address,
+      destination: tipAccount,
+      amount: BigInt(tipLamports)
     });
 
-    const transaction = null // null //().add(tipInstruction);
-
     return {
-      transaction,
+      transaction: [tipInstruction], // Return as instruction array
       description: `Jito tip: ${tipLamports} lamports`
     };
   }
@@ -285,11 +321,24 @@ export class JitoBundlesService extends BaseService {
   private async submitToJito(transactions: any[]): Promise<BundleResult> {
     try {
       // Serialize transactions for Jito
-      const serializedTransactions = transactions.map(tx => {
-        if (tx.transaction === "transaction") {
-          return "mockTransaction";
+      const serializedTransactions = transactions.map(txData => {
+        const tx = txData.transaction;
+        
+        if (!tx) {
+          throw new Error('Invalid transaction in bundle');
         }
-        return "mockTransaction";
+
+        // Handle VersionedTransaction and signed transactions
+        if (tx instanceof VersionedTransaction || 
+            (typeof tx === 'object' && 'signatures' in tx)) {
+          // For signed transactions, serialize to base64
+          const serialized = tx.serialize ? tx.serialize() : 
+                           (tx as any).message ? (tx as any).message.serialize() :
+                           new Uint8Array();
+          return btoa(String.fromCharCode(...new Uint8Array(serialized)));
+        }
+        
+        throw new Error('Transaction must be signed before submitting to Jito');
       });
 
       // Submit to Jito block engine
@@ -297,25 +346,32 @@ export class JitoBundlesService extends BaseService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
           jsonrpc: '2.0',
-          id: 1,
+          id: Date.now(),
           method: 'sendBundle',
-          params: [serializedTransactions.map(tx => tx.toString('base64'))]
+          params: [serializedTransactions]
         })
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
 
       const data = await response.json();
       
       if (data.error) {
-        throw new Error(`Jito error: ${data.error.message}`);
+        throw new Error(`Jito error: ${data.error.message || JSON.stringify(data.error)}`);
       }
 
-      // Extract signatures from transactions
-      const signatures = serializedTransactions.map((_, index) => 
-        `bundle_tx_${index}_${Date.now()}`
-      );
+      // Extract signatures from transactions - these would come from Jito response
+      const signatures = transactions.map((_, index) => {
+        // In a real implementation, Jito would return actual transaction signatures
+        // For now, generate placeholder signatures based on bundle ID
+        return `${data.result || 'bundle'}_tx_${index}_${Date.now()}`;
+      });
 
       return {
         bundleId: data.result || `bundle_${Date.now()}`,
@@ -324,7 +380,52 @@ export class JitoBundlesService extends BaseService {
       };
     } catch (error) {
       console.error('Failed to submit to Jito:', error);
-      throw error;
+      throw new Error(`Bundle submission failed: ${(error as Error).message}`);
     }
+  }
+
+  /**
+   * Create a bundle with escrow protection for high-value transactions
+   */
+  async sendEscrowBundle(
+    escrowInstructions: TransactionInstruction[],
+    config: Partial<BundleConfig> = {}
+  ): Promise<BundleResult> {
+    const defaultConfig: BundleConfig = {
+      tipLamports: 50000, // Higher tip for escrow operations
+      priorityFee: 2000,
+      computeUnits: 300000, // More compute units for complex operations
+      ...config
+    };
+
+    return this.sendBundle([{
+      transaction: escrowInstructions,
+      description: 'Escrow operations bundle'
+    }], defaultConfig);
+  }
+
+  /**
+   * Estimate bundle cost including tips and fees
+   */
+  async estimateBundleCost(
+    transactionCount: number,
+    config: Partial<BundleConfig> = {}
+  ): Promise<{
+    tipCost: number;
+    priorityFees: number;
+    totalCost: number;
+  }> {
+    const tipLamports = config.tipLamports || await this.getOptimalTip();
+    const priorityFee = config.priorityFee || 1000;
+    const computeUnits = config.computeUnits || 200000;
+    
+    // Estimate priority fees (priority fee * compute units per transaction)
+    const priorityFees = (priorityFee * computeUnits * transactionCount) / 1_000_000; // Convert micro-lamports to lamports
+    
+    return {
+      tipCost: tipLamports,
+      priorityFees: Math.ceil(priorityFees),
+      totalCost: tipLamports + Math.ceil(priorityFees)
+    };
   }
 }

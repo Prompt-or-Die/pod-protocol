@@ -1,5 +1,6 @@
 import { Address, address } from "@solana/web3.js";
 import { BaseService } from "./base.js";
+import { CID } from 'multiformats/cid';
 import keccak from 'keccak';
 // import type { JSON as HeliaJSON } from '@helia/json';
 
@@ -80,9 +81,14 @@ export class IPFSService extends BaseService {
   private config: IPFSConfig;
   private initPromise: Promise<void> | null = null;
 
-  constructor(rpcUrl: string, programId: string, commitment: any) {
+  constructor(rpcUrl: string, programId: string, commitment: any, config: IPFSConfig = {}) {
     super(rpcUrl, programId, commitment);
-  };
+    this.config = {
+      disabled: false,
+      timeout: 30000,
+      gatewayUrl: 'https://ipfs.io/ipfs',
+      ...config
+    };
   }
 
   /**

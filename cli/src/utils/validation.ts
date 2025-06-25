@@ -1,4 +1,4 @@
-import { PublicKey } from "@solana/web3.js";
+import { address, type Address } from "@solana/web3.js";
 import chalk from "chalk";
 
 /**
@@ -12,17 +12,28 @@ export class ValidationError extends Error {
 }
 
 /**
- * Validate a Solana public key address
+ * Validate a Solana address
+ */
+export function validateAddress(
+  addressString: string,
+  fieldName: string = "address",
+): Address {
+  try {
+    return address(addressString);
+  } catch {
+    throw new ValidationError(`Invalid ${fieldName}: ${addressString}`);
+  }
+}
+
+/**
+ * Legacy function name for backward compatibility
+ * @deprecated Use validateAddress instead
  */
 export function validatePublicKey(
-  address: string,
+  addressString: string,
   fieldName: string = "address",
-): PublicKey {
-  try {
-    return new PublicKey(address);
-  } catch {
-    throw new ValidationError(`Invalid ${fieldName}: ${address}`);
-  }
+): Address {
+  return validateAddress(addressString, fieldName);
 }
 
 /**

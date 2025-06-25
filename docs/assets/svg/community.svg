@@ -1,0 +1,64 @@
+<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="communityGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Central community circle -->
+  <circle cx="40" cy="40" r="12" fill="url(#communityGradient)" stroke="#ffffff" stroke-width="2"/>
+  
+  <!-- Community members (people icons) -->
+  <g transform="translate(20, 15)">
+    <circle cx="0" cy="5" r="3" fill="#14F195"/>
+    <ellipse cx="0" cy="12" rx="4" ry="3" fill="#14F195"/>
+  </g>
+  
+  <g transform="translate(55, 15)">
+    <circle cx="0" cy="5" r="3" fill="#9945FF"/>
+    <ellipse cx="0" cy="12" rx="4" ry="3" fill="#9945FF"/>
+  </g>
+  
+  <g transform="translate(15, 50)">
+    <circle cx="0" cy="5" r="3" fill="#fbbf24"/>
+    <ellipse cx="0" cy="12" rx="4" ry="3" fill="#fbbf24"/>
+  </g>
+  
+  <g transform="translate(60, 50)">
+    <circle cx="0" cy="5" r="3" fill="#ef4444"/>
+    <ellipse cx="0" cy="12" rx="4" ry="3" fill="#ef4444"/>
+  </g>
+  
+  <g transform="translate(35, 5)">
+    <circle cx="0" cy="5" r="3" fill="#8b5cf6"/>
+    <ellipse cx="0" cy="12" rx="4" ry="3" fill="#8b5cf6"/>
+  </g>
+  
+  <g transform="translate(35, 65)">
+    <circle cx="0" cy="5" r="3" fill="#06b6d4"/>
+    <ellipse cx="0" cy="12" rx="4" ry="3" fill="#06b6d4"/>
+  </g>
+  
+  <!-- Connection lines to center -->
+  <line x1="28" y1="25" x2="35" y2="32" stroke="#10b981" stroke-width="2" opacity="0.6"/>
+  <line x1="52" y1="25" x2="45" y2="32" stroke="#10b981" stroke-width="2" opacity="0.6"/>
+  <line x1="23" y1="55" x2="32" y2="47" stroke="#10b981" stroke-width="2" opacity="0.6"/>
+  <line x1="57" y1="55" x2="48" y2="47" stroke="#10b981" stroke-width="2" opacity="0.6"/>
+  <line x1="35" y1="18" x2="38" y2="28" stroke="#10b981" stroke-width="2" opacity="0.6"/>
+  <line x1="35" y1="70" x2="38" y2="52" stroke="#10b981" stroke-width="2" opacity="0.6"/>
+  
+  <!-- Community symbol in center -->
+  <text x="40" y="45" text-anchor="middle" fill="#ffffff" font-family="Arial" font-size="12" font-weight="bold">C</text>
+  
+  <!-- Communication bubbles -->
+  <circle cx="25" cy="35" r="2" fill="#ffffff" opacity="0.8">
+    <animate attributeName="r" values="2;3;2" dur="1.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="55" cy="35" r="2" fill="#ffffff" opacity="0.8">
+    <animate attributeName="r" values="2;3;2" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  
+  <!-- Global reach indicator -->
+  <circle cx="40" cy="40" r="18" stroke="#10b981" stroke-width="1" fill="none" opacity="0.3" stroke-dasharray="3,3"/>
+</svg>

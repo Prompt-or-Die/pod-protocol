@@ -1,9 +1,14 @@
-import { Address, address } from "@solana/web3.js";
+import { PublicKey, TransactionInstruction, Transaction, VersionedTransaction } from "@solana/web3.js";
 import { BaseService } from "./base.js";
 import { IPFSService, IPFSStorageResult } from './ipfs.js';
-import { Transaction } from '@solana/transactions';
 import { createHash } from 'crypto';
 import { SecureHasher, SecureKeyManager } from '../utils/secure-memory.js';
+
+// Type for Anchor provider
+type AnchorProviderType = {
+  sendAndConfirm: (tx: any) => Promise<string>;
+  rpc: any;
+};
 
 import { createRpc, LightSystemProgram, Rpc as LightRpc } from '@lightprotocol/stateless.js';
 import { createMint, mintTo, transfer, CompressedTokenProgram } from '@lightprotocol/compressed-token';
@@ -133,10 +138,37 @@ export class ZKCompressionService extends BaseService {
   private batchQueue: CompressedChannelMessage[] = [];
   private batchTimer?: NodeJS.Timeout;
   private lastBatchResult?: { signature: string; compressedAccounts: any[] };
+  protected wallet?: any;
 
-  constructor(rpcUrl: string, programId: string, commitment: any) {
+  constructor(
+    rpcUrl: string, 
+    programId: string, 
+    commitment: any, 
+    config: ZKCompressionConfig = {}, 
+    ipfsService: IPFSService
+  ) {
     super(rpcUrl, programId, commitment);
-  };
+    
+    // Set default configuration values
+    this.config = {
+      lightRpcUrl: config.lightRpcUrl || rpcUrl,
+      compressionRpcUrl: config.compressionRpcUrl || rpcUrl,
+      proverUrl: config.proverUrl || rpcUrl,
+      photonIndexerUrl: config.photonIndexerUrl || 'https://photon-indexer.lightprotocol.com',
+      maxBatchSize: config.maxBatchSize || config.batchSize || 10,
+      enableBatching: config.enableBatching ?? false,
+      batchTimeout: config.batchTimeout || 5000,
+      lightSystemProgram: config.lightSystemProgram || 'H5sFv8VwWmjxHYS2GB4fTDsK7uTtnRT4WiixtHrET3bN',
+      nullifierQueuePubkey: config.nullifierQueuePubkey || 'nullifierQueuePubkey',
+      cpiAuthorityPda: config.cpiAuthorityPda || 'cpiAuthorityPda',
+      compressedTokenProgram: config.compressedTokenProgram || 'compressedTokenProgram',
+      registeredProgramId: config.registeredProgramId || programId,
+      noopProgram: config.noopProgram || 'noopProgram',
+      accountCompressionAuthority: config.accountCompressionAuthority || 'accountCompressionAuthority',
+      accountCompressionProgram: config.accountCompressionProgram || 'accountCompressionProgram',
+      compressedTokenMint: config.compressedTokenMint || 'compressedTokenMint',
+      ...config
+    };
 
     this.rpc = createRpc(
       this.config.lightRpcUrl,
@@ -149,6 +181,13 @@ export class ZKCompressionService extends BaseService {
     if (this.config.enableBatching) {
       this.startBatchTimer();
     }
+  }
+
+  /**
+   * Set the wallet for batch processing
+   */
+  setWallet(wallet: any): void {
+    this.wallet = wallet;
   }
 
   /**
@@ -253,10 +292,14 @@ export class ZKCompressionService extends BaseService {
       } else {
         // Execute compression via Light Protocol transaction
         const instruction = await this.createCompressionInstruction(channelId, compressedMessage, wallet.publicKey);
-        const transaction = null // null //().add(instruction);
+        const transaction = pipe(
+          createTransactionMessage({ version: 0, feePayer: wallet.publicKey }),
+          tx => addInstructionToTransaction(instruction, tx)
+        );
         let signature: string;
         try {
-          signature = await Promise.resolve([]) //transaction, []);
+          const signedTransaction = await signTransaction([wallet], transaction);
+          signature = await this.rpc.sendTransaction(signedTransaction);
         } catch (err) {
           throw new Error(`Light Protocol RPC error: ${err}`);
         }
@@ -366,7 +409,7 @@ export class ZKCompressionService extends BaseService {
   ): Promise<BatchCompressionResult> {
     try {
       // Validate inputs
-      if (!channelId || !Address.isOnCurve(channelId.toBytes())) {
+      if (!channelId || typeof channelId !== 'string') {
         throw new Error('Invalid channel ID provided');
       }
       
@@ -431,7 +474,7 @@ export class ZKCompressionService extends BaseService {
         throw new Error(`Light Protocol RPC error: ${err}`);
       }
 
-      const txInfo = await Promise.resolve([]) //signature);
+      const txInfo = await this.rpc.getTransaction(signature, { commitment: 'confirmed' });
       const compressedAccounts =
         txInfo?.compressionInfo?.openedAccounts?.map((acc: any) => ({
           hash: acc.account.hash.toString(16),
@@ -442,7 +485,7 @@ export class ZKCompressionService extends BaseService {
       let merkleRoot = '';
       if (compressedAccounts.length > 0) {
         try {
-          const proof = await Promise.resolve([]) //
+          const proof = await this.rpc.getValidityProof(
             txInfo!.compressionInfo.openedAccounts[0].account.hash
           );
           merkleRoot = proof.root.toString(16);
@@ -575,6 +618,9 @@ export class ZKCompressionService extends BaseService {
       return null;
     }
 
+    if (!this.wallet) {
+      throw new Error('Wallet not initialized');
+    }
     return await this.processBatch(this.wallet);
   }
 
@@ -660,7 +706,7 @@ export class ZKCompressionService extends BaseService {
     this.batchQueue = [];
 
     try {
-      const [treeInfo] = await Promise.resolve([]) //);
+      const [treeInfo] = await this.rpc.getValidityProof(null);
       const toAddresses = batch.map((m) => m.channel);
       const amounts = batch.map(() => 0);
 
@@ -675,10 +721,14 @@ export class ZKCompressionService extends BaseService {
         tokenPoolInfo: null,
       });
 
-      const transaction = null // null //().add(instruction);
+      const transaction = pipe(
+        createTransactionMessage({ version: 0, feePayer: wallet.publicKey }),
+        tx => addInstructionToTransaction(instruction, tx)
+      );
       let signature: string;
       try {
-        signature = await Promise.resolve([]) //transaction, []);
+        const signedTransaction = await signTransaction([wallet], transaction);
+        signature = await this.rpc.sendTransaction(signedTransaction);
       } catch (err) {
         throw new Error(`Light Protocol RPC error: ${err}`);
       }
@@ -717,7 +767,9 @@ export class ZKCompressionService extends BaseService {
 
     this.batchTimer = setTimeout(() => {
       if (this.batchQueue.length > 0) {
-        this.processBatch(this.wallet).catch(console.error);
+        if (this.wallet) {
+          this.processBatch(this.wallet).catch(console.error);
+        }
       }
       this.startBatchTimer();
     }, this.config.batchTimeout);
@@ -732,7 +784,7 @@ export class ZKCompressionService extends BaseService {
     authority: string
   ): Promise<TransactionInstruction> {
     // Fetch available state tree info and construct a compression instruction
-    const [treeInfo] = await Promise.resolve([]) //);
+    const [treeInfo] = await this.rpc.getValidityProof(null);
 
     return await LightSystemProgram.compress({
       payer: authority,
