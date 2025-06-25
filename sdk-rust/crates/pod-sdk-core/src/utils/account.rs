@@ -510,4 +510,284 @@ pub fn check_rent_exemption(account_size: usize, lamports: u64) -> Result<bool> 
     let required_lamports = (account_size * rent_per_byte_year * years_to_exempt) as u64;
     
     Ok(lamports >= required_lamports)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+
+    #[test]
+    fn test_agent_account_validation() {
+        // Valid agent account
+        let valid_agent = AgentAccount {
+            name: "test_agent".to_string(),
+            owner: Pubkey::new_unique(),
+            is_active: true,
+            reputation_score: 100,
+            capabilities: vec!["chat".to_string(), "analysis".to_string()],
+            created_at: Utc::now().timestamp(),
+            updated_at: Utc::now().timestamp(),
+        };
+        assert!(validate_agent_account(&valid_agent).is_ok());
+
+        // Invalid agent - empty name
+        let invalid_name = AgentAccount {
+            name: "".to_string(),
+            ..valid_agent.clone()
+        };
+        assert!(validate_agent_account(&invalid_name).is_err());
+
+        // Invalid agent - name too long
+        let long_name = AgentAccount {
+            name: "a".repeat(65),
+            ..valid_agent.clone()
+        };
+        assert!(validate_agent_account(&long_name).is_err());
+
+        // Invalid agent - invalid characters in name
+        let invalid_chars = AgentAccount {
+            name: "test@agent".to_string(),
+            ..valid_agent.clone()
+        };
+        assert!(validate_agent_account(&invalid_chars).is_err());
+
+        // Invalid agent - default owner
+        let default_owner = AgentAccount {
+            owner: Pubkey::default(),
+            ..valid_agent.clone()
+        };
+        assert!(validate_agent_account(&default_owner).is_err());
+
+        // Invalid agent - reputation too high
+        let high_reputation = AgentAccount {
+            reputation_score: 10001,
+            ..valid_agent.clone()
+        };
+        assert!(validate_agent_account(&high_reputation).is_err());
+    }
+
+    #[test]
+    fn test_message_account_validation() {
+        let valid_message = MessageAccount {
+            id: "msg_123".to_string(),
+            channel: Pubkey::new_unique(),
+            sender: Pubkey::new_unique(),
+            content: b"Hello, World!".to_vec(),
+            content_type: "text/plain".to_string(),
+            created_at: Utc::now().timestamp(),
+            expires_at: Some(Utc::now().timestamp() + 3600), // 1 hour from now
+        };
+        assert!(validate_message_account(&valid_message).is_ok());
+
+        // Invalid - empty content
+        let empty_content = MessageAccount {
+            content: vec![],
+            ..valid_message.clone()
+        };
+        assert!(validate_message_account(&empty_content).is_err());
+
+        // Invalid - unsupported content type
+        let invalid_type = MessageAccount {
+            content_type: "application/x-custom".to_string(),
+            ..valid_message.clone()
+        };
+        assert!(validate_message_account(&invalid_type).is_err());
+
+        // Invalid - expired message
+        let expired_message = MessageAccount {
+            expires_at: Some(Utc::now().timestamp() - 3600), // 1 hour ago
+            ..valid_message.clone()
+        };
+        assert!(validate_message_account(&expired_message).is_err());
+    }
+
+    #[test]
+    fn test_channel_account_validation() {
+        let creator = Pubkey::new_unique();
+        let participant1 = Pubkey::new_unique();
+        let participant2 = Pubkey::new_unique();
+
+        let valid_channel = ChannelAccount {
+            id: "channel_123".to_string(),
+            creator,
+            participants: vec![creator, participant1, participant2],
+            is_active: true,
+            created_at: Utc::now().timestamp(),
+            updated_at: Utc::now().timestamp(),
+        };
+        assert!(validate_channel_account(&valid_channel).is_ok());
+
+        // Invalid - empty participants
+        let empty_participants = ChannelAccount {
+            participants: vec![],
+            ..valid_channel.clone()
+        };
+        assert!(validate_channel_account(&empty_participants).is_err());
+
+        // Invalid - creator not in participants
+        let creator_not_participant = ChannelAccount {
+            participants: vec![participant1, participant2],
+            ..valid_channel.clone()
+        };
+        assert!(validate_channel_account(&creator_not_participant).is_err());
+
+        // Invalid - duplicate participants
+        let duplicate_participants = ChannelAccount {
+            participants: vec![creator, participant1, participant1],
+            ..valid_channel.clone()
+        };
+        assert!(validate_channel_account(&duplicate_participants).is_err());
+    }
+
+    #[test]
+    fn test_escrow_account_validation() {
+        let valid_escrow = EscrowAccount {
+            id: "escrow_123".to_string(),
+            payer: Pubkey::new_unique(),
+            beneficiary: Pubkey::new_unique(),
+            amount: 1_000_000_000, // 1 SOL
+            status: crate::error::EscrowStatus::Active,
+            created_at: Utc::now().timestamp(),
+            expires_at: Utc::now().timestamp() + 24 * 60 * 60, // 1 day from now
+        };
+        assert!(validate_escrow_account(&valid_escrow).is_ok());
+
+        // Invalid - zero amount
+        let zero_amount = EscrowAccount {
+            amount: 0,
+            ..valid_escrow.clone()
+        };
+        assert!(validate_escrow_account(&zero_amount).is_err());
+
+        // Invalid - same payer and beneficiary
+        let same_parties = EscrowAccount {
+            beneficiary: valid_escrow.payer,
+            ..valid_escrow.clone()
+        };
+        assert!(validate_escrow_account(&same_parties).is_err());
+
+        // Invalid - duration too long
+        let long_duration = EscrowAccount {
+            expires_at: Utc::now().timestamp() + 366 * 24 * 60 * 60, // Over 1 year
+            ..valid_escrow.clone()
+        };
+        assert!(validate_escrow_account(&long_duration).is_err());
+    }
+
+    #[test]
+    fn test_ipfs_metadata_validation() {
+        let valid_ipfs = IPFSMetadataAccount {
+            id: "ipfs_123".to_string(),
+            uploader: Pubkey::new_unique(),
+            content_hash: "QmYjtig7VJQ6XsnUjqqJvj7QaMcCAwtrgNdahSiFofrE7o".to_string(),
+            size: 1024,
+            is_pinned: true,
+            created_at: Utc::now().timestamp(),
+        };
+        assert!(validate_ipfs_metadata_account(&valid_ipfs).is_ok());
+
+        // Invalid - empty content hash
+        let empty_hash = IPFSMetadataAccount {
+            content_hash: "".to_string(),
+            ..valid_ipfs.clone()
+        };
+        assert!(validate_ipfs_metadata_account(&empty_hash).is_err());
+
+        // Invalid - wrong content hash format
+        let invalid_hash = IPFSMetadataAccount {
+            content_hash: "invalid_hash".to_string(),
+            ..valid_ipfs.clone()
+        };
+        assert!(validate_ipfs_metadata_account(&invalid_hash).is_err());
+
+        // Invalid - zero size
+        let zero_size = IPFSMetadataAccount {
+            size: 0,
+            ..valid_ipfs.clone()
+        };
+        assert!(validate_ipfs_metadata_account(&zero_size).is_err());
+    }
+
+    #[test]
+    fn test_zk_compression_validation() {
+        let valid_zk = ZKCompressionAccount {
+            id: "zk_123".to_string(),
+            compressor: Pubkey::new_unique(),
+            original_size: 1000,
+            compressed_size: 500,
+            proof_hash: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890".to_string(),
+            created_at: Utc::now().timestamp(),
+        };
+        assert!(validate_zk_compression_account(&valid_zk).is_ok());
+
+        // Invalid - compressed larger than original
+        let larger_compressed = ZKCompressionAccount {
+            compressed_size: 1500,
+            ..valid_zk.clone()
+        };
+        assert!(validate_zk_compression_account(&larger_compressed).is_err());
+
+        // Invalid - compression ratio too aggressive
+        let too_aggressive = ZKCompressionAccount {
+            compressed_size: 1, // 0.1% compression ratio
+            ..valid_zk.clone()
+        };
+        assert!(validate_zk_compression_account(&too_aggressive).is_err());
+
+        // Invalid - wrong proof hash length
+        let wrong_hash_length = ZKCompressionAccount {
+            proof_hash: "short_hash".to_string(),
+            ..valid_zk.clone()
+        };
+        assert!(validate_zk_compression_account(&wrong_hash_length).is_err());
+
+        // Invalid - non-hex proof hash
+        let non_hex_hash = ZKCompressionAccount {
+            proof_hash: "ghijklmnopqrstuvghijklmnopqrstuvghijklmnopqrstuvghijklmnopqrstuv".to_string(),
+            ..valid_zk.clone()
+        };
+        assert!(validate_zk_compression_account(&non_hex_hash).is_err());
+    }
+
+    #[test]
+    fn test_pda_derivation() {
+        let owner = Pubkey::new_unique();
+        let name = "test_agent";
+        
+        let (pda1, bump1) = derive_agent_pda(&owner, name).unwrap();
+        let (pda2, bump2) = derive_agent_pda(&owner, name).unwrap();
+        
+        // Same inputs should produce same PDA
+        assert_eq!(pda1, pda2);
+        assert_eq!(bump1, bump2);
+        
+        // Different name should produce different PDA
+        let (pda3, _) = derive_agent_pda(&owner, "different_name").unwrap();
+        assert_ne!(pda1, pda3);
+    }
+
+    #[test]
+    fn test_account_size_validation() {
+        let test_data = [0u8; 100];
+        
+        // Valid size
+        assert!(validate_account_size(&test_data, 200).is_ok());
+        
+        // Invalid size
+        assert!(validate_account_size(&test_data, 50).is_err());
+    }
+
+    #[test]
+    fn test_rent_exemption() {
+        let account_size = 1000; // bytes
+        
+        // Sufficient lamports for rent exemption
+        let sufficient_lamports = 10_000_000; // High amount
+        assert!(check_rent_exemption(account_size, sufficient_lamports).unwrap());
+        
+        // Insufficient lamports
+        let insufficient_lamports = 1000;
+        assert!(!check_rent_exemption(account_size, insufficient_lamports).unwrap());
+    }
 } 

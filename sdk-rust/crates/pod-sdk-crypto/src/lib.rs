@@ -10,7 +10,8 @@ use thiserror::Error;
 use std::pin::Pin;
 
 pub use blake3;
-pub use ed25519_dalek;
+pub use solana_sdk::signer::keypair::Keypair;
+pub use solana_sdk::signature::{Signature as SolanaSignature};
 pub use rand;
 pub use sha2;
 
@@ -265,64 +266,89 @@ impl Default for Hash {
     }
 }
 
-/// Ed25519 signature utilities
+/// Ed25519 signature utilities using Solana's implementation
 pub struct Signature;
 
 impl Signature {
-    /// Sign a message with a private key
-    pub fn sign(private_key: &[u8; 32], message: &[u8]) -> Result<[u8; 64], CryptoError> {
-        use ed25519_dalek::{Signer, Keypair, SecretKey};
+    /// Sign a message with a keypair
+    pub fn sign_with_keypair(keypair: &Keypair, message: &[u8]) -> Result<[u8; 64], CryptoError> {
+        use solana_sdk::signer::Signer;
         
-        let secret_key = SecretKey::from_bytes(private_key)
-            .map_err(|_| CryptoError::InvalidPrivateKey)?;
-        let public_key = ed25519_dalek::PublicKey::from(&secret_key);
-        let keypair = Keypair { secret: secret_key, public: public_key };
-        let signature = keypair.sign(message);
-        
-        Ok(signature.to_bytes())
+        let signature = keypair.sign_message(message);
+        Ok(signature.as_ref().try_into().unwrap())
     }
     
-    /// Verify a signature
+    /// Verify a signature using Solana's verification
+    pub fn verify_solana(
+        public_key: &solana_sdk::pubkey::Pubkey,
+        message: &[u8],
+        signature: &SolanaSignature,
+    ) -> bool {
+        signature.verify(public_key.as_ref(), message)
+    }
+    
+    /// Generate a new Solana keypair
+    pub fn generate_solana_keypair() -> Result<Keypair, CryptoError> {
+        Ok(Keypair::new())
+    }
+    
+    /// Create signature from bytes
+    pub fn from_bytes(bytes: &[u8; 64]) -> Result<SolanaSignature, CryptoError> {
+        SolanaSignature::try_from(bytes.as_ref())
+            .map_err(|_| CryptoError::InvalidSignature)
+    }
+    
+    /// Simple signing function for backward compatibility
+    pub fn sign(private_key: &[u8; 32], message: &[u8]) -> Result<[u8; 64], CryptoError> {
+        // Create a keypair from the private key bytes
+        let keypair = Keypair::from_bytes(private_key)
+            .map_err(|_| CryptoError::InvalidPrivateKey)?;
+        
+        Self::sign_with_keypair(&keypair, message)
+    }
+    
+    /// Simple verification function for backward compatibility
     pub fn verify(
         public_key: &[u8; 32],
         message: &[u8],
         signature: &[u8; 64],
     ) -> bool {
-        use ed25519_dalek::{Verifier, PublicKey};
+        use solana_sdk::pubkey::Pubkey;
         
-        let public_key = match PublicKey::from_bytes(public_key) {
-            Ok(key) => key,
+        let pubkey = match Pubkey::try_from(public_key.as_ref()) {
+            Ok(pk) => pk,
             Err(_) => return false,
         };
         
-        let signature = match ed25519_dalek::Signature::from_bytes(signature) {
-            Ok(sig) => sig,
+        let sig = match Self::from_bytes(signature) {
+            Ok(s) => s,
             Err(_) => return false,
         };
         
-        public_key.verify(message, &signature).is_ok()
+        Self::verify_solana(&pubkey, message, &sig)
     }
     
-    /// Generate a new keypair
+    /// Generate a new keypair (backward compatibility)
     pub fn generate_keypair() -> Result<([u8; 32], [u8; 32]), CryptoError> {
-        use ed25519_dalek::Keypair;
-        use rand_core::OsRng;
+        let keypair = Self::generate_solana_keypair()?;
         
-        let mut csprng = OsRng;
-        let keypair = Keypair::generate(&mut csprng);
+        let secret_bytes: [u8; 32] = keypair.secret().as_ref().try_into()
+            .map_err(|_| CryptoError::InvalidPrivateKey)?;
+        let public_bytes: [u8; 32] = keypair.pubkey().as_ref().try_into()
+            .map_err(|_| CryptoError::InvalidPublicKey)?;
         
-        Ok((keypair.secret.to_bytes(), keypair.public.to_bytes()))
+        Ok((secret_bytes, public_bytes))
     }
     
-    /// Get public key from private key
+    /// Get public key from private key (backward compatibility)  
     pub fn public_key_from_private(private_key: &[u8; 32]) -> Result<[u8; 32], CryptoError> {
-        use ed25519_dalek::{SecretKey, PublicKey};
-        
-        let secret_key = SecretKey::from_bytes(private_key)
+        let keypair = Keypair::from_bytes(private_key)
             .map_err(|_| CryptoError::InvalidPrivateKey)?;
-        let public_key = PublicKey::from(&secret_key);
         
-        Ok(public_key.to_bytes())
+        let public_bytes: [u8; 32] = keypair.pubkey().as_ref().try_into()
+            .map_err(|_| CryptoError::InvalidPublicKey)?;
+        
+        Ok(public_bytes)
     }
 }
 

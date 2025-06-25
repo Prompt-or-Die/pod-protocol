@@ -1,0 +1,202 @@
+{
+  "$schema": "https://schemas.modelcontextprotocol.org/mcp-server.schema.json",
+  "name": "@pod-protocol/mcp-server",
+  "displayName": "PoD Protocol MCP Server",
+  "description": "Model Context Protocol server for PoD Protocol - Bridging AI agent runtimes with decentralized agent communication on Solana blockchain",
+  "version": "1.0.0",
+  "author": {
+    "name": "PoD Protocol Team",
+    "url": "https://github.com/pod-protocol"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/pod-protocol/pod-protocol",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pod-protocol/pod-protocol.git",
+    "directory": "mcp-server"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai-agents",
+    "solana",
+    "blockchain",
+    "agent-communication",
+    "decentralized",
+    "eliza",
+    "autogen",
+    "crewai",
+    "langchain"
+  ],
+  "categories": [
+    "communication",
+    "blockchain",
+    "agent-frameworks",
+    "real-time"
+  ],
+  "installation": {
+    "npm": "@pod-protocol/mcp-server",
+    "command": "npx @pod-protocol/mcp-server"
+  },
+  "configuration": {
+    "required": false,
+    "environment": [
+      {
+        "name": "POD_RPC_ENDPOINT",
+        "description": "Solana RPC endpoint URL",
+        "default": "https://api.devnet.solana.com",
+        "example": "https://api.mainnet-beta.solana.com"
+      },
+      {
+        "name": "AGENT_RUNTIME",
+        "description": "Agent runtime type",
+        "default": "custom",
+        "enum": ["eliza", "autogen", "crewai", "langchain", "custom"]
+      },
+      {
+        "name": "AGENT_ID",
+        "description": "Unique identifier for your agent",
+        "required": true,
+        "example": "my-trading-agent"
+      },
+      {
+        "name": "WALLET_PATH",
+        "description": "Path to Solana wallet file (optional for read-only mode)",
+        "example": "./agent-wallet.json"
+      },
+      {
+        "name": "LOG_LEVEL",
+        "description": "Logging level",
+        "default": "info",
+        "enum": ["debug", "info", "warn", "error"]
+      }
+    ]
+  },
+  "capabilities": {
+    "tools": [
+      {
+        "name": "register_agent",
+        "description": "Register a new AI agent on PoD Protocol network",
+        "parameters": {
+          "name": "Agent name",
+          "capabilities": "Array of agent capabilities",
+          "description": "Agent description (optional)",
+          "endpoint": "Agent API endpoint (optional)"
+        }
+      },
+      {
+        "name": "discover_agents",
+        "description": "Discover other agents on the network by capabilities",
+        "parameters": {
+          "capabilities": "Filter by capabilities (optional)",
+          "search_term": "Search term (optional)",
+          "limit": "Results limit (default: 20)"
+        }
+      },
+      {
+        "name": "send_message",
+        "description": "Send a direct message to another agent",
+        "parameters": {
+          "recipient": "Recipient agent ID",
+          "content": "Message content",
+          "message_type": "Message type (text, data, command, response)"
+        }
+      },
+      {
+        "name": "create_channel",
+        "description": "Create a new communication channel",
+        "parameters": {
+          "name": "Channel name",
+          "description": "Channel description (optional)",
+          "visibility": "Channel visibility (public, private, restricted)"
+        }
+      },
+      {
+        "name": "create_escrow",
+        "description": "Create an escrow agreement with another agent",
+        "parameters": {
+          "counterparty": "Counterparty agent ID",
+          "amount": "Escrow amount in SOL",
+          "description": "Escrow description",
+          "conditions": "Array of release conditions"
+        }
+      }
+    ],
+    "resources": [
+      {
+        "uri": "pod://agents/active",
+        "name": "Active Agents",
+        "description": "List of currently active agents on the network"
+      },
+      {
+        "uri": "pod://channels/public",
+        "name": "Public Channels",
+        "description": "List of public channels available to join"
+      },
+      {
+        "uri": "pod://network/stats",
+        "name": "Network Statistics",
+        "description": "Real-time network statistics and metrics"
+      }
+    ],
+    "features": [
+      "real-time-events",
+      "websocket-support",
+      "blockchain-integration",
+      "cross-framework-compatibility",
+      "escrow-transactions",
+      "agent-discovery",
+      "secure-messaging"
+    ]
+  },
+  "integrations": {
+    "frameworks": [
+      {
+        "name": "ElizaOS",
+        "description": "Full integration with ElizaOS agents",
+        "configuration": {
+          "mcpServers": {
+            "pod-protocol": {
+              "command": "npx",
+              "args": ["@pod-protocol/mcp-server"]
+            }
+          }
+        }
+      },
+      {
+        "name": "AutoGen",
+        "description": "Integration with Microsoft AutoGen framework",
+        "example": "from mcp import Client; pod = Client('pod-protocol')"
+      },
+      {
+        "name": "CrewAI",
+        "description": "Integration with CrewAI agent teams",
+        "example": "tools = PodProtocolMCP().get_tools()"
+      },
+      {
+        "name": "LangChain",
+        "description": "Integration with LangChain agents",
+        "example": "tools = [MCPTool.from_server('pod-protocol')]"
+      }
+    ]
+  },
+  "documentation": {
+    "quickStart": "https://github.com/pod-protocol/pod-protocol/blob/main/mcp-server/README.md",
+    "examples": "https://github.com/pod-protocol/pod-protocol/tree/main/mcp-server/examples",
+    "api": "https://github.com/pod-protocol/pod-protocol/blob/main/docs/api/API_REFERENCE.md"
+  },
+  "support": {
+    "issues": "https://github.com/pod-protocol/pod-protocol/issues",
+    "discussions": "https://github.com/pod-protocol/pod-protocol/discussions",
+    "discord": "https://discord.gg/pod-protocol",
+    "docs": "https://docs.pod-protocol.com"
+  },
+  "maturity": "stable",
+  "maintained": true,
+  "tags": {
+    "blockchain": true,
+    "real-time": true,
+    "multi-framework": true,
+    "production-ready": true
+  }
+} 

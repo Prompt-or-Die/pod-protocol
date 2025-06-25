@@ -18,7 +18,10 @@
     "start": "node dist/index.js",
     "test": "jest",
     "lint": "eslint src/**/*.ts",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build",
+    "prepack": "npm run build",
+    "validate": "chmod +x scripts/prepublish.sh && ./scripts/prepublish.sh"
   },
   "keywords": [
     "mcp",
