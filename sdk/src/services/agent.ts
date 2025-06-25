@@ -13,7 +13,7 @@ export class AgentService extends BaseService {
     wallet: KeyPairSigner,
     options: CreateAgentOptions,
   ): Promise<string> {
-    const [agentPDA] = findAgentPDA(wallet.address, this.programId);
+    const [agentPDA] = await findAgentPDA(wallet.address, this.programId);
 
     return retry(async () => {
       // Always prefer using the pre-initialized program if available
@@ -65,7 +65,7 @@ export class AgentService extends BaseService {
     wallet: KeyPairSigner,
     options: UpdateAgentOptions,
   ): Promise<string> {
-    const [agentPDA] = findAgentPDA(wallet.address, this.programId);
+    const [agentPDA] = await findAgentPDA(wallet.address, this.programId);
 
     return retry(async () => {
       // Use the program if it was initialized with a wallet, otherwise create a fresh one
@@ -109,7 +109,7 @@ export class AgentService extends BaseService {
   }
 
   async getAgent(walletAddress: Address): Promise<AgentAccount | null> {
-    const [agentPDA] = findAgentPDA(walletAddress, this.programId);
+    const [agentPDA] = await findAgentPDA(walletAddress, this.programId);
 
     try {
       // Use the program if it was initialized, otherwise create a temporary one

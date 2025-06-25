@@ -1,4 +1,9 @@
-import { Address, address } from '@solana/web3.js';
+import {
+  address,
+  Address,
+  getAddressEncoder,
+  getProgramDerivedAddress
+} from "@solana/web3.js";
 import { PROGRAM_ID, MessageType, AGENT_CAPABILITIES } from "./types";
 
 // Helper function to convert string to bytes
@@ -88,75 +93,78 @@ export { MessageType } from "./types";
 /**
  * Calculate PDA for an agent account
  */
-export async function findAgentPDA(
-  wallet: Address,
-  programId: Address = PROGRAM_ID,
-): Promise<[Address, number]> {
-  const seeds = [
-    stringToBytes("agent"),
-    addressToBytes(wallet),
-  ];
-  
-  return derivePDA(seeds, programId);
+export async function findAgentPDA(walletAddress: Address, programId: Address): Promise<[Address, number]> {
+  const addressEncoder = getAddressEncoder();
+  const [pda, bump] = await getProgramDerivedAddress({
+    programAddress: programId,
+    seeds: [
+      new TextEncoder().encode("agent"),
+      addressEncoder.encode(walletAddress),
+    ],
+  });
+  return [pda, bump];
 }
 
 /**
  * Calculate PDA for a message account
  */
 export async function findMessagePDA(
-  senderAgent: Address,
+  sender: Address,
   recipient: Address,
-  payloadHash: Uint8Array,
-  messageType: MessageType,
-  programId: Address = PROGRAM_ID,
+  messageId: string,
+  programId: Address
 ): Promise<[Address, number]> {
-  // Convert MessageType to numeric ID for seed
-  const messageTypeId = getMessageTypeId(messageType);
-  const messageTypeByte = new Uint8Array([messageTypeId]);
-  
-  const seeds = [
-    stringToBytes("message"),
-    addressToBytes(senderAgent),
-    addressToBytes(recipient),
-    payloadHash,
-    messageTypeByte,
-  ];
-  
-  return derivePDA(seeds, programId);
+  const addressEncoder = getAddressEncoder();
+  const [pda, bump] = await getProgramDerivedAddress({
+    programAddress: programId,
+    seeds: [
+      new TextEncoder().encode("message"),
+      addressEncoder.encode(sender),
+      addressEncoder.encode(recipient),
+      new TextEncoder().encode(messageId),
+    ],
+  });
+  return [pda, bump];
 }
 
 /**
  * Calculate PDA for a channel account
  */
 export async function findChannelPDA(
-  channelName: string,
+  channelId: string,
   creator: Address,
-  programId: Address = PROGRAM_ID,
+  programId: Address
 ): Promise<[Address, number]> {
-  const seeds = [
-    stringToBytes("channel"),
-    addressToBytes(creator),
-    stringToBytes(channelName),
-  ];
-  
-  return derivePDA(seeds, programId);
+  const addressEncoder = getAddressEncoder();
+  const [pda, bump] = await getProgramDerivedAddress({
+    programAddress: programId,
+    seeds: [
+      new TextEncoder().encode("channel"),
+      new TextEncoder().encode(channelId),
+      addressEncoder.encode(creator),
+    ],
+  });
+  return [pda, bump];
 }
 
 /**
  * Calculate PDA for an escrow account
  */
 export async function findEscrowPDA(
-  channel: Address,
-  depositor: Address,
-  programId: Address = PROGRAM_ID,
+  channelAddress: Address,
+  depositorAddress: Address,
+  programId: Address
 ): Promise<[Address, number]> {
-  const seeds = [
-    stringToBytes("escrow"),
-    addressToBytes(channel),
-    addressToBytes(depositor),
-  ];
-  
-  return derivePDA(seeds, programId);
+  const addressEncoder = getAddressEncoder();
+  const [pda, bump] = await getProgramDerivedAddress({
+    programAddress: programId,
+    seeds: [
+      new TextEncoder().encode("escrow"),
+      addressEncoder.encode(channelAddress),
+      addressEncoder.encode(depositorAddress),
+    ],
+  });
+  return [pda, bump];
 }
 
 /**
@@ -550,34 +558,40 @@ export function getVisibilityString(visibility: any): string {
  * Calculate PDA for a channel participant
  */
 export async function findParticipantPDA(
-  channel: Address,
-  agent: Address,
-  programId: Address = PROGRAM_ID,
+  channelAddress: Address,
+  agentAddress: Address,
+  programId: Address
 ): Promise<[Address, number]> {
-  const seeds = [
-    stringToBytes("participant"),
-    addressToBytes(channel),
-    addressToBytes(agent),
-  ];
-  
-  return derivePDA(seeds, programId);
+  const addressEncoder = getAddressEncoder();
+  const [pda, bump] = await getProgramDerivedAddress({
+    programAddress: programId,
+    seeds: [
+      new TextEncoder().encode("participant"),
+      addressEncoder.encode(channelAddress),
+      addressEncoder.encode(agentAddress),
+    ],
+  });
+  return [pda, bump];
 }
 
 /**
  * Calculate PDA for a channel invitation
  */
 export async function findInvitationPDA(
-  channel: Address,
-  invitee: Address,
-  programId: Address = PROGRAM_ID,
+  channelAddress: Address,
+  inviteeAddress: Address,
+  programId: Address
 ): Promise<[Address, number]> {
-  const seeds = [
-    stringToBytes("invitation"),
-    addressToBytes(channel),
-    addressToBytes(invitee),
-  ];
-  
-  return derivePDA(seeds, programId);
+  const addressEncoder = getAddressEncoder();
+  const [pda, bump] = await getProgramDerivedAddress({
+    programAddress: programId,
+    seeds: [
+      new TextEncoder().encode("invitation"),
+      addressEncoder.encode(channelAddress),
+      addressEncoder.encode(inviteeAddress),
+    ],
+  });
+  return [pda, bump];
 }
 
 /**

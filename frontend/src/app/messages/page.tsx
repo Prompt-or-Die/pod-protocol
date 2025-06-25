@@ -21,9 +21,11 @@ import {
   MessageType,
   MessageStatus,
 } from "@/components/store/types";
-import usePodClient from "@/hooks/usePodClient";
+import { usePodClient } from "@/hooks/usePodClient";
 import { MessageStatus as SDKMessageStatus } from "@pod-protocol/sdk";
-import { PublicKey } from "@solana/web3.js";
+
+// Web3.js v2.0 imports
+import { address, Address } from "@solana/web3.js";
 
 function mapStatus(status: SDKMessageStatus): MessageStatus {
   switch (status) {
@@ -63,8 +65,11 @@ export default function MessagesPage() {
         const convs = await Promise.all(
           agents.slice(0, 5).map(async (agent) => {
             try {
+              // Convert agent ID to Web3.js v2.0 Address
+              const agentAddress = address(agent.id);
+              
               const fetched = await client.messages.getAgentMessages(
-                new PublicKey(agent.id),
+                agentAddress,
                 50,
               );
 
@@ -144,7 +149,7 @@ export default function MessagesPage() {
   const wallet = useAnchorWallet();
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedAgent || !user || !wallet) return;
+    if (!newMessage.trim() || !selectedAgent || !user || !wallet || !client.isConnected) return;
 
     const channelId = `${user.id}-${selectedAgent.id}`;
     const baseMessage = {
@@ -167,15 +172,21 @@ export default function MessagesPage() {
     }, 10000); // 10 second timeout
 
     try {
-      await client.messages.sendMessage(wallet, {
-        recipient: new PublicKey(selectedAgent.id),
-        payload: newMessage,
-        messageType: MessageType.TEXT,
-        signal: controller.signal
-      });
+      // Add optimistic message
+      addMessage(channelId, { ...baseMessage, status: MessageStatus.SENT });
+
+      // Convert agent ID to Web3.js v2.0 Address
+      const recipientAddress = address(selectedAgent.id);
+      
+      // Send message using Web3.js v2.0 client
+      const signature = await client.sendMessage(newMessage, recipientAddress);
 
       clearTimeout(timeoutId);
-      addMessage(channelId, { ...baseMessage, status: MessageStatus.SENT });
+      
+      // Update message status to delivered
+      addMessage(channelId, { ...baseMessage, status: MessageStatus.DELIVERED });
+      
+      console.log(`Message sent with signature: ${signature}`);
     } catch (err) {
       clearTimeout(timeoutId);
       console.error("Failed to send message", err);
@@ -291,6 +302,19 @@ export default function MessagesPage() {
                 </div>
               </div>
 
+              {/* Connection Status */}
+              <div className="px-4 py-2 bg-purple-900/10">
+                <div className="flex items-center space-x-2">
+                  <div className={`w-2 h-2 rounded-full ${client.isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                  <span className="text-xs text-purple-300">
+                    {client.isConnected ? 'Connected to PoD Protocol' : 'Connecting...'}
+                  </span>
+                  {client.loading && (
+                    <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                  )}
+                </div>
+              </div>
+
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 <AnimatePresence>
@@ -310,9 +334,24 @@ export default function MessagesPage() {
                         }`}
                       >
                         <p className="text-sm">{message.content}</p>
-                        <p className="text-xs opacity-70 mt-1">
-                          {message.timestamp.toLocaleTimeString()}
-                        </p>
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="text-xs opacity-70">
+                            {message.timestamp.toLocaleTimeString()}
+                          </p>
+                          {message.senderId === user?.id && (
+                            <div className="ml-2">
+                              {message.status === MessageStatus.SENT && (
+                                <div className="w-3 h-3 text-purple-300">✓</div>
+                              )}
+                              {message.status === MessageStatus.DELIVERED && (
+                                <div className="w-3 h-3 text-green-400">✓✓</div>
+                              )}
+                              {message.status === MessageStatus.FAILED && (
+                                <div className="w-3 h-3 text-red-400">✗</div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </motion.div>
                   ))}
@@ -322,6 +361,12 @@ export default function MessagesPage() {
 
               {/* Message Input */}
               <div className="p-4 border-t border-purple-500/20">
+                {client.error && (
+                  <div className="mb-2 p-2 bg-red-900/20 border border-red-500/30 rounded text-red-300 text-sm">
+                    {client.error}
+                  </div>
+                )}
+                
                 <div className="flex items-end space-x-2">
                   <button className="p-2 text-purple-400 hover:text-white hover:bg-purple-500/20 rounded-lg transition-colors">
                     <Paperclip className="w-5 h-5" />
@@ -344,10 +389,14 @@ export default function MessagesPage() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleSendMessage}
-                    disabled={!newMessage.trim()}
+                    disabled={!newMessage.trim() || !client.isConnected || client.loading}
                     className="p-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
                   >
-                    <Send className="w-5 h-5" />
+                    {client.loading ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Send className="w-5 h-5" />
+                    )}
                   </motion.button>
                 </div>
               </div>

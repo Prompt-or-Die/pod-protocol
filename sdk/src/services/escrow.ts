@@ -23,13 +23,13 @@ export class EscrowService extends BaseService {
     const program = this.ensureInitialized();
 
     // Derive agent PDA
-    const [agentPDA] = findAgentPDA(address(wallet.address), address(this.programId));
+    const [agentPDA] = await findAgentPDA(wallet.address, this.programId);
 
     // Derive escrow PDA
-    const [escrowPDA] = findEscrowPDA(
-      address(options.channel),
-      address(wallet.address),
-      address(this.programId),
+    const [escrowPDA] = await findEscrowPDA(
+      options.channel,
+      wallet.address,
+      this.programId,
     );
 
     const tx = await (program.methods as any)
@@ -57,13 +57,13 @@ export class EscrowService extends BaseService {
     const program = this.ensureInitialized();
 
     // Derive agent PDA
-    const [agentPDA] = findAgentPDA(address(wallet.address), address(this.programId));
+    const [agentPDA] = await findAgentPDA(wallet.address, this.programId);
 
     // Derive escrow PDA
-    const [escrowPDA] = findEscrowPDA(
-      address(options.channel),
-      address(wallet.address),
-      address(this.programId),
+    const [escrowPDA] = await findEscrowPDA(
+      options.channel,
+      wallet.address,
+      this.programId,
     );
 
     const tx = await (program.methods as any)
@@ -89,15 +89,12 @@ export class EscrowService extends BaseService {
     depositor: Address,
   ): Promise<EscrowAccount | null> {
     try {
-      const [escrowPDA] = findEscrowPDA(address(channel), address(depositor), address(this.programId));
+      const [escrowPDA] = await findEscrowPDA(channel, depositor, this.programId);
       const escrowAccount = this.getAccount("escrowAccount");
       const account = await escrowAccount.fetch(escrowPDA);
       return this.convertEscrowAccountFromProgram(account);
     } catch (error) {
-      console.warn(
-        `Escrow not found for channel: ${channel}, depositor: ${depositor}`,
-        error,
-      );
+      console.error("Error fetching escrow details:", error);
       return null;
     }
   }

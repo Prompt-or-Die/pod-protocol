@@ -1,9 +1,12 @@
-import { 
-  PublicKey,
-  Connection,
-  Commitment,
-  Keypair
-} from '@solana/web3.js';
+import {
+  // Web3.js v2 imports
+  address,
+  Address,
+  createSolanaRpc,
+  Rpc,
+  KeyPairSigner,
+  Commitment
+} from "@solana/web3.js";
 import anchor from "@coral-xyz/anchor";
 const { Program, AnchorProvider } = anchor;
 import type { Program as ProgramType } from "@coral-xyz/anchor";
@@ -43,15 +46,10 @@ import { ZKCompressionService, ZKCompressionConfig } from "./services/zk-compres
 // Note: JitoBundleService import removed - using JitoBundlesService
 
 // Client configuration with 2025 enhancements
-export interface PodClientConfig extends PodComConfig {
-  rpcEndpoint?: string;
-  wsEndpoint?: string;
+export interface PodClientConfig {
+  endpoint: string;
   commitment?: Commitment;
   programId?: Address;
-  enableCompression?: boolean;
-  enableJitoMEV?: boolean;
-  enableAnalytics?: boolean;
-  jitoRpcUrl?: string;
 }
 
 /**
@@ -76,35 +74,28 @@ export class PodComClient {
   public sessionKeys: SessionKeysService;
   public jitoBundles: JitoBundlesService;
 
-  constructor(config: PodClientConfig = {}) {
-    const endpoint = config.rpcEndpoint || "https://api.devnet.solana.com";
-    
+  constructor(config: PodClientConfig) {
+    const {
+      endpoint,
+      commitment = 'confirmed',
+      programId: programIdString = 'PoD1111111111111111111111111111111111111111'
+    } = config;
+
     this.rpc = createSolanaRpc(endpoint);
-    this.programId = config.programId ? config.programId : PROGRAM_ID;
-    this.commitment = config.commitment || "confirmed";
+    this.commitment = commitment;
+    this.programId = address(programIdString);
 
-    // Initialize services
-    const rpcUrl = endpoint;
-    const programIdString = typeof this.programId === 'string' ? this.programId : this.programId;
-
-    this.agents = new AgentService(rpcUrl, programIdString, this.commitment);
-    this.messages = new MessageService(rpcUrl, programIdString, this.commitment);
-    this.channels = new ChannelService(rpcUrl, programIdString, this.commitment);
-    this.escrow = new EscrowService(rpcUrl, programIdString, this.commitment);
-    this.analytics = new AnalyticsService(rpcUrl, programIdString, this.commitment);
-    this.discovery = new DiscoveryService(rpcUrl, programIdString, this.commitment);
-    
-    // Initialize IPFS service
-    this.ipfs = new IPFSService(rpcUrl, programIdString, this.commitment);
-    
-    // Initialize ZK Compression service with IPFS dependency
-    this.zkCompression = new ZKCompressionService(rpcUrl, programIdString, this.commitment);
-    
-    // Initialize Session Keys service
-    this.sessionKeys = new SessionKeysService(rpcUrl, programIdString, this.commitment);
-    
-    // Initialize Jito Bundles service
-    this.jitoBundles = new JitoBundlesService(rpcUrl, programIdString, this.commitment);
+    // Initialize services with proper v2 types
+    this.agents = new AgentService(endpoint, programIdString, commitment);
+    this.messages = new MessageService(endpoint, programIdString, commitment);
+    this.channels = new ChannelService(endpoint, programIdString, commitment);
+    this.escrow = new EscrowService(endpoint, programIdString, commitment);
+    this.analytics = new AnalyticsService(endpoint, programIdString, commitment);
+    this.discovery = new DiscoveryService(endpoint, programIdString, commitment);
+    this.ipfs = new IPFSService();
+    this.zkCompression = new ZKCompressionService(endpoint, programIdString, commitment, {});
+    this.jitoBundles = new JitoBundlesService(endpoint, programIdString, commitment);
+    this.sessionKeys = new SessionKeysService(endpoint, programIdString, commitment);
   }
 
   /**

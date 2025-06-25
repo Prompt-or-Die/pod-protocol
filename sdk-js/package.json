@@ -9,7 +9,7 @@
     "clean": "rm -rf dist",
     "test": "jest",
     "lint": "eslint src --ext .js,.ts",
-    "prepublishOnly": "npm run clean && npm run build"
+    "prepublishOnly": "bun run clean && bun run build"
   },
   "dependencies": {
     "@solana/web3.js": "^2.0.0",

@@ -2,10 +2,33 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
-import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
+import { useToast } from 'react-hot-toast';
+
+// Web3.js v2.0 modular imports
+import {
+  address,
+  Address,
+  lamports,
+  sendAndConfirmTransactionFactory,
+  createTransactionMessage,
+  setTransactionMessageFeePayer,
+  setTransactionMessageLifetimeUsingBlockhash,
+  appendTransactionMessageInstruction,
+  signTransactionMessageWithSigners,
+  pipe,
+  createKeyPairSignerFromBytes,
+  generateKeyPairSigner,
+  getSignatureFromTransaction,
+  createSolanaRpc,
+  createSolanaRpcSubscriptions,
+} from '@solana/web3.js';
+
+// Web3.js v2.0 program clients
+import { getTransferSolInstruction } from '@solana-program/system';
+import { getSetComputeUnitLimitInstruction, getSetComputeUnitPriceInstruction } from '@solana-program/compute-budget';
+
 import { SolanaAgentKit, createSolanaTools } from '@solana/agent-kit';
 import { TurnkeySigner } from '@turnkey/solana';
-import { useToast } from 'react-hot-toast';
 
 // Enhanced Pod Protocol Client for 2025
 export interface PodClientConfig {
@@ -27,20 +50,20 @@ export interface AIAgentCapabilities {
 
 export interface PodClient {
   // Core functionality
-  sendMessage: (content: string, recipient: PublicKey) => Promise<string>;
-  createChannel: (name: string, members: PublicKey[]) => Promise<PublicKey>;
-  joinChannel: (channelId: PublicKey) => Promise<boolean>;
+  sendMessage: (content: string, recipient: Address) => Promise<string>;
+  createChannel: (name: string, members: Address[]) => Promise<Address>;
+  joinChannel: (channelId: Address) => Promise<boolean>;
   
   // Enhanced 2025 features
-  createAIAgent: (capabilities: AIAgentCapabilities) => Promise<PublicKey>;
-  delegateToAgent: (agentId: PublicKey, permissions: string[]) => Promise<boolean>;
+  createAIAgent: (capabilities: AIAgentCapabilities) => Promise<Address>;
+  delegateToAgent: (agentId: Address, permissions: string[]) => Promise<boolean>;
   
   // Cross-chain functionality
   bridgeMessage: (targetChain: string, message: string) => Promise<string>;
   
   // DeFi integration
-  createTokenizedChannel: (tokenMint: PublicKey) => Promise<PublicKey>;
-  stakeForPriority: (amount: number) => Promise<boolean>;
+  createTokenizedChannel: (tokenMint: Address) => Promise<Address>;
+  stakeForPriority: (amount: bigint) => Promise<boolean>;
   
   // Security features
   enableQuantumResistance: () => Promise<boolean>;
@@ -61,6 +84,25 @@ export const usePodClient = (config: PodClientConfig = {}): PodClient => {
   const [error, setError] = useState<string | null>(null);
   const [agentKit, setAgentKit] = useState<SolanaAgentKit | null>(null);
   const [turnkeySigner, setTurnkeySigner] = useState<TurnkeySigner | null>(null);
+
+  // Web3.js v2.0 RPC clients
+  const { rpc, rpcSubscriptions, sendAndConfirmTransaction } = useMemo(() => {
+    const rpcClient = createSolanaRpc(connection.rpcEndpoint);
+    
+    const wsEndpoint = connection.rpcEndpoint.replace('https://', 'wss://').replace('http://', 'ws://');
+    const rpcSubs = createSolanaRpcSubscriptions(wsEndpoint);
+    
+    const sendAndConfirm = sendAndConfirmTransactionFactory({
+      rpc: rpcClient,
+      rpcSubscriptions: rpcSubs,
+    });
+
+    return {
+      rpc: rpcClient,
+      rpcSubscriptions: rpcSubs,
+      sendAndConfirmTransaction: sendAndConfirm
+    };
+  }, [connection.rpcEndpoint]);
 
   // Initialize enhanced security if enabled
   useEffect(() => {
@@ -115,28 +157,76 @@ export const usePodClient = (config: PodClientConfig = {}): PodClient => {
     }
   };
 
-  // Enhanced transaction signing with multiple security levels
-  const signTransactionSecurely = useCallback(async (
-    transaction: Transaction | VersionedTransaction
+  // Web3.js v2.0 enhanced transaction creation with priority fees
+  const createEnhancedTransaction = useCallback(async (
+    instructions: any[],
+    feePayer: Address
   ) => {
-    if (config.securityLevel === 'quantum-resistant' && turnkeySigner) {
-      return await turnkeySigner.signTransaction(transaction);
-    } else if (signTransaction) {
-      return await signTransaction(transaction);
-    }
-    throw new Error('No signing method available');
-  }, [signTransaction, turnkeySigner, config.securityLevel]);
+    try {
+      // Get the latest blockhash
+      const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
 
-  // Core messaging functionality
+      // Get priority fee estimate
+      let priorityFee = 1000n; // Default 1000 microlamports
+      try {
+        if (process.env.NEXT_PUBLIC_HELIUS_API_KEY) {
+          const response = await fetch(connection.rpcEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: 'pod-protocol',
+              method: 'getPriorityFeeEstimate',
+              params: [{
+                priorityLevel: 'High',
+              }],
+            }),
+          });
+          const result = await response.json();
+          priorityFee = BigInt(result.result?.priorityFeeEstimate || 1000);
+        }
+      } catch (err) {
+        console.warn('Failed to get priority fee estimate, using default:', err);
+      }
+
+      // Create transaction message with Web3.js v2.0 patterns
+      const transactionMessage = pipe(
+        createTransactionMessage({ version: 0 }),
+        (message) => setTransactionMessageFeePayer(feePayer, message),
+        (message) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, message),
+        (message) => appendTransactionMessageInstruction(
+          getSetComputeUnitPriceInstruction({ microLamports: priorityFee }),
+          message
+        ),
+        (message) => appendTransactionMessageInstruction(
+          getSetComputeUnitLimitInstruction({ units: 300000 }),
+          message
+        ),
+        (message) => instructions.reduce(
+          (msg, instruction) => appendTransactionMessageInstruction(instruction, msg),
+          message
+        )
+      );
+
+      return transactionMessage;
+    } catch (err) {
+      console.error('Failed to create enhanced transaction:', err);
+      throw err;
+    }
+  }, [rpc, connection.rpcEndpoint]);
+
+  // Core messaging functionality with Web3.js v2.0
   const sendMessage = useCallback(async (
     content: string, 
-    recipient: PublicKey
+    recipient: Address
   ): Promise<string> => {
     if (!publicKey) throw new Error('Wallet not connected');
     
     try {
       setLoading(true);
       setError(null);
+
+      const senderAddress = address(publicKey.toBase58());
 
       // Enhanced message sending with optional AI assistance
       if (config.agentBehavior === 'autonomous' && agentKit) {
@@ -148,17 +238,33 @@ export const usePodClient = (config: PodClientConfig = {}): PodClient => {
         });
         return result.signature;
       } else {
-        // Manual or assisted sending
-        const podProgram = new PublicKey('HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps');
+        // Manual or assisted sending using Web3.js v2.0
+        const podProgram = address('HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps');
         
-        // Create and send transaction
-        const transaction = new Transaction();
-        // Add your Pod Protocol instructions here
+        // Create Pod Protocol instruction (placeholder - replace with actual instruction)
+        const messageInstruction = getTransferSolInstruction({
+          source: senderAddress,
+          destination: recipient,
+          amount: lamports(1n), // Placeholder amount
+        });
+
+        // Create enhanced transaction
+        const transactionMessage = await createEnhancedTransaction(
+          [messageInstruction],
+          senderAddress
+        );
+
+        // Sign transaction
+        const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
         
-        const signed = await signTransactionSecurely(transaction);
-        const signature = await connection.sendRawTransaction(signed.serialize());
-        
-        await connection.confirmTransaction(signature, 'confirmed');
+        // Send and confirm transaction
+        await sendAndConfirmTransaction(signedTransaction, {
+          commitment: 'confirmed',
+          maxRetries: 0n,
+          skipPreflight: true,
+        });
+
+        const signature = getSignatureFromTransaction(signedTransaction);
         
         toast.success('Message sent successfully!');
         return signature;
@@ -171,12 +277,12 @@ export const usePodClient = (config: PodClientConfig = {}): PodClient => {
     } finally {
       setLoading(false);
     }
-  }, [publicKey, connection, agentKit, config, signTransactionSecurely, toast]);
+  }, [publicKey, config, agentKit, createEnhancedTransaction, sendAndConfirmTransaction, toast]);
 
-  // Create AI Agent
+  // Create AI Agent with Web3.js v2.0
   const createAIAgent = useCallback(async (
     capabilities: AIAgentCapabilities
-  ): Promise<PublicKey> => {
+  ): Promise<Address> => {
     if (!publicKey || !agentKit) throw new Error('AI agent kit not available');
     
     try {
@@ -184,13 +290,13 @@ export const usePodClient = (config: PodClientConfig = {}): PodClient => {
       
       // Create AI agent with specified capabilities
       const agentId = await agentKit.createAgent({
-        owner: publicKey.toString(),
+        owner: publicKey.toBase58(),
         capabilities,
         behavior: config.agentBehavior || 'assisted'
       });
       
       toast.success('AI Agent created successfully!');
-      return new PublicKey(agentId);
+      return address(agentId);
     } catch (err) {
       const errorMsg = `Failed to create AI agent: ${err}`;
       setError(errorMsg);
@@ -221,7 +327,7 @@ export const usePodClient = (config: PodClientConfig = {}): PodClient => {
         body: JSON.stringify({
           targetChain,
           message,
-          sender: publicKey?.toString()
+          sender: publicKey?.toBase58()
         })
       });
       
@@ -238,31 +344,66 @@ export const usePodClient = (config: PodClientConfig = {}): PodClient => {
     }
   }, [config.enableCrossChain, publicKey, toast]);
 
-  // Placeholder implementations for other methods
-  const createChannel = useCallback(async (name: string, members: PublicKey[]) => {
-    // Implementation here
-    return new PublicKey('11111111111111111111111111111111');
+  // Updated implementations using Web3.js v2.0 Address type
+  const createChannel = useCallback(async (name: string, members: Address[]) => {
+    // Implementation here using Web3.js v2.0 patterns
+    return address('11111111111111111111111111111111');
   }, []);
 
-  const joinChannel = useCallback(async (channelId: PublicKey) => {
+  const joinChannel = useCallback(async (channelId: Address) => {
     // Implementation here
     return true;
   }, []);
 
-  const delegateToAgent = useCallback(async (agentId: PublicKey, permissions: string[]) => {
+  const delegateToAgent = useCallback(async (agentId: Address, permissions: string[]) => {
     // Implementation here
     return true;
   }, []);
 
-  const createTokenizedChannel = useCallback(async (tokenMint: PublicKey) => {
+  const createTokenizedChannel = useCallback(async (tokenMint: Address) => {
     // Implementation here
-    return new PublicKey('11111111111111111111111111111111');
+    return address('11111111111111111111111111111111');
   }, []);
 
-  const stakeForPriority = useCallback(async (amount: number) => {
-    // Implementation here
-    return true;
-  }, []);
+  const stakeForPriority = useCallback(async (amount: bigint) => {
+    if (!publicKey) throw new Error('Wallet not connected');
+    
+    try {
+      setLoading(true);
+      
+      const senderAddress = address(publicKey.toBase58());
+      
+      // Create staking instruction (placeholder)
+      const stakeInstruction = getTransferSolInstruction({
+        source: senderAddress,
+        destination: address('HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps'), // Pod Protocol treasury
+        amount: lamports(amount),
+      });
+
+      const transactionMessage = await createEnhancedTransaction(
+        [stakeInstruction],
+        senderAddress
+      );
+
+      const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
+      
+      await sendAndConfirmTransaction(signedTransaction, {
+        commitment: 'confirmed',
+        maxRetries: 0n,
+        skipPreflight: true,
+      });
+
+      toast.success('Successfully staked for priority!');
+      return true;
+    } catch (err) {
+      const errorMsg = `Failed to stake: ${err}`;
+      setError(errorMsg);
+      toast.error(errorMsg);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [publicKey, createEnhancedTransaction, sendAndConfirmTransaction, toast]);
 
   const enableQuantumResistance = useCallback(async () => {
     // Implementation here
@@ -270,7 +411,9 @@ export const usePodClient = (config: PodClientConfig = {}): PodClient => {
   }, []);
 
   const rotateKeys = useCallback(async () => {
-    // Implementation here
+    // Implementation here using Web3.js v2.0 key generation
+    const newKeyPair = await generateKeyPairSigner();
+    console.log('New key pair generated:', newKeyPair.address);
     return true;
   }, []);
 

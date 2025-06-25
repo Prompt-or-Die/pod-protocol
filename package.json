@@ -17,11 +17,11 @@
   },
   "scripts": {
     "postinstall": "echo '🎉 PoD Protocol workspace setup complete! Run bun run start for guided setup.'",
-    "start": "echo '🎭 Welcome to PoD Protocol!' && node scripts/onboarding-wizard.js",
-    "create-app": "node scripts/onboarding-wizard.js",
-    "setup": "echo '🛠️ Quick setup mode...' && ./scripts/interactive-setup.js",
-    "setup:complete": "./scripts/pod-installer.js",
-    "setup:cli-only": "./scripts/install-cli.sh",
+    "start": "echo '🎭 Welcome to PoD Protocol!' && node scripts/unified-setup.js",
+    "create-app": "node scripts/unified-setup.js",
+    "setup": "echo '🛠️ Unified setup mode...' && node scripts/unified-setup.js",
+    "setup:complete": "node scripts/unified-setup.js --complete",
+    "setup:cli-only": "node scripts/unified-setup.js --cli-only",
     "setup:dev": "echo '🔧 Setting up enhanced development environment...' && node scripts/dev-experience-enhancer.js",
     "build": "echo '🚀 Building all PoD Protocol components...' && bun run build:all",
     "build:all": "bun run build:sdk && bun run build:sdk-js && bun run build:cli && bun run build:frontend",
@@ -43,7 +43,7 @@
     "test:sdk-js": "cd sdk-js && bun run test",
     "test:cli": "cd cli && bun run test",
     "test:integration": "cd tests && bun run test",
-    "test:basic": "echo '🔍 Running basic functionality tests...' && cd tests && bun run test:basic",
+    "test:basic": "echo '🔍 Running basic functionality tests...' && cd tests && bun test *.test.ts *.test.js",
     "test:watch": "concurrently \"bun run test:sdk --watch\" \"bun run test:cli --watch\"",
     "lint": "echo '🔧 Linting all PoD Protocol components...' && bun run lint:all",
     "lint:all": "bun run lint:sdk && bun run lint:sdk-js && bun run lint:cli && bun run lint:frontend",
@@ -68,8 +68,10 @@
     "pod": "cd cli && bun run dev",
     "pod:help": "cd cli && bun run dev -- --help",
     "pod:version": "cd cli && bun run dev -- --version",
-    "onboard": "node scripts/onboarding-wizard.js",
-    "wizard": "node scripts/onboarding-wizard.js"
+    "onboard": "node scripts/unified-setup.js",
+    "wizard": "node scripts/unified-setup.js",
+    "validate": "node scripts/validate-setup.js",
+    "health-check": "node scripts/validate-setup.js"
   },
   "bin": {
     "create-pod-app": "./scripts/onboarding-wizard.js",

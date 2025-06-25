@@ -60,9 +60,8 @@ export class ChannelService extends BaseService {
     config: ChannelConfig,
   ): Promise<Address> {
     try {
-      // Generate channel ID
-      const channelId = Math.random().toString(36).substring(2);
-      const [channelPDA] = findChannelPDA(channelId, signer.address);
+      const channelId = Math.random().toString(36).substring(2, 15);
+      const [channelPDA] = await findChannelPDA(channelId, signer.address, this.programId);
 
       // TODO: Implement actual transaction building with Web3.js v2
       console.log("Creating channel with config:", config);
@@ -180,7 +179,7 @@ export class ChannelService extends BaseService {
     channelAddress: Address,
   ): Promise<void> {
     try {
-      const [participantPDA] = findParticipantPDA(channelAddress, signer.address);
+      const [participantPDA] = await findParticipantPDA(channelAddress, signer.address, this.programId);
 
       // TODO: Implement actual transaction building with Web3.js v2
       console.log("Joining channel:", channelAddress);
@@ -199,7 +198,7 @@ export class ChannelService extends BaseService {
     channelAddress: Address,
   ): Promise<void> {
     try {
-      const [participantPDA] = findParticipantPDA(channelAddress, signer.address);
+      const [participantPDA] = await findParticipantPDA(channelAddress, signer.address, this.programId);
 
       // TODO: Implement actual transaction building with Web3.js v2
       console.log("Leaving channel:", channelAddress);
@@ -222,11 +221,10 @@ export class ChannelService extends BaseService {
     // Generate unique nonce for message
     const nonce = Date.now();
 
-    // Derive agent PDA
-    const [agentPDA] = findAgentPDA(wallet.address, this.programId);
+    const [agentPDA] = await findAgentPDA(wallet.address, this.programId);
 
     // Derive participant PDA
-    const [participantPDA] = this.findParticipantPDA(
+    const [participantPDA] = await this.findParticipantPDA(
       options.channelPDA,
       agentPDA,
     );
@@ -272,7 +270,7 @@ export class ChannelService extends BaseService {
     inviteeAddress: Address,
   ): Promise<void> {
     try {
-      const [invitationPDA] = findInvitationPDA(channelAddress, inviteeAddress);
+      const [invitationPDA] = await findInvitationPDA(channelAddress, inviteeAddress, this.programId);
 
       // TODO: Implement actual transaction building with Web3.js v2
       console.log("Inviting to channel:", channelAddress);
@@ -287,23 +285,14 @@ export class ChannelService extends BaseService {
   /**
    * Get channel participants
    */
-  async getChannelParticipants(channelAddress: Address): Promise<ParticipantData[]> {
+  async getChannelParticipants(channelAddress: Address): Promise<Address[]> {
     try {
       // TODO: Implement actual account fetching with Web3.js v2 RPC
       console.log("Getting participants for channel:", channelAddress);
 
       // Return mock data for now
       return [
-        {
-          pubkey: address("11111111111111111111111111111114"),
-          account: {
-            channel: channelAddress,
-            agent: address("11111111111111111111111111111115"),
-            role: "member",
-            joinedAt: Date.now() - 3600000,
-            permissions: 1,
-          }
-        }
+        address("11111111111111111111111111111114"),
       ];
     } catch (error) {
       console.error("Error getting channel participants:", error);
@@ -417,15 +406,15 @@ export class ChannelService extends BaseService {
   /**
    * Helper methods for PDA finding (implementing the missing methods)
    */
-  private findParticipantPDA(channel: Address, agent: Address): [Address, number] {
-    return findParticipantPDA(channel, agent, this.programId);
+  async findParticipantPDA(channel: Address, agent: Address): Promise<[Address, number]> {
+    return await findParticipantPDA(channel, agent, this.programId);
   }
 
-  private findInvitationPDA(channel: Address, invitee: Address): [Address, number] {
-    return findInvitationPDA(channel, invitee, this.programId);
+  async findInvitationPDA(channel: Address, invitee: Address): Promise<[Address, number]> {
+    return await findInvitationPDA(channel, invitee, this.programId);
   }
 
-  private findChannelPDA(channelId: string, creator: Address): [Address, number] {
-    return findChannelPDA(channelId, creator, this.programId);
+  async findChannelPDA(channelId: string, creator: Address): Promise<[Address, number]> {
+    return await findChannelPDA(channelId, creator, this.programId);
   }
 }

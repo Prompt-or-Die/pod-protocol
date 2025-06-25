@@ -21,7 +21,10 @@ import {
   WalletDisconnectButton,
   WalletMultiButton,
 } from '@solana/wallet-adapter-react-ui';
-import { clusterApiUrl, Connection } from '@solana/web3.js';
+
+// Web3.js v2.0 modular imports
+import { createSolanaRpc, createSolanaRpcSubscriptions } from '@solana/web3.js';
+import { address } from '@solana/web3.js';
 import { SolanaAgentKit } from '@solana/agent-kit';
 import { TurnkeySigner } from '@turnkey/solana';
 
@@ -34,6 +37,13 @@ interface WalletProviderProps {
   enableQuantumResistant?: boolean;
 }
 
+// Web3.js v2.0 cluster endpoints
+const CLUSTER_ENDPOINTS = {
+  'mainnet-beta': 'https://api.mainnet-beta.solana.com',
+  'devnet': 'https://api.devnet.solana.com',
+  'testnet': 'https://api.testnet.solana.com'
+} as const;
+
 export const WalletProvider: FC<WalletProviderProps> = ({ 
   children, 
   enableAIAgents = true,
@@ -44,25 +54,34 @@ export const WalletProvider: FC<WalletProviderProps> = ({
     ? WalletAdapterNetwork.Mainnet 
     : WalletAdapterNetwork.Devnet;
 
-  // Enhanced RPC endpoint with fallbacks and load balancing
+  // Web3.js v2.0 enhanced RPC endpoint with fallbacks and load balancing
   const endpoint = useMemo(() => {
     if (process.env.NEXT_PUBLIC_HELIUS_API_KEY) {
       const heliusCluster = network === WalletAdapterNetwork.Mainnet ? 'mainnet-beta' : 'devnet';
-      return `https://rpc.helius.xyz/?api-key=${process.env.NEXT_PUBLIC_HELIUS_API_KEY}`;
+      return `https://${heliusCluster}.helius-rpc.com/?api-key=${process.env.NEXT_PUBLIC_HELIUS_API_KEY}`;
     }
     if (process.env.NEXT_PUBLIC_RPC_ENDPOINT) {
       return process.env.NEXT_PUBLIC_RPC_ENDPOINT;
     }
-    return clusterApiUrl(network);
+    
+    // Use Web3.js v2.0 cluster endpoints
+    const cluster = network === WalletAdapterNetwork.Mainnet ? 'mainnet-beta' : 'devnet';
+    return CLUSTER_ENDPOINTS[cluster];
   }, [network]);
 
-  // Enhanced connection with optimized commitment and preflight settings
-  const connection = useMemo(() => {
-    return new Connection(endpoint, {
-      commitment: 'confirmed',
-      confirmTransactionInitialTimeout: 60000,
-      wsEndpoint: process.env.NEXT_PUBLIC_WS_ENDPOINT,
-    });
+  // Web3.js v2.0 RPC and subscription clients
+  const { rpc, rpcSubscriptions } = useMemo(() => {
+    const rpcClient = createSolanaRpc(endpoint);
+    const wsEndpoint = process.env.NEXT_PUBLIC_WS_ENDPOINT 
+      ? process.env.NEXT_PUBLIC_WS_ENDPOINT 
+      : endpoint.replace('https://', 'wss://').replace('http://', 'ws://');
+    
+    const rpcSubs = createSolanaRpcSubscriptions(wsEndpoint);
+    
+    return {
+      rpc: rpcClient,
+      rpcSubscriptions: rpcSubs
+    };
   }, [endpoint]);
 
   // 2025 Wallet ecosystem - comprehensive support
@@ -144,4 +163,16 @@ export const useAIAgent = () => {
       // Implementation for AI agent signing
     }
   };
+};
+
+// Export Web3.js v2.0 RPC utilities for use throughout the app
+export const useWeb3RPC = () => {
+  const endpoint = process.env.NEXT_PUBLIC_RPC_ENDPOINT || CLUSTER_ENDPOINTS.devnet;
+  
+  return useMemo(() => ({
+    rpc: createSolanaRpc(endpoint),
+    rpcSubscriptions: createSolanaRpcSubscriptions(
+      endpoint.replace('https://', 'wss://').replace('http://', 'ws://')
+    )
+  }), [endpoint]);
 };
