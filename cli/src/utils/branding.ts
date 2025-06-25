@@ -65,6 +65,40 @@ export const COMMAND_BANNERS = {
   status: `${chalk.magenta("▄▄▄")} ${chalk.cyan.bold("🛡️ STATUS CHECK")} ${chalk.magenta("▄▄▄")}`,
 };
 
+// Black terminal command banners
+export const BLACK_TERMINAL_COMMAND_BANNERS = {
+  agent: () => {
+    const purple = chalk.hex('#9D4EDD');
+    const white = chalk.white;
+    return `${purple("▄▄▄")} ${white.bold("🤖 AGENT COMMAND")} ${purple("▄▄▄")}`;
+  },
+  message: () => {
+    const purple = chalk.hex('#9D4EDD');
+    const white = chalk.white;
+    return `${purple("▄▄▄")} ${white.bold("💬 MESSAGE COMMAND")} ${purple("▄▄▄")}`;
+  },
+  channel: () => {
+    const purple = chalk.hex('#9D4EDD');
+    const white = chalk.white;
+    return `${purple("▄▄▄")} ${white.bold("🏛️ CHANNEL COMMAND")} ${purple("▄▄▄")}`;
+  },
+  escrow: () => {
+    const purple = chalk.hex('#9D4EDD');
+    const white = chalk.white;
+    return `${purple("▄▄▄")} ${white.bold("💰 ESCROW COMMAND")} ${purple("▄▄▄")}`;
+  },
+  config: () => {
+    const purple = chalk.hex('#9D4EDD');
+    const white = chalk.white;
+    return `${purple("▄▄▄")} ${white.bold("⚙️ CONFIG COMMAND")} ${purple("▄▄▄")}`;
+  },
+  status: () => {
+    const purple = chalk.hex('#9D4EDD');
+    const white = chalk.white;
+    return `${purple("▄▄▄")} ${white.bold("🛡️ STATUS CHECK")} ${purple("▄▄▄")}`;
+  },
+};
+
 // Simple decorative elements using working colors
 export const DECORATIVE_ELEMENTS = {
   starBorder: `${chalk.yellow("✧")} ${chalk.magenta("─".repeat(50))} ${chalk.yellow("✧")}`,
@@ -92,8 +126,11 @@ export const BLACK_TERMINAL_COLORS = {
   muted: chalk.hex('#808080'), // Gray
   accent: chalk.white.bold, // White
   dim: chalk.hex('#696969'), // Dim gray
+  text: chalk.white, // White text
   background: '\x1b[40m', // Black background ANSI code
   reset: '\x1b[0m', // Reset ANSI code
+  border: chalk.hex('#9D4EDD'), // Purple borders
+  highlight: chalk.hex('#DC143C'), // Crimson highlights
 } as const;
 
 export const BRAND_COLORS = {
@@ -188,11 +225,19 @@ export function showBanner(size: BannerSize = BannerSize.FULL): void {
       }
       break;
     case BannerSize.COMPACT:
-      console.log(PROMPT_OR_DIE_COMPACT);
-      console.log(DIVIDERS.dots);
+      if (blackTerminalMode) {
+        showBlackTerminalCompactBanner();
+      } else {
+        console.log(PROMPT_OR_DIE_COMPACT);
+        console.log(DIVIDERS.dots);
+      }
       break;
     case BannerSize.MINI:
-      console.log(PROMPT_OR_DIE_MINI);
+      if (blackTerminalMode) {
+        showBlackTerminalMiniBanner();
+      } else {
+        console.log(PROMPT_OR_DIE_MINI);
+      }
       break;
     case BannerSize.NONE:
       return;
@@ -204,8 +249,13 @@ export function showBanner(size: BannerSize = BannerSize.FULL): void {
  * Display the beautiful "Prompt or Die" banner
  */
 export function showPromptOrDieBanner(): void {
-  console.log(PROMPT_OR_DIE_BANNER);
-  console.log(DECORATIVE_ELEMENTS.lightningBorder);
+  if (blackTerminalMode) {
+    showBlackTerminalPromptOrDieBanner();
+    console.log(BLACK_TERMINAL_COLORS.primary("⚡") + " " + BLACK_TERMINAL_COLORS.primary("━".repeat(48)) + " " + BLACK_TERMINAL_COLORS.primary("⚡"));
+  } else {
+    console.log(PROMPT_OR_DIE_BANNER);
+    console.log(DECORATIVE_ELEMENTS.lightningBorder);
+  }
   console.log();
 }
 
@@ -213,15 +263,32 @@ export function showPromptOrDieBanner(): void {
  * Display a compact header for commands
  */
 export function showMiniHeader(command?: string): void {
-  if (command && COMMAND_BANNERS[command as keyof typeof COMMAND_BANNERS]) {
-    console.log(COMMAND_BANNERS[command as keyof typeof COMMAND_BANNERS]);
-    console.log(DECORATIVE_ELEMENTS.starBorder);
+  if (blackTerminalMode) {
+    const purple = chalk.hex('#9D4EDD');
+    const white = chalk.white;
+    const crimson = chalk.hex('#DC143C');
+    
+    if (command && BLACK_TERMINAL_COMMAND_BANNERS[command as keyof typeof BLACK_TERMINAL_COMMAND_BANNERS]) {
+      console.log(BLACK_TERMINAL_COMMAND_BANNERS[command as keyof typeof BLACK_TERMINAL_COMMAND_BANNERS]());
+      console.log(purple("✧") + " " + purple("─".repeat(48)) + " " + purple("✧"));
+    } else {
+      const header = command
+        ? `${purple.bold("⚡️ PoD")} ${white("Protocol")} ${purple("›")} ${white.bold(command)}`
+        : `${purple.bold("⚡️ PoD")} ${white("Protocol")}`;
+      console.log(header);
+      console.log(purple("·".repeat(60)));
+    }
   } else {
-    const header = command
-      ? `${POD_MINI_LOGO} ${chalk.gray("›")} ${chalk.cyan.bold(command)}`
-      : POD_MINI_LOGO;
-    console.log(header);
-    console.log(DIVIDERS.dots);
+    if (command && COMMAND_BANNERS[command as keyof typeof COMMAND_BANNERS]) {
+      console.log(COMMAND_BANNERS[command as keyof typeof COMMAND_BANNERS]);
+      console.log(DECORATIVE_ELEMENTS.starBorder);
+    } else {
+      const header = command
+        ? `${POD_MINI_LOGO} ${chalk.gray("›")} ${chalk.cyan.bold(command)}`
+        : POD_MINI_LOGO;
+      console.log(header);
+      console.log(DIVIDERS.dots);
+    }
   }
   console.log();
 }
@@ -230,6 +297,11 @@ export function showMiniHeader(command?: string): void {
  * Display command-specific decorative header
  */
 export function showCommandHeader(command: string, subtitle?: string): void {
+  if (blackTerminalMode) {
+    blackTerminalCommandHeader(command, subtitle);
+    return;
+  }
+  
   const commandBanner =
     COMMAND_BANNERS[command as keyof typeof COMMAND_BANNERS];
   if (commandBanner) {
@@ -250,8 +322,9 @@ export function showCommandHeader(command: string, subtitle?: string): void {
  * Format a section header
  */
 export function sectionHeader(title: string, icon?: string): string {
+  const colors = getColors();
   const prefix = icon ? `${icon} ` : "";
-  return `${prefix}${BRAND_COLORS.accent(title)}`;
+  return `${prefix}${colors.accent(title)}`;
 }
 
 /**
@@ -282,12 +355,13 @@ export function progressIndicator(
   total: number,
   message: string,
 ): string {
+  const colors = getColors();
   const percentage = Math.round((step / total) * 100);
   const progressBar =
     "█".repeat(Math.floor(percentage / 5)) +
     "░".repeat(20 - Math.floor(percentage / 5));
 
-  return `${ICONS.loading} ${BRAND_COLORS.info(`[${step}/${total}]`)} ${progressBar} ${percentage}%\n   ${message}`;
+  return `${ICONS.loading} ${colors.info(`[${step}/${total}]`)} ${progressBar} ${percentage}%\n   ${message}`;
 }
 
 /**
@@ -298,8 +372,9 @@ export function keyValue(
   value: string | number,
   icon?: string,
 ): string {
+  const colors = getColors();
   const prefix = icon ? `${icon} ` : "";
-  return `${prefix}${BRAND_COLORS.accent(key)}: ${BRAND_COLORS.secondary(value.toString())}`;
+  return `${prefix}${colors.accent(key)}: ${colors.secondary(value.toString())}`;
 }
 
 /**
@@ -310,6 +385,10 @@ export function infoBox(
   content: string[],
   type: "info" | "warning" | "error" = "info",
 ): string {
+  if (blackTerminalMode) {
+    return blackTerminalInfoBox(title, content, type);
+  }
+  
   const color = BRAND_COLORS[type];
   const icon = ICONS[type];
 
@@ -334,7 +413,8 @@ export function infoBox(
  * Format command usage examples
  */
 export function commandExample(command: string, description: string): string {
-  return `${BRAND_COLORS.muted("$")} ${BRAND_COLORS.accent(command)}\n  ${BRAND_COLORS.dim(description)}`;
+  const colors = getColors();
+  return `${colors.muted("$")} ${colors.accent(command)}\n  ${colors.dim(description)}`;
 }
 
 /**
@@ -346,7 +426,7 @@ export function spinnerMessage(message: string): string {
 }
 
 /**
- * Black terminal specific banner
+ * Black terminal specific banner with improved ASCII art
  */
 function showBlackTerminalBanner(): void {
   const purple = chalk.hex('#9D4EDD');
@@ -365,6 +445,87 @@ function showBlackTerminalBanner(): void {
   console.log(white.bold("\n                    The Ultimate AI Agent Communication Protocol"));
   console.log(crimson("                          Where prompts become prophecy ⚡️"));
   console.log(purple("─".repeat(80)));
+}
+
+/**
+ * Black terminal "Prompt or Die" banner
+ */
+function showBlackTerminalPromptOrDieBanner(): void {
+  const purple = chalk.hex('#9D4EDD');
+  const crimson = chalk.hex('#DC143C');
+  const white = chalk.white;
+  
+  console.log(purple(
+`╔═══════════════════════════════════════════════════════════════════════════════╗`
+  ));
+  console.log(purple(`║`) + " " + purple.bold(
+`██████╗ ██████╗  ██████╗ ███╗   ███╗██████╗ ████████╗`
+  ) + "  " + white.bold(
+`██████╗ ██████╗ `
+  ) + " " + purple(`║`));
+  console.log(purple(`║`) + " " + purple.bold(
+`██╔══██╗██╔══██╗██╔═══██╗████╗ ████║██╔══██╗╚══██╔══╝`
+  ) + " " + white.bold(
+`██╔═══██╗██╔══██╗`
+  ) + " " + purple(`║`));
+  console.log(purple(`║`) + " " + purple.bold(
+`██████╔╝██████╔╝██║   ██║██╔████╔██║██████╔╝   ██║   `
+  ) + " " + white.bold(
+`██║   ██║██████╔╝`
+  ) + " " + purple(`║`));
+  console.log(purple(`║`) + " " + purple.bold(
+`██╔═══╝ ██╔══██╗██║   ██║██║╚██╔╝██║██╔═══╝    ██║   `
+  ) + " " + white.bold(
+`██║   ██║██╔══██╗`
+  ) + " " + purple(`║`));
+  console.log(purple(`║`) + " " + purple.bold(
+`██║     ██║  ██║╚██████╔╝██║ ╚═╝ ██║██║        ██║   `
+  ) + " " + white.bold(
+`╚██████╔╝██║  ██║`
+  ) + " " + purple(`║`));
+  console.log(purple(`║`) + " " + purple.bold(
+`╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝╚═╝        ╚═╝   `
+  ) + "  " + white.bold(
+`╚═════╝ ╚═╝  ╚═╝`
+  ) + " " + purple(`║`));
+  console.log(purple(`║`) + " ".repeat(79) + purple(`║`));
+  console.log(purple(`║`) + "    " + purple.bold(
+`███████╗██╗██╗     ██╗`
+  ) + " " + crimson.bold(
+`███████╗    ██████╗ ██╗███████╗`
+  ) + "    " + purple(`║`));
+  console.log(purple(`║`) + "    " + purple.bold(
+`██╔═════╝██║██║     ██║`
+  ) + " " + crimson.bold(
+`██╔════╝    ██╔══██╗██║██╔════╝`
+  ) + "    " + purple(`║`));
+  console.log(purple(`║`) + "    " + purple.bold(
+`█████╗  ██║██║     ██║`
+  ) + " " + crimson.bold(
+`█████╗      ██║  ██║██║█████╗  `
+  ) + "    " + purple(`║`));
+  console.log(purple(`║`) + "    " + purple.bold(
+`██╔══╝  ██║██║     ██║`
+  ) + " " + crimson.bold(
+`██╔══╝      ██║  ██║██║██╔══╝  `
+  ) + "    " + purple(`║`));
+  console.log(purple(`║`) + "    " + purple.bold(
+`███████╗██║███████╗██║`
+  ) + " " + crimson.bold(
+`███████╗    ██████╔╝██║███████╗`
+  ) + "    " + purple(`║`));
+  console.log(purple(`║`) + "    " + purple.bold(
+`╚══════╝╚═╝╚══════╝╚═╝`
+  ) + " " + crimson.bold(
+`╚══════╝    ╚═════╝ ╚═╝╚══════╝`
+  ) + "    " + purple(`║`));
+  console.log(purple(`║`) + " ".repeat(79) + purple(`║`));
+  console.log(purple(`║`) + " " + white.bold(
+`                    Where AI agents meet their destiny ⚡️`
+  ) + "                  " + purple(`║`));
+  console.log(purple(
+`╚═══════════════════════════════════════════════════════════════════════════════╝`
+  ));
 }
 
 /**
@@ -410,6 +571,29 @@ export function blackTerminalCommandHeader(command: string, subtitle?: string): 
   }
   console.log(purple("▀".repeat(30)));
   console.log();
+}
+
+/**
+ * Black terminal compact banner
+ */
+function showBlackTerminalCompactBanner(): void {
+  const purple = chalk.hex('#9D4EDD');
+  const crimson = chalk.hex('#DC143C');
+  const white = chalk.white;
+  
+  console.log(purple.bold("PROMPT") + " " + white.bold("or") + " " + crimson.bold("DIE") + " " + white("⚡️"));
+  console.log(purple("─".repeat(30)));
+}
+
+/**
+ * Black terminal mini banner
+ */
+function showBlackTerminalMiniBanner(): void {
+  const purple = chalk.hex('#9D4EDD');
+  const crimson = chalk.hex('#DC143C');
+  const white = chalk.white;
+  
+  console.log(purple("[") + " " + purple.bold("PROMPT") + " " + white("or") + " " + crimson.bold("DIE") + " " + purple("]") + " " + white("⚡"));
 }
 
 /**
