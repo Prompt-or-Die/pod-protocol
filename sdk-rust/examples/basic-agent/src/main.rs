@@ -112,7 +112,7 @@ async fn main() -> Result<()> {
         .name("Rust SDK Test Channel")
         .description("A test channel created by the Rust SDK example")
         .visibility(pod_sdk_core::ChannelVisibility::Public)
-        .max_participants(50)
+        .participant_limit(50)
         .fee_per_message(1000) // 0.000001 SOL per message
         .build()?;
     

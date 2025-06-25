@@ -77,8 +77,8 @@ export class AgentService extends BaseService {
             return tx;
         });
     }
-    async getAgent(walletPublicKey) {
-        const [agentPDA] = findAgentPDA(walletPublicKey, this.programId);
+    async getAgent(walletAddress) {
+        const [agentPDA] = findAgentPDA(walletAddress, this.programId);
         try {
             // Use the program if it was initialized, otherwise create a temporary one
             let program;
@@ -88,7 +88,7 @@ export class AgentService extends BaseService {
             }
             else {
                 // For read operations, use a read-only provider without wallet
-                const readOnlyProvider = new anchor.AnchorProvider(this.connection, new anchor.Wallet(anchor.web3.Keypair.generate()), // Temporary keypair for read-only operations
+                const readOnlyProvider = new anchor.AnchorProvider(this.connection, new anchor.Wallet(anchor.web3.KeyPairSigner.generate()), // Temporary keypair for read-only operations
                 { commitment: 'confirmed' });
                 const idl = this.ensureIDL();
                 program = new anchor.Program(idl, readOnlyProvider);

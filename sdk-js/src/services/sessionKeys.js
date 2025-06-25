@@ -5,7 +5,7 @@
  * Based on Gum session keys protocol
  */
 
-import { Keypair, PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
+import { Address, address } from '@solana/web3.js';
 import { BaseService } from './base.js';
 
 /**
@@ -24,7 +24,7 @@ export class SessionKeysService extends BaseService {
   /**
    * Set the wallet for this service
    * 
-   * @param {Keypair|Wallet} wallet - Wallet to use for signing
+   * @param {KeyPairSigner|Wallet} wallet - Wallet to use for signing
    */
   setWallet(wallet) {
     this.wallet = wallet;
@@ -47,7 +47,7 @@ export class SessionKeysService extends BaseService {
    */
   async sendTransaction(transaction, signers = []) {
     const wallet = this.ensureWallet();
-    const { blockhash } = await this.connection.getLatestBlockhash();
+    const { blockhash } = await this.connection.getLatestBlockhash().send();
     
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = wallet.publicKey;
@@ -74,7 +74,7 @@ export class SessionKeysService extends BaseService {
    * Create a new session key for AI agent interactions
    * 
    * @param {Object} config - Session configuration
-   * @param {PublicKey[]} config.targetPrograms - Programs this session can interact with
+   * @param {Address[]} config.targetPrograms - Programs this session can interact with
    * @param {number} config.expiryTime - Session expiry timestamp
    * @param {number} [config.maxUses] - Maximum number of uses
    * @param {string[]} [config.allowedInstructions] - Allowed instruction types
@@ -96,39 +96,39 @@ export class SessionKeysService extends BaseService {
 
     try {
       // Generate ephemeral keypair
-      const sessionKeypair = Keypair.generate();
+      const sessionKeyPairSigner = KeyPairSigner.generate();
       
       // Create session token account (PDA)
       const wallet = this.ensureWallet();
-      const [sessionTokenAccount] = PublicKey.findProgramAddressSync(
+      const [sessionTokenAccount] = Address.findProgramAddressSync(
         [
           Buffer.from('session_token'),
           wallet.publicKey.toBuffer(),
-          sessionKeypair.publicKey.toBuffer(),
+          sessionKeyPairSigner.publicKey.toBuffer(),
         ],
         this.programId
       );
 
       // Create session token instruction
       const instruction = await this.createSessionTokenInstruction(
-        sessionKeypair.publicKey,
+        sessionKeyPairSigner.publicKey,
         sessionTokenAccount,
         config
       );
 
       // Create and send transaction
       const transaction = new Transaction().add(instruction);
-      const signature = await this.sendTransaction(transaction, [sessionKeypair]);
+      const signature = await this.sendTransaction(transaction, [sessionKeyPairSigner]);
 
       const sessionToken = {
-        sessionKeypair,
+        sessionKeyPairSigner,
         config,
         sessionTokenAccount,
         usesRemaining: config.maxUses,
       };
 
       // Store session locally
-      const sessionId = sessionKeypair.publicKey.toBase58();
+      const sessionId = sessionKeyPairSigner.publicKey;
       this.sessions.set(sessionId, sessionToken);
 
       console.log(`Session key created: ${sessionId}`);
@@ -175,13 +175,13 @@ export class SessionKeysService extends BaseService {
       // Validate instructions are allowed
       for (const instruction of instructions) {
         if (!this.isInstructionAllowed(instruction, session.config)) {
-          throw new Error(`Instruction not allowed for this session: ${instruction.programId.toBase58()}`);
+          throw new Error(`Instruction not allowed for this session: ${instruction.programId}`);
         }
       }
 
       // Create transaction with session key
       const transaction = new Transaction().add(...instructions);
-      const signature = await this.sendTransaction(transaction, [session.sessionKeypair]);
+      const signature = await this.sendTransaction(transaction, [session.sessionKeyPairSigner]);
 
       // Decrement uses
       if (session.usesRemaining !== undefined) {
@@ -282,7 +282,7 @@ export class SessionKeysService extends BaseService {
    * Create session token instruction
    * @private
    */
-  async createSessionTokenInstruction(sessionPublicKey, sessionTokenAccount, config) {
+  async createSessionTokenInstruction(sessionAddress, sessionTokenAccount, config) {
     if (!this.program) {
       throw new Error('Program not initialized');
     }
@@ -296,7 +296,7 @@ export class SessionKeysService extends BaseService {
       )
       .accounts({
         sessionTokenAccount,
-        sessionKey: sessionPublicKey,
+        sessionKey: sessionAddress,
         authority: this.wallet.publicKey,
         systemProgram: SystemProgram.programId
       })

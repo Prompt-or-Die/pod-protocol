@@ -1,4 +1,4 @@
-import { Rpc, Address, Commitment } from "@solana/web3.js";
+import { Rpc, Address, Commitment } from '@solana/web3.js';
 import anchor from "@coral-xyz/anchor";
 type AnchorProgram = anchor.Program<any>;
 /**

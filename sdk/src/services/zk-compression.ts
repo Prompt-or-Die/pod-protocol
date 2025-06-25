@@ -3,7 +3,7 @@ const { AnchorProvider } = anchor;
 import type { AnchorProvider as AnchorProviderType } from '@coral-xyz/anchor';
 import { BaseService, BaseServiceConfig } from './base.js';
 import { IPFSService, IPFSStorageResult } from './ipfs.js';
-import { Transaction, TransactionInstruction, Address, Rpc, KeyPairSigner } from '@solana/web3.js';
+import { Transaction } from '@solana/transactions';
 import { createHash } from 'crypto';
 import { SecureHasher, SecureKeyManager } from '../utils/secure-memory.js';
 
@@ -57,45 +57,45 @@ export interface ZKCompressionConfig {
   /** Batch timeout in milliseconds */
   batchTimeout?: number;
   /** Light system program public key */
-  lightSystemProgram?: PublicKey;
+  lightSystemProgram?: Address;
   /** Nullifier queue public key */
-  nullifierQueuePubkey?: PublicKey;
+  nullifierQueuePubkey?: Address;
   /** CPI authority PDA */
-  cpiAuthorityPda?: PublicKey;
+  cpiAuthorityPda?: Address;
   /** Compressed Token program */
-  compressedTokenProgram?: PublicKey;
+  compressedTokenProgram?: Address;
   /** Registered Program ID */
-  registeredProgramId?: PublicKey;
+  registeredProgramId?: Address;
   /** No-op Program */
-  noopProgram?: PublicKey;
+  noopProgram?: Address;
   /** Account Compression authority */
-  accountCompressionAuthority?: PublicKey;
+  accountCompressionAuthority?: Address;
   /** Account Compression program */
-  accountCompressionProgram?: PublicKey;
+  accountCompressionProgram?: Address;
   /** Compressed token mint address */
-  compressedTokenMint?: PublicKey;
+  compressedTokenMint?: Address;
 }
 
 /**
  * Compressed message data structure
  */
 export interface CompressedChannelMessage {
-  channel: PublicKey;
-  sender: PublicKey;
+  channel: Address;
+  sender: Address;
   contentHash: string;
   ipfsHash: string;
   messageType: string;
   createdAt: number;
   editedAt?: number;
-  replyTo?: PublicKey;
+  replyTo?: Address;
 }
 
 /**
  * Compressed participant data structure
  */
 export interface CompressedChannelParticipant {
-  channel: PublicKey;
-  participant: PublicKey;
+  channel: Address;
+  participant: Address;
   joinedAt: number;
   messagesSent: number;
   lastMessageAt: number;
@@ -108,7 +108,7 @@ export interface CompressedChannelParticipant {
 export interface BatchSyncOperation {
   messageHashes: string[];
   timestamp: number;
-  channelId: PublicKey;
+  channelId: Address;
 }
 
 /**
@@ -130,7 +130,7 @@ export interface BatchSyncOperation {
  */
 export class ZKCompressionService extends BaseService {
   private config: ZKCompressionConfig;
-  private rpc: Rpc;
+  private rpc: Rpc<any>;
   private ipfsService: IPFSService;
   private batchQueue: CompressedChannelMessage[] = [];
   private batchTimer?: NodeJS.Timeout;
@@ -172,43 +172,43 @@ export class ZKCompressionService extends BaseService {
       lightSystemProgram:
         zkConfig.lightSystemProgram ||
         (process.env.LIGHT_SYSTEM_PROGRAM
-          ? new PublicKey(process.env.LIGHT_SYSTEM_PROGRAM)
-          : new PublicKey("H5sFv8VwWmjxHYS2GB4fTDsK7uTtnRT4WiixtHrET3bN")),
+          ? new Address(process.env.LIGHT_SYSTEM_PROGRAM)
+          : new Address("H5sFv8VwWmjxHYS2GB4fTDsK7uTtnRT4WiixtHrET3bN")),
       nullifierQueuePubkey:
         zkConfig.nullifierQueuePubkey ||
         (process.env.LIGHT_NULLIFIER_QUEUE
-          ? new PublicKey(process.env.LIGHT_NULLIFIER_QUEUE)
-          : new PublicKey("nuLLiQHXWLbjy4uxg4R8UuXsJV4JTxvUYm8rqVn8BBc")),
+          ? new Address(process.env.LIGHT_NULLIFIER_QUEUE)
+          : new Address("nuLLiQHXWLbjy4uxg4R8UuXsJV4JTxvUYm8rqVn8BBc")),
       cpiAuthorityPda:
         zkConfig.cpiAuthorityPda ||
         (process.env.LIGHT_CPI_AUTHORITY
-          ? new PublicKey(process.env.LIGHT_CPI_AUTHORITY)
-          : new PublicKey("5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1")),
+          ? new Address(process.env.LIGHT_CPI_AUTHORITY)
+          : new Address("5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1")),
       compressedTokenProgram:
         zkConfig.compressedTokenProgram ||
         (process.env.LIGHT_COMPRESSED_TOKEN_PROGRAM
-          ? new PublicKey(process.env.LIGHT_COMPRESSED_TOKEN_PROGRAM)
-          : new PublicKey("cTokenmWW8bLPjZEBAUgYy3zKxQZW6VKi7bqNFEVv3m")),
+          ? new Address(process.env.LIGHT_COMPRESSED_TOKEN_PROGRAM)
+          : new Address("cTokenmWW8bLPjZEBAUgYy3zKxQZW6VKi7bqNFEVv3m")),
       registeredProgramId:
         zkConfig.registeredProgramId ||
         (process.env.LIGHT_REGISTERED_PROGRAM_ID
-          ? new PublicKey(process.env.LIGHT_REGISTERED_PROGRAM_ID)
-          : new PublicKey("noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV")),
+          ? new Address(process.env.LIGHT_REGISTERED_PROGRAM_ID)
+          : new Address("noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV")),
       noopProgram:
         zkConfig.noopProgram ||
         (process.env.LIGHT_NOOP_PROGRAM
-          ? new PublicKey(process.env.LIGHT_NOOP_PROGRAM)
-          : new PublicKey("noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV")),
+          ? new Address(process.env.LIGHT_NOOP_PROGRAM)
+          : new Address("noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV")),
       accountCompressionAuthority:
         zkConfig.accountCompressionAuthority ||
         (process.env.LIGHT_ACCOUNT_COMPRESSION_AUTHORITY
-          ? new PublicKey(process.env.LIGHT_ACCOUNT_COMPRESSION_AUTHORITY)
-          : new PublicKey("5QPEJ5zDsVou9FQS3KCHdPeeWDfWDcXYRKZaAkXRBGSW")),
+          ? new Address(process.env.LIGHT_ACCOUNT_COMPRESSION_AUTHORITY)
+          : new Address("5QPEJ5zDsVou9FQS3KCHdPeeWDfWDcXYRKZaAkXRBGSW")),
       accountCompressionProgram:
         zkConfig.accountCompressionProgram ||
         (process.env.LIGHT_ACCOUNT_COMPRESSION_PROGRAM
-          ? new PublicKey(process.env.LIGHT_ACCOUNT_COMPRESSION_PROGRAM)
-          : new PublicKey("cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK")),
+          ? new Address(process.env.LIGHT_ACCOUNT_COMPRESSION_PROGRAM)
+          : new Address("cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK")),
     };
 
     this.rpc = createRpc(
@@ -231,13 +231,13 @@ export class ZKCompressionService extends BaseService {
    * Validate all inputs and verify cryptographic operations.
    */
   async broadcastCompressedMessage(
-    channelId: PublicKey,
+    channelId: Address,
     content: string,
     wallet: any,
     messageType: string = 'Text',
     attachments: string[] = [],
     metadata: Record<string, any> = {},
-    replyTo?: PublicKey
+    replyTo?: Address
   ): Promise<{
     signature: string;
     ipfsResult: IPFSStorageResult;
@@ -352,8 +352,8 @@ export class ZKCompressionService extends BaseService {
    * Join a channel with compressed participant data
    */
   async joinChannelCompressed(
-    channelId: PublicKey,
-    participantId: PublicKey,
+    channelId: Address,
+    participantId: Address,
     wallet: any,
     displayName?: string,
     avatar?: string,
@@ -432,14 +432,14 @@ export class ZKCompressionService extends BaseService {
    * Batch sync compressed messages to chain
    */
   async batchSyncMessages(
-    channelId: PublicKey,
+    channelId: Address,
     messageHashes: string[],
     wallet: any,
     syncTimestamp?: number
   ): Promise<BatchCompressionResult> {
     try {
       // Validate inputs
-      if (!channelId || !PublicKey.isOnCurve(channelId.toBytes())) {
+      if (!channelId || !Address.isOnCurve(channelId.toBytes())) {
         throw new Error('Invalid channel ID provided');
       }
       
@@ -538,11 +538,11 @@ export class ZKCompressionService extends BaseService {
    * Query compressed accounts using Photon indexer
    */
   async queryCompressedMessages(
-    channelId: PublicKey,
+    channelId: Address,
     options: {
       limit?: number;
       offset?: number;
-      sender?: PublicKey;
+      sender?: Address;
       after?: Date;
       before?: Date;
     } = {}
@@ -554,10 +554,10 @@ export class ZKCompressionService extends BaseService {
         id: Date.now(),
         method: 'getCompressedMessagesByChannel',
         params: [
-          channelId.toString(),
+          channelId,
           options.limit ?? 50,
           options.offset ?? 0,
-          options.sender?.toString() || null,
+          options.sender || null,
           options.after?.getTime() || null,
           options.before?.getTime() || null,
         ],
@@ -576,14 +576,14 @@ export class ZKCompressionService extends BaseService {
       }
       const raw = json.result || [];
       return raw.map(m => ({
-        channel: new PublicKey(m.channel),
-        sender: new PublicKey(m.sender),
+        channel: new Address(m.channel),
+        sender: new Address(m.sender),
         contentHash: m.content_hash,
         ipfsHash: m.ipfs_hash,
         messageType: m.message_type,
         createdAt: m.created_at,
         editedAt: m.edited_at,
-        replyTo: m.reply_to ? new PublicKey(m.reply_to) : undefined,
+        replyTo: m.reply_to ? new Address(m.reply_to) : undefined,
       }));
     } catch (error) {
       throw new Error(`Failed to query compressed messages: ${error}`);
@@ -593,7 +593,7 @@ export class ZKCompressionService extends BaseService {
   /**
    * Get channel statistics from compressed data
    */
-  async getChannelStats(channelId: PublicKey): Promise<{
+  async getChannelStats(channelId: Address): Promise<{
     totalMessages: number;
     totalParticipants: number;
     storageSize: number;
@@ -601,7 +601,7 @@ export class ZKCompressionService extends BaseService {
   }> {
     try {
       const response = await fetch(
-        `${this.config.photonIndexerUrl}/channel-stats/${channelId.toString()}`
+        `${this.config.photonIndexerUrl}/channel-stats/${channelId}`
       );
 
       if (!response.ok) {
@@ -800,9 +800,9 @@ export class ZKCompressionService extends BaseService {
    * Private: Create compression instruction using Light Protocol
    */
   private async createCompressionInstruction(
-    merkleTree: PublicKey,
+    merkleTree: Address,
     message: CompressedChannelMessage,
-    authority: PublicKey
+    authority: Address
   ): Promise<TransactionInstruction> {
     // Fetch available state tree info and construct a compression instruction
     const [treeInfo] = await this.rpc.getStateTreeInfos();

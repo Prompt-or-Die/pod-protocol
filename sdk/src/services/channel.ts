@@ -1,4 +1,4 @@
-import { Address, KeyPairSigner, address, lamports } from "@solana/web3.js";
+import { Address, KeyPairSigner, address, lamports } from '@solana/web3.js';
 import anchor from "@coral-xyz/anchor";
 const { BN, utils, web3 } = anchor;
 import { BaseService } from "./base.js";
@@ -409,16 +409,16 @@ export class ChannelService extends BaseService {
     nonceBuffer.writeBigUInt64LE(BigInt(nonce), 0);
 
     // Using legacy PDA derivation through anchor utils
-    const [pda, bump] = web3.PublicKey.findProgramAddressSync(
+    const [pda, bump] = address.findProgramAddressSync(
       [
         Buffer.from("channel_message"),
-        new web3.PublicKey(channelPDA).toBuffer(),
-        new web3.PublicKey(sender).toBuffer(),
+        new address(channelPDA).toBuffer(),
+        new address(sender).toBuffer(),
         nonceBuffer,
       ],
-      new web3.PublicKey(this.programId),
+      new address(this.programId),
     );
-    return [address(pda.toBase58()), bump];
+    return [address(pda), bump];
   }
 
   /**

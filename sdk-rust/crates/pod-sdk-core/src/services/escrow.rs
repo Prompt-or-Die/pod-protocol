@@ -504,7 +504,7 @@ impl EscrowService {
     fn is_arbitrator(&self, user: &Pubkey, escrow: &EscrowAccount) -> bool {
         // Check if user is in the escrow's arbitrator list
         if let Some(ref arbitrators) = escrow.arbitrators {
-            return arbitrators.contains(user);
+            return arbitrators.contains(&user);
         }
         
         // Check if user is a system-wide arbitrator (would be stored in config or program state)
@@ -518,8 +518,8 @@ impl EscrowService {
         // stored either in the program state or in the service configuration
         
         // For now, we can check against a hardcoded list or configuration
-        if let Some(ref arbitrator_config) = self.base.config.arbitrator_config {
-            return arbitrator_config.authorized_arbitrators.contains(user);
+        if let Some(ref arbitrator_config) = self.base.config().arbitrator_config {
+            return arbitrator_config.arbitrator_list.contains(&user);
         }
         
         false
@@ -543,8 +543,8 @@ impl EscrowService {
                 
                 // Check if escrow has been flagged for review
                 if let Some(ref flags) = escrow.flags {
-                    return flags.contains(&"fraud_suspected".to_string()) ||
-                           flags.contains(&"emergency_intervention".to_string());
+                    return flags.iter().any(|s| s == "fraud_suspected") ||
+                           flags.iter().any(|s| s == "emergency_intervention");
                 }
                 
                 false
@@ -592,7 +592,7 @@ impl BaseService for EscrowService {
 
     fn validate_config(&self) -> Result<(), Self::Error> {
         // Validate escrow service specific configuration
-        let config = &self.base.config;
+        let config = &self.base.config();
         
         // Check if program ID is set and valid
         if config.program_id.to_string() == "11111111111111111111111111111111" {
@@ -620,15 +620,15 @@ impl BaseService for EscrowService {
         
         // Validate escrow amount limits
         if let Some(ref escrow_config) = config.escrow_config {
-            if escrow_config.min_escrow_amount == 0 {
+            if escrow_config.minimum_escrow == 0 {
                 return Err(PodComError::InvalidConfiguration {
-                    field: "escrow_config.min_escrow_amount".to_string(),
+                    field: "escrow_config.minimum_escrow".to_string(),
                     reason: "Minimum escrow amount must be greater than 0".to_string(),
                 });
             }
             
             if escrow_config.max_escrow_amount > 0 && 
-               escrow_config.max_escrow_amount < escrow_config.min_escrow_amount {
+               escrow_config.max_escrow_amount < escrow_config.minimum_escrow {
                 return Err(PodComError::InvalidConfiguration {
                     field: "escrow_config.max_escrow_amount".to_string(),
                     reason: "Maximum escrow amount must be greater than minimum amount".to_string(),
@@ -653,9 +653,9 @@ impl BaseService for EscrowService {
         
         // Validate arbitrator configuration if present
         if let Some(ref arbitrator_config) = config.arbitrator_config {
-            if arbitrator_config.enabled && arbitrator_config.authorized_arbitrators.is_empty() {
+            if arbitrator_config.enabled && arbitrator_config.arbitrator_list.is_empty() {
                 return Err(PodComError::InvalidConfiguration {
-                    field: "arbitrator_config.authorized_arbitrators".to_string(),
+                    field: "arbitrator_config.arbitrator_list".to_string(),
                     reason: "At least one arbitrator must be configured when arbitration is enabled".to_string(),
                 });
             }

@@ -3,7 +3,7 @@
  */
 
 import { BaseService } from './base.js';
-import { PublicKey, SystemProgram } from '@solana/web3.js';
+import { Address, address } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';
 import { findAgentPDA, findEscrowPDA } from '../utils/pda.js';
 
@@ -18,7 +18,7 @@ export class EscrowService extends BaseService {
    * Deposit funds to escrow for a channel
    * 
    * @param {DepositEscrowOptions} options - Deposit options
-   * @param {Keypair} wallet - Depositor's wallet
+   * @param {KeyPairSigner} wallet - Depositor's wallet
    * @returns {Promise<string>} Transaction signature
    * 
    * @example
@@ -60,7 +60,7 @@ export class EscrowService extends BaseService {
    * Withdraw funds from escrow
    * 
    * @param {WithdrawEscrowOptions} options - Withdrawal options
-   * @param {Keypair} wallet - Depositor's wallet
+   * @param {KeyPairSigner} wallet - Depositor's wallet
    * @returns {Promise<string>} Transaction signature
    * 
    * @example
@@ -101,13 +101,13 @@ export class EscrowService extends BaseService {
   /**
    * Get escrow account data
    * 
-   * @param {PublicKey} channel - Channel public key
-   * @param {PublicKey} depositor - Depositor's public key
+   * @param {Address} channel - Channel public key
+   * @param {Address} depositor - Depositor's public key
    * @returns {Promise<EscrowAccount|null>} Escrow account data
    * 
    * @example
    * ```javascript
-   * const escrow = await client.escrow.get(channelPDA, depositorPublicKey);
+   * const escrow = await client.escrow.get(channelPDA, depositorAddress);
    * if (escrow) {
    *   console.log('Escrow balance:', escrow.balance);
    * }
@@ -142,14 +142,14 @@ export class EscrowService extends BaseService {
   /**
    * Get all escrow accounts by depositor
    * 
-   * @param {PublicKey} depositor - Depositor's public key
+   * @param {Address} depositor - Depositor's public key
    * @param {Object} [options] - Query options
    * @param {number} [options.limit=50] - Maximum number of results
    * @returns {Promise<EscrowAccount[]>} Array of escrow accounts
    * 
    * @example
    * ```javascript
-   * const escrows = await client.escrow.getByDepositor(depositorPublicKey, { limit: 20 });
+   * const escrows = await client.escrow.getByDepositor(depositorAddress, { limit: 20 });
    * ```
    */
   async getByDepositor(depositor, options = {}) {
@@ -187,7 +187,7 @@ export class EscrowService extends BaseService {
   /**
    * Get all escrow accounts for a channel
    * 
-   * @param {PublicKey} channel - Channel public key
+   * @param {Address} channel - Channel public key
    * @param {Object} [options] - Query options
    * @param {number} [options.limit=50] - Maximum number of results
    * @returns {Promise<EscrowAccount[]>} Array of escrow accounts
@@ -232,7 +232,7 @@ export class EscrowService extends BaseService {
   /**
    * Get total escrow balance for a channel
    * 
-   * @param {PublicKey} channel - Channel public key
+   * @param {Address} channel - Channel public key
    * @returns {Promise<number>} Total escrow balance in lamports
    * 
    * @example
@@ -249,8 +249,8 @@ export class EscrowService extends BaseService {
   /**
    * Check if depositor has sufficient escrow balance for a channel
    * 
-   * @param {PublicKey} channel - Channel public key
-   * @param {PublicKey} depositor - Depositor's public key
+   * @param {Address} channel - Channel public key
+   * @param {Address} depositor - Depositor's public key
    * @param {number} requiredAmount - Required amount in lamports
    * @returns {Promise<boolean>} True if sufficient balance
    * 
@@ -258,7 +258,7 @@ export class EscrowService extends BaseService {
    * ```javascript
    * const hasSufficientBalance = await client.escrow.hasSufficientBalance(
    *   channelPDA, 
-   *   depositorPublicKey, 
+   *   depositorAddress, 
    *   1000000
    * );
    * ```

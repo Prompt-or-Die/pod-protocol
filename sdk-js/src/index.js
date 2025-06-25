@@ -8,7 +8,7 @@
  * @version 1.5.0
  */
 
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Address, address } from '@solana/web3.js';
 import { Program, AnchorProvider, Wallet, BN } from '@coral-xyz/anchor';
 import { AgentService } from './services/agent.js';
 import { MessageService } from './services/message.js';
@@ -30,10 +30,10 @@ import { PROGRAM_ID, MessageType, MessageStatus, ChannelVisibility, AGENT_CAPABI
  * @example
  * ```javascript
  * import { PodComClient } from '@pod-protocol/sdk-js';
- * import { Keypair, Connection } from '@solana/web3.js';
+ * import { Rpc, createSolanaRpc } from '@solana/web3.js';
  * 
- * const connection = new Connection('https://api.devnet.solana.com');
- * const wallet = Keypair.generate();
+ * const connection = new Rpc<any>('https://api.devnet.solana.com');
+ * const wallet = KeyPairSigner.generate();
  * 
  * const client = new PodComClient({
  *   endpoint: 'https://api.devnet.solana.com',
@@ -53,13 +53,13 @@ export class PodComClient {
   /**
    * @param {Object} config - Configuration object
    * @param {string} [config.endpoint='https://api.devnet.solana.com'] - Solana RPC endpoint
-   * @param {PublicKey} [config.programId] - Program ID (defaults to devnet)
+   * @param {Address} [config.programId] - Program ID (defaults to devnet)
    * @param {string} [config.commitment='confirmed'] - Commitment level
    * @param {Object} [config.ipfs] - IPFS configuration
    * @param {Object} [config.zkCompression] - ZK compression configuration
    */
   constructor(config = {}) {
-    this.connection = new Connection(
+    this.connection = new Rpc<any>(
       config.endpoint || 'https://api.devnet.solana.com',
       config.commitment || 'confirmed'
     );
@@ -98,12 +98,12 @@ export class PodComClient {
    * Initialize the client with a wallet
    * Must be called before using wallet-dependent operations
    * 
-   * @param {Keypair|Wallet} wallet - Solana wallet or keypair
+   * @param {KeyPairSigner|Wallet} wallet - Solana wallet or keypair
    * @returns {Promise<void>}
    * 
    * @example
    * ```javascript
-   * const wallet = Keypair.generate();
+   * const wallet = KeyPairSigner.generate();
    * await client.initialize(wallet);
    * ```
    */
@@ -173,13 +173,13 @@ export class PodComClient {
 
   /**
    * Get connection info
-   * @returns {Object} Connection information
+   * @returns {Object} Rpc<any> information
    */
-  getConnectionInfo() {
+  getRpc<any>Info() {
     return {
       endpoint: this.connection.rpcEndpoint,
       commitment: this.commitment,
-      programId: this.programId.toString()
+      programId: this.programId
     };
   }
 
@@ -224,9 +224,9 @@ export class PodComClient {
 
   /**
    * Get the connection instance
-   * @returns {Connection} Solana connection
+   * @returns {Rpc<any>} Solana connection
    */
-  getConnection() {
+  getRpc<any>() {
     return this.connection;
   }
 }

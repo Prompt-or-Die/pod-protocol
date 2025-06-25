@@ -1,4 +1,4 @@
-import { Address, KeyPairSigner } from "@solana/web3.js";
+import { Address, KeyPairSigner } from '@solana/web3.js';
 import { BaseService } from "./base";
 import { DepositEscrowOptions, WithdrawEscrowOptions, EscrowAccount } from "../types";
 /**

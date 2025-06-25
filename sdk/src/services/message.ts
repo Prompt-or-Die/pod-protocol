@@ -1,7 +1,7 @@
 import {
   Address,
   KeyPairSigner,
-} from "@solana/web3.js";
+} from '@solana/web3.js';
 import anchor from "@coral-xyz/anchor";
 const { web3 } = anchor;
 // Removed unused anchor import
@@ -107,7 +107,7 @@ export class MessageService extends BaseService {
   }
 
   async getAgentMessages(
-    agentPublicKey: Address,
+    agentAddress: Address,
     limit: number = 50,
     statusFilter?: MessageStatus,
   ): Promise<MessageAccount[]> {
@@ -116,7 +116,7 @@ export class MessageService extends BaseService {
         {
           memcmp: {
             offset: 8 + 32,
-            bytes: agentPublicKey, // Address can be used directly
+            bytes: agentAddress, // Address can be used directly
           },
         },
       ];

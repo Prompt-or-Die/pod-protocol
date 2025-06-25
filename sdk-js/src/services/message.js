@@ -3,7 +3,7 @@
  */
 
 import { BaseService } from './base.js';
-import { PublicKey, SystemProgram } from '@solana/web3.js';
+import { Address, address } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';
 import { findMessagePDA, findAgentPDA } from '../utils/pda.js';
 import { hashPayload } from '../utils/crypto.js';
@@ -20,13 +20,13 @@ export class MessageService extends BaseService {
    * Send a message to another agent
    * 
    * @param {SendMessageOptions} options - Message options
-   * @param {Keypair} wallet - Sender's wallet
+   * @param {KeyPairSigner} wallet - Sender's wallet
    * @returns {Promise<string>} Transaction signature
    * 
    * @example
    * ```javascript
    * const tx = await client.messages.send({
-   *   recipient: recipientPublicKey,
+   *   recipient: recipientAddress,
    *   content: 'Hello from PoD Protocol!',
    *   messageType: MessageType.TEXT,
    *   expirationDays: 7
@@ -82,7 +82,7 @@ export class MessageService extends BaseService {
   /**
    * Get a message by its PDA
    * 
-   * @param {PublicKey} messagePDA - Message PDA
+   * @param {Address} messagePDA - Message PDA
    * @returns {Promise<MessageAccount|null>} Message account data
    * 
    * @example
@@ -121,7 +121,7 @@ export class MessageService extends BaseService {
   /**
    * Get messages for an agent (sent or received)
    * 
-   * @param {PublicKey} agentPubkey - Agent's public key
+   * @param {Address} agentPubkey - Agent's public key
    * @param {Object} [options] - Query options
    * @param {string} [options.direction='both'] - 'sent', 'received', or 'both'
    * @param {number} [options.limit=100] - Maximum number of messages
@@ -131,7 +131,7 @@ export class MessageService extends BaseService {
    * @example
    * ```javascript
    * // Get last 50 received messages
-   * const messages = await client.messages.getForAgent(agentPublicKey, {
+   * const messages = await client.messages.getForAgent(agentAddress, {
    *   direction: 'received',
    *   limit: 50
    * });
@@ -185,8 +185,8 @@ export class MessageService extends BaseService {
   /**
    * Mark a message as read
    * 
-   * @param {PublicKey} messagePDA - Message PDA
-   * @param {Keypair} wallet - Recipient's wallet
+   * @param {Address} messagePDA - Message PDA
+   * @param {KeyPairSigner} wallet - Recipient's wallet
    * @returns {Promise<string>} Transaction signature
    * 
    * @example
@@ -215,8 +215,8 @@ export class MessageService extends BaseService {
   /**
    * Delete a message (only sender can delete)
    * 
-   * @param {PublicKey} messagePDA - Message PDA
-   * @param {Keypair} wallet - Sender's wallet
+   * @param {Address} messagePDA - Message PDA
+   * @param {KeyPairSigner} wallet - Sender's wallet
    * @returns {Promise<string>} Transaction signature
    * 
    * @example
@@ -245,8 +245,8 @@ export class MessageService extends BaseService {
   /**
    * Get conversation between two agents
    * 
-   * @param {PublicKey} agent1 - First agent's public key
-   * @param {PublicKey} agent2 - Second agent's public key
+   * @param {Address} agent1 - First agent's public key
+   * @param {Address} agent2 - Second agent's public key
    * @param {Object} [options] - Query options
    * @param {number} [options.limit=100] - Maximum number of messages
    * @returns {Promise<MessageAccount[]>} Array of message accounts
@@ -296,12 +296,12 @@ export class MessageService extends BaseService {
   /**
    * Get unread message count for an agent
    * 
-   * @param {PublicKey} agentPubkey - Agent's public key
+   * @param {Address} agentPubkey - Agent's public key
    * @returns {Promise<number>} Number of unread messages
    * 
    * @example
    * ```javascript
-   * const unreadCount = await client.messages.getUnreadCount(agentPublicKey);
+   * const unreadCount = await client.messages.getUnreadCount(agentAddress);
    * console.log(`You have ${unreadCount} unread messages`);
    * ```
    */

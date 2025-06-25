@@ -1,6 +1,6 @@
 import { BaseService } from './base.js';
 import { IPFSService } from './ipfs.js';
-import { Transaction, PublicKey } from '@solana/web3.js';
+import { Address, address } from '@solana/web3.js';
 import { createRpc, LightSystemProgram } from '@lightprotocol/stateless.js';
 import { CompressedTokenProgram } from '@lightprotocol/compressed-token';
 /**
@@ -48,36 +48,36 @@ export class ZKCompressionService extends BaseService {
             // Default Light Protocol program addresses for devnet
             lightSystemProgram: zkConfig.lightSystemProgram ||
                 (process.env.LIGHT_SYSTEM_PROGRAM
-                    ? new PublicKey(process.env.LIGHT_SYSTEM_PROGRAM)
-                    : new PublicKey("H5sFv8VwWmjxHYS2GB4fTDsK7uTtnRT4WiixtHrET3bN")),
+                    ? new Address(process.env.LIGHT_SYSTEM_PROGRAM)
+                    : new Address("H5sFv8VwWmjxHYS2GB4fTDsK7uTtnRT4WiixtHrET3bN")),
             nullifierQueuePubkey: zkConfig.nullifierQueuePubkey ||
                 (process.env.LIGHT_NULLIFIER_QUEUE
-                    ? new PublicKey(process.env.LIGHT_NULLIFIER_QUEUE)
-                    : new PublicKey("nuLLiQHXWLbjy4uxg4R8UuXsJV4JTxvUYm8rqVn8BBc")),
+                    ? new Address(process.env.LIGHT_NULLIFIER_QUEUE)
+                    : new Address("nuLLiQHXWLbjy4uxg4R8UuXsJV4JTxvUYm8rqVn8BBc")),
             cpiAuthorityPda: zkConfig.cpiAuthorityPda ||
                 (process.env.LIGHT_CPI_AUTHORITY
-                    ? new PublicKey(process.env.LIGHT_CPI_AUTHORITY)
-                    : new PublicKey("5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1")),
+                    ? new Address(process.env.LIGHT_CPI_AUTHORITY)
+                    : new Address("5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1")),
             compressedTokenProgram: zkConfig.compressedTokenProgram ||
                 (process.env.LIGHT_COMPRESSED_TOKEN_PROGRAM
-                    ? new PublicKey(process.env.LIGHT_COMPRESSED_TOKEN_PROGRAM)
-                    : new PublicKey("cTokenmWW8bLPjZEBAUgYy3zKxQZW6VKi7bqNFEVv3m")),
+                    ? new Address(process.env.LIGHT_COMPRESSED_TOKEN_PROGRAM)
+                    : new Address("cTokenmWW8bLPjZEBAUgYy3zKxQZW6VKi7bqNFEVv3m")),
             registeredProgramId: zkConfig.registeredProgramId ||
                 (process.env.LIGHT_REGISTERED_PROGRAM_ID
-                    ? new PublicKey(process.env.LIGHT_REGISTERED_PROGRAM_ID)
-                    : new PublicKey("noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV")),
+                    ? new Address(process.env.LIGHT_REGISTERED_PROGRAM_ID)
+                    : new Address("noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV")),
             noopProgram: zkConfig.noopProgram ||
                 (process.env.LIGHT_NOOP_PROGRAM
-                    ? new PublicKey(process.env.LIGHT_NOOP_PROGRAM)
-                    : new PublicKey("noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV")),
+                    ? new Address(process.env.LIGHT_NOOP_PROGRAM)
+                    : new Address("noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV")),
             accountCompressionAuthority: zkConfig.accountCompressionAuthority ||
                 (process.env.LIGHT_ACCOUNT_COMPRESSION_AUTHORITY
-                    ? new PublicKey(process.env.LIGHT_ACCOUNT_COMPRESSION_AUTHORITY)
-                    : new PublicKey("5QPEJ5zDsVou9FQS3KCHdPeeWDfWDcXYRKZaAkXRBGSW")),
+                    ? new Address(process.env.LIGHT_ACCOUNT_COMPRESSION_AUTHORITY)
+                    : new Address("5QPEJ5zDsVou9FQS3KCHdPeeWDfWDcXYRKZaAkXRBGSW")),
             accountCompressionProgram: zkConfig.accountCompressionProgram ||
                 (process.env.LIGHT_ACCOUNT_COMPRESSION_PROGRAM
-                    ? new PublicKey(process.env.LIGHT_ACCOUNT_COMPRESSION_PROGRAM)
-                    : new PublicKey("cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK")),
+                    ? new Address(process.env.LIGHT_ACCOUNT_COMPRESSION_PROGRAM)
+                    : new Address("cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK")),
         };
         this.rpc = createRpc(this.config.lightRpcUrl, this.config.compressionRpcUrl, // Use compression endpoint
         this.config.proverUrl // Use prover endpoint
@@ -302,10 +302,10 @@ export class ZKCompressionService extends BaseService {
                 id: Date.now(),
                 method: 'getCompressedMessagesByChannel',
                 params: [
-                    channelId.toString(),
+                    channelId,
                     options.limit ?? 50,
                     options.offset ?? 0,
-                    options.sender?.toString() || null,
+                    options.sender? || null,
                     options.after?.getTime() || null,
                     options.before?.getTime() || null,
                 ],
@@ -324,14 +324,14 @@ export class ZKCompressionService extends BaseService {
             }
             const raw = json.result || [];
             return raw.map(m => ({
-                channel: new PublicKey(m.channel),
-                sender: new PublicKey(m.sender),
+                channel: new Address(m.channel),
+                sender: new Address(m.sender),
                 contentHash: m.content_hash,
                 ipfsHash: m.ipfs_hash,
                 messageType: m.message_type,
                 createdAt: m.created_at,
                 editedAt: m.edited_at,
-                replyTo: m.reply_to ? new PublicKey(m.reply_to) : undefined,
+                replyTo: m.reply_to ? new Address(m.reply_to) : undefined,
             }));
         }
         catch (error) {
@@ -343,7 +343,7 @@ export class ZKCompressionService extends BaseService {
      */
     async getChannelStats(channelId) {
         try {
-            const response = await fetch(`${this.config.photonIndexerUrl}/channel-stats/${channelId.toString()}`);
+            const response = await fetch(`${this.config.photonIndexerUrl}/channel-stats/${channelId}`);
             if (!response.ok) {
                 throw new Error(`Stats query failed: ${response.statusText}`);
             }

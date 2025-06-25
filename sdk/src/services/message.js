@@ -1,4 +1,4 @@
-import { PublicKey, SystemProgram, } from "@solana/web3.js";
+import { Address, address } from '@solana/web3.js';
 import { BaseService } from "./base";
 import { MessageStatus, } from "../types";
 import { findAgentPDA, findMessagePDA, hashPayload, retry, convertMessageTypeToProgram, convertMessageTypeFromProgram, getAccountTimestamp, getAccountCreatedAt, } from "../utils";
@@ -56,13 +56,13 @@ export class MessageService extends BaseService {
             throw error;
         }
     }
-    async getAgentMessages(agentPublicKey, limit = 50, statusFilter) {
+    async getAgentMessages(agentAddress, limit = 50, statusFilter) {
         try {
             const filters = [
                 {
                     memcmp: {
                         offset: 8 + 32,
-                        bytes: agentPublicKey.toBase58(),
+                        bytes: agentAddress,
                     },
                 },
             ];
@@ -126,8 +126,8 @@ export class MessageService extends BaseService {
     convertMessageAccountFromProgram(account, publicKey) {
         return {
             pubkey: publicKey,
-            sender: new PublicKey(account.sender),
-            recipient: new PublicKey(account.recipient),
+            sender: new Address(account.sender),
+            recipient: new Address(account.recipient),
             payload: account.payload || account.content || "",
             payloadHash: account.payloadHash,
             messageType: this.convertMessageTypeFromProgram(account.messageType),

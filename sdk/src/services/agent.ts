@@ -1,4 +1,4 @@
-import { Address, KeyPairSigner, generateKeyPairSigner } from "@solana/web3.js";
+import { Address, KeyPairSigner, generateKeyPairSigner } from '@solana/web3.js';
 import anchor from "@coral-xyz/anchor";
 const { BN, AnchorProvider, web3, Program } = anchor;
 import { BaseService } from "./base";
@@ -108,8 +108,8 @@ export class AgentService extends BaseService {
     });       
   }
 
-  async getAgent(walletPublicKey: Address): Promise<AgentAccount | null> {
-    const [agentPDA] = findAgentPDA(walletPublicKey, this.programId);
+  async getAgent(walletAddress: Address): Promise<AgentAccount | null> {
+    const [agentPDA] = findAgentPDA(walletAddress, this.programId);
 
     try {
       // Use the program if it was initialized, otherwise create a temporary one
@@ -119,10 +119,10 @@ export class AgentService extends BaseService {
         program = this.program;
       } else {
         // For read operations, use a read-only provider without wallet
-        const tempKeypair = await generateKeyPairSigner();
+        const tempKeyPairSigner = await generateKeyPairSigner();
         const readOnlyProvider = new AnchorProvider(
           this.rpc as any,
-          { publicKey: tempKeypair.address, signTransaction: async () => { throw new Error('Read-only wallet'); }, signAllTransactions: async () => { throw new Error('Read-only wallet'); } } as any, // Read-only wallet
+          { publicKey: tempKeyPairSigner.address, signTransaction: async () => { throw new Error('Read-only wallet'); }, signAllTransactions: async () => { throw new Error('Read-only wallet'); } } as any, // Read-only wallet
           { commitment: 'confirmed' }
         );
 

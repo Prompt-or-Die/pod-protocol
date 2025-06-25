@@ -1,4 +1,4 @@
-import { PublicKey } from "@solana/web3.js";
+import { Address, address } from '@solana/web3.js';
 import { BaseService } from "./base";
 import { MessageStatus, ChannelVisibility, } from "../types";
 import { lamportsToSol, formatBytes, getCapabilityNames, } from "../utils";
@@ -130,7 +130,7 @@ export class AnalyticsService extends BaseService {
             // Group messages by type
             const messagesByType = {};
             messageData.forEach((msg) => {
-                const type = msg.messageType.toString();
+                const type = msg.messageType;
                 messagesByType[type] = (messagesByType[type] || 0) + 1;
             });
             // Calculate average message size
@@ -145,14 +145,14 @@ export class AnalyticsService extends BaseService {
             // Get top senders
             const senderCounts = {};
             messageData.forEach((msg) => {
-                const sender = msg.sender.toBase58();
+                const sender = msg.sender;
                 senderCounts[sender] = (senderCounts[sender] || 0) + 1;
             });
             const topSenders = Object.entries(senderCounts)
                 .sort(([, a], [, b]) => b - a)
                 .slice(0, 10)
                 .map(([agent, messageCount]) => ({
-                agent: new PublicKey(agent),
+                agent: new Address(agent),
                 messageCount,
             }));
             return {

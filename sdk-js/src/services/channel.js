@@ -3,7 +3,7 @@
  */
 
 import { BaseService } from './base.js';
-import { PublicKey, SystemProgram } from '@solana/web3.js';
+import { Address, address } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';
 import { findAgentPDA, findChannelPDA } from '../utils/pda.js';
 import { ChannelVisibility, MessageType } from '../types.js';
@@ -19,7 +19,7 @@ export class ChannelService extends BaseService {
    * Create a new channel
    * 
    * @param {CreateChannelOptions} options - Channel creation options
-   * @param {Keypair} wallet - Creator's wallet
+   * @param {KeyPairSigner} wallet - Creator's wallet
    * @returns {Promise<string>} Transaction signature
    * 
    * @example
@@ -74,7 +74,7 @@ export class ChannelService extends BaseService {
   /**
    * Get channel data
    * 
-   * @param {PublicKey} channelPDA - Channel PDA
+   * @param {Address} channelPDA - Channel PDA
    * @returns {Promise<ChannelAccount|null>} Channel account data
    * 
    * @example
@@ -123,7 +123,7 @@ export class ChannelService extends BaseService {
    * @param {Object} [filters] - Optional filters
    * @param {number} [filters.limit=50] - Maximum number of channels
    * @param {ChannelVisibility} [filters.visibility] - Filter by visibility
-   * @param {PublicKey} [filters.creator] - Filter by creator
+   * @param {Address} [filters.creator] - Filter by creator
    * @returns {Promise<ChannelAccount[]>} Array of channel accounts
    * 
    * @example
@@ -182,8 +182,8 @@ export class ChannelService extends BaseService {
   /**
    * Join a channel
    * 
-   * @param {PublicKey} channelPDA - Channel PDA
-   * @param {Keypair} wallet - User's wallet
+   * @param {Address} channelPDA - Channel PDA
+   * @param {KeyPairSigner} wallet - User's wallet
    * @returns {Promise<string>} Transaction signature
    * 
    * @example
@@ -203,7 +203,7 @@ export class ChannelService extends BaseService {
     const [participantPDA] = this._findParticipantPDA(channelPDA, agentPDA);
 
     // Check for invitation (for private channels)
-    const [invitationPDA] = PublicKey.findProgramAddressSync(
+    const [invitationPDA] = Address.findProgramAddressSync(
       [
         Buffer.from('invitation'),
         channelPDA.toBuffer(),
@@ -240,8 +240,8 @@ export class ChannelService extends BaseService {
   /**
    * Leave a channel
    * 
-   * @param {PublicKey} channelPDA - Channel PDA
-   * @param {Keypair} wallet - User's wallet
+   * @param {Address} channelPDA - Channel PDA
+   * @param {KeyPairSigner} wallet - User's wallet
    * @returns {Promise<string>} Transaction signature
    * 
    * @example
@@ -278,12 +278,12 @@ export class ChannelService extends BaseService {
   /**
    * Send message to a channel
    * 
-   * @param {PublicKey} channelPDA - Channel PDA
+   * @param {Address} channelPDA - Channel PDA
    * @param {Object} options - Message options
    * @param {string} options.content - Message content
    * @param {MessageType} [options.messageType] - Type of message
-   * @param {PublicKey} [options.replyTo] - Message being replied to
-   * @param {Keypair} wallet - Sender's wallet
+   * @param {Address} [options.replyTo] - Message being replied to
+   * @param {KeyPairSigner} wallet - Sender's wallet
    * @returns {Promise<string>} Transaction signature
    * 
    * @example
@@ -312,7 +312,7 @@ export class ChannelService extends BaseService {
     const nonceBuffer = Buffer.alloc(8);
     nonceBuffer.writeBigUInt64LE(BigInt(nonce), 0);
 
-    const [messagePDA] = PublicKey.findProgramAddressSync(
+    const [messagePDA] = Address.findProgramAddressSync(
       [
         Buffer.from('channel_message'),
         channelPDA.toBuffer(),
@@ -349,14 +349,14 @@ export class ChannelService extends BaseService {
   /**
    * Invite a user to a channel
    * 
-   * @param {PublicKey} channelPDA - Channel PDA
-   * @param {PublicKey} invitee - User to invite
-   * @param {Keypair} wallet - Inviter's wallet
+   * @param {Address} channelPDA - Channel PDA
+   * @param {Address} invitee - User to invite
+   * @param {KeyPairSigner} wallet - Inviter's wallet
    * @returns {Promise<string>} Transaction signature
    * 
    * @example
    * ```javascript
-   * const tx = await client.channels.invite(channelPDA, inviteePublicKey, wallet);
+   * const tx = await client.channels.invite(channelPDA, inviteeAddress, wallet);
    * ```
    */
   async invite(channelPDA, invitee, wallet) {
@@ -371,7 +371,7 @@ export class ChannelService extends BaseService {
     const [participantPDA] = this._findParticipantPDA(channelPDA, agentPDA);
 
     // Derive invitation PDA
-    const [invitationPDA] = PublicKey.findProgramAddressSync(
+    const [invitationPDA] = Address.findProgramAddressSync(
       [Buffer.from('invitation'), channelPDA.toBuffer(), invitee.toBuffer()],
       this.programId
     );
@@ -396,7 +396,7 @@ export class ChannelService extends BaseService {
   /**
    * Get channel participants
    * 
-   * @param {PublicKey} channelPDA - Channel PDA
+   * @param {Address} channelPDA - Channel PDA
    * @param {Object} [options] - Query options
    * @param {number} [options.limit=50] - Maximum number of participants
    * @returns {Promise<Array>} Array of participant accounts
@@ -430,7 +430,7 @@ export class ChannelService extends BaseService {
   /**
    * Get channel messages
    * 
-   * @param {PublicKey} channelPDA - Channel PDA
+   * @param {Address} channelPDA - Channel PDA
    * @param {Object} [options] - Query options
    * @param {number} [options.limit=50] - Maximum number of messages
    * @returns {Promise<Array>} Array of message accounts
@@ -505,7 +505,7 @@ export class ChannelService extends BaseService {
   }
 
   _findParticipantPDA(channelPDA, agentPDA) {
-    return PublicKey.findProgramAddressSync(
+    return Address.findProgramAddressSync(
       [Buffer.from('participant'), channelPDA.toBuffer(), agentPDA.toBuffer()],
       this.programId
     );

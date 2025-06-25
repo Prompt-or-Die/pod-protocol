@@ -5,14 +5,7 @@
  * Optimizes transaction processing and provides atomic execution guarantees
  */
 
-import { 
-  Transaction, 
-  VersionedTransaction,
-  PublicKey,
-  SystemProgram,
-  Keypair,
-  ComputeBudgetProgram
-} from '@solana/web3.js';
+import { Address, address } from '@solana/web3.js';
 import { BaseService } from './base.js';
 
 /**
@@ -40,7 +33,7 @@ export class JitoBundlesService extends BaseService {
   /**
    * Set the wallet for this service
    * 
-   * @param {Keypair|Wallet} wallet - Wallet to use for signing
+   * @param {KeyPairSigner|Wallet} wallet - Wallet to use for signing
    */
   setWallet(wallet) {
     this.wallet = wallet;
@@ -62,7 +55,7 @@ export class JitoBundlesService extends BaseService {
    * 
    * @param {Object[]} transactions - Array of bundle transactions
    * @param {Transaction|VersionedTransaction} transactions[].transaction - Transaction to include
-   * @param {Keypair[]} [transactions[].signers] - Optional signers
+   * @param {KeyPairSigner[]} [transactions[].signers] - Optional signers
    * @param {string} [transactions[].description] - Description for logging
    * @param {Object} config - Bundle configuration
    * @param {number} config.tipLamports - Tip amount in lamports (minimum 1000)
@@ -133,7 +126,7 @@ export class JitoBundlesService extends BaseService {
           }
 
           // Get recent blockhash
-          const { blockhash } = await this.connection.getLatestBlockhash();
+          const { blockhash } = await this.connection.getLatestBlockhash().send();
           
           if (tx instanceof Transaction) {
             const wallet = this.ensureWallet();
@@ -149,7 +142,7 @@ export class JitoBundlesService extends BaseService {
             if (wallet.signTransaction && typeof wallet.signTransaction === 'function') {
               tx = await wallet.signTransaction(tx);
             } else {
-              // For Keypair/Signer, use partial sign
+              // For KeyPairSigner/Signer, use partial sign
               tx.partialSign(wallet);
             }
           }
@@ -260,7 +253,7 @@ export class JitoBundlesService extends BaseService {
   async getOptimalTip() {
     try {
       // Get recent blockhash to estimate network congestion
-      const { blockhash } = await this.connection.getLatestBlockhash();
+      const { blockhash } = await this.connection.getLatestBlockhash().send();
       
       // Simple heuristic: higher tip during congestion
       // In a real implementation, this would query Jito's API for current tips
@@ -330,7 +323,7 @@ export class JitoBundlesService extends BaseService {
     
     // Select random tip account
     const tipAccountIndex = Math.floor(Math.random() * this.JITO_TIP_ACCOUNTS.length);
-    const tipAccount = new PublicKey(this.JITO_TIP_ACCOUNTS[tipAccountIndex]);
+    const tipAccount = new Address(this.JITO_TIP_ACCOUNTS[tipAccountIndex]);
 
     const tipInstruction = SystemProgram.transfer({
       fromPubkey: wallet.publicKey,

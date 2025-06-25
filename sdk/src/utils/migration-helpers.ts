@@ -5,7 +5,7 @@
  * from Solana Web3.js v1.x to v2.0 for the PoD Protocol SDK.
  */
 
-import { Address, address } from "@solana/web3.js";
+import { Address, address } from '@solana/web3.js';
 
 /**
  * Convert a string to an Address type (Web3.js v2.0)
@@ -105,12 +105,12 @@ export function convertAccountFilters(legacyFilters: any[]): any[] {
 export function formatMigrationError(originalError: any): Error {
   const message = originalError?.message || 'Unknown migration error';
   
-  if (message.includes('PublicKey')) {
-    return new Error(`Migration Error: Replace PublicKey with Address. Original: ${message}`);
+  if (message.includes('Address')) {
+    return new Error(`Migration Error: Replace Address with Address. Original: ${message}`);
   }
   
-  if (message.includes('Connection')) {
-    return new Error(`Migration Error: Replace Connection with Rpc. Original: ${message}`);
+  if (message.includes('Rpc<any>')) {
+    return new Error(`Migration Error: Replace Rpc<any> with Rpc. Original: ${message}`);
   }
   
   if (message.includes('Signer')) {
@@ -132,7 +132,7 @@ export const TypeGuards = {
     return typeof value === 'string' && isValidAddress(value);
   },
   
-  isLegacyPublicKey: (value: any): boolean => {
+  isLegacyAddress: (value: any): boolean => {
     return value && typeof value.toBase58 === 'function';
   },
   

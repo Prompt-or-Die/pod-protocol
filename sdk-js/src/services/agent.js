@@ -3,7 +3,7 @@
  */
 
 import { BaseService } from './base.js';
-import { PublicKey, SystemProgram } from '@solana/web3.js';
+import { Address, address } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';
 import { findAgentPDA } from '../utils/pda.js';
 
@@ -18,7 +18,7 @@ export class AgentService extends BaseService {
    * Register a new agent
    * 
    * @param {CreateAgentOptions} options - Agent creation options
-   * @param {Keypair} wallet - Wallet to sign the transaction
+   * @param {KeyPairSigner} wallet - Wallet to sign the transaction
    * @returns {Promise<string>} Transaction signature
    * 
    * @example
@@ -68,7 +68,7 @@ export class AgentService extends BaseService {
    * Update an existing agent
    * 
    * @param {UpdateAgentOptions} options - Update options
-   * @param {Keypair} wallet - Wallet to sign the transaction
+   * @param {KeyPairSigner} wallet - Wallet to sign the transaction
    * @returns {Promise<string>} Transaction signature
    * 
    * @example
@@ -105,12 +105,12 @@ export class AgentService extends BaseService {
   /**
    * Get agent information by public key
    * 
-   * @param {PublicKey} agentPubkey - Agent's public key
+   * @param {Address} agentPubkey - Agent's public key
    * @returns {Promise<AgentAccount|null>} Agent account data
    * 
    * @example
    * ```javascript
-   * const agent = await client.agents.get(agentPublicKey);
+   * const agent = await client.agents.get(agentAddress);
    * if (agent) {
    *   console.log('Agent capabilities:', agent.capabilities);
    *   console.log('Agent reputation:', agent.reputation);
@@ -206,12 +206,12 @@ export class AgentService extends BaseService {
   /**
    * Check if an agent exists
    * 
-   * @param {PublicKey} agentPubkey - Agent's public key
+   * @param {Address} agentPubkey - Agent's public key
    * @returns {Promise<boolean>} True if agent exists
    * 
    * @example
    * ```javascript
-   * const exists = await client.agents.exists(agentPublicKey);
+   * const exists = await client.agents.exists(agentAddress);
    * if (!exists) {
    *   console.log('Agent not found');
    * }
@@ -225,12 +225,12 @@ export class AgentService extends BaseService {
   /**
    * Get agent statistics
    * 
-   * @param {PublicKey} agentPubkey - Agent's public key
+   * @param {Address} agentPubkey - Agent's public key
    * @returns {Promise<Object>} Agent statistics
    * 
    * @example
    * ```javascript
-   * const stats = await client.agents.getStats(agentPublicKey);
+   * const stats = await client.agents.getStats(agentAddress);
    * console.log('Messages sent:', stats.messagesSent);
    * console.log('Channels joined:', stats.channelsJoined);
    * ```
@@ -255,8 +255,8 @@ export class AgentService extends BaseService {
   /**
    * Get agent PDA for a public key
    * 
-   * @param {PublicKey} agentPubkey - Agent's public key
-   * @returns {PublicKey} Agent PDA
+   * @param {Address} agentPubkey - Agent's public key
+   * @returns {Address} Agent PDA
    */
   async getAgentPDA(agentPubkey) {
     const [pda] = findAgentPDA(agentPubkey, this.programId);
@@ -278,7 +278,7 @@ export class AgentService extends BaseService {
   /**
    * Create register agent instruction
    * 
-   * @param {PublicKey} agentPubkey - Agent's public key
+   * @param {Address} agentPubkey - Agent's public key
    * @param {number} capabilities - Capabilities bitmask
    * @param {string} metadataUri - Metadata URI
    * @returns {TransactionInstruction} Register instruction
@@ -303,7 +303,7 @@ export class AgentService extends BaseService {
   /**
    * Create update agent instruction
    * 
-   * @param {PublicKey} agentPubkey - Agent's public key
+   * @param {Address} agentPubkey - Agent's public key
    * @param {number} capabilities - New capabilities bitmask
    * @param {string} metadataUri - New metadata URI
    * @returns {TransactionInstruction} Update instruction

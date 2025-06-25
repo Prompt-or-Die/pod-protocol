@@ -879,3 +879,55 @@ mod tests {
         assert!(retry_config.validate().is_err());
     }
 } 
+
+// Add missing configuration fields
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MessageConfig {
+    pub message_size_limit: u32,
+    pub encryption_enabled: bool,
+    pub retention_period_hours: u32,
+    pub compression_threshold: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChannelConfig {
+    pub participant_limit: u32,
+    pub invitation_expiry_hours: u32,
+    pub message_history_limit: u32,
+    pub moderation_enabled: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EscrowConfig {
+    pub minimum_escrow: u64,
+    pub timeout_hours: u32,
+    pub arbitrator_config: Option<ArbitratorConfig>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ArbitratorConfig {
+    pub enabled: bool,
+    pub arbitrator_list: Vec<String>,
+    pub dispute_timeout_hours: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AnalyticsConfig {
+    pub collection_interval: u32,
+    pub metrics_retention_days: u32,
+    pub anonymization_enabled: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiscoveryConfig {
+    pub search_result_limit: u32,
+    pub indexing_enabled: bool,
+    pub cache_duration_minutes: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ZKCompressionConfig {
+    pub proof_size_limit: u32,
+    pub compression_level: u8,
+    pub batch_size: u32,
+}

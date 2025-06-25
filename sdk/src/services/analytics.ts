@@ -1,4 +1,4 @@
-import { Address, address } from "@solana/web3.js";
+import { Address, address } from '@solana/web3.js';
 import { BaseService } from "./base";
 import {
   AgentAccount,
@@ -196,7 +196,7 @@ export class AnalyticsService extends BaseService {
       // Group messages by type
       const messagesByType: Record<string, number> = {};
       messageData.forEach((msg) => {
-        const type = msg.messageType.toString();
+        const type = msg.messageType;
         messagesByType[type] = (messagesByType[type] || 0) + 1;
       });
 
@@ -217,7 +217,7 @@ export class AnalyticsService extends BaseService {
       // Get top senders
       const senderCounts: Record<string, number> = {};
       messageData.forEach((msg) => {
-        const sender = msg.sender.toString();
+        const sender = msg.sender;
         senderCounts[sender] = (senderCounts[sender] || 0) + 1;
       });
 

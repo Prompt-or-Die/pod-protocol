@@ -679,7 +679,7 @@ impl BaseService for ZKCompressionService {
 
     fn validate_config(&self) -> Result<(), Self::Error> {
         // Validate ZK compression service specific configuration
-        let config = &self.base.config;
+        let config = &self.base.config();
         
         // Check if program ID is set and valid
         if config.program_id.to_string() == "11111111111111111111111111111111" {
@@ -699,16 +699,16 @@ impl BaseService for ZKCompressionService {
         
         // Validate ZK compression specific settings
         if let Some(ref zk_config) = config.zk_compression_config {
-            if zk_config.max_proof_size == 0 {
+            if zk_config.proof_size_limit == 0 {
                 return Err(PodComError::InvalidConfiguration {
-                    field: "zk_compression_config.max_proof_size".to_string(),
+                    field: "zk_compression_config.proof_size_limit".to_string(),
                     reason: "Maximum proof size must be greater than 0".to_string(),
                 });
             }
             
-            if zk_config.max_proof_size > 1024 * 1024 { // 1MB limit
+            if zk_config.proof_size_limit > 1024 * 1024 { // 1MB limit
                 return Err(PodComError::InvalidConfiguration {
-                    field: "zk_compression_config.max_proof_size".to_string(),
+                    field: "zk_compression_config.proof_size_limit".to_string(),
                     reason: "Maximum proof size cannot exceed 1MB".to_string(),
                 });
             }

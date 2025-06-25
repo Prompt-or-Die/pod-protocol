@@ -509,7 +509,7 @@ impl BaseService for AgentService {
 
     fn validate_config(&self) -> Result<(), Self::Error> {
         // Validate agent service specific configuration
-        let config = &self.base.config;
+        let config = &self.base.config();
         
         // Check if program ID is set and valid
         if config.program_id.to_string() == "11111111111111111111111111111111" {

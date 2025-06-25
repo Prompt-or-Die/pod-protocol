@@ -1,4 +1,4 @@
-import { Address, KeyPairSigner, address } from "@solana/web3.js";
+import { Address, KeyPairSigner, address } from '@solana/web3.js';
 import { BaseService } from "./base.js";
 import {
   AgentAccount,
@@ -11,8 +11,8 @@ import {
 import {
   hasCapability,
   getCapabilityNames,
-  formatPublicKey,
-  isValidPublicKey,
+  formatAddress,
+  isValidAddress,
   getAccountTimestamp,
   getAccountCreatedAt,
   getAccountLastUpdated,

@@ -1,4 +1,4 @@
-import { createSolanaRpc, address, Address, Commitment, Rpc } from "@solana/web3.js";
+import { createSolanaRpc, address, Address, Commitment, Rpc } from '@solana/web3.js';
 import anchor from "@coral-xyz/anchor";
 const { Program } = anchor;
 import type { Program as ProgramType } from "@coral-xyz/anchor";

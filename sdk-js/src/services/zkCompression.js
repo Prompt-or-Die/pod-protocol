@@ -309,7 +309,7 @@ class ZKCompressionService extends BaseService {
         try {
             // Process each operation
             const results = operations.map(operation => ({
-                channelId: operation.channelId.toString(),
+                channelId: operation.channelId,
                 messageCount: operation.messageHashes.length,
                 timestamp: operation.timestamp,
                 status: 'synced'

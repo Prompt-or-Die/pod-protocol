@@ -270,7 +270,7 @@ export class DiscoveryService extends BaseService {
    * 
    * @param {Object} options - Recommendation options
    * @param {string} options.type - Type: 'agents', 'channels', or 'messages'
-   * @param {PublicKey} [options.basedOn] - Base recommendations on this entity
+   * @param {Address} [options.basedOn] - Base recommendations on this entity
    * @param {number} [options.limit=10] - Maximum recommendations
    * @param {string} [options.algorithm='collaborative_filtering'] - Algorithm to use
    * @returns {Promise<Array>} Array of recommendations
@@ -279,7 +279,7 @@ export class DiscoveryService extends BaseService {
    * ```javascript
    * const recommendations = await client.discovery.getRecommendations({
    *   type: 'agents',
-   *   basedOn: myAgentPublicKey,
+   *   basedOn: myAgentAddress,
    *   limit: 10
    * });
    * ```

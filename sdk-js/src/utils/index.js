@@ -3,7 +3,7 @@
  * This file provides feature parity with the TypeScript SDK
  */
 
-import { PublicKey } from '@solana/web3.js';
+import { Address, address } from '@solana/web3.js';
 import CryptoJS from 'crypto-js';
 
 // Re-export from specific utility files
@@ -259,12 +259,12 @@ export function getAccountLastUpdated(account) {
 /**
  * Format public key for display
  * 
- * @param {PublicKey|string} pubkey - Public key
+ * @param {Address|string} pubkey - Public key
  * @param {number} [length=8] - Display length
  * @returns {string} Formatted public key
  */
-export function formatPublicKey(pubkey, length = 8) {
-  const keyStr = pubkey.toString();
+export function formatAddress(pubkey, length = 8) {
+  const keyStr = pubkey;
   if (keyStr.length <= length * 2) {
     return keyStr;
   }
@@ -383,13 +383,13 @@ export function getVisibilityString(visibility) {
 /**
  * Find participant PDA
  * 
- * @param {PublicKey} channel - Channel public key
- * @param {PublicKey} agent - Agent public key
- * @param {PublicKey} programId - Program ID
- * @returns {[PublicKey, number]} PDA and bump
+ * @param {Address} channel - Channel public key
+ * @param {Address} agent - Agent public key
+ * @param {Address} programId - Program ID
+ * @returns {[Address, number]} PDA and bump
  */
 export function findParticipantPDA(channel, agent, programId) {
-  return PublicKey.findProgramAddressSync(
+  return Address.findProgramAddressSync(
     [
       Buffer.from('participant'),
       channel.toBuffer(),
@@ -402,13 +402,13 @@ export function findParticipantPDA(channel, agent, programId) {
 /**
  * Find invitation PDA
  * 
- * @param {PublicKey} channel - Channel public key
- * @param {PublicKey} invitee - Invitee public key
- * @param {PublicKey} programId - Program ID
- * @returns {[PublicKey, number]} PDA and bump
+ * @param {Address} channel - Channel public key
+ * @param {Address} invitee - Invitee public key
+ * @param {Address} programId - Program ID
+ * @returns {[Address, number]} PDA and bump
  */
 export function findInvitationPDA(channel, invitee, programId) {
-  return PublicKey.findProgramAddressSync(
+  return Address.findProgramAddressSync(
     [
       Buffer.from('invitation'),
       channel.toBuffer(),
@@ -432,7 +432,7 @@ export function createSeed(input) {
 /**
  * Confirm transaction with retries
  * 
- * @param {Connection} connection - Solana connection
+ * @param {Rpc<any>} connection - Solana connection
  * @param {string} signature - Transaction signature
  * @param {number} [maxRetries=10] - Maximum retries
  * @param {number} [delay=1000] - Delay between retries

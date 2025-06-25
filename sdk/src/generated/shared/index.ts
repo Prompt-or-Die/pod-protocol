@@ -30,7 +30,7 @@ export function expectSome<T>(value: T | null | undefined): T {
 }
 
 /**
- * Asserts that the given value is a PublicKey.
+ * Asserts that the given value is a Address.
  * @internal
  */
 export function expectAddress<T extends string = string>(

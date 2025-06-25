@@ -668,7 +668,95 @@ impl BaseService for AnalyticsService {
 
     fn validate_config(&self) -> Result<(), Self::Error> {
         // Validate analytics service specific configuration
-        // TODO: Add specific validations if needed
+        let config = &self.base.config();
+        
+        // Check if program ID is set and valid
+        if config.program_id.to_string() == "11111111111111111111111111111111" {
+            return Err(PodComError::InvalidConfiguration {
+                field: "program_id".to_string(),
+                reason: "Program ID cannot be the default/null address".to_string(),
+            });
+        }
+        
+        // Validate cluster configuration
+        if config.cluster.is_empty() {
+            return Err(PodComError::InvalidConfiguration {
+                field: "cluster".to_string(),
+                reason: "Cluster URL cannot be empty".to_string(),
+            });
+        }
+        
+        // Validate analytics-specific settings
+        if let Some(ref analytics_config) = config.analytics_config {
+            // Validate metrics collection interval
+            if analytics_config.collection_interval == 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "analytics_config.collection_interval".to_string(),
+                    reason: "Metrics collection interval must be greater than 0".to_string(),
+                });
+            }
+            
+            if analytics_config.collection_interval > 3600 { // 1 hour max
+                return Err(PodComError::InvalidConfiguration {
+                    field: "analytics_config.collection_interval".to_string(),
+                    reason: "Metrics collection interval cannot exceed 1 hour (3600 seconds)".to_string(),
+                });
+            }
+            
+            // Validate retention periods
+            if analytics_config.data_retention_days == 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "analytics_config.data_retention_days".to_string(),
+                    reason: "Data retention period must be at least 1 day".to_string(),
+                });
+            }
+            
+            if analytics_config.data_retention_days > 3650 { // 10 years max
+                return Err(PodComError::InvalidConfiguration {
+                    field: "analytics_config.data_retention_days".to_string(),
+                    reason: "Data retention period cannot exceed 10 years (3650 days)".to_string(),
+                });
+            }
+            
+            // Validate aggregation settings
+            if analytics_config.max_time_series_points == 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "analytics_config.max_time_series_points".to_string(),
+                    reason: "Maximum time series points must be greater than 0".to_string(),
+                });
+            }
+            
+            if analytics_config.max_time_series_points > 1000000 { // 1M points max
+                return Err(PodComError::InvalidConfiguration {
+                    field: "analytics_config.max_time_series_points".to_string(),
+                    reason: "Maximum time series points cannot exceed 1,000,000".to_string(),
+                });
+            }
+            
+            // Validate cache settings
+            if analytics_config.cache_size_mb == 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "analytics_config.cache_size_mb".to_string(),
+                    reason: "Cache size must be greater than 0 MB".to_string(),
+                });
+            }
+            
+            if analytics_config.cache_size_mb > 1024 { // 1GB max
+                return Err(PodComError::InvalidConfiguration {
+                    field: "analytics_config.cache_size_mb".to_string(),
+                    reason: "Cache size cannot exceed 1024 MB".to_string(),
+                });
+            }
+            
+            // Validate batch processing settings
+            if analytics_config.enable_batch_processing && analytics_config.batch_size == 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "analytics_config.batch_size".to_string(),
+                    reason: "Batch size must be greater than 0 when batch processing is enabled".to_string(),
+                });
+            }
+        }
+        
         Ok(())
     }
 

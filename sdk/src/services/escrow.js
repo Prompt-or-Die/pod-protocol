@@ -1,4 +1,4 @@
-import { SystemProgram } from "@solana/web3.js";
+import { SystemProgram } from '@solana/web3.js';
 import anchor from "@coral-xyz/anchor";
 import { BaseService } from "./base";
 import { findAgentPDA, findEscrowPDA } from "../utils";
@@ -61,7 +61,7 @@ export class EscrowService extends BaseService {
             return this.convertEscrowAccountFromProgram(account);
         }
         catch (error) {
-            console.warn(`Escrow not found for channel: ${channel.toString()}, depositor: ${depositor.toString()}`, error);
+            console.warn(`Escrow not found for channel: ${channel}, depositor: ${depositor}`, error);
             return null;
         }
     }
@@ -75,7 +75,7 @@ export class EscrowService extends BaseService {
                 {
                     memcmp: {
                         offset: 8 + 32, // After discriminator and channel pubkey
-                        bytes: depositor.toBase58(),
+                        bytes: depositor,
                     },
                 },
             ];

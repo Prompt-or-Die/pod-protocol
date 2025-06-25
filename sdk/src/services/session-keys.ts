@@ -5,19 +5,12 @@
  * Allows users to delegate limited transaction authority to applications
  */
 
-import { 
-  Transaction, 
-  TransactionInstruction, 
-  Address, 
-  Rpc, 
-  KeyPairSigner, 
-  SystemProgram 
-} from '@solana/web3.js';
+import { Transaction } from '@solana/transactions';
 import { BaseService, BaseServiceConfig } from './base.js';
 
 export interface SessionKeyConfig {
   /** Target programs this session key can interact with */
-  targetPrograms: PublicKey[];
+  targetPrograms: Address[];
   /** Session expiry timestamp */
   expiryTime: number;
   /** Maximum number of uses for this session */
@@ -28,11 +21,11 @@ export interface SessionKeyConfig {
 
 export interface SessionToken {
   /** Ephemeral keypair for this session */
-  sessionKeypair: Keypair;
+  sessionKeyPairSigner: KeyPairSigner;
   /** Session configuration */
   config: SessionKeyConfig;
   /** Session token account address */
-  sessionTokenAccount: PublicKey;
+  sessionTokenAccount: Address;
   /** Number of uses remaining */
   usesRemaining?: number;
 }
@@ -56,9 +49,9 @@ export class SessionKeysService extends BaseService {
     return this.wallet;
   }
 
-  private async sendTransaction(transaction: Transaction, signers: Keypair[] = []): Promise<string> {
+  private async sendTransaction(transaction: Transaction, signers: KeyPairSigner[] = []): Promise<string> {
     const wallet = this.ensureWallet();
-    const { blockhash } = await this.connection.getLatestBlockhash();
+    const { blockhash } = await this.connection.getLatestBlockhash().send();
     
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = wallet.publicKey;
@@ -72,7 +65,7 @@ export class SessionKeysService extends BaseService {
     if ('signTransaction' in wallet && typeof wallet.signTransaction === 'function') {
       transaction = await wallet.signTransaction(transaction);
     } else {
-      transaction.partialSign(wallet as Keypair);
+      transaction.partialSign(wallet as KeyPairSigner);
     }
     
     const signature = await this.connection.sendRawTransaction(transaction.serialize());
@@ -87,39 +80,39 @@ export class SessionKeysService extends BaseService {
   async createSessionKey(config: SessionKeyConfig): Promise<SessionToken> {
     try {
       // Generate ephemeral keypair
-      const sessionKeypair = Keypair.generate();
+      const sessionKeyPairSigner = KeyPairSigner.generate();
       
       // Create session token account (PDA)
       const wallet = this.ensureWallet();
-      const [sessionTokenAccount] = PublicKey.findProgramAddressSync(
+      const [sessionTokenAccount] = Address.findProgramAddressSync(
         [
           Buffer.from('session_token'),
           wallet.publicKey.toBuffer(),
-          sessionKeypair.publicKey.toBuffer(),
+          sessionKeyPairSigner.publicKey.toBuffer(),
         ],
         this.programId
       );
 
       // Create session token instruction
       const instruction = await this.createSessionTokenInstruction(
-        sessionKeypair.publicKey,
+        sessionKeyPairSigner.publicKey,
         sessionTokenAccount,
         config
       );
 
       // Create and send transaction
       const transaction = new Transaction().add(instruction);
-      const signature = await this.sendTransaction(transaction, [sessionKeypair]);
+      const signature = await this.sendTransaction(transaction, [sessionKeyPairSigner]);
 
       const sessionToken: SessionToken = {
-        sessionKeypair,
+        sessionKeyPairSigner,
         config,
         sessionTokenAccount,
         usesRemaining: config.maxUses,
       };
 
       // Store session locally
-      const sessionId = sessionKeypair.publicKey.toBase58();
+      const sessionId = sessionKeyPairSigner.publicKey;
       this.sessions.set(sessionId, sessionToken);
 
       console.log(`Session key created: ${sessionId}`);
@@ -157,13 +150,13 @@ export class SessionKeysService extends BaseService {
       // Validate instructions are allowed
       for (const instruction of instructions) {
         if (!this.isInstructionAllowed(instruction, session.config)) {
-          throw new Error(`Instruction not allowed for this session: ${instruction.programId.toBase58()}`);
+          throw new Error(`Instruction not allowed for this session: ${instruction.programId}`);
         }
       }
 
       // Create transaction with session key
       const transaction = new Transaction().add(...instructions);
-      const signature = await this.sendTransaction(transaction, [session.sessionKeypair]);
+      const signature = await this.sendTransaction(transaction, [session.sessionKeyPairSigner]);
 
       // Decrement uses
       if (session.usesRemaining !== undefined) {
@@ -237,8 +230,8 @@ export class SessionKeysService extends BaseService {
   }
 
   private async createSessionTokenInstruction(
-    sessionPublicKey: PublicKey,
-    sessionTokenAccount: PublicKey,
+    sessionAddress: Address,
+    sessionTokenAccount: Address,
     config: SessionKeyConfig
   ): Promise<TransactionInstruction> {
     // This would create the actual session token instruction
@@ -248,7 +241,7 @@ export class SessionKeysService extends BaseService {
       keys: [
         { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
         { pubkey: sessionTokenAccount, isSigner: false, isWritable: true },
-        { pubkey: sessionPublicKey, isSigner: true, isWritable: false },
+        { pubkey: sessionAddress, isSigner: true, isWritable: false },
       ],
       programId: this.programId,
       data: Buffer.from([0]), // Placeholder instruction data
@@ -256,7 +249,7 @@ export class SessionKeysService extends BaseService {
   }
 
   private async createRevokeSessionInstruction(
-    sessionTokenAccount: PublicKey
+    sessionTokenAccount: Address
   ): Promise<TransactionInstruction> {
     const wallet = this.ensureWallet();
     return new TransactionInstruction({

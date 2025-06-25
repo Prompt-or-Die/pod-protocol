@@ -117,7 +117,7 @@ pub struct ChannelAccount {
     /// Channel visibility setting
     pub visibility: ChannelVisibility,
     /// Maximum number of participants
-    pub max_participants: u32,
+    pub participant_limit: u32,
     /// Current number of participants
     pub participant_count: u32,
     /// Fee per message in lamports
@@ -276,7 +276,7 @@ pub struct CreateChannelRequest {
     /// Visibility setting
     pub visibility: ChannelVisibility,
     /// Maximum participants
-    pub max_participants: u32,
+    pub participant_limit: u32,
     /// Fee per message in lamports
     pub fee_per_message: u64,
 }
@@ -287,7 +287,7 @@ pub struct CreateChannelBuilder {
     name: Option<String>,
     description: Option<String>,
     visibility: Option<ChannelVisibility>,
-    max_participants: Option<u32>,
+    participant_limit: Option<u32>,
     fee_per_message: Option<u64>,
 }
 
@@ -316,8 +316,8 @@ impl CreateChannelBuilder {
     }
 
     /// Set maximum participants
-    pub fn max_participants(mut self, max: u32) -> Self {
-        self.max_participants = Some(max);
+    pub fn participant_limit(mut self, max: u32) -> Self {
+        self.participant_limit = Some(max);
         self
     }
 
@@ -344,7 +344,7 @@ impl CreateChannelBuilder {
             name,
             description,
             visibility: self.visibility.unwrap_or(ChannelVisibility::Public),
-            max_participants: self.max_participants.unwrap_or(1000),
+            participant_limit: self.participant_limit.unwrap_or(1000),
             fee_per_message: self.fee_per_message.unwrap_or(0),
         })
     }
@@ -443,7 +443,7 @@ mod tests {
             .name("Test Channel")
             .description("A test channel")
             .visibility(ChannelVisibility::Private)
-            .max_participants(50)
+            .participant_limit(50)
             .fee_per_message(1000)
             .build()
             .unwrap();
@@ -451,7 +451,7 @@ mod tests {
         assert_eq!(request.name, "Test Channel");
         assert_eq!(request.description, "A test channel");
         assert_eq!(request.visibility, ChannelVisibility::Private);
-        assert_eq!(request.max_participants, 50);
+        assert_eq!(request.participant_limit, 50);
         assert_eq!(request.fee_per_message, 1000);
     }
 

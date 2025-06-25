@@ -199,10 +199,10 @@ export class IPFSService extends BaseService {
       const size = new TextEncoder().encode(jsonString).length;
 
       return {
-        hash: cid.toString(),
+        hash: cid,
         cid,
         size,
-        url: `${this.config.gatewayUrl}/${cid.toString()}`,
+        url: `${this.config.gatewayUrl}/${cid}`,
       };
     } catch (error) {
       throw new Error(`Failed to store data on IPFS: ${error}`);
@@ -222,10 +222,10 @@ export class IPFSService extends BaseService {
       const cid = await this.fs!.addBytes(data);
 
       return {
-        hash: cid.toString(),
+        hash: cid,
         cid,
         size: data.length,
-        url: `${this.config.gatewayUrl}/${cid.toString()}`,
+        url: `${this.config.gatewayUrl}/${cid}`,
       };
     } catch (error) {
       throw new Error(`Failed to store file on IPFS: ${error}`);
@@ -316,7 +316,7 @@ export class IPFSService extends BaseService {
     try {
       await this.ensureIPFSInitialized();
       return {
-        id: this.helia!.libp2p.peerId.toString(),
+        id: this.helia!.libp2p.peerId,
         agentVersion: 'helia',
         protocolVersion: '1.0.0'
       };

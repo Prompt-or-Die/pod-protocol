@@ -65,9 +65,9 @@ export function solToLamports(sol) {
  * @param {string} pubkey - Public key string
  * @returns {boolean} True if valid
  */
-export function isValidPublicKey(pubkey) {
+export function isValidAddress(pubkey) {
   try {
-    new PublicKey(pubkey);
+    new Address(pubkey);
     return true;
   } catch {
     return false;

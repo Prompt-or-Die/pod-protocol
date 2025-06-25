@@ -5,17 +5,7 @@
  * Optimizes transaction processing and provides atomic execution guarantees
  */
 
-import { 
-  Connection, 
-  Transaction, 
-  VersionedTransaction,
-  PublicKey,
-  SystemProgram,
-  Keypair,
-  TransactionInstruction,
-  ComputeBudgetProgram,
-  Signer
-} from '@solana/web3.js';
+import { Address, address } from "@solana/web3.js";
 import { BaseService, BaseServiceConfig } from './base.js';
 
 export interface BundleConfig {
@@ -33,7 +23,7 @@ export interface BundleTransaction {
   /** The transaction to include in bundle */
   transaction: Transaction | VersionedTransaction;
   /** Optional signers for this transaction */
-  signers?: Keypair[];
+  signers?: KeyPairSigner[];
   /** Description for logging */
   description?: string;
 }
@@ -128,7 +118,7 @@ export class JitoBundlesService extends BaseService {
           }
 
           // Get recent blockhash
-          const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash();
+          const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash().send();
           
           if (tx instanceof Transaction) {
             const wallet = this.ensureWallet();
@@ -144,8 +134,8 @@ export class JitoBundlesService extends BaseService {
             if ('signTransaction' in wallet && typeof wallet.signTransaction === 'function') {
               tx = await wallet.signTransaction(tx);
             } else {
-              // For Keypair/Signer, use partial sign
-              tx.partialSign(wallet as Keypair);
+              // For KeyPairSigner/Signer, use partial sign
+              tx.partialSign(wallet as KeyPairSigner);
             }
           }
 
@@ -274,7 +264,7 @@ export class JitoBundlesService extends BaseService {
 
   private async createTipTransaction(tipLamports: number): Promise<BundleTransaction> {
     // Randomly select a Jito tip account
-    const tipAccount = new PublicKey(
+    const tipAccount = new Address(
       this.JITO_TIP_ACCOUNTS[Math.floor(Math.random() * this.JITO_TIP_ACCOUNTS.length)]
     );
 

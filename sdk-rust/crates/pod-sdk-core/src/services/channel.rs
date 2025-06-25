@@ -170,7 +170,7 @@ impl ChannelService {
             if channel_account.participants.len() >= MAX_CHANNEL_PARTICIPANTS {
                 return Err(PodComError::ChannelParticipantLimitReached {
                     channel_address: *channel_address,
-                    max_participants: MAX_CHANNEL_PARTICIPANTS,
+                    participant_limit: MAX_CHANNEL_PARTICIPANTS,
                 });
             }
             
@@ -533,7 +533,7 @@ impl BaseService for ChannelService {
 
     fn validate_config(&self) -> Result<(), Self::Error> {
         // Validate channel service specific configuration
-        let config = &self.base.config;
+        let config = &self.base.config();
         
         // Check if program ID is set and valid
         if config.program_id.to_string() == "11111111111111111111111111111111" {
@@ -553,16 +553,16 @@ impl BaseService for ChannelService {
         
         // Validate channel-specific settings
         if let Some(ref channel_config) = config.channel_config {
-            if channel_config.max_participants == 0 {
+            if channel_config.participant_limit == 0 {
                 return Err(PodComError::InvalidConfiguration {
-                    field: "channel_config.max_participants".to_string(),
+                    field: "channel_config.participant_limit".to_string(),
                     reason: "Maximum participants must be greater than 0".to_string(),
                 });
             }
             
-            if channel_config.max_participants > 10000 {
+            if channel_config.participant_limit > 10000 {
                 return Err(PodComError::InvalidConfiguration {
-                    field: "channel_config.max_participants".to_string(),
+                    field: "channel_config.participant_limit".to_string(),
                     reason: "Maximum participants cannot exceed 10,000".to_string(),
                 });
             }

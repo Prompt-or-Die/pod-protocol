@@ -74,7 +74,7 @@ export class DiscoveryService extends BaseService {
                 programFilters.push({
                     memcmp: {
                         offset: 8 + 32, // After discriminator and first field
-                        bytes: filters.sender.toBase58(),
+                        bytes: filters.sender,
                     },
                 });
             }
@@ -83,7 +83,7 @@ export class DiscoveryService extends BaseService {
                 programFilters.push({
                     memcmp: {
                         offset: 8 + 32 + 32, // After discriminator, sender, and recipient
-                        bytes: filters.recipient.toBase58(),
+                        bytes: filters.recipient,
                     },
                 });
             }
@@ -146,7 +146,7 @@ export class DiscoveryService extends BaseService {
                 programFilters.push({
                     memcmp: {
                         offset: 8, // After discriminator
-                        bytes: filters.creator.toBase58(),
+                        bytes: filters.creator,
                     },
                 });
             }

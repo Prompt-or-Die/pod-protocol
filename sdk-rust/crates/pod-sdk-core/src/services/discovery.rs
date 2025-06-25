@@ -334,7 +334,7 @@ impl DiscoveryService {
         }
 
         // Check name match
-        if let Some(ref name_pattern) = query.name_pattern {
+        if let Some(name_pattern) = &query.name_pattern {
             let name_pattern: &str = name_pattern;
             if !agent.name.to_lowercase().contains(&name_pattern.to_lowercase()) {
                 return false;
@@ -752,7 +752,7 @@ impl BaseService for DiscoveryService {
 
     fn validate_config(&self) -> Result<(), Self::Error> {
         // Validate discovery service specific configuration
-        let config = &self.base.config;
+        let config = &self.base.config();
         
         // Check if program ID is set and valid
         if config.program_id.to_string() == "11111111111111111111111111111111" {
@@ -780,16 +780,16 @@ impl BaseService for DiscoveryService {
         
         // Validate search limits
         if let Some(ref discovery_config) = config.discovery_config {
-            if discovery_config.max_search_results == 0 {
+            if discovery_config.search_result_limit == 0 {
                 return Err(PodComError::InvalidConfiguration {
-                    field: "discovery_config.max_search_results".to_string(),
+                    field: "discovery_config.search_result_limit".to_string(),
                     reason: "Maximum search results must be greater than 0".to_string(),
                 });
             }
             
-            if discovery_config.max_search_results > 10000 {
+            if discovery_config.search_result_limit > 10000 {
                 return Err(PodComError::InvalidConfiguration {
-                    field: "discovery_config.max_search_results".to_string(),
+                    field: "discovery_config.search_result_limit".to_string(),
                     reason: "Maximum search results cannot exceed 10,000 for performance reasons".to_string(),
                 });
             }

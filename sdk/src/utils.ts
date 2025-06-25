@@ -1,4 +1,4 @@
-import { Address, address } from "@solana/web3.js";
+import { Address, address } from '@solana/web3.js';
 import { PROGRAM_ID, MessageType, AGENT_CAPABILITIES } from "./types";
 
 // Re-export types for convenience
@@ -39,7 +39,7 @@ export function findMessagePDA(
     Buffer.from(messageId),
     Buffer.from(senderAgent),
     Buffer.from(recipient),
-    Buffer.from(timestamp.toString()),
+    Buffer.from(timestamp),
   ];
   
   return [address("11111111111111111111111111111112"), 0];
@@ -329,7 +329,7 @@ export function solToLamports(sol: number): number {
 /**
  * Check if a string is a valid Solana public key
  */
-export function isValidAddress(addressString: string): boolean {
+export function validateAddress(addressString: string): boolean {
   try {
     address(addressString);
     return true;
@@ -577,7 +577,7 @@ export function formatSOL(lamports: number | bigint): string {
 /**
  * Validate public key format (for backward compatibility)
  */
-export function validatePublicKey(
+export function validateAddress(
   pubkey: Address | string,
 ): boolean {
   try {

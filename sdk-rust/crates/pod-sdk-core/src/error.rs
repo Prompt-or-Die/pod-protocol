@@ -101,6 +101,10 @@ pub enum PodComError {
     #[error("Missing configuration field: {field}")]
     MissingConfiguration { field: String },
     
+    /// Invalid configuration
+    #[error("Invalid configuration: {message}")]
+    InvalidConfiguration { message: String },
+    
     /// Invalid compression size
     #[error("Invalid compression size for {field}: {value}")]
     InvalidCompressionSize { field: String, value: u64 },
@@ -138,8 +142,8 @@ pub enum PodComError {
     InvalidChannelParticipants { reason: String },
     
     /// Channel participant limit reached
-    #[error("Channel {channel_address} participant limit reached (max: {max_participants})")]
-    ChannelParticipantLimitReached { channel_address: Pubkey, max_participants: usize },
+    #[error("Channel {channel_address} participant limit reached (max: {participant_limit})")]
+    ChannelParticipantLimitReached { channel_address: Pubkey, participant_limit: usize },
     
     /// Participant already exists
     #[error("Participant {participant} already exists in channel {channel_address}")]
@@ -277,8 +281,8 @@ pub enum ChannelError {
     NotFound { channel: Pubkey },
     
     /// Channel is full
-    #[error("Channel is full: {channel} (max participants: {max_participants})")]
-    Full { channel: Pubkey, max_participants: u32 },
+    #[error("Channel is full: {channel} (max participants: {participant_limit})")]
+    Full { channel: Pubkey, participant_limit: u32 },
     
     /// Access denied
     #[error("Access denied to channel: {channel}")]

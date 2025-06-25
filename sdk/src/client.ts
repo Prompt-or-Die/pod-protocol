@@ -5,12 +5,12 @@ import {
   Rpc,
   RpcApi,
   Commitment
-} from "@solana/web3.js";
+} from '@solana/web3.js';
 import { 
   KeyPairSigner, 
   generateKeyPairSigner,
   createKeyPairSignerFromBytes 
-} from "@solana/web3.js";
+} from '@solana/web3.js';
 import anchor from "@coral-xyz/anchor";
 const { Program, AnchorProvider } = anchor;
 import type { Program as ProgramType } from "@coral-xyz/anchor";
@@ -91,34 +91,31 @@ export class PodComClient {
     this.commitment = config.commitment || "confirmed";
 
     // Initialize services
-    const serviceConfig: BaseServiceConfig = {
-      rpc: this.rpc,
-      programId: this.programId,
-      commitment: this.commitment,
-    };
+    const rpcUrl = endpoint;
+    const programIdString = typeof this.programId === 'string' ? this.programId : this.programId;
 
-    this.agents = new AgentService(serviceConfig);
-    this.messages = new MessageService(serviceConfig);
-    this.channels = new ChannelService(serviceConfig);
-    this.escrow = new EscrowService(serviceConfig);
-    this.analytics = new AnalyticsService(serviceConfig);
-    this.discovery = new DiscoveryService(serviceConfig);
+    this.agents = new AgentService(rpcUrl, programIdString, this.commitment);
+    this.messages = new MessageService(rpcUrl, programIdString, this.commitment);
+    this.channels = new ChannelService(rpcUrl, programIdString, this.commitment);
+    this.escrow = new EscrowService(rpcUrl, programIdString, this.commitment);
+    this.analytics = new AnalyticsService(rpcUrl, programIdString, this.commitment);
+    this.discovery = new DiscoveryService(rpcUrl, programIdString, this.commitment);
     
     // Initialize IPFS service
-    this.ipfs = new IPFSService(serviceConfig, {});
+    this.ipfs = new IPFSService(rpcUrl, programIdString, this.commitment);
     
     // Initialize ZK Compression service with IPFS dependency
     this.zkCompression = new ZKCompressionService(
-      serviceConfig,
-      {},
-      this.ipfs
+      rpcUrl,
+      programIdString,
+      this.commitment
     );
     
     // Initialize Session Keys service
-    this.sessionKeys = new SessionKeysService(serviceConfig);
+    this.sessionKeys = new SessionKeysService(rpcUrl, programIdString, this.commitment);
     
     // Initialize Jito Bundles service
-    this.jitoBundles = new JitoBundlesService(serviceConfig, config.jitoRpcUrl);
+    this.jitoBundles = new JitoBundlesService(rpcUrl, programIdString, this.commitment);
   }
 
   /**
@@ -237,8 +234,8 @@ export class PodComClient {
   /**
    * @deprecated Use client.agents.getAgent() instead
    */
-  async getAgent(walletPublicKey: Address): Promise<AgentAccount | null> {
-    return this.agents.getAgent(walletPublicKey);
+  async getAgent(walletAddress: Address): Promise<AgentAccount | null> {
+    return this.agents.getAgent(walletAddress);
   }
 
   /**
@@ -280,11 +277,11 @@ export class PodComClient {
    * @deprecated Use client.messages.getAgentMessages() instead
    */
   async getAgentMessages(
-    agentPublicKey: Address,
+    agentAddress: Address,
     limit: number = 50,
     statusFilter?: MessageStatus,
   ): Promise<MessageAccount[]> {
-    return this.messages.getAgentMessages(agentPublicKey, limit, statusFilter);
+    return this.messages.getAgentMessages(agentAddress, limit, statusFilter);
   }
 
   /**

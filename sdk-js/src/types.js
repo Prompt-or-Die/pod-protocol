@@ -2,12 +2,12 @@
  * PoD Protocol types and constants for JavaScript SDK
  */
 
-import { PublicKey } from '@solana/web3.js';
+import { Address, address } from '@solana/web3.js';
 
 /**
  * PoD Protocol Program ID on Solana Devnet
  */
-export const PROGRAM_ID = new PublicKey('HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps');
+export const PROGRAM_ID = new Address('HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps');
 
 /**
  * Message types supported by PoD Protocol
@@ -70,7 +70,7 @@ export const PodComError = {
 /**
  * Agent account data structure
  * @typedef {Object} AgentAccount
- * @property {PublicKey} pubkey - Agent's wallet public key
+ * @property {Address} pubkey - Agent's wallet public key
  * @property {number} capabilities - Bitmask representing agent capabilities
  * @property {string} metadataUri - URI to agent metadata (IPFS, Arweave, etc.)
  * @property {number} reputation - Agent reputation score
@@ -83,9 +83,9 @@ export const PodComError = {
 /**
  * Message account data structure
  * @typedef {Object} MessageAccount
- * @property {PublicKey} pubkey - Message account public key
- * @property {PublicKey} sender - Sender's public key
- * @property {PublicKey} recipient - Recipient's public key
+ * @property {Address} pubkey - Message account public key
+ * @property {Address} sender - Sender's public key
+ * @property {Address} recipient - Recipient's public key
  * @property {Uint8Array} payloadHash - SHA-256 hash of message payload
  * @property {string} payload - Original message payload (for display)
  * @property {MessageType} messageType - Type of message
@@ -99,8 +99,8 @@ export const PodComError = {
 /**
  * Channel account data structure
  * @typedef {Object} ChannelAccount
- * @property {PublicKey} pubkey - Channel account public key
- * @property {PublicKey} creator - Channel creator's public key
+ * @property {Address} pubkey - Channel account public key
+ * @property {Address} creator - Channel creator's public key
  * @property {string} name - Channel name
  * @property {string} description - Channel description
  * @property {ChannelVisibility} visibility - Channel visibility setting
@@ -117,8 +117,8 @@ export const PodComError = {
 /**
  * Escrow account data structure
  * @typedef {Object} EscrowAccount
- * @property {PublicKey} channel - Associated channel public key
- * @property {PublicKey} depositor - Depositor's public key
+ * @property {Address} channel - Associated channel public key
+ * @property {Address} depositor - Depositor's public key
  * @property {number} balance - Deposited amount in lamports
  * @property {number} amount - Deposited amount in lamports (alias)
  * @property {number} createdAt - Deposit timestamp
@@ -143,7 +143,7 @@ export const PodComError = {
 /**
  * Configuration options for sending a message
  * @typedef {Object} SendMessageOptions
- * @property {PublicKey} recipient - Recipient's public key
+ * @property {Address} recipient - Recipient's public key
  * @property {string} content - Message content
  * @property {MessageType} [messageType='text'] - Type of message
  * @property {number} [expirationDays=7] - Days until message expires
@@ -162,14 +162,14 @@ export const PodComError = {
 /**
  * Configuration options for depositing into escrow
  * @typedef {Object} DepositEscrowOptions
- * @property {PublicKey} channel - Channel to deposit into
+ * @property {Address} channel - Channel to deposit into
  * @property {number} amount - Amount in lamports
  */
 
 /**
  * Configuration options for withdrawing from escrow
  * @typedef {Object} WithdrawEscrowOptions
- * @property {PublicKey} channel - Channel to withdraw from
+ * @property {Address} channel - Channel to withdraw from
  * @property {number} amount - Amount in lamports
  */
 
@@ -177,7 +177,7 @@ export const PodComError = {
  * Main configuration for PoD Protocol SDK
  * @typedef {Object} PodComConfig
  * @property {string} [endpoint] - Solana cluster endpoint
- * @property {PublicKey} [programId] - Program ID (defaults to devnet)
+ * @property {Address} [programId] - Program ID (defaults to devnet)
  * @property {string} [commitment] - Default commitment level
  * @property {Object} [ipfs] - IPFS configuration
  * @property {Object} [zkCompression] - ZK Compression configuration

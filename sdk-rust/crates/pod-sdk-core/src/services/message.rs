@@ -487,7 +487,7 @@ impl BaseService for MessageService {
 
     fn validate_config(&self) -> Result<(), Self::Error> {
         // Validate message service specific configuration
-        let config = &self.base.config;
+        let config = &self.base.config();
         
         // Check if program ID is set and valid
         if config.program_id.to_string() == "11111111111111111111111111111111" {
@@ -515,16 +515,16 @@ impl BaseService for MessageService {
         
         // Validate message size limits
         if let Some(ref message_config) = config.message_config {
-            if message_config.max_message_size == 0 {
+            if message_config.message_size_limit == 0 {
                 return Err(PodComError::InvalidConfiguration {
-                    field: "message_config.max_message_size".to_string(),
+                    field: "message_config.message_size_limit".to_string(),
                     reason: "Maximum message size must be greater than 0".to_string(),
                 });
             }
             
-            if message_config.max_message_size > 32 * 1024 { // 32KB limit
+            if message_config.message_size_limit > 32 * 1024 { // 32KB limit
                 return Err(PodComError::InvalidConfiguration {
-                    field: "message_config.max_message_size".to_string(),
+                    field: "message_config.message_size_limit".to_string(),
                     reason: "Maximum message size cannot exceed 32KB".to_string(),
                 });
             }

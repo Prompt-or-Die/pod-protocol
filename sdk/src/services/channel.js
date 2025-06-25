@@ -1,4 +1,4 @@
-import { PublicKey, SystemProgram } from "@solana/web3.js";
+import { Address, address } from '@solana/web3.js';
 import anchor from "@coral-xyz/anchor";
 import { BaseService } from "./base";
 import { ChannelVisibility, } from "../types";
@@ -42,7 +42,7 @@ export class ChannelService extends BaseService {
             return this.convertChannelAccountFromProgram(account, channelPDA);
         }
         catch (error) {
-            console.warn(`Channel not found: ${channelPDA.toString()}`, error);
+            console.warn(`Channel not found: ${channelPDA}`, error);
             return null;
         }
     }
@@ -84,7 +84,7 @@ export class ChannelService extends BaseService {
                 {
                     memcmp: {
                         offset: 8, // After discriminator
-                        bytes: creator.toBase58(),
+                        bytes: creator,
                     },
                 },
             ];
@@ -108,7 +108,7 @@ export class ChannelService extends BaseService {
         // Derive participant PDA
         const [participantPDA] = this.findParticipantPDA(channelPDA, agentPDA);
         // Check if channel requires invitation (for private channels)
-        const [invitationPDA] = PublicKey.findProgramAddressSync([
+        const [invitationPDA] = Address.findProgramAddressSync([
             Buffer.from("invitation"),
             channelPDA.toBuffer(),
             wallet.publicKey.toBuffer(),
@@ -171,7 +171,7 @@ export class ChannelService extends BaseService {
         // Derive message PDA
         const nonceBuffer = Buffer.alloc(8);
         nonceBuffer.writeBigUInt64LE(BigInt(nonce), 0);
-        const [messagePDA] = PublicKey.findProgramAddressSync([
+        const [messagePDA] = Address.findProgramAddressSync([
             Buffer.from("channel_message"),
             options.channelPDA.toBuffer(),
             wallet.publicKey.toBuffer(),
@@ -202,7 +202,7 @@ export class ChannelService extends BaseService {
         // Derive participant PDA (for inviter)
         const [participantPDA] = this.findParticipantPDA(channelPDA, agentPDA);
         // Derive invitation PDA
-        const [invitationPDA] = PublicKey.findProgramAddressSync([Buffer.from("invitation"), channelPDA.toBuffer(), invitee.toBuffer()], this.programId);
+        const [invitationPDA] = Address.findProgramAddressSync([Buffer.from("invitation"), channelPDA.toBuffer(), invitee.toBuffer()], this.programId);
         const tx = await program.methods
             .inviteToChannel(invitee)
             .accounts({
@@ -227,7 +227,7 @@ export class ChannelService extends BaseService {
                 {
                     memcmp: {
                         offset: 8, // After discriminator
-                        bytes: channelPDA.toBase58(),
+                        bytes: channelPDA,
                     },
                 },
             ];
@@ -249,7 +249,7 @@ export class ChannelService extends BaseService {
                 {
                     memcmp: {
                         offset: 8, // After discriminator
-                        bytes: channelPDA.toBase58(),
+                        bytes: channelPDA,
                     },
                 },
             ];
@@ -316,7 +316,7 @@ export class ChannelService extends BaseService {
         };
     }
     findParticipantPDA(channelPDA, agentPDA) {
-        return PublicKey.findProgramAddressSync([Buffer.from("participant"), channelPDA.toBuffer(), agentPDA.toBuffer()], this.programId);
+        return Address.findProgramAddressSync([Buffer.from("participant"), channelPDA.toBuffer(), agentPDA.toBuffer()], this.programId);
     }
 }
 //# sourceMappingURL=channel.js.map

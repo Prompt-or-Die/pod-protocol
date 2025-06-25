@@ -5,8 +5,8 @@
 export class BaseService {
   /**
    * @param {Object} config - Service configuration
-   * @param {Connection} config.connection - Solana connection
-   * @param {PublicKey} config.programId - Program ID
+   * @param {Rpc<any>} config.connection - Solana connection
+   * @param {Address} config.programId - Program ID
    * @param {string} config.commitment - Commitment level
    */
   constructor(config) {

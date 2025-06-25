@@ -171,7 +171,7 @@ export class AnalyticsService extends BaseService {
       // Get top senders
       const senderCounts = {};
       messages.forEach(message => {
-        const sender = message.sender.toString();
+        const sender = message.sender;
         senderCounts[sender] = (senderCounts[sender] || 0) + 1;
       });
 
@@ -329,12 +329,12 @@ export class AnalyticsService extends BaseService {
   /**
    * Get analytics for a specific agent
    * 
-   * @param {PublicKey} agentPubkey - Agent's public key
+   * @param {Address} agentPubkey - Agent's public key
    * @returns {Promise<Object>} Agent-specific analytics
    * 
    * @example
    * ```javascript
-   * const agentStats = await client.analytics.getAgentStats(agentPublicKey);
+   * const agentStats = await client.analytics.getAgentStats(agentAddress);
    * console.log('Messages sent:', agentStats.messagesSent);
    * ```
    */
