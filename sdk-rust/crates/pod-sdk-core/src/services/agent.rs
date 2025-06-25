@@ -15,10 +15,7 @@ use solana_sdk::{
 };
 
 use pod_sdk_types::{
-    accounts::{AgentAccount, ChannelAccount},
-    instructions::{CreateAgentParams, UpdateAgentParams},
-    constants::*,
-    events::AgentEvent,
+    AgentAccount, ChannelAccount, RegisterAgentRequest,
 };
 
 use crate::{

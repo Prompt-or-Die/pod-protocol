@@ -18,6 +18,7 @@ import { errorHandler } from "./utils/enhanced-error-handler.js";
 import { AIAssistant } from "./utils/ai-assistant.js";
 import { createStandaloneClient, mockAgentRegistration, mockMessageSend } from "./utils/standalone-client.js";
 import { createZKCompressionCommand } from "./commands/zk-compression.js";
+import { createAdvancedCommand } from "./commands/advanced.js";
 
 // Get current version from package.json
 const __filename = fileURLToPath(import.meta.url);
@@ -208,6 +209,9 @@ program
 
 // Register ZK Compression commands
 program.addCommand(createZKCompressionCommand());
+
+// Register Advanced commands  
+program.addCommand(createAdvancedCommand());
 
 // Enhanced status command
 program

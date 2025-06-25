@@ -16,10 +16,7 @@ use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncRead, AsyncWrite};
 
 use pod_sdk_types::{
-    accounts::{IPFSMetadataAccount, AgentAccount},
-    instructions::{UploadToIPFSParams, PinContentParams},
-    constants::*,
-    events::IPFSEvent,
+    AgentAccount,
 };
 
 use crate::{

@@ -3,7 +3,7 @@
  * This file provides feature parity with the TypeScript SDK
  */
 
-import { address } from '@solana/web3.js';
+// Import removed - Web3.js v2.0 uses different import patterns
 import CryptoJS from 'crypto-js';
 
 // Re-export from specific utility files

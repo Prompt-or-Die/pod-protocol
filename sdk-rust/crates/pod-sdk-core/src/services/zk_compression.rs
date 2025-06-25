@@ -15,10 +15,7 @@ use solana_sdk::{
 use serde::{Deserialize, Serialize};
 
 use pod_sdk_types::{
-    accounts::{ZKCompressionAccount, AgentAccount},
-    instructions::{CompressDataParams, DecompressDataParams, VerifyCompressionParams},
-    constants::*,
-    events::ZKCompressionEvent,
+    AgentAccount,
 };
 
 use crate::{
@@ -27,7 +24,7 @@ use crate::{
     utils::{
         zk::{ZKProof, ZKCircuit, ZKCompressor, CompressionProof},
         compression::{CompressionAlgorithm, CompressionLevel},
-        crypto::{generate_commitment, verify_merkle_proof},
+        zk::{generate_commitment, verify_merkle_proof},
     },
 };
 

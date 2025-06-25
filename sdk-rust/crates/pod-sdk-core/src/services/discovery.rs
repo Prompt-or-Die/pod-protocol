@@ -15,10 +15,7 @@ use solana_sdk::{
 use serde::{Deserialize, Serialize};
 
 use pod_sdk_types::{
-    accounts::{AgentAccount, ChannelAccount},
-    instructions::{DiscoveryQuery, AgentCapability},
-    constants::*,
-    events::DiscoveryEvent,
+    AgentAccount, ChannelAccount, capabilities,
 };
 
 use crate::{

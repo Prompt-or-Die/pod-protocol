@@ -14,11 +14,8 @@ use solana_sdk::{
 };
 
 use pod_sdk_types::{
-    accounts::{ChannelAccount, AgentAccount, MessageAccount},
-    instructions::{CreateChannelParams, UpdateChannelParams, ChannelAccessLevel},
-    constants::*,
-    events::ChannelEvent,
-    encryption::ChannelEncryptionKey,
+    ChannelAccount, AgentAccount, MessageAccount,
+    CreateChannelRequest, ChannelVisibility,
 };
 
 use crate::{

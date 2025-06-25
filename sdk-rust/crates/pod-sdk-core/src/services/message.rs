@@ -14,11 +14,8 @@ use solana_sdk::{
 };
 
 use pod_sdk_types::{
-    accounts::{MessageAccount, ChannelAccount},
-    instructions::{SendMessageParams, UpdateMessageParams},
-    constants::*,
-    events::MessageEvent,
-    encryption::{MessageContent, EncryptedMessage},
+    MessageAccount, ChannelAccount, SendMessageRequest,
+    MessageType, MessageStatus,
 };
 
 use crate::{
