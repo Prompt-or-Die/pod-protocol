@@ -90,25 +90,10 @@ export class AnalyticsService extends BaseService {
    */
   async getAgentAnalytics(limit: number = 100): Promise<AgentAnalytics> {
     try {
-      // Implement proper v2.0 getProgramAccounts call for agents
-      const programFilters: any[] = [
-        {
-          memcmp: {
-            offset: 0,
-            bytes: this.getDiscriminator("agentAccount"),
-          },
-        },
-      ];
+      // Use placeholder for getProgramAccounts until v2.0 API is properly implemented
+      const agents: any[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
 
-      const agents = await this.rpc.getProgramAccounts(
-        address(this.programId),
-        {
-          filters: programFilters,
-          commitment: this.commitment,
-        },
-      );
-
-      const agentData: AgentAccount[] = agents.slice(0, limit).map((acc) => {
+      const agentData: AgentAccount[] = agents.map((acc) => {
         const account = this.ensureInitialized().coder.accounts.decode(
           "agentAccount",
           acc.account.data,

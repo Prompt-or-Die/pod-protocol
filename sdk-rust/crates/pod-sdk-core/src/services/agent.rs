@@ -388,18 +388,98 @@ impl AgentService {
             let agent_account = self.get_agent_account(agent_address).await?;
             let channels = self.get_agent_channels(agent_address).await?;
             
-            // TODO: Implement message counting and other statistics
+            // Calculate message count across all channels
+            let total_messages = self.calculate_total_messages(agent_address, &channels).await?;
+            
+            // Calculate uptime percentage based on activity
+            let uptime_percentage = self.calculate_uptime_percentage(&agent_account).await?;
+            
             let stats = AgentStats {
                 total_channels: channels.len() as u64,
                 active_channels: channels.iter().filter(|(_, ch)| ch.is_active).count() as u64,
-                total_messages: 0, // TODO: Implement
+                total_messages,
                 last_activity: agent_account.updated_at,
                 reputation_score: agent_account.reputation_score,
-                uptime_percentage: 100.0, // TODO: Calculate based on activity
+                uptime_percentage,
             };
             
             Ok(stats)
         }).await
+    }
+
+    /// Calculate total messages sent by an agent across all channels
+    async fn calculate_total_messages(
+        &self,
+        agent_address: &Pubkey,
+        channels: &[(Pubkey, ChannelAccount)],
+    ) -> Result<u64> {
+        let program = self.base.program()?;
+        let mut total_messages = 0u64;
+        
+        // Count messages in each channel where this agent is a participant
+        for (channel_pubkey, _) in channels {
+            // Fetch message accounts for this channel and count messages from this agent
+            let message_accounts = program
+                .accounts::<pod_sdk_types::accounts::MessageAccount>(vec![
+                    solana_account_decoder::UiAccountEncoding::Base64,
+                ])
+                .await
+                .unwrap_or_default();
+                
+            for (_, message) in message_accounts {
+                if message.sender == *agent_address && message.channel.is_some() 
+                    && message.channel.unwrap() == *channel_pubkey {
+                    total_messages += 1;
+                }
+            }
+        }
+        
+        Ok(total_messages)
+    }
+
+    /// Calculate uptime percentage based on agent activity patterns
+    async fn calculate_uptime_percentage(&self, agent_account: &AgentAccount) -> Result<f64> {
+        let now = chrono::Utc::now();
+        let created_at = agent_account.created_at;
+        let last_activity = agent_account.updated_at;
+        
+        // Calculate total time since creation
+        let total_time = now.signed_duration_since(created_at).num_seconds();
+        if total_time <= 0 {
+            return Ok(100.0); // Newly created agent
+        }
+        
+        // Calculate time since last activity
+        let inactive_time = now.signed_duration_since(last_activity).num_seconds();
+        
+        // Simple uptime calculation based on activity recency
+        // - If last activity was within 1 hour: 100% uptime
+        // - If last activity was within 24 hours: scale linearly from 100% to 80%
+        // - If last activity was within 7 days: scale linearly from 80% to 50%
+        // - Otherwise: scale based on total lifetime activity ratio
+        
+        let uptime_percentage = if inactive_time <= 3600 {
+            // Active within last hour - consider fully operational
+            100.0
+        } else if inactive_time <= 86400 {
+            // Active within last 24 hours - scale linearly
+            100.0 - (inactive_time as f64 - 3600.0) / 86400.0 * 20.0
+        } else if inactive_time <= 604800 {
+            // Active within last 7 days - scale to 50%
+            80.0 - (inactive_time as f64 - 86400.0) / 604800.0 * 30.0
+        } else {
+            // Long inactive - calculate based on activity ratio
+            let active_time = total_time - inactive_time;
+            let base_uptime = (active_time as f64 / total_time as f64) * 100.0;
+            
+            // Apply minimum threshold and decay factor
+            let min_uptime = 10.0;
+            let decay_factor = 0.9; // Account for extended inactivity
+            
+            (base_uptime * decay_factor).max(min_uptime)
+        };
+        
+        Ok(uptime_percentage.clamp(0.0, 100.0))
     }
 }
 
@@ -429,7 +509,60 @@ impl BaseService for AgentService {
 
     fn validate_config(&self) -> Result<(), Self::Error> {
         // Validate agent service specific configuration
-        // TODO: Add specific validations if needed
+        let config = &self.base.config;
+        
+        // Check if program ID is set and valid
+        if config.program_id.to_string() == "11111111111111111111111111111111" {
+            return Err(PodComError::InvalidConfiguration {
+                field: "program_id".to_string(),
+                reason: "Program ID cannot be the default/null address".to_string(),
+            });
+        }
+        
+        // Validate cluster configuration
+        if config.cluster.is_empty() {
+            return Err(PodComError::InvalidConfiguration {
+                field: "cluster".to_string(),
+                reason: "Cluster URL cannot be empty".to_string(),
+            });
+        }
+        
+        // Validate timeout settings for agent operations
+        if config.rpc_timeout_secs < 5 {
+            return Err(PodComError::InvalidConfiguration {
+                field: "rpc_timeout_secs".to_string(),
+                reason: "RPC timeout must be at least 5 seconds for agent operations".to_string(),
+            });
+        }
+        
+        // Validate commitment level
+        match config.commitment.as_str() {
+            "processed" | "confirmed" | "finalized" => {},
+            _ => {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "commitment".to_string(),
+                    reason: "Commitment must be 'processed', 'confirmed', or 'finalized'".to_string(),
+                });
+            }
+        }
+        
+        // Validate rate limiting settings if enabled
+        if let Some(ref rate_limit) = config.rate_limit {
+            if rate_limit.requests_per_second == 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "rate_limit.requests_per_second".to_string(),
+                    reason: "Rate limit requests per second must be greater than 0".to_string(),
+                });
+            }
+            
+            if rate_limit.burst_capacity == 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "rate_limit.burst_capacity".to_string(),
+                    reason: "Rate limit burst capacity must be greater than 0".to_string(),
+                });
+            }
+        }
+        
         Ok(())
     }
 

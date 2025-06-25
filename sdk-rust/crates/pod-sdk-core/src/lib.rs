@@ -124,7 +124,7 @@ mod error;
 
 // Service modules
 mod services;
-// mod utils;
+mod utils;
 
 // Optional feature modules
 #[cfg(feature = "compression")]

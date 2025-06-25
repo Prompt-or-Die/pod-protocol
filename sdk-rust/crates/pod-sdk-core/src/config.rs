@@ -34,6 +34,10 @@ pub struct PodComConfig {
     pub security_config: SecurityConfig,
     /// Performance configuration
     pub performance_config: PerformanceConfig,
+    /// IPFS configuration
+    pub ipfs_config: IPFSConfig,
+    /// ZK Compression configuration
+    pub zk_compression_config: ZKCompressionConfig,
 }
 
 impl PodComConfig {
@@ -50,6 +54,8 @@ impl PodComConfig {
             cache_config: CacheConfig::default(),
             security_config: SecurityConfig::default(),
             performance_config: PerformanceConfig::default(),
+            ipfs_config: IPFSConfig::default(),
+            zk_compression_config: ZKCompressionConfig::default(),
         }
     }
     
@@ -66,6 +72,8 @@ impl PodComConfig {
             cache_config: CacheConfig::production(),
             security_config: SecurityConfig::strict(),
             performance_config: PerformanceConfig::optimized(),
+            ipfs_config: IPFSConfig::production(),
+            zk_compression_config: ZKCompressionConfig::production(),
         }
     }
     
@@ -82,6 +90,8 @@ impl PodComConfig {
             cache_config: CacheConfig::disabled(),
             security_config: SecurityConfig::permissive(),
             performance_config: PerformanceConfig::debug(),
+            ipfs_config: IPFSConfig::disabled(),
+            zk_compression_config: ZKCompressionConfig::debug(),
         }
     }
     
@@ -115,6 +125,8 @@ impl PodComConfig {
         self.cache_config.validate()?;
         self.security_config.validate()?;
         self.performance_config.validate()?;
+        self.ipfs_config.validate()?;
+        self.zk_compression_config.validate()?;
         
         Ok(())
     }
@@ -220,8 +232,12 @@ pub struct RetryConfig {
     pub max_delay: Duration,
     /// Backoff multiplier
     pub backoff_multiplier: f64,
+    /// Multiplier (alias for backoff_multiplier for backward compatibility)
+    pub multiplier: f64,
     /// Enable jitter to prevent thundering herd
     pub enable_jitter: bool,
+    /// Jitter amount (0.0 to 1.0)
+    pub jitter: f64,
 }
 
 impl RetryConfig {
@@ -232,7 +248,9 @@ impl RetryConfig {
             base_delay: Duration::from_millis(100),
             max_delay: Duration::from_secs(10),
             backoff_multiplier: 2.0,
+            multiplier: 2.0,
             enable_jitter: true,
+            jitter: 0.1,
         }
     }
     
@@ -243,7 +261,9 @@ impl RetryConfig {
             base_delay: Duration::from_millis(200),
             max_delay: Duration::from_secs(30),
             backoff_multiplier: 1.5,
+            multiplier: 1.5,
             enable_jitter: true,
+            jitter: 0.1,
         }
     }
     
@@ -254,7 +274,9 @@ impl RetryConfig {
             base_delay: Duration::from_millis(50),
             max_delay: Duration::from_secs(5),
             backoff_multiplier: 1.2,
+            multiplier: 1.2,
             enable_jitter: false,
+            jitter: 0.0,
         }
     }
     
@@ -301,6 +323,8 @@ impl RetryConfig {
 pub struct RateLimitConfig {
     /// Requests per second limit
     pub requests_per_second: u32,
+    /// Maximum requests per window (for backward compatibility)
+    pub max_requests_per_window: u32,
     /// Burst capacity
     pub burst_capacity: u32,
     /// Enable rate limiting
@@ -314,6 +338,7 @@ impl RateLimitConfig {
     pub fn default() -> Self {
         Self {
             requests_per_second: 10,
+            max_requests_per_window: 10,
             burst_capacity: 20,
             enabled: true,
             window_duration: Duration::from_secs(1),
@@ -324,6 +349,7 @@ impl RateLimitConfig {
     pub fn strict() -> Self {
         Self {
             requests_per_second: 5,
+            max_requests_per_window: 5,
             burst_capacity: 10,
             enabled: true,
             window_duration: Duration::from_secs(1),
@@ -334,6 +360,7 @@ impl RateLimitConfig {
     pub fn permissive() -> Self {
         Self {
             requests_per_second: 100,
+            max_requests_per_window: 100,
             burst_capacity: 200,
             enabled: false,
             window_duration: Duration::from_secs(1),
@@ -639,6 +666,152 @@ impl PodComConfigBuilder {
         
         config.validate()?;
         Ok(config)
+    }
+}
+
+/// IPFS configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IPFSConfig {
+    /// IPFS node endpoint
+    pub ipfs_endpoint: String,
+    /// Enable IPFS integration
+    pub enabled: bool,
+    /// Connection timeout
+    pub timeout: Duration,
+    /// Maximum file size for upload
+    pub max_file_size: usize,
+    /// Pin content by default
+    pub auto_pin: bool,
+}
+
+impl IPFSConfig {
+    /// Default IPFS configuration
+    pub fn default() -> Self {
+        Self {
+            ipfs_endpoint: "http://127.0.0.1:5001".to_string(),
+            enabled: true,
+            timeout: Duration::from_secs(30),
+            max_file_size: 32 * 1024 * 1024, // 32MB
+            auto_pin: false,
+        }
+    }
+    
+    /// Production IPFS configuration
+    pub fn production() -> Self {
+        Self {
+            ipfs_endpoint: "https://ipfs.infura.io:5001".to_string(),
+            enabled: true,
+            timeout: Duration::from_secs(60),
+            max_file_size: 100 * 1024 * 1024, // 100MB
+            auto_pin: true,
+        }
+    }
+    
+    /// Disabled IPFS configuration
+    pub fn disabled() -> Self {
+        Self {
+            ipfs_endpoint: String::new(),
+            enabled: false,
+            timeout: Duration::from_secs(10),
+            max_file_size: 0,
+            auto_pin: false,
+        }
+    }
+    
+    /// Validate IPFS configuration
+    pub fn validate(&self) -> Result<()> {
+        if self.enabled {
+            if self.ipfs_endpoint.is_empty() {
+                return Err(ConfigError::Invalid {
+                    field: "ipfs_endpoint".to_string(),
+                    value: self.ipfs_endpoint.clone(),
+                    reason: "IPFS endpoint cannot be empty when enabled".to_string(),
+                })?;
+            }
+            
+            if self.max_file_size == 0 {
+                return Err(ConfigError::Invalid {
+                    field: "max_file_size".to_string(),
+                    value: self.max_file_size.to_string(),
+                    reason: "Max file size must be greater than 0 when IPFS is enabled".to_string(),
+                })?;
+            }
+        }
+        
+        Ok(())
+    }
+}
+
+/// ZK Compression configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ZKCompressionConfig {
+    /// Enable ZK compression
+    pub enabled: bool,
+    /// Compression level (1-9)
+    pub compression_level: u8,
+    /// Enable proof caching
+    pub cache_proofs: bool,
+    /// Maximum proof cache size
+    pub max_cache_size: usize,
+    /// Proof generation timeout
+    pub proof_timeout: Duration,
+}
+
+impl ZKCompressionConfig {
+    /// Default ZK compression configuration
+    pub fn default() -> Self {
+        Self {
+            enabled: true,
+            compression_level: 6,
+            cache_proofs: true,
+            max_cache_size: 1000,
+            proof_timeout: Duration::from_secs(30),
+        }
+    }
+    
+    /// Production ZK compression configuration
+    pub fn production() -> Self {
+        Self {
+            enabled: true,
+            compression_level: 9,
+            cache_proofs: true,
+            max_cache_size: 10000,
+            proof_timeout: Duration::from_secs(60),
+        }
+    }
+    
+    /// Debug ZK compression configuration
+    pub fn debug() -> Self {
+        Self {
+            enabled: false,
+            compression_level: 1,
+            cache_proofs: false,
+            max_cache_size: 0,
+            proof_timeout: Duration::from_secs(5),
+        }
+    }
+    
+    /// Validate ZK compression configuration
+    pub fn validate(&self) -> Result<()> {
+        if self.enabled {
+            if self.compression_level == 0 || self.compression_level > 9 {
+                return Err(ConfigError::Invalid {
+                    field: "compression_level".to_string(),
+                    value: self.compression_level.to_string(),
+                    reason: "Compression level must be between 1 and 9".to_string(),
+                })?;
+            }
+            
+            if self.proof_timeout.is_zero() {
+                return Err(ConfigError::Invalid {
+                    field: "proof_timeout".to_string(),
+                    value: format!("{:?}", self.proof_timeout),
+                    reason: "Proof timeout cannot be zero when ZK compression is enabled".to_string(),
+                })?;
+            }
+        }
+        
+        Ok(())
     }
 }
 

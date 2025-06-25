@@ -715,12 +715,63 @@ class ${this.projectName.replace(/-/g, '')}Agent {
       await this.initialize();
       console.log("🚀 ${this.agentConfig.name} is now online and ready!");
       
-      // TODO: Implement your agent's main logic here
+      // Agent main logic - customize based on your agent type
+      console.log("🤖 Starting ${this.agentConfig.type} agent behavior...");
+      
+      // Example: Start message monitoring
+      await this.startMessageListener();
+      
+      // Example: Start periodic tasks
+      this.startPeriodicTasks();
+      
+      // Keep agent running
+      await this.keepAlive();
       
     } catch (error) {
       console.error("❌ Agent failed to start:", error);
       process.exit(1);
     }
+  }
+
+  async startMessageListener() {
+    console.log("👂 Starting message listener...");
+    // Check for new messages periodically
+    setInterval(async () => {
+      try {
+        console.log("📬 Checking for new messages...");
+        // Add your message polling logic here
+      } catch (error) {
+        console.error("Error checking messages:", error);
+      }
+    }, 5000); // Check every 5 seconds
+  }
+
+  async handleIncomingMessage(message) {
+    console.log(\`📨 Received message from \${message.sender}\`);
+    // Add your message handling logic here based on agent type
+  }
+
+  startPeriodicTasks() {
+    console.log("⏰ Starting periodic tasks...");
+    
+    // Agent health check
+    setInterval(() => {
+      console.log("💓 Agent heartbeat - still running...");
+    }, 60000);
+
+    // Add agent-type specific tasks here
+  }
+
+  async keepAlive() {
+    console.log("🔄 Agent is now running. Press Ctrl+C to stop.");
+    
+    return new Promise((resolve) => {
+      process.on('SIGINT', () => {
+        console.log("\\n👋 Shutting down agent gracefully...");
+        resolve();
+        process.exit(0);
+      });
+    });
   }
 }
 

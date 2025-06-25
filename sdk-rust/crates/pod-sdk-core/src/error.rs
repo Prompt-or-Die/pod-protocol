@@ -84,6 +84,113 @@ pub enum PodComError {
     /// Generic internal error
     #[error("Internal error: {message}")]
     Internal { message: String },
+    
+    /// Unauthorized access
+    #[error("Unauthorized access to {resource} for action {action}")]
+    UnauthorizedAccess { resource: String, action: String },
+    
+    /// Invalid content hash
+    #[error("Invalid content hash: {hash}")]
+    InvalidContentHash { hash: String },
+    
+    /// Invalid content size
+    #[error("Invalid content size: {size}")]
+    InvalidContentSize { size: u64 },
+    
+    /// Missing configuration field
+    #[error("Missing configuration field: {field}")]
+    MissingConfiguration { field: String },
+    
+    /// Invalid compression size
+    #[error("Invalid compression size for {field}: {value}")]
+    InvalidCompressionSize { field: String, value: u64 },
+    
+    /// Invalid compression ratio
+    #[error("Invalid compression ratio: {ratio}")]
+    InvalidCompressionRatio { ratio: f64 },
+    
+    /// Missing proof hash
+    #[error("Missing proof hash")]
+    MissingProofHash,
+    
+    /// Content too large
+    #[error("Content too large: {size} bytes (max: {max_size})")]
+    ContentTooLarge { size: usize, max_size: usize },
+    
+    /// Missing encryption key
+    #[error("Missing encryption key")]
+    MissingEncryptionKey,
+    
+    /// Message expired
+    #[error("Message expired: {message_address} at {expired_at}")]
+    MessageExpired { message_address: Pubkey, expired_at: u64 },
+    
+    /// Rate limited
+    #[error("Rate limited for operation {operation}, retry after {retry_after:?}")]
+    RateLimited { operation: String, retry_after: Option<Duration> },
+    
+    /// Agent has active channels
+    #[error("Agent {agent_address} has {channel_count} active channels")]
+    AgentHasActiveChannels { agent_address: Pubkey, channel_count: usize },
+    
+    /// Invalid channel participants
+    #[error("Invalid channel participants: {reason}")]
+    InvalidChannelParticipants { reason: String },
+    
+    /// Channel participant limit reached
+    #[error("Channel {channel_address} participant limit reached (max: {max_participants})")]
+    ChannelParticipantLimitReached { channel_address: Pubkey, max_participants: usize },
+    
+    /// Participant already exists
+    #[error("Participant {participant} already exists in channel {channel_address}")]
+    ParticipantAlreadyExists { channel_address: Pubkey, participant: Pubkey },
+    
+    /// Participant not found
+    #[error("Participant {participant} not found in channel {channel_address}")]
+    ParticipantNotFound { channel_address: Pubkey, participant: Pubkey },
+    
+    /// Cannot remove last participant
+    #[error("Cannot remove last participant from channel {channel_address}")]
+    CannotRemoveLastParticipant { channel_address: Pubkey },
+    
+    /// Invalid escrow amount
+    #[error("Invalid escrow amount: {amount}")]
+    InvalidEscrowAmount { amount: u64 },
+    
+    /// Invalid escrow state
+    #[error("Invalid escrow state for {escrow_address}: expected {expected_state:?}, found {current_state:?}")]
+    InvalidEscrowState { 
+        escrow_address: Pubkey, 
+        current_state: EscrowStatus, 
+        expected_state: EscrowStatus 
+    },
+    
+    /// Empty compression input
+    #[error("Empty compression input")]
+    EmptyCompressionInput,
+    
+    /// Compression input too large
+    #[error("Compression input too large: {size} bytes (max: {max_size})")]
+    CompressionInputTooLarge { size: usize, max_size: usize },
+    
+    /// Invalid compression proof
+    #[error("Invalid compression proof: {proof_hash}")]
+    InvalidCompressionProof { proof_hash: String },
+    
+    /// Compression data integrity failed
+    #[error("Compression data integrity failed: expected {expected_commitment:?}, computed {computed_commitment:?}")]
+    CompressionDataIntegrityFailed { 
+        expected_commitment: Vec<u8>, 
+        computed_commitment: Vec<u8> 
+    },
+    
+    /// Empty batch compression input
+    #[error("Empty batch compression input")]
+    EmptyBatchCompressionInput,
+    
+    /// Batch compression too large
+    #[error("Batch compression too large: {size} items (max: {max_size})")]
+    BatchCompressionTooLarge { size: usize, max_size: usize },
 }
 
 /// Agent service specific errors
@@ -474,6 +581,19 @@ pub enum ErrorSeverity {
     High,
     /// Critical severity - system failure
     Critical,
+}
+
+/// Escrow status enumeration (referenced in errors)
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EscrowStatus {
+    /// Escrow is active
+    Active,
+    /// Escrow has been released
+    Released,
+    /// Escrow has been refunded
+    Refunded,
+    /// Escrow is in dispute
+    Disputed,
 }
 
 /// Trait for errors that can be retried

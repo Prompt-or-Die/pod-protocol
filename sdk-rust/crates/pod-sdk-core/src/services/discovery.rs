@@ -335,6 +335,7 @@ impl DiscoveryService {
 
         // Check name match
         if let Some(ref name_pattern) = query.name_pattern {
+            let name_pattern: &str = name_pattern;
             if !agent.name.to_lowercase().contains(&name_pattern.to_lowercase()) {
                 return false;
             }

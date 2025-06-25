@@ -23,7 +23,7 @@ use crate::{
 };
 
 /// Base configuration shared by all services
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct ServiceConfig {
     /// RPC client for Solana interactions
     pub rpc_client: Arc<RpcClient>,
@@ -39,6 +39,20 @@ pub struct ServiceConfig {
     pub rate_limit_config: RateLimitConfig,
     /// Cache configuration
     pub cache_config: CacheConfig,
+}
+
+impl std::fmt::Debug for ServiceConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ServiceConfig")
+            .field("program_id", &self.program_id)
+            .field("commitment", &self.commitment)
+            .field("retry_config", &self.retry_config)
+            .field("timeout", &self.timeout)
+            .field("rate_limit_config", &self.rate_limit_config)
+            .field("cache_config", &self.cache_config)
+            .field("rpc_client", &"<RpcClient>")
+            .finish()
+    }
 }
 
 /// Health status of a service
@@ -136,7 +150,6 @@ pub trait BaseService: Send + Sync {
 }
 
 /// Common functionality shared by all services
-#[derive(Debug)]
 pub struct ServiceBase {
     /// Service configuration
     config: ServiceConfig,
@@ -148,6 +161,18 @@ pub struct ServiceBase {
     initialized_at: Option<Instant>,
     /// Rate limiter
     rate_limiter: Arc<RwLock<RateLimiter>>,
+}
+
+impl std::fmt::Debug for ServiceBase {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ServiceBase")
+            .field("config", &self.config)
+            .field("metrics", &"<ServiceMetrics>")
+            .field("initialized_at", &self.initialized_at)
+            .field("rate_limiter", &"<RateLimiter>")
+            .field("program", &self.program.is_some())
+            .finish()
+    }
 }
 
 impl ServiceBase {

@@ -19,16 +19,59 @@ export interface BaseServiceConfig {
  */
 export abstract class BaseService {
   protected rpc: Rpc<any>;
-  protected programId: Address;
   protected commitment: Commitment;
+  protected programId: Address;
   protected program?: AnchorProgram;
   protected idl?: any;
 
-  constructor(config: BaseServiceConfig) {
-    this.rpc = config.rpc;
-    this.programId = config.programId;
-    this.commitment = config.commitment;
-    this.program = config.program;
+  constructor(
+    rpcUrl: string,
+    programId: string,
+    commitment: Commitment = 'confirmed'
+  ) {
+    this.rpc = createSolanaRpc(rpcUrl);
+    this.commitment = commitment;
+    this.programId = address(programId);
+  }
+
+  /**
+   * Get the RPC client
+   */
+  public getRpc(): Rpc<any> {
+    return this.rpc;
+  }
+
+  /**
+   * Get the program ID
+   */
+  public getProgramId(): Address {
+    return this.programId;
+  }
+
+  /**
+   * Get commitment level
+   */
+  public getCommitment(): Commitment {
+    return this.commitment;
+  }
+
+  /**
+   * Helper to create address from string
+   */
+  protected createAddress(addressString: string): Address {
+    return address(addressString);
+  }
+
+  /**
+   * Validate that an address string is valid
+   */
+  protected validateAddress(addressString: string): boolean {
+    try {
+      address(addressString);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   protected ensureInitialized(): AnchorProgram {

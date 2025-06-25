@@ -1,5 +1,5 @@
 import { Address, KeyPairSigner, address } from "@solana/web3.js";
-import { BaseService } from "./base";
+import { BaseService } from "./base.js";
 import {
   AgentAccount,
   MessageAccount,
@@ -81,7 +81,265 @@ export interface Recommendation<T> {
   reason?: string;
 }
 
+export interface AgentDiscoveryData {
+  pubkey: Address;
+  account: {
+    name: string;
+    capabilities: string[];
+    reputation: number;
+    totalMessages: number;
+    successfulInteractions: number;
+    lastActive: number;
+    isActive: boolean;
+    tags: string[];
+  };
+}
+
+export interface ChannelDiscoveryData {
+  pubkey: Address;
+  account: {
+    name: string;
+    description: string;
+    participantCount: number;
+    messageCount: number;
+    isPublic: boolean;
+    tags: string[];
+    activity: number;
+  };
+}
+
+// Mock filter type for Web3.js v2 compatibility
+export interface ProgramAccountsFilter {
+  memcmp?: {
+    offset: number;
+    bytes: string;
+  };
+  dataSize?: number;
+}
+
 export class DiscoveryService extends BaseService {
+  /**
+   * Discover agents by capabilities
+   */
+  async findAgentsByCapabilities(
+    capabilities: string[],
+    limit: number = 20,
+  ): Promise<AgentDiscoveryData[]> {
+    try {
+      // TODO: Implement actual program account fetching with Web3.js v2
+      console.log("Finding agents with capabilities:", capabilities);
+
+      // Mock implementation for now
+      const mockAgents: AgentDiscoveryData[] = [
+        {
+          pubkey: address("11111111111111111111111111111112"),
+          account: {
+            name: "TradingBot",
+            capabilities: ["trading", "analysis"],
+            reputation: 85,
+            totalMessages: 150,
+            successfulInteractions: 128,
+            lastActive: Date.now() - 300000,
+            isActive: true,
+            tags: ["trading", "defi"],
+          }
+        },
+        {
+          pubkey: address("11111111111111111111111111111113"),
+          account: {
+            name: "AnalysisAgent",
+            capabilities: ["analysis", "research"],
+            reputation: 92,
+            totalMessages: 200,
+            successfulInteractions: 185,
+            lastActive: Date.now() - 600000,
+            isActive: true,
+            tags: ["analysis", "research"],
+          }
+        }
+      ];
+
+      return mockAgents
+        .filter(agent => 
+          capabilities.some(cap => agent.account.capabilities.includes(cap))
+        )
+        .slice(0, limit);
+
+    } catch (error) {
+      console.error("Error finding agents by capabilities:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Find trending channels
+   */
+  async findTrendingChannels(
+    timeframe: 'hour' | 'day' | 'week' = 'day',
+    limit: number = 10,
+  ): Promise<ChannelDiscoveryData[]> {
+    try {
+      // TODO: Implement actual program account fetching with Web3.js v2
+      console.log("Finding trending channels for timeframe:", timeframe);
+
+      // Mock implementation for now
+      const mockChannels: ChannelDiscoveryData[] = [
+        {
+          pubkey: address("11111111111111111111111111111114"),
+          account: {
+            name: "DeFi Discussion",
+            description: "Latest DeFi trends and strategies",
+            participantCount: 45,
+            messageCount: 1250,
+            isPublic: true,
+            tags: ["defi", "trading"],
+            activity: 85,
+          }
+        },
+        {
+          pubkey: address("11111111111111111111111111111115"),
+          account: {
+            name: "AI Agents Hub",
+            description: "AI agent coordination and strategies",
+            participantCount: 32,
+            messageCount: 890,
+            isPublic: true,
+            tags: ["ai", "agents"],
+            activity: 72,
+          }
+        }
+      ];
+
+      return mockChannels
+        .sort((a, b) => b.account.activity - a.account.activity)
+        .slice(0, limit);
+
+    } catch (error) {
+      console.error("Error finding trending channels:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Search agents by keywords
+   */
+  async searchAgents(
+    query: string,
+    filters?: {
+      capabilities?: string[];
+      minReputation?: number;
+      isActive?: boolean;
+    },
+    limit: number = 20,
+  ): Promise<AgentDiscoveryData[]> {
+    try {
+      // TODO: Implement actual search with Web3.js v2
+      console.log("Searching agents with query:", query, "filters:", filters);
+
+      // Mock search implementation
+      const allAgents = await this.findAgentsByCapabilities([], 100);
+      
+      return allAgents
+        .filter(agent => {
+          const matchesQuery = agent.account.name.toLowerCase().includes(query.toLowerCase()) ||
+                              agent.account.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()));
+          
+          const matchesFilters = !filters || (
+            (!filters.capabilities || filters.capabilities.some(cap => 
+              agent.account.capabilities.includes(cap))) &&
+            (!filters.minReputation || agent.account.reputation >= filters.minReputation) &&
+            (!filters.isActive || agent.account.isActive === filters.isActive)
+          );
+
+          return matchesQuery && matchesFilters;
+        })
+        .slice(0, limit);
+
+    } catch (error) {
+      console.error("Error searching agents:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get agent recommendations based on interaction history
+   */
+  async getAgentRecommendations(
+    forAgent: Address,
+    limit: number = 10,
+  ): Promise<AgentDiscoveryData[]> {
+    try {
+      // TODO: Implement recommendation algorithm with interaction history
+      console.log("Getting recommendations for agent:", forAgent);
+
+      // Mock recommendation based on popular agents
+      const popularAgents = await this.findAgentsByCapabilities([], limit * 2);
+      
+      return popularAgents
+        .sort((a, b) => b.account.reputation - a.account.reputation)
+        .slice(0, limit);
+
+    } catch (error) {
+      console.error("Error getting agent recommendations:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get channel recommendations
+   */
+  async getChannelRecommendations(
+    forAgent: Address,
+    limit: number = 10,
+  ): Promise<ChannelDiscoveryData[]> {
+    try {
+      // TODO: Implement channel recommendation algorithm
+      console.log("Getting channel recommendations for agent:", forAgent);
+
+      // Mock recommendation based on trending channels
+      return await this.findTrendingChannels('day', limit);
+
+    } catch (error) {
+      console.error("Error getting channel recommendations:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get network statistics
+   */
+  async getNetworkStats(): Promise<{
+    totalAgents: number;
+    activeAgents: number;
+    totalChannels: number;
+    totalMessages: number;
+    averageReputation: number;
+  }> {
+    try {
+      // TODO: Implement actual network statistics calculation
+      console.log("Getting network statistics");
+
+      // Mock statistics
+      return {
+        totalAgents: 1250,
+        activeAgents: 890,
+        totalChannels: 180,
+        totalMessages: 25600,
+        averageReputation: 78.5,
+      };
+
+    } catch (error) {
+      console.error("Error getting network stats:", error);
+      return {
+        totalAgents: 0,
+        activeAgents: 0,
+        totalChannels: 0,
+        totalMessages: 0,
+        averageReputation: 0,
+      };
+    }
+  }
+
   /**
    * Search for agents with advanced filtering
    */
