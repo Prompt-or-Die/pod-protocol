@@ -144,8 +144,7 @@ export function parseGetChannelParticipantsInstruction<
     IInstructionWithData<Uint8Array>
 ): ParsedGetChannelParticipantsInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 1) {
-    // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new Error('GetChannelParticipants instruction: Insufficient accounts provided. Expected at least required accounts for participant retrieval');
   }
   let accountIndex = 0;
   const getNextAccount = () => {

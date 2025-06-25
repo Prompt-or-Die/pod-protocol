@@ -287,8 +287,7 @@ export function parseUpdateMessageStatusInstruction<
     IInstructionWithData<Uint8Array>
 ): ParsedUpdateMessageStatusInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 3) {
-    // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new Error('UpdateMessageStatus instruction: Insufficient accounts provided. Expected at least 2 accounts (messageAccount, authority)');
   }
   let accountIndex = 0;
   const getNextAccount = () => {

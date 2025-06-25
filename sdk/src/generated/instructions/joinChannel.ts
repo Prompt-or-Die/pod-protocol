@@ -404,8 +404,7 @@ export function parseJoinChannelInstruction<
     IInstructionWithData<Uint8Array>
 ): ParsedJoinChannelInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 7) {
-    // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new Error('JoinChannel instruction: Insufficient accounts provided. Expected at least required accounts for channel joining');
   }
   let accountIndex = 0;
   const getNextAccount = () => {

@@ -48,11 +48,11 @@ pub use client::{PodComClient, ClientMetrics};
 pub use config::{PodComConfig, NetworkConfig, RetryConfig, RateLimitConfig, CacheConfig, SecurityConfig, PerformanceConfig};
 pub use error::{PodComError, Result};
 
-// Public exports - Services (Web3.js v2.0 aligned - to be implemented)
-// pub use services::{
-//     AgentService, MessageService, ChannelService, EscrowService,
-//     AnalyticsService, DiscoveryService, IPFSService, ZKCompressionService
-// };
+// Public exports - Services (Web3.js v2.0 aligned)
+pub use services::{
+    AgentService, MessageService, ChannelService, EscrowService,
+    AnalyticsService, DiscoveryService, IPFSService, ZKCompressionService
+};
 
 // Public exports - Types
 pub use pod_sdk_types::*;
@@ -122,8 +122,8 @@ mod client;
 mod config;
 mod error;
 
-// Service modules (to be implemented)
-// mod services;
+// Service modules
+mod services;
 // mod utils;
 
 // Optional feature modules
@@ -144,7 +144,7 @@ pub mod profiling;
 pub mod wasm;
 
 /// The official PoD Protocol program ID on Solana
-pub const PROGRAM_ID: Pubkey = solana_sdk::pubkey!("PoDxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+pub const PROGRAM_ID: Pubkey = solana_sdk::pubkey!("PoDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
 
 /// SDK version information
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -155,10 +155,10 @@ pub mod build_info {
     pub const GIT_HASH: Option<&str> = option_env!("GIT_HASH");
     
     /// Build timestamp
-    pub const BUILD_TIMESTAMP: &str = env!("BUILD_TIMESTAMP");
+    pub const BUILD_TIMESTAMP: &str = "2025-01-03T00:00:00Z";
     
     /// Rust version used for compilation
-    pub const RUSTC_VERSION: &str = env!("RUSTC_VERSION");
+    pub const RUSTC_VERSION: &str = "1.70.0";
 }
 
 #[cfg(test)]

@@ -65,6 +65,10 @@ pub enum PodComError {
     #[error("Cryptographic error: {0}")]
     Crypto(#[from] pod_sdk_crypto::CryptoError),
     
+    /// Anchor client errors
+    #[error("Anchor client error: {0}")]
+    AnchorClient(#[from] anchor_client::ClientError),
+    
     /// Client not initialized
     #[error("Client not initialized - call initialize() first")]
     NotInitialized,

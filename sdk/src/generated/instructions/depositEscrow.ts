@@ -314,8 +314,7 @@ export function parseDepositEscrowInstruction<
     IInstructionWithData<Uint8Array>
 ): ParsedDepositEscrowInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 4) {
-    // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new Error('DepositEscrow instruction: Insufficient accounts provided. Expected at least required accounts for escrow deposit');
   }
   let accountIndex = 0;
   const getNextAccount = () => {

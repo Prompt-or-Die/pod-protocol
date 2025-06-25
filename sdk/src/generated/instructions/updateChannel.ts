@@ -225,8 +225,7 @@ export function parseUpdateChannelInstruction<
     IInstructionWithData<Uint8Array>
 ): ParsedUpdateChannelInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 2) {
-    // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new Error('UpdateChannel instruction: Insufficient accounts provided. Expected at least 2 accounts (channelAccount, creator)');
   }
   let accountIndex = 0;
   const getNextAccount = () => {

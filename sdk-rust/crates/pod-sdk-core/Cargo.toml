@@ -122,10 +122,10 @@ wasm = [
     "web-sys"
 ]
 
-# Optional functionality (disabled for Web3.js v2.0 initial setup)
-# compression = ["light-client", "light-utils"]
-# ipfs = ["ipfs-api-backend-hyper"]
-# profiling = ["pprof"]
+# Optional functionality
+compression = []
+ipfs = []
+profiling = []
 
 # Testing features
 testing = []

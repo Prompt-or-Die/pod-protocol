@@ -280,8 +280,7 @@ export function parseWithdrawEscrowInstruction<
     IInstructionWithData<Uint8Array>
 ): ParsedWithdrawEscrowInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 3) {
-    // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new Error('WithdrawEscrow instruction: Insufficient accounts provided. Expected at least required accounts for escrow withdrawal');
   }
   let accountIndex = 0;
   const getNextAccount = () => {

@@ -358,8 +358,7 @@ export function parseJoinChannelCompressedInstruction<
     IInstructionWithData<Uint8Array>
 ): ParsedJoinChannelCompressedInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 13) {
-    // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new Error('JoinChannelCompressed instruction: Insufficient accounts provided. Expected at least required accounts for compressed channel joining');
   }
   let accountIndex = 0;
   const getNextAccount = () => {

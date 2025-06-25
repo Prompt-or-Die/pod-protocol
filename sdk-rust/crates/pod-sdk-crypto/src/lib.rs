@@ -19,7 +19,12 @@ pub use sha2;
 pub enum CryptoError {
     /// Invalid key size
     #[error("Invalid key size: expected {expected}, got {actual}")]
-    InvalidKeySize { expected: usize, actual: usize },
+    InvalidKeySize { 
+        /// Expected key size
+        expected: usize, 
+        /// Actual key size provided
+        actual: usize 
+    },
     
     /// Invalid signature
     #[error("Invalid signature")]

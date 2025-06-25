@@ -364,8 +364,7 @@ export function parseBatchSyncCompressedMessagesInstruction<
     IInstructionWithData<Uint8Array>
 ): ParsedBatchSyncCompressedMessagesInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 12) {
-    // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new Error('BatchSyncCompressedMessages instruction: Insufficient accounts provided. Expected at least required accounts for batch message synchronization');
   }
   let accountIndex = 0;
   const getNextAccount = () => {

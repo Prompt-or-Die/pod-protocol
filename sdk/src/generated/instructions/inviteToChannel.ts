@@ -403,8 +403,7 @@ export function parseInviteToChannelInstruction<
     IInstructionWithData<Uint8Array>
 ): ParsedInviteToChannelInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 6) {
-    // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new Error('InviteToChannel instruction: Insufficient accounts provided. Expected at least required accounts for channel invitation');
   }
   let accountIndex = 0;
   const getNextAccount = () => {

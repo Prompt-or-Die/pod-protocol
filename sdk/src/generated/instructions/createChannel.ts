@@ -334,7 +334,7 @@ export function parseCreateChannelInstruction<
     IInstructionWithData<Uint8Array>
 ): ParsedCreateChannelInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 3) {
-    throw new Error('CreateChannel instruction: Insufficient accounts provided. Expected at least required accounts');
+    throw new Error('CreateChannel instruction: Insufficient accounts provided. Expected at least 3 accounts (channelAccount, creator, systemProgram)');
   }
   let accountIndex = 0;
   const getNextAccount = () => {

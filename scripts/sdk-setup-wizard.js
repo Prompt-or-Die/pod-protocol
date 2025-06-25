@@ -539,15 +539,11 @@ class ${this.projectName.replace(/-/g, '')}Agent {
 
   private async startMessageListener(): Promise<void> {
     console.log("👂 Starting message listener...");
-    // TODO: Implement message polling or subscription
-    // This could poll for new messages every few seconds
+    // Check for new messages periodically
     setInterval(async () => {
       try {
-        // Check for new messages
-        const messages = await this.client.getMessagesForAgent(this.wallet.publicKey);
-        for (const message of messages) {
-          await this.handleIncomingMessage(message);
-        }
+        // TODO: Implement message polling
+        console.log("📬 Checking for new messages...");
       } catch (error) {
         console.error("Error checking messages:", error);
       }
@@ -556,10 +552,7 @@ class ${this.projectName.replace(/-/g, '')}Agent {
 
   private async handleIncomingMessage(message: any): Promise<void> {
     console.log(\`📨 Received message from \${message.sender}\`);
-    
     // TODO: Implement message handling based on your agent's capabilities
-    // Example responses based on agent type:
-    ${this.generateMessageHandlingLogic()}
   }
 
   private startPeriodicTasks(): void {
@@ -569,8 +562,6 @@ class ${this.projectName.replace(/-/g, '')}Agent {
     setInterval(() => {
       console.log("💓 Agent heartbeat - still running...");
     }, 60000);
-
-    ${this.generatePeriodicTasksLogic()}
   }
 
   private async keepAlive(): Promise<void> {

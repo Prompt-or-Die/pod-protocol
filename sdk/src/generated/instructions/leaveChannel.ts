@@ -297,8 +297,7 @@ export function parseLeaveChannelInstruction<
     IInstructionWithData<Uint8Array>
 ): ParsedLeaveChannelInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 4) {
-    // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new Error('LeaveChannel instruction: Insufficient accounts provided. Expected at least required accounts for channel operations');
   }
   let accountIndex = 0;
   const getNextAccount = () => {
