@@ -32,8 +32,7 @@ spl-concurrent-merkle-tree = { version = "1.0.0", default-features = false }
 # Error handling
 thiserror = "2.0.12"
 
-# Secure memory handling using memsafe (modern alternative to zeroize)
-memsafe = { version = "0.4.0", default-features = true }
+# Secure memory handling - using custom SecureBuffer implementation
 
 # Cryptographic operations - native Solana compatible
 blake3 = { version = "1.5.5", features = ["traits-preview"] }

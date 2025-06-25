@@ -123,6 +123,51 @@ select_sdk() {
   log "✅ Selected: $SDK_CHOICE" 2
 }
 
+confirm_build() {
+  local sdk_name=$1
+  local build_warning=$2
+  
+  log "" 0
+  if [ -n "$build_warning" ]; then
+    log "⚠️  $build_warning" 3
+  fi
+  
+  while true; do
+    read -p "Would you like to build the $sdk_name now? (y/n): " build_confirm
+    case $build_confirm in
+      [Yy]* ) return 0 ;;
+      [Nn]* ) return 1 ;;
+      * ) log "Please answer yes (y) or no (n)." 1 ;;
+    esac
+  done
+}
+
+select_builds_for_all() {
+  log "" 0
+  log "You selected all SDKs. Please choose which ones to build:" 4
+  
+  BUILD_TYPESCRIPT=false
+  BUILD_JAVASCRIPT=false
+  BUILD_PYTHON=false
+  BUILD_CLI=false
+  
+  if confirm_build "TypeScript SDK" ""; then
+    BUILD_TYPESCRIPT=true
+  fi
+  
+  if confirm_build "JavaScript SDK" ""; then
+    BUILD_JAVASCRIPT=true
+  fi
+  
+  if confirm_build "Python SDK" "Note: This will create a Python virtual environment"; then
+    BUILD_PYTHON=true
+  fi
+  
+  if confirm_build "CLI Tool" ""; then
+    BUILD_CLI=true
+  fi
+}
+
 install_solana_cli() {
   if ! command -v solana &> /dev/null; then
     log "Installing Solana CLI..." 3
@@ -134,7 +179,7 @@ install_solana_cli() {
   fi
 }
 
-build_sdk() {
+build_individual_sdk() {
   local sdk_type=$1
   
   log "Building $sdk_type SDK..." 3
@@ -147,17 +192,73 @@ build_sdk() {
       $PACKAGE_MANAGER run build:javascript
       ;;
     "python")
+      log "⚠️  Creating Python virtual environment..." 3
       $PACKAGE_MANAGER run build:python
       ;;
     "cli")
       $PACKAGE_MANAGER run build:cli
       ;;
-    "all")
-      $PACKAGE_MANAGER run build:all
-      ;;
   esac
   
   log "✅ $sdk_type SDK built successfully!" 2
+}
+
+build_sdk() {
+  local sdk_choice=$1
+  
+  case $sdk_choice in
+    "all")
+      select_builds_for_all
+      
+      if [ "$BUILD_TYPESCRIPT" = true ]; then
+        build_individual_sdk "typescript"
+      fi
+      
+      if [ "$BUILD_JAVASCRIPT" = true ]; then
+        build_individual_sdk "javascript"
+      fi
+      
+      if [ "$BUILD_PYTHON" = true ]; then
+        build_individual_sdk "python"
+      fi
+      
+      if [ "$BUILD_CLI" = true ]; then
+        build_individual_sdk "cli"
+      fi
+      
+      if [ "$BUILD_TYPESCRIPT" = false ] && [ "$BUILD_JAVASCRIPT" = false ] && [ "$BUILD_PYTHON" = false ] && [ "$BUILD_CLI" = false ]; then
+        log "No SDKs selected for building. Skipping build step." 3
+      fi
+      ;;
+    "typescript")
+      if confirm_build "TypeScript SDK" ""; then
+        build_individual_sdk "typescript"
+      else
+        log "Skipping TypeScript SDK build." 3
+      fi
+      ;;
+    "javascript")
+      if confirm_build "JavaScript SDK" ""; then
+        build_individual_sdk "javascript"
+      else
+        log "Skipping JavaScript SDK build." 3
+      fi
+      ;;
+    "python")
+      if confirm_build "Python SDK" "Note: This will create a Python virtual environment"; then
+        build_individual_sdk "python"
+      else
+        log "Skipping Python SDK build." 3
+      fi
+      ;;
+    "cli")
+      if confirm_build "CLI Tool" ""; then
+        build_individual_sdk "cli"
+      else
+        log "Skipping CLI Tool build." 3
+      fi
+      ;;
+  esac
 }
 
 install_dependencies() {
@@ -195,7 +296,39 @@ Usage Information:
       log "  pod agent register --help" 0
       ;;
     "all")
-      log "All SDKs installed! Check the documentation for usage examples." 2
+      log "Built SDKs:" 4
+      
+      if [ "$BUILD_TYPESCRIPT" = true ]; then
+        log "  TypeScript SDK:" 2
+        log "    import { PodComClient } from '@pod-protocol/sdk';" 0
+        log "    const client = new PodComClient({ endpoint: 'https://api.devnet.solana.com' });" 0
+        log "" 0
+      fi
+      
+      if [ "$BUILD_JAVASCRIPT" = true ]; then
+        log "  JavaScript SDK:" 2
+        log "    import { PodComClient } from '@pod-protocol/sdk-js';" 0
+        log "    const client = new PodComClient({ endpoint: 'https://api.devnet.solana.com' });" 0
+        log "" 0
+      fi
+      
+      if [ "$BUILD_PYTHON" = true ]; then
+        log "  Python SDK:" 2
+        log "    from pod_protocol import PodComClient" 0
+        log "    client = PodComClient(endpoint='https://api.devnet.solana.com')" 0
+        log "" 0
+      fi
+      
+      if [ "$BUILD_CLI" = true ]; then
+        log "  CLI Tool:" 2
+        log "    pod --help" 0
+        log "    pod agent register --help" 0
+        log "" 0
+      fi
+      
+      if [ "$BUILD_TYPESCRIPT" = false ] && [ "$BUILD_JAVASCRIPT" = false ] && [ "$BUILD_PYTHON" = false ] && [ "$BUILD_CLI" = false ]; then
+        log "  No SDKs were built. You can build them later using the package.json scripts." 3
+      fi
       ;;
   esac
   
@@ -218,4 +351,4 @@ main() {
 }
 
 # Run main function
-main "$@" 
+main "$@"

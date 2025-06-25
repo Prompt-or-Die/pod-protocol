@@ -19,7 +19,7 @@ interface CliConfig {
 
 export class ConfigCommands {
   private getConfigPath(): string {
-    return join(homedir(), ".config", "pod-com", "config.json");
+    return join(homedir(), ".config", "pod", "config.json");
   }
 
   private loadConfig(): CliConfig {
@@ -717,7 +717,7 @@ export class ConfigCommands {
             const keypairPath = join(
               homedir(),
               ".config",
-              "pod-com",
+              "pod",
               "keypair.json",
             );
 

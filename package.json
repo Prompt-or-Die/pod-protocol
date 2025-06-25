@@ -2,14 +2,15 @@
   "name": "pod-protocol",
   "version": "1.5.0",
   "description": "PoD Protocol (Prompt or Die): The ultimate AI Agent Communication Protocol on Solana",
-  "private": true,
+  "private": false,
   "type": "module",
   "main": "index.js",
   "bin": {
     "pod": "cli/dist/index.js",
-    "pod-com": "cli/dist/index.js"
+    "pod-protocol-setup": "setup.js"
   },
   "scripts": {
+    "postinstall": "node -e \"console.log('\\n🎉 PoD Protocol initiated successfully!\\n'); console.log('To complete setup and select your SDK, run: npx pod-protocol-setup\\n');\"",
     "setup": "node scripts/setup-package-managers.js",
     "build": "node scripts/build.js",
     "build:safe": "node scripts/build.js anchor",
@@ -47,6 +48,8 @@
     "ci:build": "yarn run build:verify && yarn run build:all",
     "ci:test": "yarn run test:all && yarn run lint:all",
     "validate:workflows": "node scripts/validate-workflows.js",
+    "publish:all": "node scripts/publish-all.js",
+    "publish:dry-run": "node scripts/publish-dry-run.js",
     "pretest": "node scripts/check-dependencies.js && yarn run build:verify",
     "prepublishOnly": "yarn run production:test && yarn run build:all"
   },
@@ -82,7 +85,7 @@
     "frontend"
   ],
   "dependencies": {
-    "@coral-xyz/anchor": "0.31.1",
+    "@coral-xyz/anchor": "0.31.2",
     "@inquirer/checkbox": "4.1.8",
     "@inquirer/core": "10.1.13",
     "@pod-protocol/cli": "1.4.4",

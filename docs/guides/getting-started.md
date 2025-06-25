@@ -17,7 +17,26 @@ Solana CLI >= 1.16.0  # The blockchain essence
 Bun >= 1.0.0         # The package manager (preferred) or npm/yarn
 ```
 
-### Step 0: Configure the CLI
+### Step 1: Global Installation with SDK Selection
+
+```bash
+# Install the protocol globally
+npm install -g pod-protocol
+# or use your preferred package manager:
+# yarn global add pod-protocol
+# pnpm add -g pod-protocol  
+# bun add -g pod-protocol
+
+# Run the interactive setup to choose your SDK
+pod-protocol-setup
+```
+
+The setup wizard will guide you through:
+1. **Package Manager Selection**: Choose between Bun (recommended), Yarn, or NPM
+2. **SDK Selection**: Pick from TypeScript, JavaScript, Python, CLI tool, or all SDKs
+3. **Automatic Setup**: Installs dependencies and builds your selected SDKs
+
+### Step 2: Configure the CLI
 
 Before using the protocol you need a Solana keypair and a basic configuration.
 
@@ -30,7 +49,7 @@ pod config generate-keypair
 pod config set-keypair ~/.config/solana/id.json
 ```
 
-The CLI will look for a keypair at `~/.config/solana/id.json` by default if no other path is configured. Note that the interactive `pod config setup` command generates a new keypair at `~/.config/pod-com/keypair.json` and configures the CLI to use it.
+The CLI will look for a keypair at `~/.config/solana/id.json` by default if no other path is configured. Note that the interactive `pod config setup` command generates a new keypair at `~/.config/pod/keypair.json` and configures the CLI to use it.
 
 If the default file `~/.config/solana/id.json` does not exist and you want to create it manually, use:
 

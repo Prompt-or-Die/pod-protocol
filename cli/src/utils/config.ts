@@ -23,30 +23,48 @@ interface CliClientConfig {
 }
 
 /**
- * Load CLI configuration from file
+ * Load CLI configuration from file and environment variables
+ * Environment variables take precedence over config file
  */
 export function loadConfig(): CliConfig {
-  const configPath = join(homedir(), ".config", "pod-com", "config.json");
+  const configPath = join(homedir(), ".config", "pod", "config.json");
 
-  if (!existsSync(configPath)) {
-    return {
-      network: "devnet",
-      keypairPath: join(homedir(), ".config", "solana", "id.json"),
-    };
+  // Default configuration
+  let config: CliConfig = {
+    network: "devnet",
+    keypairPath: join(homedir(), ".config", "solana", "id.json"),
+  };
+
+  // Load from config file if it exists
+  if (existsSync(configPath)) {
+    try {
+      const configData = readFileSync(configPath, "utf8");
+      config = { ...config, ...JSON.parse(configData) };
+    } catch {
+      console.warn(
+        chalk.yellow("Warning: Could not read config file, using defaults"),
+      );
+    }
   }
 
-  try {
-    const configData = readFileSync(configPath, "utf8");
-    return JSON.parse(configData);
-  } catch {
-    console.warn(
-      chalk.yellow("Warning: Could not read config file, using defaults"),
-    );
-    return {
-      network: "devnet",
-      keypairPath: join(homedir(), ".config", "solana", "id.json"),
-    };
+  // Override with environment variables if present
+  if (process.env.SOLANA_NETWORK) {
+    config.network = process.env.SOLANA_NETWORK;
   }
+  
+  if (process.env.SOLANA_KEYPAIR_PATH) {
+    config.keypairPath = process.env.SOLANA_KEYPAIR_PATH;
+  }
+  
+  if (process.env.SOLANA_PROGRAM_ID) {
+    config.programId = process.env.SOLANA_PROGRAM_ID;
+  }
+  
+  if (process.env.SOLANA_RPC_URL) {
+    config.customEndpoint = process.env.SOLANA_RPC_URL;
+  }
+
+  return config;
 }
 
 /**

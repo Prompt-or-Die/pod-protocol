@@ -4,7 +4,7 @@
     "": {
       "name": "pod-protocol",
       "dependencies": {
-        "@coral-xyz/anchor": "0.31.1",
+        "@coral-xyz/anchor": "0.31.2",
         "@inquirer/checkbox": "4.1.8",
         "@inquirer/core": "10.1.13",
         "@pod-protocol/cli": "1.4.4",
@@ -23,7 +23,7 @@
         "qrcode-terminal": "0.12.0",
         "react-syntax-highlighter": "15.6.1",
         "table": "6.9.0",
-        "yaml": "^2.3.5",
+        "yaml": "^2.3.5"
       },
       "devDependencies": {
         "@coral-xyz/anchor-cli": "0.31.2",
@@ -48,8 +48,8 @@
         "rollup": "4.44.0",
         "ts-mocha": "11.1.0",
         "typedoc": "0.28.5",
-        "typescript": "5.8.3",
-      },
+        "typescript": "5.8.3"
+      }
     },
     "frontend": {
       "name": "pod-protocol-frontend",
@@ -80,7 +80,7 @@
         "socket.io-client": "4.8.1",
         "tailwind-merge": "3.3.1",
         "ws": "8.18.2",
-        "zustand": "5.0.5",
+        "zustand": "5.0.5"
       },
       "devDependencies": {
         "@eslint/eslintrc": "3.3.1",
@@ -100,9 +100,9 @@
         "jest": "30.0.2",
         "jest-environment-jsdom": "30.0.2",
         "tailwindcss": "4.1.10",
-        "typescript": "5.8.3",
-      },
-    },
+        "typescript": "5.8.3"
+      }
+    }
   },
   "overrides": {
     "@testing-library/dom": "^10.4.0",
@@ -117,7 +117,7 @@
     "prismjs": ">=1.30.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "typescript": "5.8.3",
+    "typescript": "5.8.3"
   },
   "packages": {
     "@achingbrain/http-parser-js": ["@achingbrain/http-parser-js@0.5.9", "", { "dependencies": { "uint8arrays": "^5.1.0" } }, "sha512-nPuMf2zVzBAGRigH/1jFpb/6HmJsps+15f4BPlGDp3vsjYB2ZgruAErUpKpcFiVRz3DHLXcGNmuwmqZx/sVI7A=="],

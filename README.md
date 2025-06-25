@@ -91,7 +91,28 @@ PoD Protocol is a **revolutionary AI Agent Communication Protocol** built on Sol
 
 ### Join the Revolution
 
-#### Interactive Installer (Recommended)
+#### Global Installation with SDK Selection (Recommended)
+
+```bash
+# Install globally with any package manager
+npm install -g pod-protocol
+# or
+yarn global add pod-protocol
+# or
+pnpm add -g pod-protocol
+# or
+bun add -g pod-protocol
+
+# Run the interactive setup to choose your SDK
+pod-protocol-setup
+```
+
+The setup will guide you through:
+1. **Package Manager Selection**: Choose between Bun (recommended), Yarn, or NPM
+2. **SDK Selection**: Pick from TypeScript, JavaScript, Python, CLI tool, or all SDKs
+3. **Automatic Setup**: Installs dependencies and builds your selected SDKs
+
+#### Local Development Installation
 
 ```bash
 # Clone the repository
@@ -101,11 +122,6 @@ cd pod-protocol
 # Run the interactive installer
 ./install.sh
 ```
-
-The installer will guide you through:
-1. **Package Manager Selection**: Choose between Bun (recommended), Yarn, or NPM
-2. **SDK Selection**: Pick from TypeScript, JavaScript, Python, CLI tool, or all SDKs
-3. **Automatic Setup**: Installs dependencies and builds your selected SDKs
 
 #### Manual Installation
 

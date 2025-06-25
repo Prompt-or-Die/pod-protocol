@@ -38,9 +38,17 @@ export function createCommandHandler<T extends any[]>(
       const globalOpts = getCommandOpts(cmd);
       const commandArgs = args.slice(0, -1) as T;
 
-      const wallet = getWallet(globalOpts.keypair);
-      const keypair = getKeypair(globalOpts.keypair);
-      const client = await createClient(globalOpts.network, wallet);
+      // For dry-run mode, we can skip expensive client initialization
+      let client: PodComClient | null = null;
+      let wallet: any = null;
+      let keypair: any = null;
+
+      if (!globalOpts.dryRun) {
+        wallet = getWallet(globalOpts.keypair);
+        keypair = getKeypair(globalOpts.keypair);
+        client = await createClient(globalOpts.network, wallet);
+      }
+
       await handler(client as any, keypair, globalOpts, ...commandArgs);
     } catch (error: any) {
       handleCommandError(error, action);

@@ -87,13 +87,13 @@ The project supports multiple package managers:
   "type": "module",
   "bin": {
     "pod": "dist/index.js",
-    "pod-com": "dist/index.js"
+    "pod": "dist/index.js"
   }
 }
 ```
 
 **Key Features:**
-- **Binary exports**: Provides `pod` and `pod-com` commands
+- **Binary exports**: Provides `pod` command
 - **ES Modules**: Native ESM support
 - **TypeScript compilation**: Built with `tsc`
 

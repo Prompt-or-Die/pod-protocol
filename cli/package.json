@@ -8,8 +8,7 @@
     ".": "./dist/index.js"
   },
   "bin": {
-    "pod": "dist/index.js",
-    "pod-com": "dist/index.js"
+    "pod": "dist/index.js"
   },
   "files": [
     "dist",

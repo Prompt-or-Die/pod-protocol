@@ -87,7 +87,7 @@ yarn run production:test
 - **Build**: TypeScript compiler
 - **Runtime**: Bun preferred
 - **Commands**: Agent registration, messaging, channel management, ZK compression
-- **Binary**: Available as `pod` and `pod-com`
+- **Binary**: Available as `pod`
 
 ### Frontend (`frontend/`)
 - **Framework**: Next.js 15 with App Router
