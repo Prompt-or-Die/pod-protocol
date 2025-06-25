@@ -15,8 +15,8 @@
  * - Batch processing complexities
  */
 
-const { createHash } = require('crypto');
-const { BaseService } = require('./base');
+import { createHash } from 'crypto';
+import { BaseService } from './base.js';
 
 /**
  * ZK Compression configuration options
@@ -424,7 +424,7 @@ class ZKCompressionService extends BaseService {
     }
 }
 
-module.exports = {
+export {
     ZKCompressionService,
     ZKCompressionConfig,
     CompressedAccount,

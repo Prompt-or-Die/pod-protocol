@@ -7,9 +7,7 @@ import replace from "@rollup/plugin-replace";
 export default {
   input: {
     index: "src/index.js",
-    client: "src/client.js",
     types: "src/types.js",
-    utils: "src/utils.js",
     "services/agent": "src/services/agent.js",
     "services/message": "src/services/message.js",
     "services/channel": "src/services/channel.js",
@@ -17,7 +15,10 @@ export default {
     "services/analytics": "src/services/analytics.js",
     "services/discovery": "src/services/discovery.js",
     "services/ipfs": "src/services/ipfs.js",
-    "services/zk-compression": "src/services/zk-compression.js",
+    "services/zkCompression": "src/services/zkCompression.js",
+    "utils/crypto": "src/utils/crypto.js",
+    "utils/pda": "src/utils/pda.js",
+    "utils/secureMemory": "src/utils/secureMemory.js",
   },
   output: [
     {

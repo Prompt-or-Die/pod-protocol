@@ -20,7 +20,7 @@ no-log-ix-name = []
 
 [dependencies]
 # Core Solana dependencies - latest stable versions for 2025
-anchor-lang = { version = "0.31.2", default-features = false, features = ["init-if-needed"] }
+anchor-lang = { version = "0.31.1", default-features = false, features = ["init-if-needed"] }
 solana-program = { version = "2.3.0", default-features = false }
 
 # Native Solana State Compression - the modern alternative to Light Protocol
@@ -47,7 +47,7 @@ serde = { version = "1.0.217", features = ["derive"] }
 log = "0.4.25"
 
 [dev-dependencies]
-anchor-lang = { version = "0.31.2", features = ["derive"] }
+anchor-lang = { version = "0.31.1", features = ["derive"] }
 
 [package.metadata.docs.rs]
 all-features = false

@@ -7,6 +7,7 @@ import { Command } from 'commander';
 import { PodComClient } from '@pod-protocol/sdk';
 import { PublicKey } from '@solana/web3.js';
 import { createClient, getWallet } from '../utils/client.js';
+import { getCliConfig } from '../utils/config.js';
 import { createSpinner, showSuccess, formatValue } from '../utils/shared.js';
 import chalk from 'chalk';
 

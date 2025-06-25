@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, statSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
-import { Keypair } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
 import chalk from "chalk";
 import { SecureKeypairLoader, secureWipe } from "./secure-memory.js";
 
@@ -10,6 +10,16 @@ interface CliConfig {
   keypairPath: string;
   programId?: string;
   customEndpoint?: string;
+}
+
+/**
+ * CLI client configuration interface
+ */
+interface CliClientConfig {
+  endpoint: string;
+  commitment: 'confirmed' | 'processed' | 'finalized';
+  programId?: PublicKey;
+  network: string;
 }
 
 /**
@@ -179,6 +189,19 @@ export function loadKeypair(keypairPath?: string): Keypair {
     );
     process.exit(1);
   }
+}
+
+/**
+ * Get CLI configuration for client initialization
+ */
+export async function getCliConfig(): Promise<CliClientConfig> {
+  const config = loadConfig();
+  return {
+    endpoint: getNetworkEndpoint(config.network),
+    commitment: 'confirmed' as const,
+    programId: config.programId ? new PublicKey(config.programId) : undefined,
+    network: config.network
+  };
 }
 
 /**

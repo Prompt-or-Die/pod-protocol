@@ -53,34 +53,130 @@ async function buildAnchorProgram() {
   
   if (!checkCommand('anchor')) {
     log('❌ Anchor CLI not found. Installing...', 'yellow');
-    runCommand('npm install -g @coral-xyz/anchor-cli@0.31.1');
+    runCommand('cargo install --git https://github.com/coral-xyz/anchor avm --locked --force');
+    runCommand('avm install 0.31.1');
+    runCommand('avm use 0.31.1');
   }
   
-  // Build the Anchor program
+  // Try to build with anchor first
   const result = runCommand('anchor build');
   
   if (result === null) {
-    log('❌ Anchor build failed, falling back to Cargo build', 'yellow');
-    const cargoResult = runCommand('cd programs/pod-com && cargo build-sbf');
-    if (cargoResult === null) {
-      log('❌ Cargo build-sbf failed, trying cargo build', 'yellow');
-      runCommand('cd programs/pod-com && cargo build');
+    log('❌ Anchor build failed, falling back to cargo build', 'yellow');
+    
+    // Check if we have cargo-build-sbf
+    if (!checkCommand('cargo-build-sbf')) {
+      log('⚠️  cargo-build-sbf not found, using regular cargo build', 'yellow');
+      runCommand('cd programs/pod-com && cargo build --release');
+    } else {
+      runCommand('cd programs/pod-com && cargo build-sbf');
     }
   }
   
   return result !== null;
 }
 
-async function buildWorkspaces() {
-  log('🏗️  Building workspaces with Bun...', 'blue');
+async function buildTypeScriptSDK() {
+  log('📦 Building TypeScript SDK...', 'magenta');
+  
+  // Install dependencies
+  runCommand('cd sdk && bun install');
   
   // Build SDK
-  log('📦 Building SDK...', 'magenta');
   runCommand('cd sdk && bun run build:prod');
   
-  // Build CLI
+  log('✅ TypeScript SDK built successfully', 'green');
+}
+
+async function buildJavaScriptSDK() {
+  log('📦 Building JavaScript SDK...', 'magenta');
+  
+  // Install dependencies
+  if (checkCommand('bun')) {
+    runCommand('cd sdk-js && bun install');
+  } else if (checkCommand('npm')) {
+    runCommand('cd sdk-js && npm install');
+  }
+  
+  // Build SDK
+  runCommand('cd sdk-js && npm run build:prod');
+  
+  log('✅ JavaScript SDK built successfully', 'green');
+}
+
+async function buildPythonSDK() {
+  log('📦 Building Python SDK...', 'magenta');
+  
+  // Check if Python is installed
+  const pythonCmd = checkCommand('python3') ? 'python3' : 'python';
+  const pipCmd = checkCommand('pip3') ? 'pip3' : 'pip';
+  
+  if (!checkCommand(pythonCmd)) {
+    log('⚠️  Python not found, skipping Python SDK build', 'yellow');
+    return;
+  }
+  
+  try {
+    // Try to create virtual environment
+    log('Creating Python virtual environment...', 'cyan');
+    runCommand(`cd sdk-python && ${pythonCmd} -m venv .venv`);
+    
+    // Activate virtual environment and install build dependencies
+    const venvPython = process.platform === 'win32' 
+      ? '.venv/Scripts/python'
+      : '.venv/bin/python';
+    const venvPip = process.platform === 'win32'
+      ? '.venv/Scripts/pip'
+      : '.venv/bin/pip';
+    
+    log('Installing build dependencies in virtual environment...', 'cyan');
+    runCommand(`cd sdk-python && ${venvPip} install --upgrade pip build twine`);
+    
+    // Build distribution
+    runCommand(`cd sdk-python && ${venvPython} -m build`);
+    
+  } catch (error) {
+    log('⚠️  Virtual environment failed, trying alternative approach...', 'yellow');
+    
+    // Alternative: try using pipx or user installation
+    try {
+      if (checkCommand('pipx')) {
+        log('Using pipx for build...', 'cyan');
+        runCommand(`cd sdk-python && pipx run build`);
+      } else {
+        log('Using user installation for build...', 'cyan');
+        runCommand(`cd sdk-python && ${pipCmd} install --user build`);
+        runCommand(`cd sdk-python && ${pythonCmd} -m build`);
+      }
+    } catch (altError) {
+      log('⚠️  Python SDK build failed - please install python3-venv or pipx', 'yellow');
+      log('Run: sudo apt install python3-venv python3-pip', 'yellow');
+      return;
+    }
+  }
+  
+  log('✅ Python SDK built successfully', 'green');
+}
+
+async function buildCLI() {
   log('📦 Building CLI...', 'magenta');
+  
+  // Install dependencies
+  runCommand('cd cli && bun install');
+  
+  // Build CLI
   runCommand('cd cli && bun run build:prod');
+  
+  log('✅ CLI built successfully', 'green');
+}
+
+async function buildWorkspaces() {
+  log('🏗️  Building all workspaces...', 'blue');
+  
+  await buildTypeScriptSDK();
+  await buildJavaScriptSDK();
+  await buildPythonSDK();
+  await buildCLI();
 }
 
 async function generateIDL() {
@@ -89,10 +185,12 @@ async function generateIDL() {
   // Try to copy IDL from target directory
   const idlPath = 'target/idl/pod_com.json';
   const sdkIdlPath = 'sdk/src/pod_com.json';
+  const jsIdlPath = 'sdk-js/src/pod_com.json';
   
   if (existsSync(idlPath)) {
     copyFileSync(idlPath, sdkIdlPath);
-    log('✅ IDL copied to SDK', 'green');
+    copyFileSync(idlPath, jsIdlPath);
+    log('✅ IDL copied to SDKs', 'green');
   } else {
     log('⚠️  IDL not found, using existing version', 'yellow');
   }
@@ -106,12 +204,34 @@ async function main() {
   const buildType = args[0] || 'all';
   
   log('🚀 Starting PoD Protocol build...', 'green');
+  log(`📍 Build type: ${buildType}`, 'cyan');
+  
+  // Add Solana to PATH if it exists
+  if (existsSync(`${process.env.HOME}/.local/share/solana/install/active_release/bin`)) {
+    process.env.PATH = `${process.env.HOME}/.local/share/solana/install/active_release/bin:${process.env.PATH}`;
+    log('✅ Solana CLI found and added to PATH', 'green');
+  }
   
   try {
     switch (buildType) {
       case 'anchor':
         await buildAnchorProgram();
         await generateIDL();
+        break;
+      case 'typescript':
+      case 'ts':
+        await buildTypeScriptSDK();
+        break;
+      case 'javascript':
+      case 'js':
+        await buildJavaScriptSDK();
+        break;
+      case 'python':
+      case 'py':
+        await buildPythonSDK();
+        break;
+      case 'cli':
+        await buildCLI();
         break;
       case 'workspaces':
         await buildWorkspaces();
@@ -125,6 +245,7 @@ async function main() {
     }
     
     log('✅ Build completed successfully!', 'green');
+    log('📚 Run ./install.sh to install the SDKs', 'cyan');
   } catch (error) {
     log(`❌ Build failed: ${error.message}`, 'red');
     process.exit(1);
