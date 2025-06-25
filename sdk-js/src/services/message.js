@@ -21,15 +21,15 @@ export class MessageService extends BaseService {
    * 
    * @param {SendMessageOptions} options - Message options
    * @param {KeyPairSigner} wallet - Sender's wallet
-   * @returns {Promise<string>} Transaction signature
+   * @returns {Promise} Transaction signature
    * 
    * @example
    * ```javascript
    * const tx = await client.messages.send({
-   *   recipient: recipientAddress,
+   *   recipient,
    *   content: 'Hello from PoD Protocol!',
-   *   messageType: MessageType.TEXT,
-   *   expirationDays: 7
+   *   messageType.TEXT,
+   *   expirationDays
    * }, wallet);
    * ```
    */
@@ -68,10 +68,10 @@ export class MessageService extends BaseService {
           new BN(expiresAt)
         )
         .accounts({
-          messageAccount: messagePDA,
-          sender: wallet.publicKey,
-          recipient: options.recipient,
-          systemProgram: SystemProgram.programId
+          messageAccount,
+          sender.publicKey,
+          recipient.recipient,
+          systemProgram.programId
         })
         .rpc();
 
@@ -83,7 +83,7 @@ export class MessageService extends BaseService {
    * Get a message by its PDA
    * 
    * @param {Address} messagePDA - Message PDA
-   * @returns {Promise<MessageAccount|null>} Message account data
+   * @returns {Promise} Message account data
    * 
    * @example
    * ```javascript
@@ -103,12 +103,12 @@ export class MessageService extends BaseService {
       const messageAccount = await this.program.account.messageAccount.fetch(messagePDA);
       
       return {
-        pubkey: messagePDA,
+        pubkey,
         ...messageAccount,
         // Convert BN to number for JavaScript compatibility
-        timestamp: messageAccount.timestamp.toNumber(),
-        createdAt: messageAccount.timestamp.toNumber(),
-        expiresAt: messageAccount.expiresAt.toNumber()
+        timestamp.timestamp.toNumber(),
+        createdAt.timestamp.toNumber(),
+        expiresAt.expiresAt.toNumber()
       };
     } catch (error) {
       if (error.message?.includes('Account does not exist')) {
@@ -126,14 +126,14 @@ export class MessageService extends BaseService {
    * @param {string} [options.direction='both'] - 'sent', 'received', or 'both'
    * @param {number} [options.limit=100] - Maximum number of messages
    * @param {string} [options.status] - Filter by message status
-   * @returns {Promise<MessageAccount[]>} Array of message accounts
+   * @returns {Promise} Array of message accounts
    * 
    * @example
    * ```javascript
    * // Get last 50 received messages
    * const messages = await client.messages.getForAgent(agentAddress, {
    *   direction: 'received',
-   *   limit: 50
+   *   limit
    * });
    * ```
    */
@@ -146,11 +146,11 @@ export class MessageService extends BaseService {
       const accounts = await this.program.account.messageAccount.all();
       let messages = accounts
         .map(account => ({
-          pubkey: account.publicKey,
+          pubkey.publicKey,
           ...account.account,
-          timestamp: account.account.timestamp.toNumber(),
-          createdAt: account.account.timestamp.toNumber(),
-          expiresAt: account.account.expiresAt.toNumber()
+          timestamp.account.timestamp.toNumber(),
+          createdAt.account.timestamp.toNumber(),
+          expiresAt.account.expiresAt.toNumber()
         }))
         .filter(message => {
           const direction = options.direction || 'both';
@@ -187,7 +187,7 @@ export class MessageService extends BaseService {
    * 
    * @param {Address} messagePDA - Message PDA
    * @param {KeyPairSigner} wallet - Recipient's wallet
-   * @returns {Promise<string>} Transaction signature
+   * @returns {Promise} Transaction signature
    * 
    * @example
    * ```javascript
@@ -203,8 +203,8 @@ export class MessageService extends BaseService {
       const tx = await this.program.methods
         .updateMessageStatus('read')
         .accounts({
-          messageAccount: messagePDA,
-          signer: wallet.publicKey
+          messageAccount,
+          signer.publicKey
         })
         .rpc();
 
@@ -217,7 +217,7 @@ export class MessageService extends BaseService {
    * 
    * @param {Address} messagePDA - Message PDA
    * @param {KeyPairSigner} wallet - Sender's wallet
-   * @returns {Promise<string>} Transaction signature
+   * @returns {Promise} Transaction signature
    * 
    * @example
    * ```javascript
@@ -233,8 +233,8 @@ export class MessageService extends BaseService {
       const tx = await this.program.methods
         .deleteMessage()
         .accounts({
-          messageAccount: messagePDA,
-          sender: wallet.publicKey
+          messageAccount,
+          sender.publicKey
         })
         .rpc();
 
@@ -249,14 +249,14 @@ export class MessageService extends BaseService {
    * @param {Address} agent2 - Second agent's public key
    * @param {Object} [options] - Query options
    * @param {number} [options.limit=100] - Maximum number of messages
-   * @returns {Promise<MessageAccount[]>} Array of message accounts
+   * @returns {Promise} Array of message accounts
    * 
    * @example
    * ```javascript
    * const conversation = await client.messages.getConversation(
    *   myAgentKey, 
    *   otherAgentKey,
-   *   { limit: 50 }
+   *   { limit }
    * );
    * ```
    */
@@ -269,11 +269,11 @@ export class MessageService extends BaseService {
       const accounts = await this.program.account.messageAccount.all();
       let messages = accounts
         .map(account => ({
-          pubkey: account.publicKey,
+          pubkey.publicKey,
           ...account.account,
-          timestamp: account.account.timestamp.toNumber(),
-          createdAt: account.account.timestamp.toNumber(),
-          expiresAt: account.account.expiresAt.toNumber()
+          timestamp.account.timestamp.toNumber(),
+          createdAt.account.timestamp.toNumber(),
+          expiresAt.account.expiresAt.toNumber()
         }))
         .filter(message => 
           (message.sender.equals(agent1) && message.recipient.equals(agent2)) ||
@@ -297,7 +297,7 @@ export class MessageService extends BaseService {
    * Get unread message count for an agent
    * 
    * @param {Address} agentPubkey - Agent's public key
-   * @returns {Promise<number>} Number of unread messages
+   * @returns {Promise} Number of unread messages
    * 
    * @example
    * ```javascript

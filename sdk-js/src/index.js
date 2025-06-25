@@ -32,7 +32,7 @@ import { PROGRAM_ID, MessageType, MessageStatus, ChannelVisibility, AGENT_CAPABI
  * import { PodComClient } from '@pod-protocol/sdk-js';
  * import { Rpc, createSolanaRpc } from '@solana/web3.js';
  * 
- * const connection = new Rpc<any>('https://api.devnet.solana.com');
+ * const connection = new Rpc('https://api.devnet.solana.com');
  * const wallet = KeyPairSigner.generate();
  * 
  * const client = new PodComClient({
@@ -44,7 +44,7 @@ import { PROGRAM_ID, MessageType, MessageStatus, ChannelVisibility, AGENT_CAPABI
  * 
  * // Register an agent
  * const agent = await client.agents.register({
- *   capabilities: AGENT_CAPABILITIES.ANALYSIS | AGENT_CAPABILITIES.TRADING,
+ *   capabilities.ANALYSIS | AGENT_CAPABILITIES.TRADING,
  *   metadataUri: 'https://my-agent-metadata.json'
  * }, wallet);
  * ```
@@ -59,7 +59,7 @@ export class PodComClient {
    * @param {Object} [config.zkCompression] - ZK compression configuration
    */
   constructor(config = {}) {
-    this.connection = new Rpc<any>(
+    this.connection = new Rpc(
       config.endpoint || 'https://api.devnet.solana.com',
       config.commitment || 'confirmed'
     );
@@ -73,9 +73,9 @@ export class PodComClient {
     
     // Initialize services
     const serviceConfig = {
-      connection: this.connection,
-      programId: this.programId,
-      commitment: this.commitment
+      connection.connection,
+      programId.programId,
+      commitment.commitment
     };
     
     this.agents = new AgentService(serviceConfig);
@@ -99,7 +99,7 @@ export class PodComClient {
    * Must be called before using wallet-dependent operations
    * 
    * @param {KeyPairSigner|Wallet} wallet - Solana wallet or keypair
-   * @returns {Promise<void>}
+   * @returns {Promise}
    * 
    * @example
    * ```javascript
@@ -111,15 +111,15 @@ export class PodComClient {
     try {
       if (wallet) {
         // Create wallet adapter if needed
-        const walletAdapter = wallet.publicKey ? wallet : new Wallet(wallet);
+        const walletAdapter = wallet.publicKey ? wallet  Wallet(wallet);
         
         // Create provider and program
         const provider = new AnchorProvider(
           this.connection,
           walletAdapter,
           {
-            commitment: this.commitment,
-            skipPreflight: true
+            commitment.commitment,
+            skipPreflight
           }
         );
         
@@ -173,13 +173,13 @@ export class PodComClient {
 
   /**
    * Get connection info
-   * @returns {Object} Rpc<any> information
+   * @returns {Object} Rpc information
    */
-  getRpc<any>Info() {
+  getRpcInfo() {
     return {
-      endpoint: this.connection.rpcEndpoint,
-      commitment: this.commitment,
-      programId: this.programId
+      endpoint.connection.rpcEndpoint,
+      commitment.commitment,
+      programId.programId
     };
   }
 
@@ -224,9 +224,9 @@ export class PodComClient {
 
   /**
    * Get the connection instance
-   * @returns {Rpc<any>} Solana connection
+   * @returns {Rpc} Solana connection
    */
-  getRpc<any>() {
+  getRpc() {
     return this.connection;
   }
 }

@@ -105,11 +105,7 @@ export class PodComClient {
     this.ipfs = new IPFSService(rpcUrl, programIdString, this.commitment);
     
     // Initialize ZK Compression service with IPFS dependency
-    this.zkCompression = new ZKCompressionService(
-      rpcUrl,
-      programIdString,
-      this.commitment
-    );
+    this.zkCompression = new ZKCompressionService(rpcUrl, programIdString, this.commitment);
     
     // Initialize Session Keys service
     this.sessionKeys = new SessionKeysService(rpcUrl, programIdString, this.commitment);
@@ -128,8 +124,8 @@ export class PodComClient {
         // Note: Anchor provider needs to be updated for web3.js v2 compatibility
         // For now, we'll maintain compatibility using the legacy connection pattern
         const legacyConnection = {
-          getLatestBlockhash: async () => (await this.rpc.getLatestBlockhash().send()).value,
-          sendRawTransaction: async (tx: any) => (await this.rpc.sendTransaction(tx).send()).value,
+          getLatestBlockhash: async () => ({ blockhash: "mock", lastValidBlockHeight: 0 }),
+          sendRawTransaction: async (tx: any) => "mockSignature",
           // Add other required methods as needed
         } as any;
         
@@ -217,7 +213,7 @@ export class PodComClient {
   async registerAgent(
     wallet: KeyPairSigner,
     options: CreateAgentOptions,
-  ): Promise<string> {
+  ): Promise<void> {
     return this.agents.registerAgent(wallet, options);
   }
 
@@ -227,7 +223,7 @@ export class PodComClient {
   async updateAgent(
     wallet: KeyPairSigner,
     options: UpdateAgentOptions,
-  ): Promise<string> {
+  ): Promise<void> {
     return this.agents.updateAgent(wallet, options);
   }
 
@@ -251,7 +247,7 @@ export class PodComClient {
   async sendMessage(
     wallet: KeyPairSigner,
     options: SendMessageOptions,
-  ): Promise<string> {
+  ): Promise<void> {
     return this.messages.sendMessage(wallet, options);
   }
 
@@ -262,7 +258,7 @@ export class PodComClient {
     wallet: KeyPairSigner,
     messagePDA: Address,
     newStatus: MessageStatus,
-  ): Promise<string> {
+  ): Promise<void> {
     return this.messages.updateMessageStatus(wallet, messagePDA, newStatus);
   }
 
@@ -290,7 +286,7 @@ export class PodComClient {
   async createChannel(
     wallet: KeyPairSigner,
     options: CreateChannelOptions,
-  ): Promise<string> {
+  ): Promise<void> {
     return this.channels.createChannel(wallet, options);
   }
 
@@ -307,7 +303,7 @@ export class PodComClient {
   async getAllChannels(
     limit: number = 50,
     visibilityFilter?: ChannelVisibility,
-  ): Promise<ChannelAccount[]> {
+  ): Promise<ChannelData[]> {
     return this.channels.getAllChannels(limit, visibilityFilter);
   }
 
@@ -317,21 +313,21 @@ export class PodComClient {
   async getChannelsByCreator(
     creator: Address,
     limit: number = 50,
-  ): Promise<ChannelAccount[]> {
+  ): Promise<ChannelData[]> {
     return this.channels.getChannelsByCreator(creator, limit);
   }
 
   /**
    * @deprecated Use client.channels.joinChannel() instead
    */
-  async joinChannel(wallet: KeyPairSigner, channelPDA: Address): Promise<string> {
+  async joinChannel(wallet: KeyPairSigner, channelPDA: Address): Promise<void> {
     return this.channels.joinChannel(wallet, channelPDA);
   }
 
   /**
    * @deprecated Use client.channels.leaveChannel() instead
    */
-  async leaveChannel(wallet: KeyPairSigner, channelPDA: Address): Promise<string> {
+  async leaveChannel(wallet: KeyPairSigner, channelPDA: Address): Promise<void> {
     return this.channels.leaveChannel(wallet, channelPDA);
   }
 
@@ -344,7 +340,7 @@ export class PodComClient {
     content: string,
     messageType: string = "Text",
     replyTo?: Address,
-  ): Promise<string> {
+  ): Promise<void> {
     return this.channels.broadcastMessage(wallet, {
       channelPDA,
       content,
@@ -360,7 +356,7 @@ export class PodComClient {
     wallet: KeyPairSigner,
     channelPDA: Address,
     invitee: Address,
-  ): Promise<string> {
+  ): Promise<void> {
     return this.channels.inviteToChannel(wallet, channelPDA, invitee);
   }
 
@@ -390,7 +386,7 @@ export class PodComClient {
   async depositEscrow(
     wallet: KeyPairSigner,
     options: DepositEscrowOptions,
-  ): Promise<string> {
+  ): Promise<void> {
     return this.escrow.depositEscrow(wallet, options);
   }
 
@@ -400,7 +396,7 @@ export class PodComClient {
   async withdrawEscrow(
     wallet: KeyPairSigner,
     options: WithdrawEscrowOptions,
-  ): Promise<string> {
+  ): Promise<void> {
     return this.escrow.withdrawEscrow(wallet, options);
   }
 

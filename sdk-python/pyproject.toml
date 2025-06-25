@@ -19,7 +19,10 @@ keywords = [
     "prompt-or-die",
     "pod-protocol",
     "python",
-    "anchor"
+    "anchor",
+    "jito-bundles",
+    "session-keys",
+    "mev-protection"
 ]
 authors = [
   {name = "PoD Protocol Team", email = "dev@pod-protocol.com"},
@@ -46,6 +49,9 @@ dependencies = [
     "cryptography>=41.0.0",
     "pydantic>=2.5.0",
     "typing-extensions>=4.8.0",
+    "asyncio-throttle>=1.0.2",
+    "websockets>=11.0.0",
+    "solders>=0.20.0",
 ]
 
 [project.optional-dependencies]
@@ -73,6 +79,21 @@ ipfs = [
 ]
 zk = [
     "light-protocol-py>=0.1.0",  # This would need to be created
+]
+jito = [
+    "httpx>=0.25.0",
+    "websockets>=11.0.0",
+]
+session = [
+    "cryptography>=41.0.0",
+    "asyncio-throttle>=1.0.2",
+]
+full = [
+    "ipfshttpclient>=0.8.0a2",
+    "light-protocol-py>=0.1.0",
+    "httpx>=0.25.0",
+    "websockets>=11.0.0",
+    "asyncio-throttle>=1.0.2",
 ]
 
 [project.urls]
@@ -169,7 +190,11 @@ markers = [
     "integration: Integration tests",
     "e2e: End-to-end tests", 
     "slow: Slow running tests",
-    "network: Tests requiring network access"
+    "network: Tests requiring network access",
+    "session_keys: Session keys functionality tests",
+    "jito_bundles: Jito bundles functionality tests",
+    "message_batch: Message batch operation tests",
+    "real_time: Real-time subscription tests"
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",

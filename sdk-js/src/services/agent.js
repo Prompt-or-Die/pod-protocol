@@ -19,12 +19,12 @@ export class AgentService extends BaseService {
    * 
    * @param {CreateAgentOptions} options - Agent creation options
    * @param {KeyPairSigner} wallet - Wallet to sign the transaction
-   * @returns {Promise<string>} Transaction signature
+   * @returns {Promise} Transaction signature
    * 
    * @example
    * ```javascript
    * const tx = await client.agents.register({
-   *   capabilities: AGENT_CAPABILITIES.ANALYSIS | AGENT_CAPABILITIES.TRADING,
+   *   capabilities.ANALYSIS | AGENT_CAPABILITIES.TRADING,
    *   metadataUri: 'https://my-agent-metadata.json'
    * }, wallet);
    * ```
@@ -41,9 +41,9 @@ export class AgentService extends BaseService {
         const tx = await this.program.methods
           .registerAgent(new BN(options.capabilities), options.metadataUri)
           .accounts({
-            agentAccount: agentPDA,
-            signer: wallet.publicKey,
-            systemProgram: SystemProgram.programId
+            agentAccount,
+            signer.publicKey,
+            systemProgram.programId
           })
           .rpc();
 
@@ -69,12 +69,12 @@ export class AgentService extends BaseService {
    * 
    * @param {UpdateAgentOptions} options - Update options
    * @param {KeyPairSigner} wallet - Wallet to sign the transaction
-   * @returns {Promise<string>} Transaction signature
+   * @returns {Promise} Transaction signature
    * 
    * @example
    * ```javascript
    * const tx = await client.agents.update({
-   *   capabilities: AGENT_CAPABILITIES.ANALYSIS,
+   *   capabilities.ANALYSIS,
    *   metadataUri: 'https://updated-metadata.json'
    * }, wallet);
    * ```
@@ -89,12 +89,12 @@ export class AgentService extends BaseService {
     return this.retry(async () => {
       const tx = await this.program.methods
         .updateAgent(
-          options.capabilities ? new BN(options.capabilities) : null,
+          options.capabilities ? new BN(options.capabilities) ,
           options.metadataUri || null
         )
         .accounts({
-          agentAccount: agentPDA,
-          signer: wallet.publicKey
+          agentAccount,
+          signer.publicKey
         })
         .rpc();
 
@@ -106,7 +106,7 @@ export class AgentService extends BaseService {
    * Get agent information by public key
    * 
    * @param {Address} agentPubkey - Agent's public key
-   * @returns {Promise<AgentAccount|null>} Agent account data
+   * @returns {Promise} Agent account data
    * 
    * @example
    * ```javascript
@@ -127,14 +127,14 @@ export class AgentService extends BaseService {
       const agentAccount = await this.program.account.agentAccount.fetch(agentPDA);
       
       return {
-        pubkey: agentPDA,
+        pubkey,
         ...agentAccount,
         // Convert BN to number for JavaScript compatibility
-        capabilities: agentAccount.capabilities.toNumber(),
-        reputation: agentAccount.reputation.toNumber(),
-        lastUpdated: agentAccount.lastUpdated.toNumber(),
-        invitesSent: agentAccount.invitesSent.toNumber(),
-        lastInviteAt: agentAccount.lastInviteAt.toNumber()
+        capabilities.capabilities.toNumber(),
+        reputation.reputation.toNumber(),
+        lastUpdated.lastUpdated.toNumber(),
+        invitesSent.invitesSent.toNumber(),
+        lastInviteAt.lastInviteAt.toNumber()
       };
     } catch (error) {
       if (error.message?.includes('Account does not exist')) {
@@ -151,15 +151,15 @@ export class AgentService extends BaseService {
    * @param {number} [filters.capabilities] - Filter by capabilities bitmask
    * @param {number} [filters.minReputation] - Minimum reputation score
    * @param {number} [filters.limit=100] - Maximum number of results
-   * @returns {Promise<AgentAccount[]>} Array of agent accounts
+   * @returns {Promise} Array of agent accounts
    * 
    * @example
    * ```javascript
    * // Get all trading agents with reputation > 50
    * const agents = await client.agents.list({
-   *   capabilities: AGENT_CAPABILITIES.TRADING,
-   *   minReputation: 50,
-   *   limit: 50
+   *   capabilities.TRADING,
+   *   minReputation,
+   *   limit
    * });
    * ```
    */
@@ -171,14 +171,14 @@ export class AgentService extends BaseService {
     try {
       const accounts = await this.program.account.agentAccount.all();
       let agents = accounts.map(account => ({
-        pubkey: account.publicKey,
+        pubkey.publicKey,
         ...account.account,
         // Convert BN to number for JavaScript compatibility
-        capabilities: account.account.capabilities.toNumber(),
-        reputation: account.account.reputation.toNumber(),
-        lastUpdated: account.account.lastUpdated.toNumber(),
-        invitesSent: account.account.invitesSent.toNumber(),
-        lastInviteAt: account.account.lastInviteAt.toNumber()
+        capabilities.account.capabilities.toNumber(),
+        reputation.account.reputation.toNumber(),
+        lastUpdated.account.lastUpdated.toNumber(),
+        invitesSent.account.invitesSent.toNumber(),
+        lastInviteAt.account.lastInviteAt.toNumber()
       }));
 
       // Apply filters
@@ -207,7 +207,7 @@ export class AgentService extends BaseService {
    * Check if an agent exists
    * 
    * @param {Address} agentPubkey - Agent's public key
-   * @returns {Promise<boolean>} True if agent exists
+   * @returns {Promise} True if agent exists
    * 
    * @example
    * ```javascript
@@ -226,7 +226,7 @@ export class AgentService extends BaseService {
    * Get agent statistics
    * 
    * @param {Address} agentPubkey - Agent's public key
-   * @returns {Promise<Object>} Agent statistics
+   * @returns {Promise} Agent statistics
    * 
    * @example
    * ```javascript
@@ -245,10 +245,10 @@ export class AgentService extends BaseService {
     }
 
     return {
-      reputation: agent.reputation,
-      invitesSent: agent.invitesSent,
-      lastActive: agent.lastUpdated,
-      accountAge: Date.now() - (agent.lastUpdated * 1000)
+      reputation.reputation,
+      invitesSent.invitesSent,
+      lastActive.lastUpdated,
+      accountAge.now() - (agent.lastUpdated * 1000)
     };
   }
 
@@ -272,7 +272,7 @@ export class AgentService extends BaseService {
   generateMetadataURI(metadata) {
     const jsonString = JSON.stringify(metadata);
     const base64String = Buffer.from(jsonString).toString('base64');
-    return `data:application/json;base64,${base64String}`;
+    return `data/json;base64,${base64String}`;
   }
 
   /**
@@ -293,9 +293,9 @@ export class AgentService extends BaseService {
     return this.program.methods
       .registerAgent(new BN(capabilities), metadataUri)
       .accounts({
-        agentAccount: agentPDA,
-        signer: agentPubkey,
-        systemProgram: SystemProgram.programId
+        agentAccount,
+        signer,
+        systemProgram.programId
       })
       .instruction();
   }
@@ -317,12 +317,12 @@ export class AgentService extends BaseService {
 
     return this.program.methods
       .updateAgent(
-        capabilities ? new BN(capabilities) : null,
+        capabilities ? new BN(capabilities) ,
         metadataUri || null
       )
       .accounts({
-        agentAccount: agentPDA,
-        signer: agentPubkey
+        agentAccount,
+        signer
       })
       .instruction();
   }
@@ -407,13 +407,13 @@ export class AgentService extends BaseService {
    */
   capabilitiesFromArray(capabilitiesArray) {
     const capabilityMap = {
-      'text': 1,
-      'image': 2,
-      'code': 4,
-      'analysis': 8,
-      'trading': 16,
-      'custom1': 32,
-      'custom2': 64
+      'text',
+      'image',
+      'code',
+      'analysis',
+      'trading',
+      'custom1',
+      'custom2'
     };
 
     let capabilities = 0;

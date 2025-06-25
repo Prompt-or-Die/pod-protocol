@@ -11,6 +11,8 @@ from .analytics import AnalyticsService
 from .discovery import DiscoveryService
 from .ipfs import IPFSService, IPFSConfig
 from .zk_compression import ZKCompressionService, ZKCompressionConfig
+from .session_keys import SessionKeysService, SessionKeyConfig, SessionTokenData
+from .jito_bundles import JitoBundlesService, JitoConfig, BundleTransaction, BundleResult
 
 __all__ = [
     "BaseService",
@@ -24,4 +26,11 @@ __all__ = [
     "IPFSConfig",
     "ZKCompressionService",
     "ZKCompressionConfig",
+    "SessionKeysService",
+    "SessionKeyConfig",
+    "SessionTokenData",
+    "JitoBundlesService",
+    "JitoConfig",
+    "BundleTransaction",
+    "BundleResult",
 ]

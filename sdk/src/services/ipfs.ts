@@ -1,9 +1,5 @@
-// Dynamic imports to avoid native module issues
-// import { createHelia } from 'helia';
-// import { unixfs } from '@helia/unixfs';
-// import { json } from '@helia/json';
-import { CID } from 'multiformats/cid';
-import { BaseService, BaseServiceConfig } from './base.js';
+import { Address, address } from "@solana/web3.js";
+import { BaseService } from "./base.js";
 import keccak from 'keccak';
 // import type { JSON as HeliaJSON } from '@helia/json';
 
@@ -84,14 +80,9 @@ export class IPFSService extends BaseService {
   private config: IPFSConfig;
   private initPromise: Promise<void> | null = null;
 
-  constructor(baseConfig: BaseServiceConfig, ipfsConfig: IPFSConfig = {}) {
-    super(baseConfig);
-    
-    this.config = {
-      timeout: ipfsConfig.timeout || 30000,
-      gatewayUrl: ipfsConfig.gatewayUrl || 'https://ipfs.io/ipfs',
-      ...ipfsConfig,
-    };
+  constructor(rpcUrl: string, programId: string, commitment: any) {
+    super(rpcUrl, programId, commitment);
+  };
   }
 
   /**

@@ -93,7 +93,7 @@ export {
   getCapabilityNames,
   lamportsToSol,
   solToLamports,
-  validateAddress,
+  isValidAddress,
   sleep,
   retry,
 } from "./utils";

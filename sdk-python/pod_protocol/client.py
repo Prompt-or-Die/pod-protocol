@@ -20,6 +20,8 @@ from .services import (
     DiscoveryService,
     IPFSService,
     ZKCompressionService,
+    SessionKeysService,
+    JitoBundlesService,
 )
 from .utils import SecureMemoryManager
 from .exceptions import PodProtocolError, ConfigurationError
@@ -109,6 +111,13 @@ class PodComClient:
             self.config.zk_compression,
             self.ipfs
         )
+        
+        # Initialize new services
+        self.session_keys = SessionKeysService(service_config)
+        
+        # Get Jito RPC URL from config if available
+        jito_rpc_url = getattr(self.config, 'jito_rpc_url', None)
+        self.jito_bundles = JitoBundlesService(service_config, jito_rpc_url)
     
     async def initialize(self, wallet: Optional[Union[Keypair, Wallet]] = None) -> None:
         """
@@ -157,6 +166,11 @@ class PodComClient:
                 
                 # Initialize services with program
                 await self._initialize_services(self.program)
+                
+                # Set wallet for services that need it
+                self.session_keys.set_wallet(wallet_adapter)
+                self.jito_bundles.set_wallet(wallet_adapter)
+                
             else:
                 # Read-only mode - create provider without wallet
                 self.provider = Provider(
@@ -183,11 +197,13 @@ class PodComClient:
         """Initialize all services with the program instance"""
         services = [
             self.agents, self.messages, self.channels, self.escrow,
-            self.analytics, self.discovery, self.ipfs, self.zk_compression
+            self.analytics, self.discovery, self.ipfs, self.zk_compression,
+            self.session_keys, self.jito_bundles
         ]
         
         for service in services:
-            service.set_program(program)
+            if hasattr(service, 'set_program'):
+                service.set_program(program)
     
     def get_connection_info(self) -> dict:
         """
@@ -232,7 +248,8 @@ class PodComClient:
         # Cleanup services
         services = [
             self.agents, self.messages, self.channels, self.escrow,
-            self.analytics, self.discovery, self.ipfs, self.zk_compression
+            self.analytics, self.discovery, self.ipfs, self.zk_compression,
+            self.session_keys, self.jito_bundles
         ]
         
         for service in services:
@@ -314,11 +331,17 @@ class PodComClient:
                 ]
             ])
             
+            # Check new services
+            session_keys_healthy = self.session_keys.is_initialized()
+            jito_bundles_healthy = self.jito_bundles.is_initialized()
+            
             return {
                 'healthy': bool(version and program_healthy and services_healthy),
                 'network': version.get('solana-core') if version else None,
                 'program_initialized': program_healthy,
                 'services_initialized': services_healthy,
+                'session_keys_initialized': session_keys_healthy,
+                'jito_bundles_initialized': jito_bundles_healthy,
                 'read_only': self.is_read_only(),
                 'endpoint': self.connection._provider.endpoint_uri
             }
@@ -329,3 +352,52 @@ class PodComClient:
                 'error': str(e),
                 'endpoint': self.connection._provider.endpoint_uri
             }
+    
+    # Convenience methods for new services
+    async def create_session(self, config, wallet=None):
+        """
+        Create a new session key for automated transactions
+        
+        Args:
+            config: Session configuration
+            wallet: Wallet to use (optional)
+            
+        Returns:
+            Session token string
+        """
+        return await self.session_keys.create_session(config, wallet)
+    
+    async def send_bundle(self, transactions, tip_lamports=10000):
+        """
+        Send a bundle of transactions through Jito for MEV protection
+        
+        Args:
+            transactions: List of bundle transactions
+            tip_lamports: Tip amount in lamports
+            
+        Returns:
+            Bundle execution result
+        """
+        return await self.jito_bundles.send_bundle(transactions, tip_lamports)
+    
+    async def get_bundle_statistics(self):
+        """
+        Get bundle execution statistics
+        
+        Returns:
+            Dictionary containing bundle statistics
+        """
+        return await self.jito_bundles.get_bundle_statistics()
+    
+    async def estimate_bundle_fee(self, transaction_count, priority_level="medium"):
+        """
+        Estimate bundle execution fees
+        
+        Args:
+            transaction_count: Number of transactions in bundle
+            priority_level: Priority level ("low", "medium", "high")
+            
+        Returns:
+            Fee estimation breakdown
+        """
+        return await self.jito_bundles.estimate_bundle_fee(transaction_count, priority_level)

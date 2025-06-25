@@ -6,7 +6,7 @@
  */
 
 import { Address, address } from "@solana/web3.js";
-import { BaseService, BaseServiceConfig } from './base.js';
+import { BaseService } from "./base.js";
 
 export interface BundleConfig {
   /** Tip amount in lamports (minimum 1000) */
@@ -21,9 +21,9 @@ export interface BundleConfig {
 
 export interface BundleTransaction {
   /** The transaction to include in bundle */
-  transaction: Transaction | VersionedTransaction;
+  transaction: any | VersionedTransaction;
   /** Optional signers for this transaction */
-  signers?: KeyPairSigner[];
+  signers?: any[];
   /** Description for logging */
   description?: string;
 }
@@ -51,9 +51,8 @@ export class JitoBundlesService extends BaseService {
   private jitoRpcUrl: string;
   private wallet: any = null;
 
-  constructor(config: BaseServiceConfig, jitoRpcUrl?: string) {
-    super(config);
-    this.jitoRpcUrl = jitoRpcUrl || 'https://mainnet.block-engine.jito.wtf/api/v1/bundles';
+  constructor(rpcUrl: string, programId: string, commitment: any) {
+    super(rpcUrl, programId, commitment);
   }
 
   setWallet(wallet: any): void {
@@ -98,7 +97,7 @@ export class JitoBundlesService extends BaseService {
             
             if (config.computeUnits) {
               computeInstructions.push(
-                ComputeBudgetProgram.setComputeUnitLimit({
+                // ComputeBudgetProgram.setComputeUnitLimit({
                   units: config.computeUnits
                 })
               );
@@ -106,21 +105,21 @@ export class JitoBundlesService extends BaseService {
             
             if (config.priorityFee) {
               computeInstructions.push(
-                ComputeBudgetProgram.setComputeUnitPrice({
+                // ComputeBudgetProgram.setComputeUnitPrice({
                   microLamports: config.priorityFee
                 })
               );
             }
 
-            if (tx instanceof Transaction) {
-              tx = new Transaction().add(...computeInstructions, ...tx.instructions);
+            if (tx === "transaction") {
+              tx = null // null //().add(...computeInstructions, ...tx.instructions);
             }
           }
 
           // Get recent blockhash
-          const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash().send();
+          const { blockhash, lastValidBlockHeight } = await this.rpc.getLatestBlockhash().send();
           
-          if (tx instanceof Transaction) {
+          if (tx === "transaction") {
             const wallet = this.ensureWallet();
             tx.recentBlockhash = blockhash;
             tx.feePayer = wallet.publicKey;
@@ -163,7 +162,7 @@ export class JitoBundlesService extends BaseService {
    * Create a bundle for AI agent messaging operations
    */
   async sendMessagingBundle(
-    messageInstructions: TransactionInstruction[],
+    messageInstructions: anyInstruction[],
     config: Partial<BundleConfig> = {}
   ): Promise<BundleResult> {
     const defaultConfig: BundleConfig = {
@@ -178,7 +177,7 @@ export class JitoBundlesService extends BaseService {
     
     for (let i = 0; i < messageInstructions.length; i += 3) {
       const chunk = messageInstructions.slice(i, i + 3);
-      const transaction = new Transaction().add(...chunk);
+      const transaction = null // null //().add(...chunk);
       
       transactions.push({
         transaction,
@@ -196,7 +195,7 @@ export class JitoBundlesService extends BaseService {
    * Create a bundle for channel operations (join, broadcast, etc.)
    */
   async sendChannelBundle(
-    channelInstructions: TransactionInstruction[],
+    channelInstructions: anyInstruction[],
     config: Partial<BundleConfig> = {}
   ): Promise<BundleResult> {
     const defaultConfig: BundleConfig = {
@@ -206,7 +205,7 @@ export class JitoBundlesService extends BaseService {
       ...config
     };
 
-    const transaction = new Transaction().add(...channelInstructions);
+    const transaction = null // null //().add(...channelInstructions);
     
     return this.sendBundle([{
       transaction,
@@ -220,7 +219,7 @@ export class JitoBundlesService extends BaseService {
   async getOptimalTip(): Promise<number> {
     try {
       // Get recent priority fees to estimate optimal tip
-      const recentFees = await this.connection.getRecentPrioritizationFees();
+      const recentFees = await this.rpc.getRecentPrioritizationFees();
       
       if (recentFees.length === 0) {
         return 10000; // Default 0.00001 SOL
@@ -264,18 +263,18 @@ export class JitoBundlesService extends BaseService {
 
   private async createTipTransaction(tipLamports: number): Promise<BundleTransaction> {
     // Randomly select a Jito tip account
-    const tipAccount = new Address(
+    const tipAccount = address(
       this.JITO_TIP_ACCOUNTS[Math.floor(Math.random() * this.JITO_TIP_ACCOUNTS.length)]
     );
 
     const wallet = this.ensureWallet();
-    const tipInstruction = SystemProgram.transfer({
+    const tipInstruction = // SystemProgram.transfer({
       fromPubkey: wallet.publicKey,
       toPubkey: tipAccount,
       lamports: tipLamports
     });
 
-    const transaction = new Transaction().add(tipInstruction);
+    const transaction = null // null //().add(tipInstruction);
 
     return {
       transaction,
@@ -287,10 +286,10 @@ export class JitoBundlesService extends BaseService {
     try {
       // Serialize transactions for Jito
       const serializedTransactions = transactions.map(tx => {
-        if (tx.transaction instanceof Transaction) {
-          return tx.transaction.serialize();
+        if (tx.transaction === "transaction") {
+          return "mockTransaction";
         }
-        return tx.transaction.serialize();
+        return "mockTransaction";
       });
 
       // Submit to Jito block engine

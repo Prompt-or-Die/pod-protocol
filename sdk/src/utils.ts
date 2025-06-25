@@ -39,7 +39,7 @@ export function findMessagePDA(
     Buffer.from(messageId),
     Buffer.from(senderAgent),
     Buffer.from(recipient),
-    Buffer.from(timestamp),
+    Buffer.from(timestamp.toString()),
   ];
   
   return [address("11111111111111111111111111111112"), 0];
@@ -329,14 +329,7 @@ export function solToLamports(sol: number): number {
 /**
  * Check if a string is a valid Solana public key
  */
-export function validateAddress(addressString: string): boolean {
-  try {
-    address(addressString);
-    return true;
-  } catch {
-    return false;
-  }
-}
+
 
 /**
  * Convert timestamp to number, handling BN and other formats
@@ -577,7 +570,7 @@ export function formatSOL(lamports: number | bigint): string {
 /**
  * Validate public key format (for backward compatibility)
  */
-export function validateAddress(
+export function isValidAddress(
   pubkey: Address | string,
 ): boolean {
   try {

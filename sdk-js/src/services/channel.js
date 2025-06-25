@@ -20,16 +20,16 @@ export class ChannelService extends BaseService {
    * 
    * @param {CreateChannelOptions} options - Channel creation options
    * @param {KeyPairSigner} wallet - Creator's wallet
-   * @returns {Promise<string>} Transaction signature
+   * @returns {Promise} Transaction signature
    * 
    * @example
    * ```javascript
    * const tx = await client.channels.create({
    *   name: 'ai-collective',
    *   description: 'A channel for AI collaboration',
-   *   visibility: ChannelVisibility.PUBLIC,
-   *   maxParticipants: 100,
-   *   feePerMessage: 1000
+   *   visibility.PUBLIC,
+   *   maxParticipants,
+   *   feePerMessage
    * }, wallet);
    * ```
    */
@@ -59,11 +59,11 @@ export class ChannelService extends BaseService {
           new BN(options.feePerMessage || 0)
         )
         .accounts({
-          agentAccount: agentPDA,
-          channelAccount: channelPDA,
-          participantAccount: participantPDA,
-          creator: wallet.publicKey,
-          systemProgram: SystemProgram.programId
+          agentAccount,
+          channelAccount,
+          participantAccount,
+          creator.publicKey,
+          systemProgram.programId
         })
         .rpc();
 
@@ -75,7 +75,7 @@ export class ChannelService extends BaseService {
    * Get channel data
    * 
    * @param {Address} channelPDA - Channel PDA
-   * @returns {Promise<ChannelAccount|null>} Channel account data
+   * @returns {Promise} Channel account data
    * 
    * @example
    * ```javascript
@@ -95,19 +95,19 @@ export class ChannelService extends BaseService {
       const account = await this.program.account.channelAccount.fetch(channelPDA);
       
       return {
-        pubkey: channelPDA,
-        creator: account.creator,
-        name: account.name,
-        description: account.description,
-        visibility: this._convertChannelVisibilityFromProgram(account.visibility),
-        maxParticipants: account.maxParticipants,
-        participantCount: account.currentParticipants,
-        currentParticipants: account.currentParticipants,
-        feePerMessage: account.feePerMessage?.toNumber() || 0,
-        escrowBalance: account.escrowBalance?.toNumber() || 0,
-        createdAt: account.createdAt?.toNumber() || Date.now(),
-        isActive: account.isActive !== false,
-        bump: account.bump
+        pubkey,
+        creator.creator,
+        name.name,
+        description.description,
+        visibility._convertChannelVisibilityFromProgram(account.visibility),
+        maxParticipants.maxParticipants,
+        participantCount.currentParticipants,
+        currentParticipants.currentParticipants,
+        feePerMessage.feePerMessage?.toNumber() || 0,
+        escrowBalance.escrowBalance?.toNumber() || 0,
+        createdAt.createdAt?.toNumber() || Date.now(),
+        isActive.isActive !== false,
+        bump.bump
       };
     } catch (error) {
       if (error.message?.includes('Account does not exist')) {
@@ -124,13 +124,13 @@ export class ChannelService extends BaseService {
    * @param {number} [filters.limit=50] - Maximum number of channels
    * @param {ChannelVisibility} [filters.visibility] - Filter by visibility
    * @param {Address} [filters.creator] - Filter by creator
-   * @returns {Promise<ChannelAccount[]>} Array of channel accounts
+   * @returns {Promise} Array of channel accounts
    * 
    * @example
    * ```javascript
    * const publicChannels = await client.channels.list({
-   *   visibility: ChannelVisibility.PUBLIC,
-   *   limit: 20
+   *   visibility.PUBLIC,
+   *   limit
    * });
    * ```
    */
@@ -142,19 +142,19 @@ export class ChannelService extends BaseService {
     try {
       const accounts = await this.program.account.channelAccount.all();
       let channels = accounts.map(account => ({
-        pubkey: account.publicKey,
-        creator: account.account.creator,
-        name: account.account.name,
-        description: account.account.description,
-        visibility: this._convertChannelVisibilityFromProgram(account.account.visibility),
-        maxParticipants: account.account.maxParticipants,
-        participantCount: account.account.currentParticipants,
-        currentParticipants: account.account.currentParticipants,
-        feePerMessage: account.account.feePerMessage?.toNumber() || 0,
-        escrowBalance: account.account.escrowBalance?.toNumber() || 0,
-        createdAt: account.account.createdAt?.toNumber() || Date.now(),
-        isActive: account.account.isActive !== false,
-        bump: account.account.bump
+        pubkey.publicKey,
+        creator.account.creator,
+        name.account.name,
+        description.account.description,
+        visibility._convertChannelVisibilityFromProgram(account.account.visibility),
+        maxParticipants.account.maxParticipants,
+        participantCount.account.currentParticipants,
+        currentParticipants.account.currentParticipants,
+        feePerMessage.account.feePerMessage?.toNumber() || 0,
+        escrowBalance.account.escrowBalance?.toNumber() || 0,
+        createdAt.account.createdAt?.toNumber() || Date.now(),
+        isActive.account.isActive !== false,
+        bump.account.bump
       }));
 
       // Apply filters
@@ -184,7 +184,7 @@ export class ChannelService extends BaseService {
    * 
    * @param {Address} channelPDA - Channel PDA
    * @param {KeyPairSigner} wallet - User's wallet
-   * @returns {Promise<string>} Transaction signature
+   * @returns {Promise} Transaction signature
    * 
    * @example
    * ```javascript
@@ -224,12 +224,12 @@ export class ChannelService extends BaseService {
       const tx = await this.program.methods
         .joinChannel()
         .accounts({
-          channelAccount: channelPDA,
-          participantAccount: participantPDA,
-          agentAccount: agentPDA,
-          invitationAccount: invitationAccount ? invitationPDA : null,
-          user: wallet.publicKey,
-          systemProgram: SystemProgram.programId
+          channelAccount,
+          participantAccount,
+          agentAccount,
+          invitationAccount ? invitationPDA ,
+          user.publicKey,
+          systemProgram.programId
         })
         .rpc();
 
@@ -242,7 +242,7 @@ export class ChannelService extends BaseService {
    * 
    * @param {Address} channelPDA - Channel PDA
    * @param {KeyPairSigner} wallet - User's wallet
-   * @returns {Promise<string>} Transaction signature
+   * @returns {Promise} Transaction signature
    * 
    * @example
    * ```javascript
@@ -264,10 +264,10 @@ export class ChannelService extends BaseService {
       const tx = await this.program.methods
         .leaveChannel()
         .accounts({
-          channelAccount: channelPDA,
-          participantAccount: participantPDA,
-          agentAccount: agentPDA,
-          user: wallet.publicKey
+          channelAccount,
+          participantAccount,
+          agentAccount,
+          user.publicKey
         })
         .rpc();
 
@@ -284,13 +284,13 @@ export class ChannelService extends BaseService {
    * @param {MessageType} [options.messageType] - Type of message
    * @param {Address} [options.replyTo] - Message being replied to
    * @param {KeyPairSigner} wallet - Sender's wallet
-   * @returns {Promise<string>} Transaction signature
+   * @returns {Promise} Transaction signature
    * 
    * @example
    * ```javascript
    * const tx = await client.channels.sendMessage(channelPDA, {
    *   content: 'Hello channel!',
-   *   messageType: MessageType.TEXT
+   *   messageType.TEXT
    * }, wallet);
    * ```
    */
@@ -333,12 +333,12 @@ export class ChannelService extends BaseService {
           new BN(nonce)
         )
         .accounts({
-          channelAccount: channelPDA,
-          participantAccount: participantPDA,
-          agentAccount: agentPDA,
-          messageAccount: messagePDA,
-          user: wallet.publicKey,
-          systemProgram: SystemProgram.programId
+          channelAccount,
+          participantAccount,
+          agentAccount,
+          messageAccount,
+          user.publicKey,
+          systemProgram.programId
         })
         .rpc();
 
@@ -352,7 +352,7 @@ export class ChannelService extends BaseService {
    * @param {Address} channelPDA - Channel PDA
    * @param {Address} invitee - User to invite
    * @param {KeyPairSigner} wallet - Inviter's wallet
-   * @returns {Promise<string>} Transaction signature
+   * @returns {Promise} Transaction signature
    * 
    * @example
    * ```javascript
@@ -380,12 +380,12 @@ export class ChannelService extends BaseService {
       const tx = await this.program.methods
         .inviteToChannel(invitee)
         .accounts({
-          channelAccount: channelPDA,
-          participantAccount: participantPDA,
-          agentAccount: agentPDA,
-          invitationAccount: invitationPDA,
-          inviter: wallet.publicKey,
-          systemProgram: SystemProgram.programId
+          channelAccount,
+          participantAccount,
+          agentAccount,
+          invitationAccount,
+          inviter.publicKey,
+          systemProgram.programId
         })
         .rpc();
 
@@ -399,11 +399,11 @@ export class ChannelService extends BaseService {
    * @param {Address} channelPDA - Channel PDA
    * @param {Object} [options] - Query options
    * @param {number} [options.limit=50] - Maximum number of participants
-   * @returns {Promise<Array>} Array of participant accounts
+   * @returns {Promise} Array of participant accounts
    * 
    * @example
    * ```javascript
-   * const participants = await client.channels.getParticipants(channelPDA, { limit: 100 });
+   * const participants = await client.channels.getParticipants(channelPDA, { limit });
    * ```
    */
   async getParticipants(channelPDA, options = {}) {
@@ -433,11 +433,11 @@ export class ChannelService extends BaseService {
    * @param {Address} channelPDA - Channel PDA
    * @param {Object} [options] - Query options
    * @param {number} [options.limit=50] - Maximum number of messages
-   * @returns {Promise<Array>} Array of message accounts
+   * @returns {Promise} Array of message accounts
    * 
    * @example
    * ```javascript
-   * const messages = await client.channels.getMessages(channelPDA, { limit: 100 });
+   * const messages = await client.channels.getMessages(channelPDA, { limit });
    * ```
    */
   async getMessages(channelPDA, options = {}) {
@@ -451,8 +451,8 @@ export class ChannelService extends BaseService {
         .filter(account => account.account.channel.equals(channelPDA))
         .map(account => ({
           ...account.account,
-          pubkey: account.publicKey,
-          timestamp: account.account.timestamp?.toNumber() || Date.now()
+          pubkey.publicKey,
+          timestamp.account.timestamp?.toNumber() || Date.now()
         }));
 
       // Sort by timestamp (newest first)
@@ -471,12 +471,9 @@ export class ChannelService extends BaseService {
   // Private helper methods
   _convertChannelVisibility(visibility) {
     switch (visibility) {
-      case ChannelVisibility.PUBLIC:
-        return { public: {} };
-      case ChannelVisibility.PRIVATE:
-        return { private: {} };
-      default:
-        return { public: {} };
+      case ChannelVisibility.PUBLIC { public: {} };
+      case ChannelVisibility.PRIVATE { private: {} };
+      default { public: {} };
     }
   }
 
@@ -489,16 +486,11 @@ export class ChannelService extends BaseService {
   _convertMessageType(messageType) {
     if (typeof messageType === 'string') {
       switch (messageType.toLowerCase()) {
-        case 'text':
-          return { text: {} };
-        case 'data':
-          return { data: {} };
-        case 'command':
-          return { command: {} };
-        case 'response':
-          return { response: {} };
-        default:
-          return { text: {} };
+        case 'text' { text: {} };
+        case 'data' { data: {} };
+        case 'command' { command: {} };
+        case 'response' { response: {} };
+        default { text: {} };
       }
     }
     return messageType || { text: {} };
