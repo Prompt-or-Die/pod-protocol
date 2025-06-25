@@ -679,7 +679,87 @@ impl BaseService for ZKCompressionService {
 
     fn validate_config(&self) -> Result<(), Self::Error> {
         // Validate ZK compression service specific configuration
-        // TODO: Add specific validations if needed
+        let config = &self.base.config;
+        
+        // Check if program ID is set and valid
+        if config.program_id.to_string() == "11111111111111111111111111111111" {
+            return Err(PodComError::InvalidConfiguration {
+                field: "program_id".to_string(),
+                reason: "Program ID cannot be the default/null address".to_string(),
+            });
+        }
+        
+        // Validate cluster configuration
+        if config.cluster.is_empty() {
+            return Err(PodComError::InvalidConfiguration {
+                field: "cluster".to_string(),
+                reason: "Cluster URL cannot be empty".to_string(),
+            });
+        }
+        
+        // Validate ZK compression specific settings
+        if let Some(ref zk_config) = config.zk_compression_config {
+            if zk_config.max_proof_size == 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "zk_compression_config.max_proof_size".to_string(),
+                    reason: "Maximum proof size must be greater than 0".to_string(),
+                });
+            }
+            
+            if zk_config.max_proof_size > 1024 * 1024 { // 1MB limit
+                return Err(PodComError::InvalidConfiguration {
+                    field: "zk_compression_config.max_proof_size".to_string(),
+                    reason: "Maximum proof size cannot exceed 1MB".to_string(),
+                });
+            }
+            
+            // Validate compression ratio thresholds
+            if zk_config.min_compression_ratio <= 0.0 || zk_config.min_compression_ratio > 1.0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "zk_compression_config.min_compression_ratio".to_string(),
+                    reason: "Minimum compression ratio must be between 0.0 and 1.0".to_string(),
+                });
+            }
+            
+            // Validate circuit parameters
+            if zk_config.circuit_depth == 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "zk_compression_config.circuit_depth".to_string(),
+                    reason: "Circuit depth must be greater than 0".to_string(),
+                });
+            }
+            
+            if zk_config.circuit_depth > 32 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "zk_compression_config.circuit_depth".to_string(),
+                    reason: "Circuit depth cannot exceed 32 for practical computation".to_string(),
+                });
+            }
+            
+            // Validate proving key settings
+            if zk_config.proving_key_cache_size == 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "zk_compression_config.proving_key_cache_size".to_string(),
+                    reason: "Proving key cache size must be greater than 0".to_string(),
+                });
+            }
+            
+            // Validate verification timeout
+            if zk_config.verification_timeout_ms == 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "zk_compression_config.verification_timeout_ms".to_string(),
+                    reason: "Verification timeout must be greater than 0".to_string(),
+                });
+            }
+            
+            if zk_config.verification_timeout_ms > 300000 { // 5 minutes max
+                return Err(PodComError::InvalidConfiguration {
+                    field: "zk_compression_config.verification_timeout_ms".to_string(),
+                    reason: "Verification timeout cannot exceed 5 minutes (300000ms)".to_string(),
+                });
+            }
+        }
+        
         Ok(())
     }
 

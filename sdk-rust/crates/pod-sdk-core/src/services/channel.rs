@@ -533,7 +533,72 @@ impl BaseService for ChannelService {
 
     fn validate_config(&self) -> Result<(), Self::Error> {
         // Validate channel service specific configuration
-        // TODO: Add specific validations if needed
+        let config = &self.base.config;
+        
+        // Check if program ID is set and valid
+        if config.program_id.to_string() == "11111111111111111111111111111111" {
+            return Err(PodComError::InvalidConfiguration {
+                field: "program_id".to_string(),
+                reason: "Program ID cannot be the default/null address".to_string(),
+            });
+        }
+        
+        // Validate cluster configuration
+        if config.cluster.is_empty() {
+            return Err(PodComError::InvalidConfiguration {
+                field: "cluster".to_string(),
+                reason: "Cluster URL cannot be empty".to_string(),
+            });
+        }
+        
+        // Validate channel-specific settings
+        if let Some(ref channel_config) = config.channel_config {
+            if channel_config.max_participants == 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "channel_config.max_participants".to_string(),
+                    reason: "Maximum participants must be greater than 0".to_string(),
+                });
+            }
+            
+            if channel_config.max_participants > 10000 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "channel_config.max_participants".to_string(),
+                    reason: "Maximum participants cannot exceed 10,000".to_string(),
+                });
+            }
+            
+            // Validate channel name constraints
+            if channel_config.max_channel_name_length == 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "channel_config.max_channel_name_length".to_string(),
+                    reason: "Maximum channel name length must be greater than 0".to_string(),
+                });
+            }
+            
+            if channel_config.max_channel_name_length > 256 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "channel_config.max_channel_name_length".to_string(),
+                    reason: "Maximum channel name length cannot exceed 256 characters".to_string(),
+                });
+            }
+            
+            // Validate message limits per channel
+            if channel_config.max_messages_per_channel > 0 && channel_config.max_messages_per_channel < 100 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "channel_config.max_messages_per_channel".to_string(),
+                    reason: "Maximum messages per channel must be at least 100 if set".to_string(),
+                });
+            }
+            
+            // Validate fees
+            if channel_config.min_channel_fee > channel_config.max_channel_fee && channel_config.max_channel_fee > 0 {
+                return Err(PodComError::InvalidConfiguration {
+                    field: "channel_config.max_channel_fee".to_string(),
+                    reason: "Maximum channel fee must be greater than or equal to minimum fee".to_string(),
+                });
+            }
+        }
+        
         Ok(())
     }
 
