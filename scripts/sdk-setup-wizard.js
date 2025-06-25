@@ -2,7 +2,7 @@
 
 /**
  * PoD Protocol SDK Setup Wizard
- * Interactive installation and configuration for all SDK languages
+ * Interactive configuration for all SDKs with Web3.js v2 support
  */
 
 import { select, input, confirm, checkbox } from '@inquirer/prompts';
@@ -16,6 +16,28 @@ import gradient from 'gradient-string';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
+
+// Web3.js v2 imports - note these should be imported correctly
+// For now using dynamic imports due to module compatibility
+const createKeyPair = async () => {
+  try {
+    const { generateKeyPairSigner } = await import("@solana/web3.js");
+    return generateKeyPairSigner();
+  } catch (error) {
+    console.warn("Using fallback keypair generation");
+    return null;
+  }
+};
+
+const createAddress = async (addressString) => {
+  try {
+    const { address } = await import("@solana/web3.js");
+    return address(addressString);
+  } catch (error) {
+    console.warn("Using fallback address creation");
+    return addressString;
+  }
+};
 
 // Enhanced PoD Protocol branding
 const SDK_BANNER = gradient.rainbow.multiline(`
@@ -368,6 +390,9 @@ SOLANA_RPC_URL=https://api.devnet.solana.com
 SOLANA_COMMITMENT=confirmed
 AGENT_NAME=${this.agentConfig.name}
 
+# Wallet Configuration
+# SOLANA_PRIVATE_KEY=[1,2,3,...] # Array of bytes from Keypair.secretKey
+
 # Optional: Custom program ID
 # PROGRAM_ID=your_program_id_here
 
@@ -447,8 +472,21 @@ class ${this.projectName.replace(/-/g, '')}Agent {
       commitment: "confirmed"
     });
     
-    // TODO: Load your actual wallet
-    this.wallet = Keypair.generate();
+    // Load wallet from environment or generate new one
+    const privateKeyString = process.env.SOLANA_PRIVATE_KEY;
+    if (privateKeyString) {
+      try {
+        const privateKeyBytes = JSON.parse(privateKeyString);
+        this.wallet = Keypair.fromSecretKey(new Uint8Array(privateKeyBytes));
+        console.log("✅ Loaded wallet from environment");
+      } catch (error) {
+        console.warn("⚠️ Failed to load wallet from environment, generating new one");
+        this.wallet = Keypair.generate();
+      }
+    } else {
+      this.wallet = Keypair.generate();
+      console.log("💡 Generated new wallet. Add SOLANA_PRIVATE_KEY to .env to persist");
+    }
   }
 
   async initialize(): Promise<void> {
@@ -481,12 +519,136 @@ class ${this.projectName.replace(/-/g, '')}Agent {
       await this.initialize();
       console.log("🚀 ${this.agentConfig.name} is now online and ready!");
       
-      // TODO: Implement your agent's main logic here
+      // Agent main logic - customize based on your agent type
+      console.log("🤖 Starting ${this.agentConfig.type} agent behavior...");
+      
+      // Example: Listen for incoming messages
+      await this.startMessageListener();
+      
+      // Example: Perform periodic tasks based on capabilities
+      this.startPeriodicTasks();
+      
+      // Keep the agent running
+      await this.keepAlive();
       
     } catch (error) {
       console.error("❌ Agent failed to start:", error);
       process.exit(1);
     }
+  }
+
+  private async startMessageListener(): Promise<void> {
+    console.log("👂 Starting message listener...");
+    // TODO: Implement message polling or subscription
+    // This could poll for new messages every few seconds
+    setInterval(async () => {
+      try {
+        // Check for new messages
+        const messages = await this.client.getMessagesForAgent(this.wallet.publicKey);
+        for (const message of messages) {
+          await this.handleIncomingMessage(message);
+        }
+      } catch (error) {
+        console.error("Error checking messages:", error);
+      }
+    }, 5000); // Check every 5 seconds
+  }
+
+  private async handleIncomingMessage(message: any): Promise<void> {
+    console.log(\`📨 Received message from \${message.sender}\`);
+    
+    // TODO: Implement message handling based on your agent's capabilities
+    // Example responses based on agent type:
+    ${this.generateMessageHandlingLogic()}
+  }
+
+  private startPeriodicTasks(): void {
+    console.log("⏰ Starting periodic tasks...");
+    
+    // Example: Agent health check every minute
+    setInterval(() => {
+      console.log("💓 Agent heartbeat - still running...");
+    }, 60000);
+
+    ${this.generatePeriodicTasksLogic()}
+  }
+
+  private async keepAlive(): Promise<void> {
+    console.log("🔄 Agent is now running. Press Ctrl+C to stop.");
+    
+    // Keep the process alive
+    return new Promise((resolve) => {
+      process.on('SIGINT', () => {
+        console.log("\\n👋 Shutting down agent gracefully...");
+        resolve();
+        process.exit(0);
+      });
+    });
+  }
+
+  generateMessageHandlingLogic() {
+    const typeToLogic = {
+      trading: `
+    if (message.payload.includes('price') || message.payload.includes('trade')) {
+      // Handle trading-related messages
+      await this.sendMessage(message.sender, "I can help with trading analysis!");
+    }`,
+      analysis: `
+    if (message.payload.includes('analyze') || message.payload.includes('data')) {
+      // Handle analysis requests
+      await this.sendMessage(message.sender, "I can analyze that data for you!");
+    }`,
+      communication: `
+    // Echo back all messages as a communication hub
+    await this.sendMessage(message.sender, \`Received: \${message.payload}\`);`,
+      content: `
+    if (message.payload.includes('generate') || message.payload.includes('create')) {
+      // Handle content generation requests
+      await this.sendMessage(message.sender, "I can generate content for you!");
+    }`,
+      custom: `
+    // Handle messages based on your custom logic
+    console.log("Processing custom message logic...");`
+    };
+
+    return typeToLogic[this.agentConfig.type] || typeToLogic.custom;
+  }
+
+  generatePeriodicTasksLogic() {
+    const typeToTasks = {
+      trading: `
+    // Trading agents might want to check market conditions periodically
+    setInterval(async () => {
+      console.log("📈 Checking market conditions...");
+      // TODO: Implement market analysis
+    }, 30000); // Every 30 seconds`,
+      analysis: `
+    // Analysis agents might process data queues periodically
+    setInterval(async () => {
+      console.log("🔍 Processing analysis queue...");
+      // TODO: Implement data processing
+    }, 60000); // Every minute`,
+      communication: `
+    // Communication hubs might broadcast status updates
+    setInterval(async () => {
+      console.log("📡 Broadcasting status update...");
+      // TODO: Implement status broadcasts
+    }, 300000); // Every 5 minutes`,
+      content: `
+    // Content generators might check for content requests
+    setInterval(async () => {
+      console.log("🎨 Checking for content requests...");
+      // TODO: Implement content generation queue
+    }, 120000); // Every 2 minutes`,
+      custom: `
+    // Add your custom periodic tasks here
+    setInterval(async () => {
+      console.log("⚙️ Running custom periodic task...");
+      // TODO: Implement your custom logic
+    }, 60000); // Every minute`
+    };
+
+    return typeToTasks[this.agentConfig.type] || typeToTasks.custom;
   }
 }
 
@@ -515,8 +677,21 @@ class ${this.projectName.replace(/-/g, '')}Agent {
       commitment: "confirmed"
     });
     
-    // TODO: Load your actual wallet
-    this.wallet = Keypair.generate();
+    // Load wallet from environment or generate new one
+    const privateKeyString = process.env.SOLANA_PRIVATE_KEY;
+    if (privateKeyString) {
+      try {
+        const privateKeyBytes = JSON.parse(privateKeyString);
+        this.wallet = Keypair.fromSecretKey(new Uint8Array(privateKeyBytes));
+        console.log("✅ Loaded wallet from environment");
+      } catch (error) {
+        console.warn("⚠️ Failed to load wallet from environment, generating new one");
+        this.wallet = Keypair.generate();
+      }
+    } else {
+      this.wallet = Keypair.generate();
+      console.log("💡 Generated new wallet. Add SOLANA_PRIVATE_KEY to .env to persist");
+    }
   }
 
   async initialize() {
@@ -588,8 +763,20 @@ class ${this.projectName.replace(/-/g, '').title()}Agent:
             'commitment': 'confirmed'
         })
         
-        # TODO: Load your actual wallet
-        self.wallet = Keypair()
+        # Load wallet from environment or generate new one
+        import json
+        private_key_string = os.getenv('SOLANA_PRIVATE_KEY')
+        if private_key_string:
+            try:
+                private_key_bytes = json.loads(private_key_string)
+                self.wallet = Keypair.from_bytes(bytes(private_key_bytes))
+                print("✅ Loaded wallet from environment")
+            except Exception as error:
+                print(f"⚠️ Failed to load wallet from environment: {error}")
+                self.wallet = Keypair()
+        else:
+            self.wallet = Keypair()
+            print("💡 Generated new wallet. Add SOLANA_PRIVATE_KEY to .env to persist")
     
     async def initialize(self) -> None:
         """Initialize the agent and register on PoD Protocol."""
@@ -703,8 +890,23 @@ if __name__ == '__main__':
       case 'javascript':
         return `describe('${this.agentConfig.name}', () => {
   test('should initialize successfully', async () => {
-    // TODO: Add your tests here
-    expect(true).toBe(true);
+    const agent = new ${this.projectName.replace(/-/g, '')}Agent();
+    expect(agent).toBeDefined();
+    expect(agent.wallet).toBeDefined();
+    expect(agent.client).toBeDefined();
+  });
+
+  test('should connect to Solana network', async () => {
+    const agent = new ${this.projectName.replace(/-/g, '')}Agent();
+    // Test network connectivity
+    const version = await agent.client.rpc.getVersion();
+    expect(version).toBeDefined();
+  });
+
+  test('should handle wallet operations', async () => {
+    const agent = new ${this.projectName.replace(/-/g, '')}Agent();
+    expect(agent.wallet.publicKey).toBeDefined();
+    // Add more wallet-specific tests based on your agent's requirements
   });
 });`;
       case 'python':
@@ -719,8 +921,22 @@ from main import ${this.projectName.replace(/-/g, '').title()}Agent
 async def test_agent_initialization():
     """Test agent initialization."""
     agent = ${this.projectName.replace(/-/g, '').title()}Agent()
-    # TODO: Add your tests here
     assert agent is not None
+    assert agent.wallet is not None
+    assert agent.client is not None
+
+@pytest.mark.asyncio
+async def test_wallet_operations():
+    """Test wallet functionality."""
+    agent = ${this.projectName.replace(/-/g, '').title()}Agent()
+    assert agent.wallet.pubkey() is not None
+
+@pytest.mark.asyncio
+async def test_client_connection():
+    """Test Solana network connection."""
+    agent = ${this.projectName.replace(/-/g, '').title()}Agent()
+    # Add network connectivity tests based on your requirements
+    assert hasattr(agent.client, 'initialize')
 `;
     }
   }

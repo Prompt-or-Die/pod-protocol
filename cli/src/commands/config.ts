@@ -5,11 +5,12 @@ import inquirer from "inquirer";
 import { table } from "table";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { homedir } from "os";
-import { join, dirname } from "path";
-import { Keypair } from "@solana/web3.js";
+import { join, dirname, resolve } from "path";
+import { Keypair, generateKeyPairSigner, address } from "@solana/web3.js";
 import qrcode from "qrcode-terminal";
 import { loadConfig as loadSharedConfig } from "../utils/config.js";
 import { safeParseKeypair, safeParseConfig } from "../utils/safe-json.js";
+import { BRAND_COLORS, ICONS, showCommandHeader } from "../utils/branding.js";
 
 interface CliConfig {
   network: string;
@@ -282,17 +283,17 @@ export class ConfigCommands {
           // Check if keypair exists and show public key
           if (existsSync(currentConfig.keypairPath)) {
             try {
-                          const keypairData = safeParseKeypair(
-              readFileSync(currentConfig.keypairPath, "utf8")
-            );
-            
-            if (!keypairData) {
-              throw new Error("Invalid or potentially malicious keypair file format");
-            }
-            
-            const keypair = Keypair.fromSecretKey(
-              new Uint8Array(keypairData),
-            );
+              const keypairData = safeParseKeypair(
+                readFileSync(currentConfig.keypairPath, "utf8")
+              );
+              
+              if (!keypairData) {
+                throw new Error("Invalid or potentially malicious keypair file format");
+              }
+              
+              const keypair = Keypair.fromSecretKey(
+                new Uint8Array(keypairData),
+              );
               data.push(["Public Key", keypair.publicKey.toBase58()]);
             } catch {
               data.push(["Public Key", chalk.red("Invalid keypair file")]);

@@ -272,8 +272,7 @@ export function parseUpdateAgentInstruction<
     IInstructionWithData<Uint8Array>
 ): ParsedUpdateAgentInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 2) {
-    // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new Error('UpdateAgent instruction: Insufficient accounts provided. Expected at least 2 accounts (agentAccount, signer)');
   }
   let accountIndex = 0;
   const getNextAccount = () => {

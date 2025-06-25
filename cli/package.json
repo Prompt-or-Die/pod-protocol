@@ -3,31 +3,52 @@
   "version": "1.5.2",
   "description": "Pod Protocol CLI tool",
   "main": "dist/index.js",
+  "type": "module",
   "bin": {
     "pod": "dist/index.js"
   },
   "scripts": {
+    "dev": "tsx src/index.ts",
     "build": "tsc && chmod +x dist/index.js",
+    "build:watch": "tsc --watch",
     "clean": "rm -rf dist",
-    "prepublishOnly": "npm run clean && npm run build"
+    "test": "echo 'CLI tests coming soon'",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "prepublishOnly": "bun run clean && bun run build"
   },
   "dependencies": {
-    "@pod-protocol/sdk": "^1.5.2",
-    "@solana/web3.js": "^2.0.0",
+    "@solana/web3.js": "^2.0.0-rc.1",
+    "@solana/rpc-core": "^2.0.0-rc.1", 
+    "@solana/rpc-types": "^2.0.0-rc.1",
+    "@solana/addresses": "^2.0.0-rc.1",
+    "@solana/keys": "^2.0.0-rc.1",
+    "@solana/transactions": "^2.0.0-rc.1",
+    "@solana/signers": "^2.0.0-rc.1",
     "@solana-program/system": "^0.7.0",
     "@solana-program/token": "^0.5.1",
     "commander": "^11.0.0",
-    "chalk": "^4.1.2"
+    "chalk": "^4.1.2",
+    "inquirer": "^9.2.12",
+    "@inquirer/prompts": "^3.3.0",
+    "ora": "^7.0.1",
+    "gradient-string": "^2.0.2"
   },
   "devDependencies": {
-    "@types/node": "^18.0.0",
-    "typescript": "^5.0.0"
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0",
+    "tsx": "^4.6.0",
+    "eslint": "^8.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.18.0",
+    "@typescript-eslint/parser": "^6.18.0"
   },
   "keywords": [
     "solana",
     "blockchain",
     "cli",
-    "pod-protocol"
+    "pod-protocol",
+    "web3",
+    "ai-agents"
   ],
   "author": "Pod Protocol",
   "license": "MIT",

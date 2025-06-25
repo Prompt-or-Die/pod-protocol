@@ -304,8 +304,7 @@ export function parseRegisterAgentInstruction<
     IInstructionWithData<Uint8Array>
 ): ParsedRegisterAgentInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 3) {
-    // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new Error('RegisterAgent instruction: Insufficient accounts provided. Expected at least 3 accounts (agentAccount, signer, systemProgram)');
   }
   let accountIndex = 0;
   const getNextAccount = () => {

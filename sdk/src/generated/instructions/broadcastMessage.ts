@@ -428,8 +428,7 @@ export function parseBroadcastMessageInstruction<
     IInstructionWithData<Uint8Array>
 ): ParsedBroadcastMessageInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 6) {
-    // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new Error('BroadcastMessage instruction: Insufficient accounts provided. Expected at least required accounts');
   }
   let accountIndex = 0;
   const getNextAccount = () => {

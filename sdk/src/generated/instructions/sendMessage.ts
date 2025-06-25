@@ -334,8 +334,7 @@ export function parseSendMessageInstruction<
     IInstructionWithData<Uint8Array>
 ): ParsedSendMessageInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 4) {
-    // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new Error('SendMessage instruction: Insufficient accounts provided. Expected at least 4 accounts (messageAccount, sender, recipient, systemProgram)');
   }
   let accountIndex = 0;
   const getNextAccount = () => {

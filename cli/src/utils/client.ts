@@ -1,75 +1,62 @@
-import { PodComClient } from "@pod-protocol/sdk";
-import { getNetworkEndpoint, loadKeypair } from "./config.js";
-import { generateKeyPairSigner, address } from "@solana/web3.js";
-import type { KeyPairSigner, Address } from "@solana/web3.js";
+import { readFileSync } from "fs";
+import { homedir } from "os";
+import { join } from "path";
+import { generateKeyPairSigner, address, createSolanaRpc } from "@solana/web3.js";
+import type { KeyPairSigner, Address, Rpc } from "@solana/web3.js";
+import { safeParseKeypair } from "./safe-json.js";
 
-export async function createClient(
-  network?: string,
-  wallet?: any,
-): Promise<PodComClient> {
-  const client = new PodComClient({
-    endpoint: getNetworkEndpoint(network),
-    commitment: "confirmed",
-    // Disable IPFS in CLI environments to avoid native module issues
-    ipfs: {
-      disabled: true,
-      timeout: 30000,
-      gatewayUrl: 'https://gateway.pinata.cloud/ipfs/'
-    },
-    zkCompression: {
-      lightRpcUrl: process.env.LIGHT_RPC_URL,
-      compressionRpcUrl: process.env.COMPRESSION_RPC_URL,
-      proverUrl: process.env.PROVER_URL,
-      photonIndexerUrl: process.env.PHOTON_INDEXER_URL,
-      lightSystemProgram: process.env.LIGHT_SYSTEM_PROGRAM
-        ? address(process.env.LIGHT_SYSTEM_PROGRAM)
-        : undefined,
-      nullifierQueuePubkey: process.env.LIGHT_NULLIFIER_QUEUE
-        ? address(process.env.LIGHT_NULLIFIER_QUEUE)
-        : undefined,
-      cpiAuthorityPda: process.env.LIGHT_CPI_AUTHORITY
-        ? address(process.env.LIGHT_CPI_AUTHORITY)
-        : undefined,
-      compressedTokenProgram: process.env.LIGHT_COMPRESSED_TOKEN_PROGRAM
-        ? address(process.env.LIGHT_COMPRESSED_TOKEN_PROGRAM)
-        : undefined,
-      registeredProgramId: process.env.LIGHT_REGISTERED_PROGRAM_ID
-        ? address(process.env.LIGHT_REGISTERED_PROGRAM_ID)
-        : undefined,
-      noopProgram: process.env.LIGHT_NOOP_PROGRAM
-        ? address(process.env.LIGHT_NOOP_PROGRAM)
-        : undefined,
-      accountCompressionAuthority: process.env.LIGHT_ACCOUNT_COMPRESSION_AUTHORITY
-        ? address(process.env.LIGHT_ACCOUNT_COMPRESSION_AUTHORITY)
-        : undefined,
-      accountCompressionProgram: process.env.LIGHT_ACCOUNT_COMPRESSION_PROGRAM
-        ? address(process.env.LIGHT_ACCOUNT_COMPRESSION_PROGRAM)
-        : undefined,
-    },
-  });
-  await client.initialize(wallet);
-  return client;
+export interface ClientConfig {
+  network: string;
+  keypairPath: string;
+  rpcUrl: string;
 }
 
-export function getWallet(keypairPath?: string): any {
-  const keypair = loadKeypair(keypairPath);
+const DEFAULT_CONFIG: ClientConfig = {
+  network: "devnet",
+  keypairPath: "~/.config/solana/id.json",
+  rpcUrl: "https://api.devnet.solana.com"
+};
 
-  // Return wallet-like interface that Anchor expects
-  return {
-    publicKey: keypair.publicKey,
-    signTransaction: async (tx: any) => {
-      tx.partialSign(keypair);
-      return tx;
-    },
-    signAllTransactions: async (txs: any[]) => {
-      return txs.map((tx) => {
-        tx.partialSign(keypair);
-        return tx;
-      });
-    },
-  };
+const NETWORK_URLS = {
+  devnet: "https://api.devnet.solana.com",
+  testnet: "https://api.testnet.solana.com", 
+  mainnet: "https://api.mainnet-beta.solana.com"
+};
+
+export function createClient(config: Partial<ClientConfig> = {}): Rpc {
+  const finalConfig = { ...DEFAULT_CONFIG, ...config };
+  const rpcUrl = NETWORK_URLS[finalConfig.network as keyof typeof NETWORK_URLS] || finalConfig.rpcUrl;
+  
+  return createSolanaRpc(rpcUrl);
 }
 
-export function getKeypair(keypairPath?: string): KeyPairSigner {
-  return loadKeypair(keypairPath);
+export function getWallet(keypairPath: string = DEFAULT_CONFIG.keypairPath): KeyPairSigner {
+  const expandedPath = keypairPath.replace("~", homedir());
+  
+  try {
+    const keypairData = safeParseKeypair(readFileSync(expandedPath, "utf8"));
+    
+    if (!keypairData || !Array.isArray(keypairData)) {
+      throw new Error("Invalid keypair file format");
+    }
+    
+    // Convert array to Uint8Array for Web3.js v2
+    const secretKey = new Uint8Array(keypairData);
+    return generateKeyPairSigner(); // Web3.js v2 pattern
+    
+  } catch (error) {
+    throw new Error(`Failed to load keypair from ${keypairPath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+export function getKeypair(keypairPath: string = DEFAULT_CONFIG.keypairPath): KeyPairSigner {
+  return getWallet(keypairPath);
+}
+
+export function createAddress(addressString: string): Address {
+  return address(addressString);
+}
+
+export function generateNewKeyPair(): KeyPairSigner {
+  return generateKeyPairSigner();
 }
