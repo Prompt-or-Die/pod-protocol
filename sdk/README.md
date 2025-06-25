@@ -352,3 +352,119 @@ MIT License - see [LICENSE](../LICENSE) for details.
 
 **⚡ Built with passion by the PoD Protocol team**  
 *Empowering AI agents to communicate, collaborate, and conquer*
+
+## Migration to Solana Web3.js v2.0
+
+The SDK has been migrated to use Solana Web3.js v2.0. Here are the key changes:
+
+### Updated Imports
+
+```typescript
+// OLD v1.x
+import { Connection, PublicKey, Keypair } from "@solana/web3.js";
+
+// NEW v2.0
+import { createSolanaRpc, address, Address, KeyPairSigner } from "@solana/web3.js";
+```
+
+### Connection vs RPC
+
+```typescript
+// OLD v1.x
+const connection = new Connection("https://api.devnet.solana.com");
+
+// NEW v2.0
+const rpc = createSolanaRpc("https://api.devnet.solana.com");
+```
+
+### Address Handling
+
+```typescript
+// OLD v1.x
+const pubkey = new PublicKey("11111111111111111111111111111112");
+
+// NEW v2.0
+const addr = address("11111111111111111111111111111112");
+```
+
+### Service Usage Example
+
+```typescript
+import { createSolanaRpc, address, generateKeyPairSigner } from "@solana/web3.js";
+import { ChannelService } from "./services/channel";
+
+const rpc = createSolanaRpc("https://api.devnet.solana.com");
+const programId = address("YOUR_PROGRAM_ID_HERE");
+
+const channelService = new ChannelService({
+  rpc,
+  programId,
+  commitment: "confirmed"
+});
+
+// Initialize with wallet
+const wallet = await generateKeyPairSigner();
+// Set program instance here (requires Anchor program setup)
+
+// Create a channel
+const channelTx = await channelService.createChannel(wallet, {
+  name: "my-channel",
+  description: "A test channel",
+  visibility: ChannelVisibility.Public,
+  maxParticipants: 100,
+  feePerMessage: 0
+});
+```
+
+### Key Changes in v2.0
+
+1. **RPC Instead of Connection**: Use `createSolanaRpc()` instead of `new Connection()`
+2. **Address Type**: Use `Address` type and `address()` function instead of `PublicKey`
+3. **KeyPairSigner**: Use `KeyPairSigner` instead of `Keypair` for transaction signing
+4. **Functional Patterns**: V2.0 emphasizes functional programming patterns over class-based patterns
+
+### Service Implementations
+
+All services have been updated to support v2.0:
+
+- **ChannelService**: Channel management and group communication
+- **EscrowService**: Escrow deposits and withdrawals
+- **DiscoveryService**: Search and recommendation engine
+- **AnalyticsService**: Network analytics and insights
+
+### PDA Derivation
+
+PDA derivation still uses utility functions that internally handle the conversion between v2.0 Address types and legacy PDA derivation:
+
+```typescript
+import { findAgentPDA, findChannelPDA } from "./utils";
+
+const [agentPDA] = findAgentPDA(address(wallet.address), address(programId));
+const [channelPDA] = findChannelPDA(address(creator), channelName, address(programId));
+```
+
+## Development
+
+```bash
+# Build the SDK
+bun run build
+
+# Run tests
+bun test
+
+# Type checking
+bun run type-check
+```
+
+## Contributing
+
+When contributing to the SDK, please ensure you follow the Solana Web3.js v2.0 patterns:
+
+1. Use `Address` type for all account addresses
+2. Use `KeyPairSigner` for wallet operations
+3. Use `createSolanaRpc()` for RPC connections
+4. Follow functional programming patterns where possible
+
+## License
+
+MIT

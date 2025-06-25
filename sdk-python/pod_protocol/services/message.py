@@ -2,6 +2,7 @@
 Message service for PoD Protocol Python SDK
 """
 
+import time
 from typing import Optional, List, Dict, Any
 from solders.pubkey import Pubkey
 from solders.keypair import Keypair
@@ -34,7 +35,9 @@ class MessageService(BaseService):
         payload_hash = hash_payload(options.content)
         message_pda, _ = find_message_pda(wallet.pubkey(), options.recipient, payload_hash, self.program_id)
         expiration_days = options.expiration_days if hasattr(options, 'expiration_days') else 7
-        expires_at = 0  # TODO: Calculate expiration timestamp
+        
+        # Calculate expiration timestamp (current time + expiration days in seconds)
+        expires_at = int(time.time()) + (expiration_days * 24 * 60 * 60)
         tx = await self.program.rpc["send_message"](
             list(payload_hash),
             options.content,

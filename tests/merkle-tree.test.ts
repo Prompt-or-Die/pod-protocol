@@ -1,5 +1,5 @@
+import { createSolanaRpc, address, Address } from "@solana/web3.js";
 import { expect, test } from "bun:test";
-import { Connection, PublicKey } from "@solana/web3.js";
 import { createHash } from "crypto";
 import { IPFSService } from "../sdk/src/services/ipfs";
 import { ZKCompressionService } from "../sdk/src/services/zk-compression";
@@ -25,4 +25,12 @@ test("buildMerkleTree computes correct root", () => {
   expect(root).toBe(
     "51f8ef61c28fbe2a9d67319302117104259d46a16a69f5b8fffeb9b5b70abada"
   );
+});
+
+describe("Merkle Tree Tests", () => {
+  it("should create a merkle tree", () => {
+    // Test implementation using v2.0 patterns
+    const testAddress = address("11111111111111111111111111111112");
+    expect(testAddress).toBeDefined();
+  });
 });

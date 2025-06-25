@@ -1,0 +1,466 @@
+//! # PoD Protocol Cryptographic Utilities
+//!
+//! This crate provides cryptographic utilities and secure memory management
+//! for the PoD Protocol Rust SDK.
+
+#![deny(missing_docs)]
+#![warn(clippy::all)]
+
+use thiserror::Error;
+use std::pin::Pin;
+
+pub use blake3;
+pub use ed25519_dalek;
+pub use rand;
+pub use sha2;
+
+/// Cryptographic error types
+#[derive(Debug, Error)]
+pub enum CryptoError {
+    /// Invalid key size
+    #[error("Invalid key size: expected {expected}, got {actual}")]
+    InvalidKeySize { expected: usize, actual: usize },
+    
+    /// Invalid signature
+    #[error("Invalid signature")]
+    InvalidSignature,
+    
+    /// Invalid public key
+    #[error("Invalid public key")]
+    InvalidPublicKey,
+    
+    /// Invalid private key
+    #[error("Invalid private key")]
+    InvalidPrivateKey,
+    
+    /// Random number generation failed
+    #[error("Random number generation failed: {0}")]
+    RngError(String),
+    
+    /// Buffer size validation failed
+    #[error("Invalid buffer size: {0}")]
+    InvalidBufferSize(usize),
+}
+
+/// Maximum size for secure buffers (64KB)
+pub const MAX_SECURE_BUFFER_SIZE: usize = 64 * 1024;
+
+/// Secure memory buffer that automatically zeros on drop
+pub struct SecureBuffer {
+    data: Vec<u8>,
+    _pin: std::marker::PhantomPinned,
+}
+
+impl SecureBuffer {
+    /// Create a new secure buffer with the specified size
+    pub fn new(size: usize) -> Result<Pin<Box<Self>>, CryptoError> {
+        if size == 0 || size > MAX_SECURE_BUFFER_SIZE {
+            return Err(CryptoError::InvalidBufferSize(size));
+        }
+        
+        let mut data = vec![0u8; size];
+        
+        // Initialize with secure random if requested
+        unsafe {
+            std::ptr::write_volatile(data.as_mut_ptr(), 0);
+        }
+        
+        let buffer = Self {
+            data,
+            _pin: std::marker::PhantomPinned,
+        };
+        
+        Ok(Box::pin(buffer))
+    }
+    
+    /// Create a secure buffer from existing data
+    pub fn from_slice(data: &[u8]) -> Result<Pin<Box<Self>>, CryptoError> {
+        if data.len() > MAX_SECURE_BUFFER_SIZE {
+            return Err(CryptoError::InvalidBufferSize(data.len()));
+        }
+        
+        let buffer = Self {
+            data: data.to_vec(),
+            _pin: std::marker::PhantomPinned,
+        };
+        
+        Ok(Box::pin(buffer))
+    }
+    
+    /// Get an immutable slice of the buffer
+    pub fn as_slice(&self) -> &[u8] {
+        &self.data
+    }
+    
+    /// Get a mutable slice of the buffer
+    pub fn as_mut_slice(&mut self) -> &mut [u8] {
+        &mut self.data
+    }
+    
+    /// Get the length of the buffer
+    pub fn len(&self) -> usize {
+        self.data.len()
+    }
+    
+    /// Check if the buffer is empty
+    pub fn is_empty(&self) -> bool {
+        self.data.is_empty()
+    }
+    
+    /// Constant-time comparison with another buffer
+    pub fn secure_compare(&self, other: &[u8]) -> bool {
+        if self.data.len() != other.len() {
+            return false;
+        }
+        
+        // Constant-time comparison to prevent timing attacks
+        self.data
+            .iter()
+            .zip(other.iter())
+            .fold(0u8, |acc, (a, b)| acc | (a ^ b)) == 0
+    }
+    
+    /// Fill the buffer with secure random bytes
+    pub fn fill_random(&mut self) -> Result<(), CryptoError> {
+        use rand::RngCore;
+        let mut rng = rand::thread_rng();
+        rng.fill_bytes(&mut self.data);
+        Ok(())
+    }
+    
+    /// Clear the buffer (set all bytes to zero)
+    pub fn clear(&mut self) {
+        for byte in &mut self.data {
+            unsafe {
+                std::ptr::write_volatile(byte, 0);
+            }
+        }
+    }
+}
+
+impl std::fmt::Debug for SecureBuffer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SecureBuffer")
+            .field("len", &self.data.len())
+            .field("data", &"[REDACTED]")
+            .finish()
+    }
+}
+
+/// Secure random number generator
+pub struct SecureRng {
+    rng: rand::rngs::ThreadRng,
+}
+
+impl SecureRng {
+    /// Create a new secure RNG
+    pub fn new() -> Result<Self, CryptoError> {
+        Ok(Self {
+            rng: rand::thread_rng(),
+        })
+    }
+    
+    /// Fill a buffer with random bytes
+    pub fn fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), CryptoError> {
+        use rand::RngCore;
+        self.rng.fill_bytes(dest);
+        Ok(())
+    }
+    
+    /// Generate a random u64
+    pub fn next_u64(&mut self) -> u64 {
+        use rand::RngCore;
+        self.rng.next_u64()
+    }
+    
+    /// Generate random bytes into a new secure buffer
+    pub fn generate_bytes(&mut self, size: usize) -> Result<Pin<Box<SecureBuffer>>, CryptoError> {
+        let mut buffer = SecureBuffer::new(size)?;
+        // Safety: We just created the buffer and have exclusive access
+        unsafe {
+            let buffer_mut = Pin::get_unchecked_mut(buffer.as_mut());
+            self.fill_bytes(buffer_mut.as_mut_slice())?;
+        }
+        Ok(buffer)
+    }
+}
+
+impl Default for SecureRng {
+    fn default() -> Self {
+        Self::new().expect("Failed to initialize secure RNG")
+    }
+}
+
+/// Blake3 hasher wrapper
+pub struct Hash {
+    hasher: blake3::Hasher,
+}
+
+impl Hash {
+    /// Create a new hasher
+    pub fn new() -> Self {
+        Self {
+            hasher: blake3::Hasher::new(),
+        }
+    }
+    
+    /// Create a new keyed hasher
+    pub fn new_keyed(key: &[u8; 32]) -> Self {
+        Self {
+            hasher: blake3::Hasher::new_keyed(key),
+        }
+    }
+    
+    /// Add data to the hash
+    pub fn update(&mut self, data: &[u8]) {
+        self.hasher.update(data);
+    }
+    
+    /// Finalize the hash and return the result
+    pub fn finalize(self) -> [u8; 32] {
+        self.hasher.finalize().into()
+    }
+    
+    /// Compute hash of data in one call
+    pub fn hash(data: &[u8]) -> [u8; 32] {
+        blake3::hash(data).into()
+    }
+    
+    /// Compute keyed hash of data in one call
+    pub fn hash_keyed(key: &[u8; 32], data: &[u8]) -> [u8; 32] {
+        blake3::keyed_hash(key, data).into()
+    }
+}
+
+impl Default for Hash {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Ed25519 signature utilities
+pub struct Signature;
+
+impl Signature {
+    /// Sign a message with a private key
+    pub fn sign(private_key: &[u8; 32], message: &[u8]) -> Result<[u8; 64], CryptoError> {
+        use ed25519_dalek::{Signer, Keypair, SecretKey};
+        
+        let secret_key = SecretKey::from_bytes(private_key)
+            .map_err(|_| CryptoError::InvalidPrivateKey)?;
+        let public_key = ed25519_dalek::PublicKey::from(&secret_key);
+        let keypair = Keypair { secret: secret_key, public: public_key };
+        let signature = keypair.sign(message);
+        
+        Ok(signature.to_bytes())
+    }
+    
+    /// Verify a signature
+    pub fn verify(
+        public_key: &[u8; 32],
+        message: &[u8],
+        signature: &[u8; 64],
+    ) -> bool {
+        use ed25519_dalek::{Verifier, PublicKey};
+        
+        let public_key = match PublicKey::from_bytes(public_key) {
+            Ok(key) => key,
+            Err(_) => return false,
+        };
+        
+        let signature = match ed25519_dalek::Signature::from_bytes(signature) {
+            Ok(sig) => sig,
+            Err(_) => return false,
+        };
+        
+        public_key.verify(message, &signature).is_ok()
+    }
+    
+    /// Generate a new keypair
+    pub fn generate_keypair() -> Result<([u8; 32], [u8; 32]), CryptoError> {
+        use ed25519_dalek::Keypair;
+        use rand_core::OsRng;
+        
+        let mut csprng = OsRng;
+        let keypair = Keypair::generate(&mut csprng);
+        
+        Ok((keypair.secret.to_bytes(), keypair.public.to_bytes()))
+    }
+    
+    /// Get public key from private key
+    pub fn public_key_from_private(private_key: &[u8; 32]) -> Result<[u8; 32], CryptoError> {
+        use ed25519_dalek::{SecretKey, PublicKey};
+        
+        let secret_key = SecretKey::from_bytes(private_key)
+            .map_err(|_| CryptoError::InvalidPrivateKey)?;
+        let public_key = PublicKey::from(&secret_key);
+        
+        Ok(public_key.to_bytes())
+    }
+}
+
+/// Key derivation utilities
+pub struct KeyDerivation;
+
+impl KeyDerivation {
+    /// Derive a key using HKDF-SHA256
+    pub fn hkdf_sha256(
+        ikm: &[u8],        // Input key material
+        salt: Option<&[u8]>, // Optional salt
+        info: &[u8],       // Context info
+        length: usize,     // Output length
+    ) -> Result<Vec<u8>, CryptoError> {
+        use sha2::Sha256;
+        use hkdf::Hkdf;
+        
+        let hk = Hkdf::<Sha256>::new(salt, ikm);
+        let mut okm = vec![0u8; length];
+        hk.expand(info, &mut okm)
+            .map_err(|_| CryptoError::RngError("HKDF expansion failed".to_string()))?;
+        
+        Ok(okm)
+    }
+    
+    /// Derive multiple keys from a master key
+    pub fn derive_multiple_keys(
+        master_key: &[u8; 32],
+        salt: &[u8],
+        contexts: &[&[u8]],
+        key_length: usize,
+    ) -> Result<Vec<Vec<u8>>, CryptoError> {
+        let mut keys = Vec::with_capacity(contexts.len());
+        
+        for context in contexts {
+            let key = Self::hkdf_sha256(master_key, Some(salt), context, key_length)?;
+            keys.push(key);
+        }
+        
+        Ok(keys)
+    }
+}
+
+/// Utility functions
+pub mod utils {
+    use super::*;
+    
+    /// Generate secure random salt
+    pub fn generate_salt(size: usize) -> Result<Vec<u8>, CryptoError> {
+        let mut rng = SecureRng::new()?;
+        let mut salt = vec![0u8; size];
+        rng.fill_bytes(&mut salt)?;
+        Ok(salt)
+    }
+    
+    /// Constant-time comparison of two byte slices
+    pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
+        if a.len() != b.len() {
+            return false;
+        }
+        
+        a.iter()
+            .zip(b.iter())
+            .fold(0u8, |acc, (x, y)| acc | (x ^ y)) == 0
+    }
+    
+    /// Securely overwrite memory
+    pub fn secure_zero(data: &mut [u8]) {
+        for byte in data {
+            unsafe {
+                std::ptr::write_volatile(byte, 0);
+            }
+        }
+    }
+}
+
+use hkdf;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_secure_buffer_creation() {
+        let buffer = SecureBuffer::new(32).unwrap();
+        assert_eq!(buffer.len(), 32);
+        assert_eq!(buffer.as_slice(), &[0u8; 32]);
+    }
+
+    #[test]
+    fn test_secure_buffer_from_slice() {
+        let data = b"Hello, World!";
+        let buffer = SecureBuffer::from_slice(data).unwrap();
+        assert_eq!(buffer.as_slice(), data);
+    }
+
+    #[test]
+    fn test_secure_buffer_comparison() {
+        let data1 = b"Hello, World!";
+        let data2 = b"Hello, World!";
+        let data3 = b"Hello, Rust!";
+        
+        let buffer1 = SecureBuffer::from_slice(data1).unwrap();
+        let buffer2 = SecureBuffer::from_slice(data2).unwrap();
+        
+        assert!(buffer1.secure_compare(data2));
+        assert!(!buffer1.secure_compare(data3));
+        assert!(buffer2.secure_compare(data1));
+    }
+
+    #[test]
+    fn test_hash_functionality() {
+        let data = b"Hello, World!";
+        let hash1 = Hash::hash(data);
+        let hash2 = Hash::hash(data);
+        
+        // Same input should produce same hash
+        assert_eq!(hash1, hash2);
+        
+        // Different input should produce different hash
+        let hash3 = Hash::hash(b"Hello, Rust!");
+        assert_ne!(hash1, hash3);
+    }
+
+    #[test]
+    fn test_signature_roundtrip() {
+        let message = b"Hello, World!";
+        let (private_key, public_key) = Signature::generate_keypair().unwrap();
+        
+        let signature = Signature::sign(&private_key, message).unwrap();
+        assert!(Signature::verify(&public_key, message, &signature));
+        
+        // Wrong message should fail verification
+        assert!(!Signature::verify(&public_key, b"Wrong message", &signature));
+    }
+
+    #[test]
+    fn test_public_key_derivation() {
+        let (private_key, expected_public_key) = Signature::generate_keypair().unwrap();
+        let derived_public_key = Signature::public_key_from_private(&private_key).unwrap();
+        
+        assert_eq!(expected_public_key, derived_public_key);
+    }
+
+    #[test]
+    fn test_secure_rng() {
+        let mut rng = SecureRng::new().unwrap();
+        let mut buffer1 = [0u8; 32];
+        let mut buffer2 = [0u8; 32];
+        
+        rng.fill_bytes(&mut buffer1).unwrap();
+        rng.fill_bytes(&mut buffer2).unwrap();
+        
+        // Should be very unlikely to generate the same random data
+        assert_ne!(buffer1, buffer2);
+    }
+
+    #[test]
+    fn test_constant_time_comparison() {
+        let data1 = b"Hello, World!";
+        let data2 = b"Hello, World!";
+        let data3 = b"Hello, Rust!";
+        
+        assert!(utils::constant_time_eq(data1, data2));
+        assert!(!utils::constant_time_eq(data1, data3));
+        assert!(!utils::constant_time_eq(data1, b"Short"));
+    }
+} 

@@ -1,4 +1,4 @@
-import { PublicKey, Signer } from "@solana/web3.js";
+import { Address, KeyPairSigner } from "@solana/web3.js";
 import { BaseService } from "./base";
 import { DepositEscrowOptions, WithdrawEscrowOptions, EscrowAccount } from "../types";
 /**
@@ -8,19 +8,19 @@ export declare class EscrowService extends BaseService {
     /**
      * Deposit funds to escrow for a channel
      */
-    depositEscrow(wallet: Signer, options: DepositEscrowOptions): Promise<string>;
+    depositEscrow(wallet: KeyPairSigner, options: DepositEscrowOptions): Promise<string>;
     /**
      * Withdraw funds from escrow
      */
-    withdrawEscrow(wallet: Signer, options: WithdrawEscrowOptions): Promise<string>;
+    withdrawEscrow(wallet: KeyPairSigner, options: WithdrawEscrowOptions): Promise<string>;
     /**
      * Get escrow account data
      */
-    getEscrow(channel: PublicKey, depositor: PublicKey): Promise<EscrowAccount | null>;
+    getEscrow(channel: Address, depositor: Address): Promise<EscrowAccount | null>;
     /**
      * Get all escrow accounts by depositor
      */
-    getEscrowsByDepositor(depositor: PublicKey, limit?: number): Promise<EscrowAccount[]>;
+    getEscrowsByDepositor(depositor: Address, limit?: number): Promise<EscrowAccount[]>;
     private convertEscrowAccountFromProgram;
 }
 //# sourceMappingURL=escrow.d.ts.map

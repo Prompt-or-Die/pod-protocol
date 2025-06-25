@@ -1,10 +1,10 @@
 import { PodComClient } from "@pod-protocol/sdk";
-import { Keypair } from "@solana/web3.js";
+import type { KeyPairSigner } from "@solana/web3.js";
 import { GlobalOptions } from "../../utils/shared.js";
 
 export interface CommandContext {
   client: PodComClient;
-  wallet: Keypair;
+  wallet: KeyPairSigner;
   globalOpts: GlobalOptions;
 }
 

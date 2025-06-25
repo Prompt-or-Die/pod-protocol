@@ -1,12 +1,12 @@
-import { Connection, PublicKey, Commitment } from "@solana/web3.js";
+import { Rpc, Address, Commitment } from "@solana/web3.js";
 import anchor from "@coral-xyz/anchor";
 type AnchorProgram = anchor.Program<any>;
 /**
  * Configuration object for BaseService constructor
  */
 export interface BaseServiceConfig {
-    connection: Connection;
-    programId: PublicKey;
+    rpc: Rpc<any>;
+    programId: Address;
     commitment: Commitment;
     program?: AnchorProgram;
 }
@@ -14,8 +14,8 @@ export interface BaseServiceConfig {
  * Base service class with common functionality for all services
  */
 export declare abstract class BaseService {
-    protected connection: Connection;
-    protected programId: PublicKey;
+    protected rpc: Rpc<any>;
+    protected programId: Address;
     protected commitment: Commitment;
     protected program?: AnchorProgram;
     protected idl?: any;

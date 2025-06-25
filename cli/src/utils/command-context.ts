@@ -1,5 +1,5 @@
 import { PodComClient } from "@pod-protocol/sdk";
-import { Keypair } from "@solana/web3.js";
+import type { KeyPairSigner } from "@solana/web3.js";
 import { EnhancedErrorHandler } from "./enhanced-error-handler.js";
 import { OutputFormatter } from "./output-formatter.js";
 import { showBanner, showMiniHeader } from "./branding.js";
@@ -37,7 +37,7 @@ export interface DiagnosticInfo {
 
 export class CommandContext {
   public readonly client: PodComClient;
-  public readonly wallet: Keypair;
+  public readonly wallet: KeyPairSigner;
   public readonly options: CommandOptions;
   public readonly errorHandler: EnhancedErrorHandler;
   public readonly formatter: OutputFormatter;
@@ -47,7 +47,7 @@ export class CommandContext {
 
   constructor(
     client: PodComClient,
-    wallet: Keypair,
+    wallet: KeyPairSigner,
     options: CommandOptions = {},
     command: string = "unknown",
   ) {
@@ -71,7 +71,7 @@ export class CommandContext {
       timestamp: new Date().toISOString(),
       command,
       network: options.network || "unknown",
-      walletAddress: wallet.publicKey.toString(),
+      walletAddress: wallet.address || 'unknown',
       clientVersion: this.getClientVersion(),
       nodeVersion: process.version,
       platform: `${process.platform} ${process.arch}`,
@@ -339,7 +339,7 @@ export class CommandContext {
  */
 export async function createCommandContext(
   client: PodComClient,
-  wallet: Keypair,
+  wallet: KeyPairSigner,
   options: CommandOptions,
   command: string,
 ): Promise<CommandContext> {

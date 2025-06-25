@@ -1,9 +1,9 @@
 import {
   Address,
   KeyPairSigner,
-  GetProgramAccountsFilter,
-  SystemProgram,
 } from "@solana/web3.js";
+import anchor from "@coral-xyz/anchor";
+const { web3 } = anchor;
 // Removed unused anchor import
 import { BaseService } from "./base";
 import {
@@ -28,13 +28,13 @@ import {
  */
 export class MessageService extends BaseService {
   async sendMessage(
-    wallet: Signer,
+    wallet: KeyPairSigner,
     options: SendMessageOptions,
   ): Promise<string> {
     const program = this.ensureInitialized();
 
     // Derive sender agent PDA
-    const [senderAgentPDA] = findAgentPDA(wallet.publicKey, this.programId);
+    const [senderAgentPDA] = findAgentPDA(wallet.address, this.programId);
 
     // Hash the payload
     const payloadHash = await hashPayload(options.payload);
@@ -64,8 +64,8 @@ export class MessageService extends BaseService {
         .accounts({
           messageAccount: messagePDA,
           senderAgent: senderAgentPDA,
-          signer: wallet.publicKey,
-          systemProgram: SystemProgram.programId,
+          signer: wallet.address,
+          systemProgram: "11111111111111111111111111111112", // System Program ID
         })
         .signers([wallet])
         .rpc({ commitment: this.commitment });
@@ -75,8 +75,8 @@ export class MessageService extends BaseService {
   }
 
   async updateMessageStatus(
-    wallet: Signer,
-    messagePDA: PublicKey,
+    wallet: KeyPairSigner,
+    messagePDA: Address,
     newStatus: MessageStatus,
   ): Promise<string> {
     return retry(async () => {
@@ -85,7 +85,7 @@ export class MessageService extends BaseService {
         .updateMessageStatus(this.convertMessageStatus(newStatus))
         .accounts({
           messageAccount: messagePDA,
-          authority: wallet.publicKey,
+          authority: wallet.address,
         })
         .signers([wallet])
         .rpc({ commitment: this.commitment });
@@ -94,7 +94,7 @@ export class MessageService extends BaseService {
     });
   }
 
-  async getMessage(messagePDA: PublicKey): Promise<MessageAccount | null> {
+  async getMessage(messagePDA: Address): Promise<MessageAccount | null> {
     try {
       const account = await this.getAccount("messageAccount").fetch(messagePDA);
       return this.convertMessageAccountFromProgram(account, messagePDA);
@@ -107,16 +107,16 @@ export class MessageService extends BaseService {
   }
 
   async getAgentMessages(
-    agentPublicKey: PublicKey,
+    agentPublicKey: Address,
     limit: number = 50,
     statusFilter?: MessageStatus,
   ): Promise<MessageAccount[]> {
     try {
-      const filters: GetProgramAccountsFilter[] = [
+      const filters: any[] = [
         {
           memcmp: {
             offset: 8 + 32,
-            bytes: agentPublicKey.toBase58(),
+            bytes: agentPublicKey, // Address can be used directly
           },
         },
       ];
@@ -131,15 +131,12 @@ export class MessageService extends BaseService {
         });
       }
 
-      const accounts = await this.connection.getProgramAccounts(
-        this.programId,
-        {
-          filters,
-          commitment: this.commitment,
-        },
-      );
+      const result = await this.rpc.getProgramAccounts(this.programId, {
+        filters,
+        commitment: this.commitment,
+      }).send();
 
-      return accounts.slice(0, limit).map((acc) => {
+      return result.value.slice(0, limit).map((acc) => {
         const account = this.ensureInitialized().coder.accounts.decode(
           "messageAccount",
           acc.account.data,
@@ -192,12 +189,12 @@ export class MessageService extends BaseService {
 
   private convertMessageAccountFromProgram(
     account: any,
-    publicKey: PublicKey,
+    publicKey: Address,
   ): MessageAccount {
     return {
       pubkey: publicKey,
-      sender: new PublicKey(account.sender),
-      recipient: new PublicKey(account.recipient),
+      sender: account.sender as Address,
+      recipient: account.recipient as Address,
       payload: account.payload || account.content || "",
       payloadHash: account.payloadHash,
       messageType: this.convertMessageTypeFromProgram(account.messageType),

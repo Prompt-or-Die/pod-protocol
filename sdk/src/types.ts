@@ -160,6 +160,9 @@ export enum PodComError {
   Unauthorized = 6001,
   MessageExpired = 6002,
   InvalidMessageStatusTransition = 6003,
+  InsufficientAccounts = 6004,
+  InvalidAccountData = 6005,
+  InvalidInstructionData = 6006,
 }
 
 /**

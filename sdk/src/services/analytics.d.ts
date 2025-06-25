@@ -1,4 +1,4 @@
-import { PublicKey } from "@solana/web3.js";
+import { Address } from "@solana/web3.js";
 import { BaseService } from "./base";
 import { AgentAccount, MessageAccount, ChannelAccount, MessageStatus, ChannelVisibility } from "../types";
 /**
@@ -18,7 +18,7 @@ export interface MessageAnalytics {
     averageMessageSize: number;
     messagesPerDay: number;
     topSenders: Array<{
-        agent: PublicKey;
+        agent: Address;
         messageCount: number;
     }>;
     recentMessages: MessageAccount[];
@@ -71,6 +71,26 @@ export declare class AnalyticsService extends BaseService {
      * Generate analytics report
      */
     generateReport(): Promise<string>;
+    /**
+     * Track a user action
+     */
+    trackAction(user: Address, action: string, metadata?: any): Promise<void>;
+    /**
+     * Get usage statistics for a user
+     */
+    getUserStats(user: Address): Promise<any>;
+    /**
+     * Get global protocol statistics
+     */
+    getGlobalStats(): Promise<any>;
+    /**
+     * Track message delivery
+     */
+    trackMessageDelivery(sender: Address, recipient: Address, messageType: string): Promise<void>;
+    /**
+     * Get delivery statistics
+     */
+    getDeliveryStats(user?: Address): Promise<any>;
     private getDiscriminator;
     private convertMessageTypeFromProgram;
     private convertMessageStatusFromProgram;

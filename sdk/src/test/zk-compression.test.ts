@@ -1,14 +1,14 @@
 import { describe, it, expect, afterAll } from '@jest/globals';
-import { Address, createSolanaRpc, TransactionInstruction, generateKeyPairSigner } from "@solana/web3.js";
+import { Address, createSolanaRpc, generateKeyPairSigner, address } from "@solana/web3.js";
 
 // Mock ZKCompressionService to avoid heavy dependencies
 class MockZKCompressionService {
   async createCompressionInstruction() {
-    return new TransactionInstruction({
+    return {
       keys: [],
-      programId: new PublicKey("11111111111111111111111111111111"),
-      data: Buffer.from([])
-    });
+      programId: address("11111111111111111111111111111111"),
+      data: new Uint8Array([])
+    };
   }
   
   async processBatch() {
@@ -22,8 +22,8 @@ describe("ZKCompressionService", () => {
   it("should create compression instruction", async () => {
     const instruction = await service.createCompressionInstruction();
     
-    expect(instruction).toBeInstanceOf(TransactionInstruction);
-    expect(instruction.programId.toString()).toBe("11111111111111111111111111111111");
+    expect(instruction).toBeDefined();
+    expect(instruction.programId).toBe("11111111111111111111111111111111");
   });
 
   it("should process batch with compression", async () => {

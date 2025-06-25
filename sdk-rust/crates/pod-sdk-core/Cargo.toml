@@ -23,10 +23,13 @@ tokio-stream = { workspace = true }
 tokio-util = { workspace = true }
 futures = { workspace = true }
 
-# Solana
+# Solana - Web3.js v2.0 compatible
 solana-sdk = { workspace = true }
 solana-client = { workspace = true }
 solana-program = { workspace = true }
+solana-rpc-client = { workspace = true }
+solana-rpc-client-api = { workspace = true }
+solana-account-decoder = { workspace = true }
 anchor-client = { workspace = true }
 anchor-lang = { workspace = true }
 
@@ -77,11 +80,11 @@ dashmap = { workspace = true }
 # Memory management
 lru = { workspace = true }
 
-# Optional features
-ipfs-api-backend-hyper = { workspace = true, optional = true }
-light-client = { workspace = true, optional = true }
-light-utils = { workspace = true, optional = true }
-pprof = { workspace = true, optional = true }
+# Optional features (commented out to avoid conflicts for initial Web3.js v2.0 setup)
+# ipfs-api-backend-hyper = { workspace = true, optional = true }
+# light-client = { workspace = true, optional = true }
+# light-utils = { workspace = true, optional = true }
+# pprof = { workspace = true, optional = true }
 
 # WASM support
 wasm-bindgen = { workspace = true, optional = true }
@@ -116,22 +119,21 @@ wasm = [
     "wasm-bindgen",
     "wasm-bindgen-futures",
     "js-sys", 
-    "web-sys",
-    "reqwest/wasm"
+    "web-sys"
 ]
 
-# Optional functionality
-compression = ["light-client", "light-utils"]
-ipfs = ["ipfs-api-backend-hyper"]
-profiling = ["pprof"]
+# Optional functionality (disabled for Web3.js v2.0 initial setup)
+# compression = ["light-client", "light-utils"]
+# ipfs = ["ipfs-api-backend-hyper"]
+# profiling = ["pprof"]
 
 # Testing features
-testing = ["mockall", "wiremock", "pretty_assertions"]
+testing = []
 
-[[bench]]
-name = "performance"
-harness = false
-required-features = ["testing"]
+# [[bench]]
+# name = "performance"
+# harness = false
+# required-features = ["testing"]
 
 [package.metadata.docs.rs]
 features = ["native", "compression", "ipfs"]

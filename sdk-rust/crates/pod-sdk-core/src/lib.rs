@@ -43,34 +43,38 @@
 #![warn(clippy::all)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-// Public exports - Core client
-pub use client::{PodComClient};
-pub use config::{PodComConfig, CommitmentLevel, NetworkConfig};
+// Public exports - Core client (Web3.js v2.0 aligned)
+pub use client::{PodComClient, ClientMetrics};
+pub use config::{PodComConfig, NetworkConfig, RetryConfig, RateLimitConfig, CacheConfig, SecurityConfig, PerformanceConfig};
 pub use error::{PodComError, Result};
 
-// Public exports - Services  
-pub use services::{
-    AgentService, MessageService, ChannelService, EscrowService,
-    AnalyticsService, DiscoveryService, IPFSService, ZKCompressionService
-};
+// Public exports - Services (Web3.js v2.0 aligned - to be implemented)
+// pub use services::{
+//     AgentService, MessageService, ChannelService, EscrowService,
+//     AnalyticsService, DiscoveryService, IPFSService, ZKCompressionService
+// };
 
 // Public exports - Types
 pub use pod_sdk_types::*;
 
-// Public exports - Utilities
-pub use utils::{
-    validation::Validator,
-    retry::{RetryConfig, retry_with_backoff},
-    pda::{find_agent_pda, find_channel_pda, find_message_pda},
-};
+// Public exports - Utilities (Web3.js v2.0 aligned - to be implemented)
+// pub use utils::{
+//     validation::Validator,
+//     retry::{RetryConfig, retry_with_backoff},
+//     pda::{find_agent_pda, find_channel_pda, find_message_pda},
+// };
 
-// Re-export commonly used types
+// Re-export commonly used types - Web3.js v2.0 compatible
 pub use solana_sdk::{
     pubkey::Pubkey,
     signature::Signature,
     signer::keypair::Keypair,
     commitment_config::CommitmentConfig,
 };
+
+// New RPC client types for Web3.js v2.0 alignment
+pub use solana_rpc_client::rpc_client::RpcClient;
+pub use solana_rpc_client_api::config::{RpcTransactionConfig, RpcAccountInfoConfig};
 
 pub use anchor_client::Program;
 pub use serde_json::Value as JsonValue;
@@ -113,12 +117,14 @@ pub mod capabilities {
     pub const CUSTOM_BASE: u64 = 1 << 32;
 }
 
-// Internal modules
+// Internal modules - Web3.js v2.0 compatible architecture
 mod client;
 mod config;
 mod error;
-mod services;
-mod utils;
+
+// Service modules (to be implemented)
+// mod services;
+// mod utils;
 
 // Optional feature modules
 #[cfg(feature = "compression")]

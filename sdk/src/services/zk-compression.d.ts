@@ -1,6 +1,6 @@
 import { BaseService, BaseServiceConfig } from './base.js';
 import { IPFSService, IPFSStorageResult } from './ipfs.js';
-import { PublicKey } from '@solana/web3.js';
+import { Address } from '@solana/web3.js';
 /**
  * Compressed account information returned by Light Protocol
  */
@@ -45,44 +45,44 @@ export interface ZKCompressionConfig {
     enableBatching?: boolean;
     /** Batch timeout in milliseconds */
     batchTimeout?: number;
-    /** Light system program public key */
-    lightSystemProgram?: PublicKey;
-    /** Nullifier queue public key */
-    nullifierQueuePubkey?: PublicKey;
+    /** Light system program address */
+    lightSystemProgram?: Address;
+    /** Nullifier queue address */
+    nullifierQueuePubkey?: Address;
     /** CPI authority PDA */
-    cpiAuthorityPda?: PublicKey;
+    cpiAuthorityPda?: Address;
     /** Compressed Token program */
-    compressedTokenProgram?: PublicKey;
+    compressedTokenProgram?: Address;
     /** Registered Program ID */
-    registeredProgramId?: PublicKey;
+    registeredProgramId?: Address;
     /** No-op Program */
-    noopProgram?: PublicKey;
+    noopProgram?: Address;
     /** Account Compression authority */
-    accountCompressionAuthority?: PublicKey;
+    accountCompressionAuthority?: Address;
     /** Account Compression program */
-    accountCompressionProgram?: PublicKey;
+    accountCompressionProgram?: Address;
     /** Compressed token mint address */
-    compressedTokenMint?: PublicKey;
+    compressedTokenMint?: Address;
 }
 /**
  * Compressed message data structure
  */
 export interface CompressedChannelMessage {
-    channel: PublicKey;
-    sender: PublicKey;
+    channel: Address;
+    sender: Address;
     contentHash: string;
     ipfsHash: string;
     messageType: string;
     createdAt: number;
     editedAt?: number;
-    replyTo?: PublicKey;
+    replyTo?: Address;
 }
 /**
  * Compressed participant data structure
  */
 export interface CompressedChannelParticipant {
-    channel: PublicKey;
-    participant: PublicKey;
+    channel: Address;
+    participant: Address;
     joinedAt: number;
     messagesSent: number;
     lastMessageAt: number;
@@ -94,7 +94,7 @@ export interface CompressedChannelParticipant {
 export interface BatchSyncOperation {
     messageHashes: string[];
     timestamp: number;
-    channelId: PublicKey;
+    channelId: Address;
 }
 /**
  * SECURITY WARNING (CRIT-01): ZK Compression Service - EXPERIMENTAL
@@ -128,7 +128,7 @@ export declare class ZKCompressionService extends BaseService {
      * SECURITY WARNING: This function uses experimental ZK compression.
      * Validate all inputs and verify all cryptographic operations.
      */
-    broadcastCompressedMessage(channelId: PublicKey, content: string, wallet: any, messageType?: string, attachments?: string[], metadata?: Record<string, any>, replyTo?: PublicKey): Promise<{
+    broadcastCompressedMessage(channelId: Address, content: string, wallet: any, messageType?: string, attachments?: string[], metadata?: Record<string, any>, replyTo?: Address): Promise<{
         signature: string;
         ipfsResult: IPFSStorageResult;
         compressedAccount: CompressedAccount;
@@ -136,7 +136,7 @@ export declare class ZKCompressionService extends BaseService {
     /**
      * Join a channel with compressed participant data
      */
-    joinChannelCompressed(channelId: PublicKey, participantId: PublicKey, wallet: any, displayName?: string, avatar?: string, permissions?: string[]): Promise<{
+    joinChannelCompressed(channelId: Address, participantId: Address, wallet: any, displayName?: string, avatar?: string, permissions?: string[]): Promise<{
         signature: string;
         ipfsResult?: IPFSStorageResult;
         compressedAccount: CompressedAccount;
@@ -144,21 +144,21 @@ export declare class ZKCompressionService extends BaseService {
     /**
      * Batch sync compressed messages to chain
      */
-    batchSyncMessages(channelId: PublicKey, messageHashes: string[], wallet: any, syncTimestamp?: number): Promise<BatchCompressionResult>;
+    batchSyncMessages(channelId: Address, messageHashes: string[], wallet: any, syncTimestamp?: number): Promise<BatchCompressionResult>;
     /**
      * Query compressed accounts using Photon indexer
      */
-    queryCompressedMessages(channelId: PublicKey, options?: {
+    queryCompressedMessages(channelId: Address, options?: {
         limit?: number;
         offset?: number;
-        sender?: PublicKey;
+        sender?: Address;
         after?: Date;
         before?: Date;
     }): Promise<CompressedChannelMessage[]>;
     /**
      * Get channel statistics from compressed data
      */
-    getChannelStats(channelId: PublicKey): Promise<{
+    getChannelStats(channelId: Address): Promise<{
         totalMessages: number;
         totalParticipants: number;
         storageSize: number;

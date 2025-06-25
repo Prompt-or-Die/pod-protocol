@@ -1,6 +1,6 @@
-import { Address, KeyPairSigner, SystemProgram } from "@solana/web3.js";
+import { Address, KeyPairSigner, address } from "@solana/web3.js";
 import anchor from "@coral-xyz/anchor";
-const { BN } = anchor;
+const { BN, web3 } = anchor;
 import { BaseService } from "./base";
 import {
   DepositEscrowOptions,
@@ -17,19 +17,19 @@ export class EscrowService extends BaseService {
    * Deposit funds to escrow for a channel
    */
   async depositEscrow(
-    wallet: Signer,
+    wallet: KeyPairSigner,
     options: DepositEscrowOptions,
   ): Promise<string> {
     const program = this.ensureInitialized();
 
     // Derive agent PDA
-    const [agentPDA] = findAgentPDA(wallet.publicKey, this.programId);
+    const [agentPDA] = findAgentPDA(address(wallet.address), address(this.programId));
 
     // Derive escrow PDA
     const [escrowPDA] = findEscrowPDA(
-      options.channel,
-      wallet.publicKey,
-      this.programId,
+      address(options.channel),
+      address(wallet.address),
+      address(this.programId),
     );
 
     const tx = await (program.methods as any)
@@ -38,8 +38,8 @@ export class EscrowService extends BaseService {
         escrowAccount: escrowPDA,
         channelAccount: options.channel,
         depositorAgent: agentPDA,
-        depositor: wallet.publicKey,
-        systemProgram: SystemProgram.programId,
+        depositor: wallet.address,
+        systemProgram: address("11111111111111111111111111111112"), // SystemProgram.programId
       })
       .signers([wallet])
       .rpc({ commitment: this.commitment });
@@ -51,19 +51,19 @@ export class EscrowService extends BaseService {
    * Withdraw funds from escrow
    */
   async withdrawEscrow(
-    wallet: Signer,
+    wallet: KeyPairSigner,
     options: WithdrawEscrowOptions,
   ): Promise<string> {
     const program = this.ensureInitialized();
 
     // Derive agent PDA
-    const [agentPDA] = findAgentPDA(wallet.publicKey, this.programId);
+    const [agentPDA] = findAgentPDA(address(wallet.address), address(this.programId));
 
     // Derive escrow PDA
     const [escrowPDA] = findEscrowPDA(
-      options.channel,
-      wallet.publicKey,
-      this.programId,
+      address(options.channel),
+      address(wallet.address),
+      address(this.programId),
     );
 
     const tx = await (program.methods as any)
@@ -72,8 +72,8 @@ export class EscrowService extends BaseService {
         escrowAccount: escrowPDA,
         channelAccount: options.channel,
         depositorAgent: agentPDA,
-        depositor: wallet.publicKey,
-        systemProgram: SystemProgram.programId,
+        depositor: wallet.address,
+        systemProgram: address("11111111111111111111111111111112"), // SystemProgram.programId
       })
       .signers([wallet])
       .rpc({ commitment: this.commitment });
@@ -85,17 +85,17 @@ export class EscrowService extends BaseService {
    * Get escrow account data
    */
   async getEscrow(
-    channel: PublicKey,
-    depositor: PublicKey,
+    channel: Address,
+    depositor: Address,
   ): Promise<EscrowAccount | null> {
     try {
-      const [escrowPDA] = findEscrowPDA(channel, depositor, this.programId);
+      const [escrowPDA] = findEscrowPDA(address(channel), address(depositor), address(this.programId));
       const escrowAccount = this.getAccount("escrowAccount");
       const account = await escrowAccount.fetch(escrowPDA);
       return this.convertEscrowAccountFromProgram(account);
     } catch (error) {
       console.warn(
-        `Escrow not found for channel: ${channel.toString()}, depositor: ${depositor.toString()}`,
+        `Escrow not found for channel: ${channel}, depositor: ${depositor}`,
         error,
       );
       return null;
@@ -106,7 +106,7 @@ export class EscrowService extends BaseService {
    * Get all escrow accounts by depositor
    */
   async getEscrowsByDepositor(
-    depositor: PublicKey,
+    depositor: Address,
     limit: number = 50,
   ): Promise<EscrowAccount[]> {
     try {
@@ -115,7 +115,7 @@ export class EscrowService extends BaseService {
         {
           memcmp: {
             offset: 8 + 32, // After discriminator and channel pubkey
-            bytes: depositor.toBase58(),
+            bytes: depositor, // Address can be used directly in memcmp
           },
         },
       ];

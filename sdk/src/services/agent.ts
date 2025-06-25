@@ -1,4 +1,4 @@
-import { Address, KeyPairSigner } from "@solana/web3.js";
+import { Address, KeyPairSigner, generateKeyPairSigner } from "@solana/web3.js";
 import anchor from "@coral-xyz/anchor";
 const { BN, AnchorProvider, web3, Program } = anchor;
 import { BaseService } from "./base";
@@ -33,8 +33,8 @@ export class AgentService extends BaseService {
           .registerAgent(new BN(options.capabilities), options.metadataUri)
           .accounts({
             agentAccount: agentPDA,
-            signer: wallet.publicKey,
-            systemProgram: web3.SystemProgram.programId,
+            signer: wallet.address,
+            systemProgram: "11111111111111111111111111111112", // System Program ID
           })
           .rpc();
 
@@ -108,7 +108,7 @@ export class AgentService extends BaseService {
     });       
   }
 
-  async getAgent(walletPublicKey: PublicKey): Promise<AgentAccount | null> {
+  async getAgent(walletPublicKey: Address): Promise<AgentAccount | null> {
     const [agentPDA] = findAgentPDA(walletPublicKey, this.programId);
 
     try {
@@ -119,9 +119,10 @@ export class AgentService extends BaseService {
         program = this.program;
       } else {
         // For read operations, use a read-only provider without wallet
+        const tempKeypair = await generateKeyPairSigner();
         const readOnlyProvider = new AnchorProvider(
-          this.connection,
-          { publicKey: web3.Keypair.generate().publicKey, signTransaction: async () => { throw new Error('Read-only wallet'); }, signAllTransactions: async () => { throw new Error('Read-only wallet'); } } as any, // Read-only wallet
+          this.rpc as any,
+          { publicKey: tempKeypair.address, signTransaction: async () => { throw new Error('Read-only wallet'); }, signAllTransactions: async () => { throw new Error('Read-only wallet'); } } as any, // Read-only wallet
           { commitment: 'confirmed' }
         );
 
@@ -153,7 +154,7 @@ export class AgentService extends BaseService {
     try {
       // For read operations, use a read-only provider without wallet
       const readOnlyProvider = new AnchorProvider(
-         this.connection,
+         this.rpc as any,
          {} as any, // No wallet needed for read operations
          { commitment: 'confirmed' }
        );

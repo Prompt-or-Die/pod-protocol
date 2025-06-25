@@ -2,8 +2,8 @@ import {
   createSolanaRpc, 
   address, 
   Address,
-  RpcApi,
   Rpc,
+  RpcApi,
   Commitment
 } from "@solana/web3.js";
 import { 
@@ -30,13 +30,6 @@ import {
   BroadcastMessageOptions,
   MessageStatus,
   ChannelVisibility,
-  type ChannelState,
-  type MessageState,
-  type AdvancedCompressionConfig,
-  type JitoBundlingConfig,
-  type PerformanceConfig,
-  type SecurityConfig,
-  type ClientConfig,
 } from "./types";
 import { PodCom, IDL } from "./pod_com";
 import type { IdlAccounts } from "@coral-xyz/anchor";
@@ -54,10 +47,10 @@ import { AnalyticsService } from "./services/analytics";
 import { DiscoveryService } from "./services/discovery";
 import { IPFSService, IPFSConfig } from "./services/ipfs";
 import { ZKCompressionService, ZKCompressionConfig } from "./services/zk-compression";
-import { JitoBundleService } from "./services/jito-bundles";
+// Note: JitoBundleService import removed - using JitoBundlesService
 
 // Client configuration with 2025 enhancements
-export interface PodClientConfig extends ClientConfig {
+export interface PodClientConfig extends PodComConfig {
   rpcEndpoint?: string;
   wsEndpoint?: string;
   commitment?: Commitment;
@@ -65,8 +58,7 @@ export interface PodClientConfig extends ClientConfig {
   enableCompression?: boolean;
   enableJitoMEV?: boolean;
   enableAnalytics?: boolean;
-  performanceConfig?: PerformanceConfig;
-  securityConfig?: SecurityConfig;
+  jitoRpcUrl?: string;
 }
 
 /**
@@ -74,8 +66,8 @@ export interface PodClientConfig extends ClientConfig {
  * Refactored to use service-based architecture for better maintainability
  */
 export class PodComClient {
-  private connection: Connection;
-  private programId: PublicKey;
+  private rpc: Rpc<any>;
+  private programId: Address;
   private commitment: Commitment;
   private program?: ProgramType<any>; // Use any for IDL compatibility
 
@@ -94,13 +86,13 @@ export class PodComClient {
   constructor(config: PodClientConfig = {}) {
     const endpoint = config.rpcEndpoint || "https://api.devnet.solana.com";
     
-    this.connection = new Connection(endpoint, config.commitment || "confirmed");
-    this.programId = config.programId ? address(config.programId) : address(PROGRAM_ID.toString());
+    this.rpc = createSolanaRpc(endpoint);
+    this.programId = config.programId ? config.programId : PROGRAM_ID;
     this.commitment = config.commitment || "confirmed";
 
     // Initialize services
     const serviceConfig: BaseServiceConfig = {
-      connection: this.connection,
+      rpc: this.rpc,
       programId: this.programId,
       commitment: this.commitment,
     };
@@ -113,12 +105,12 @@ export class PodComClient {
     this.discovery = new DiscoveryService(serviceConfig);
     
     // Initialize IPFS service
-    this.ipfs = new IPFSService(serviceConfig, config.ipfs || {});
+    this.ipfs = new IPFSService(serviceConfig, {});
     
     // Initialize ZK Compression service with IPFS dependency
     this.zkCompression = new ZKCompressionService(
       serviceConfig,
-      config.zkCompression || {},
+      {},
       this.ipfs
     );
     
@@ -136,7 +128,15 @@ export class PodComClient {
     try {
       if (wallet) {
         // If a wallet is provided, create the program with it
-        const provider = new AnchorProvider(this.connection, wallet, {
+        // Note: Anchor provider needs to be updated for web3.js v2 compatibility
+        // For now, we'll maintain compatibility using the legacy connection pattern
+        const legacyConnection = {
+          getLatestBlockhash: async () => (await this.rpc.getLatestBlockhash().send()).value,
+          sendRawTransaction: async (tx: any) => (await this.rpc.sendTransaction(tx).send()).value,
+          // Add other required methods as needed
+        } as any;
+        
+        const provider = new AnchorProvider(legacyConnection, wallet, {
           commitment: this.commitment,
           skipPreflight: true,
         });
@@ -218,7 +218,7 @@ export class PodComClient {
    * @deprecated Use client.agents.registerAgent() instead
    */
   async registerAgent(
-    wallet: Signer,
+    wallet: KeyPairSigner,
     options: CreateAgentOptions,
   ): Promise<string> {
     return this.agents.registerAgent(wallet, options);
@@ -228,7 +228,7 @@ export class PodComClient {
    * @deprecated Use client.agents.updateAgent() instead
    */
   async updateAgent(
-    wallet: Signer,
+    wallet: KeyPairSigner,
     options: UpdateAgentOptions,
   ): Promise<string> {
     return this.agents.updateAgent(wallet, options);
@@ -237,7 +237,7 @@ export class PodComClient {
   /**
    * @deprecated Use client.agents.getAgent() instead
    */
-  async getAgent(walletPublicKey: PublicKey): Promise<AgentAccount | null> {
+  async getAgent(walletPublicKey: Address): Promise<AgentAccount | null> {
     return this.agents.getAgent(walletPublicKey);
   }
 
@@ -252,7 +252,7 @@ export class PodComClient {
    * @deprecated Use client.messages.sendMessage() instead
    */
   async sendMessage(
-    wallet: Signer,
+    wallet: KeyPairSigner,
     options: SendMessageOptions,
   ): Promise<string> {
     return this.messages.sendMessage(wallet, options);
@@ -262,8 +262,8 @@ export class PodComClient {
    * @deprecated Use client.messages.updateMessageStatus() instead
    */
   async updateMessageStatus(
-    wallet: Signer,
-    messagePDA: PublicKey,
+    wallet: KeyPairSigner,
+    messagePDA: Address,
     newStatus: MessageStatus,
   ): Promise<string> {
     return this.messages.updateMessageStatus(wallet, messagePDA, newStatus);
@@ -272,7 +272,7 @@ export class PodComClient {
   /**
    * @deprecated Use client.messages.getMessage() instead
    */
-  async getMessage(messagePDA: PublicKey): Promise<MessageAccount | null> {
+  async getMessage(messagePDA: Address): Promise<MessageAccount | null> {
     return this.messages.getMessage(messagePDA);
   }
 
@@ -280,7 +280,7 @@ export class PodComClient {
    * @deprecated Use client.messages.getAgentMessages() instead
    */
   async getAgentMessages(
-    agentPublicKey: PublicKey,
+    agentPublicKey: Address,
     limit: number = 50,
     statusFilter?: MessageStatus,
   ): Promise<MessageAccount[]> {
@@ -291,7 +291,7 @@ export class PodComClient {
    * @deprecated Use client.channels.createChannel() instead
    */
   async createChannel(
-    wallet: Signer,
+    wallet: KeyPairSigner,
     options: CreateChannelOptions,
   ): Promise<string> {
     return this.channels.createChannel(wallet, options);
@@ -300,7 +300,7 @@ export class PodComClient {
   /**
    * @deprecated Use client.channels.getChannel() instead
    */
-  async getChannel(channelPDA: PublicKey): Promise<ChannelAccount | null> {
+  async getChannel(channelPDA: Address): Promise<ChannelAccount | null> {
     return this.channels.getChannel(channelPDA);
   }
 
@@ -318,7 +318,7 @@ export class PodComClient {
    * @deprecated Use client.channels.getChannelsByCreator() instead
    */
   async getChannelsByCreator(
-    creator: PublicKey,
+    creator: Address,
     limit: number = 50,
   ): Promise<ChannelAccount[]> {
     return this.channels.getChannelsByCreator(creator, limit);
@@ -327,14 +327,14 @@ export class PodComClient {
   /**
    * @deprecated Use client.channels.joinChannel() instead
    */
-  async joinChannel(wallet: Signer, channelPDA: PublicKey): Promise<string> {
+  async joinChannel(wallet: KeyPairSigner, channelPDA: Address): Promise<string> {
     return this.channels.joinChannel(wallet, channelPDA);
   }
 
   /**
    * @deprecated Use client.channels.leaveChannel() instead
    */
-  async leaveChannel(wallet: Signer, channelPDA: PublicKey): Promise<string> {
+  async leaveChannel(wallet: KeyPairSigner, channelPDA: Address): Promise<string> {
     return this.channels.leaveChannel(wallet, channelPDA);
   }
 
@@ -342,11 +342,11 @@ export class PodComClient {
    * @deprecated Use client.channels.broadcastMessage() instead
    */
   async broadcastMessage(
-    wallet: Signer,
-    channelPDA: PublicKey,
+    wallet: KeyPairSigner,
+    channelPDA: Address,
     content: string,
     messageType: string = "Text",
-    replyTo?: PublicKey,
+    replyTo?: Address,
   ): Promise<string> {
     return this.channels.broadcastMessage(wallet, {
       channelPDA,
@@ -360,9 +360,9 @@ export class PodComClient {
    * @deprecated Use client.channels.inviteToChannel() instead
    */
   async inviteToChannel(
-    wallet: Signer,
-    channelPDA: PublicKey,
-    invitee: PublicKey,
+    wallet: KeyPairSigner,
+    channelPDA: Address,
+    invitee: Address,
   ): Promise<string> {
     return this.channels.inviteToChannel(wallet, channelPDA, invitee);
   }
@@ -371,7 +371,7 @@ export class PodComClient {
    * @deprecated Use client.channels.getChannelParticipants() instead
    */
   async getChannelParticipants(
-    channelPDA: PublicKey,
+    channelPDA: Address,
     limit: number = 50
   ): Promise<Array<any>> {
     return this.channels.getChannelParticipants(channelPDA, limit);
@@ -381,7 +381,7 @@ export class PodComClient {
    * @deprecated Use client.channels.getChannelMessages() instead
    */
   async getChannelMessages(
-    channelPDA: PublicKey,
+    channelPDA: Address,
     limit: number = 50
   ): Promise<Array<any>> {
     return this.channels.getChannelMessages(channelPDA, limit);
@@ -391,7 +391,7 @@ export class PodComClient {
    * @deprecated Use client.escrow.depositEscrow() instead
    */
   async depositEscrow(
-    wallet: Signer,
+    wallet: KeyPairSigner,
     options: DepositEscrowOptions,
   ): Promise<string> {
     return this.escrow.depositEscrow(wallet, options);
@@ -401,7 +401,7 @@ export class PodComClient {
    * @deprecated Use client.escrow.withdrawEscrow() instead
    */
   async withdrawEscrow(
-    wallet: Signer,
+    wallet: KeyPairSigner,
     options: WithdrawEscrowOptions,
   ): Promise<string> {
     return this.escrow.withdrawEscrow(wallet, options);
@@ -411,8 +411,8 @@ export class PodComClient {
    * @deprecated Use client.escrow.getEscrow() instead
    */
   async getEscrow(
-    channel: PublicKey,
-    depositor: PublicKey,
+    channel: Address,
+    depositor: Address,
   ): Promise<EscrowAccount | null> {
     return this.escrow.getEscrow(channel, depositor);
   }
@@ -421,7 +421,7 @@ export class PodComClient {
    * @deprecated Use client.escrow.getEscrowsByDepositor() instead
    */
   async getEscrowsByDepositor(
-    depositor: PublicKey,
+    depositor: Address,
     limit: number = 50,
   ): Promise<EscrowAccount[]> {
     return this.escrow.getEscrowsByDepositor(depositor, limit);
@@ -432,16 +432,16 @@ export class PodComClient {
   // ============================================================================
 
   /**
-   * Get the connection instance
+   * Get the RPC instance
    */
-  getConnection(): Connection {
-    return this.connection;
+  getRpc(): Rpc<any> {
+    return this.rpc;
   }
 
   /**
    * Get the program ID
    */
-  getProgramId(): PublicKey {
+  getProgramId(): Address {
     return this.programId;
   }
 

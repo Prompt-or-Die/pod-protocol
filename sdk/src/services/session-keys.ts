@@ -1,11 +1,18 @@
 /**
  * Session Keys Service for PoD Protocol
  * 
- * Provides ephemeral key management for seamless AI agent interactions
- * Based on Gum session keys protocol
+ * Provides secure session key management for automated transactions
+ * Allows users to delegate limited transaction authority to applications
  */
 
-import { Connection, Keypair, Address, Transaction, TransactionInstruction, KeyPairSigner, SystemProgram } from '@solana/web3.js';
+import { 
+  Transaction, 
+  TransactionInstruction, 
+  Address, 
+  Rpc, 
+  KeyPairSigner, 
+  SystemProgram 
+} from '@solana/web3.js';
 import { BaseService, BaseServiceConfig } from './base.js';
 
 export interface SessionKeyConfig {

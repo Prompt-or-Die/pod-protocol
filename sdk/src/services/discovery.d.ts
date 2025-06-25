@@ -1,4 +1,4 @@
-import { PublicKey } from "@solana/web3.js";
+import { Address } from "@solana/web3.js";
 import { BaseService } from "./base";
 import { AgentAccount, MessageAccount, ChannelAccount, MessageStatus, ChannelVisibility, MessageType } from "../types";
 /**
@@ -19,8 +19,8 @@ export interface AgentSearchFilters extends SearchFilters {
     lastActiveBefore?: number;
 }
 export interface MessageSearchFilters extends SearchFilters {
-    sender?: PublicKey;
-    recipient?: PublicKey;
+    sender?: Address;
+    recipient?: Address;
     status?: MessageStatus[];
     messageType?: MessageType[];
     createdAfter?: number;
@@ -28,7 +28,7 @@ export interface MessageSearchFilters extends SearchFilters {
     payloadContains?: string;
 }
 export interface ChannelSearchFilters extends SearchFilters {
-    creator?: PublicKey;
+    creator?: Address;
     visibility?: ChannelVisibility[];
     nameContains?: string;
     descriptionContains?: string;
@@ -47,7 +47,7 @@ export interface SearchResult<T> {
     executionTime: number;
 }
 export interface RecommendationOptions {
-    forAgent?: PublicKey;
+    forAgent?: Address;
     limit?: number;
     includeReason?: boolean;
 }
@@ -85,6 +85,26 @@ export declare class DiscoveryService extends BaseService {
      * Get trending channels based on recent activity
      */
     getTrendingChannels(limit?: number): Promise<ChannelAccount[]>;
+    /**
+     * Search for agents by capabilities
+     */
+    searchAgentsByCapabilities(capabilities: number, limit?: number): Promise<any[]>;
+    /**
+     * Search for agents by metadata
+     */
+    searchAgentsByMetadata(query: string, limit?: number): Promise<any[]>;
+    /**
+     * Get recommended agents for a user
+     */
+    getRecommendedAgentsForUser(user: Address, limit?: number): Promise<any[]>;
+    /**
+     * Search for public channels
+     */
+    searchPublicChannels(query?: string, limit?: number): Promise<any[]>;
+    /**
+     * Get channels by category/tags
+     */
+    getChannelsByCategory(category: string, limit?: number): Promise<any[]>;
     private applyAgentFilters;
     private applyMessageFilters;
     private applyChannelFilters;

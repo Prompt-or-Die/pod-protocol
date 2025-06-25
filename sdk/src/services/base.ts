@@ -1,4 +1,4 @@
-import { createSolanaRpc, address, Address, Commitment, Rpc, RpcApi } from "@solana/web3.js";
+import { createSolanaRpc, address, Address, Commitment, Rpc } from "@solana/web3.js";
 import anchor from "@coral-xyz/anchor";
 const { Program } = anchor;
 import type { Program as ProgramType } from "@coral-xyz/anchor";
@@ -8,7 +8,7 @@ type AnchorProgram = ProgramType<any>;
  * Configuration object for BaseService constructor
  */
 export interface BaseServiceConfig {
-  rpc: Rpc<RpcApi>;
+  rpc: Rpc<any>;
   programId: Address;
   commitment: Commitment;
   program?: AnchorProgram;
@@ -18,7 +18,7 @@ export interface BaseServiceConfig {
  * Base service class with common functionality for all services
  */
 export abstract class BaseService {
-  protected rpc: Rpc<RpcApi>;
+  protected rpc: Rpc<any>;
   protected programId: Address;
   protected commitment: Commitment;
   protected program?: AnchorProgram;

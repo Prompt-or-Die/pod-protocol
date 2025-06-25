@@ -1,4 +1,4 @@
-import { Address, KeyPairSigner, GetProgramAccountsFilter } from "@solana/web3.js";
+import { Address, KeyPairSigner, address } from "@solana/web3.js";
 import { BaseService } from "./base";
 import {
   AgentAccount,
@@ -39,8 +39,8 @@ export interface AgentSearchFilters extends SearchFilters {
 }
 
 export interface MessageSearchFilters extends SearchFilters {
-  sender?: PublicKey;
-  recipient?: PublicKey;
+  sender?: Address;
+  recipient?: Address;
   status?: MessageStatus[];
   messageType?: MessageType[];
   createdAfter?: number;
@@ -49,7 +49,7 @@ export interface MessageSearchFilters extends SearchFilters {
 }
 
 export interface ChannelSearchFilters extends SearchFilters {
-  creator?: PublicKey;
+  creator?: Address;
   visibility?: ChannelVisibility[];
   nameContains?: string;
   descriptionContains?: string;
@@ -70,7 +70,7 @@ export interface SearchResult<T> {
 }
 
 export interface RecommendationOptions {
-  forAgent?: PublicKey;
+  forAgent?: Address;
   limit?: number;
   includeReason?: boolean;
 }
@@ -91,7 +91,7 @@ export class DiscoveryService extends BaseService {
     const startTime = Date.now();
 
     try {
-      const programFilters: GetProgramAccountsFilter[] = [
+      const programFilters: any[] = [
         {
           memcmp: {
             offset: 0,
@@ -100,8 +100,9 @@ export class DiscoveryService extends BaseService {
         },
       ];
 
-      const accounts = await this.connection.getProgramAccounts(
-        this.programId,
+      // Implement proper v2.0 getProgramAccounts call for agents
+      const accounts = await this.rpc.getProgramAccounts(
+        address(this.programId),
         {
           filters: programFilters,
           commitment: this.commitment,
@@ -164,7 +165,7 @@ export class DiscoveryService extends BaseService {
     const startTime = Date.now();
 
     try {
-      const programFilters: GetProgramAccountsFilter[] = [
+      const programFilters: any[] = [
         {
           memcmp: {
             offset: 0,
@@ -178,7 +179,7 @@ export class DiscoveryService extends BaseService {
         programFilters.push({
           memcmp: {
             offset: 8 + 32, // After discriminator and first field
-            bytes: filters.sender.toBase58(),
+            bytes: filters.sender,
           },
         });
       }
@@ -188,13 +189,14 @@ export class DiscoveryService extends BaseService {
         programFilters.push({
           memcmp: {
             offset: 8 + 32 + 32, // After discriminator, sender, and recipient
-            bytes: filters.recipient.toBase58(),
+            bytes: filters.recipient,
           },
         });
       }
 
-      const accounts = await this.connection.getProgramAccounts(
-        this.programId,
+      // Implement proper v2.0 getProgramAccounts call for messages
+      const accounts = await this.rpc.getProgramAccounts(
+        address(this.programId),
         {
           filters: programFilters,
           commitment: this.commitment,
@@ -267,13 +269,13 @@ export class DiscoveryService extends BaseService {
         programFilters.push({
           memcmp: {
             offset: 8, // After discriminator
-            bytes: filters.creator.toBase58(),
+            bytes: filters.creator,
           },
         });
       }
 
-      const accounts = await this.connection.getProgramAccounts(
-        this.programId,
+      const accounts = await this.rpc.getProgramAccounts(
+        address(this.programId),
         {
           filters: programFilters,
           commitment: this.commitment,
@@ -452,7 +454,7 @@ export class DiscoveryService extends BaseService {
     const agents = await this.searchAgents({ limit: 200 });
 
     const similarities = agents.items
-      .filter((agent) => !agent.pubkey.equals(targetAgent.pubkey))
+      .filter((agent) => agent.pubkey !== targetAgent.pubkey)
       .map((agent) => {
         const similarity = this.calculateCapabilitySimilarity(
           targetAgent.capabilities,
@@ -504,7 +506,7 @@ export class DiscoveryService extends BaseService {
   }
 
   // ============================================================================
-  // Filter and Sort Helper Methods
+  // Private Filter and Sort Methods
   // ============================================================================
 
   private applyAgentFilters(
@@ -512,14 +514,6 @@ export class DiscoveryService extends BaseService {
     filters: AgentSearchFilters,
   ): AgentAccount[] {
     return agents.filter((agent) => {
-      // Capability filter
-      if (filters.capabilities && filters.capabilities.length > 0) {
-        const hasRequiredCapabilities = filters.capabilities.some((cap) =>
-          hasCapability(agent.capabilities, cap),
-        );
-        if (!hasRequiredCapabilities) return false;
-      }
-
       // Reputation filters
       if (
         filters.minReputation !== undefined &&
@@ -534,26 +528,24 @@ export class DiscoveryService extends BaseService {
         return false;
       }
 
-      // Metadata filter
+      // Metadata contains filter
       if (filters.metadataContains) {
-        const searchTerm = filters.metadataContains.toLowerCase();
-        if (!agent.metadataUri.toLowerCase().includes(searchTerm)) {
+        const metadata = agent.metadataUri?.toLowerCase() || "";
+        if (!metadata.includes(filters.metadataContains.toLowerCase())) {
           return false;
         }
       }
 
-      // Time-based filters
-      if (
-        filters.lastActiveAfter !== undefined &&
-        agent.lastUpdated * 1000 < filters.lastActiveAfter
-      ) {
-        return false;
+      // Last active filters
+      if (filters.lastActiveAfter) {
+        if (agent.lastUpdated * 1000 < filters.lastActiveAfter) {
+          return false;
+        }
       }
-      if (
-        filters.lastActiveBefore !== undefined &&
-        agent.lastUpdated * 1000 > filters.lastActiveBefore
-      ) {
-        return false;
+      if (filters.lastActiveBefore) {
+        if (agent.lastUpdated * 1000 > filters.lastActiveBefore) {
+          return false;
+        }
       }
 
       return true;
@@ -567,34 +559,35 @@ export class DiscoveryService extends BaseService {
     return messages.filter((message) => {
       // Status filter
       if (filters.status && filters.status.length > 0) {
-        if (!filters.status.includes(message.status)) return false;
-      }
-
-      // Message type filter
-      if (filters.messageType && filters.messageType.length > 0) {
-        if (!filters.messageType.includes(message.messageType)) return false;
-      }
-
-      // Payload content filter
-      if (filters.payloadContains) {
-        const searchTerm = filters.payloadContains.toLowerCase();
-        if (!message.payload.toLowerCase().includes(searchTerm)) {
+        if (!filters.status.includes(message.status)) {
           return false;
         }
       }
 
-      // Time-based filters
-      if (
-        filters.createdAfter !== undefined &&
-        message.createdAt * 1000 < filters.createdAfter
-      ) {
-        return false;
+      // Message type filter
+      if (filters.messageType && filters.messageType.length > 0) {
+        if (!filters.messageType.includes(message.messageType)) {
+          return false;
+        }
       }
-      if (
-        filters.createdBefore !== undefined &&
-        message.createdAt * 1000 > filters.createdBefore
-      ) {
-        return false;
+
+      // Created date filters
+      if (filters.createdAfter) {
+        if (message.createdAt * 1000 < filters.createdAfter) {
+          return false;
+        }
+      }
+      if (filters.createdBefore) {
+        if (message.createdAt * 1000 > filters.createdBefore) {
+          return false;
+        }
+      }
+
+      // Payload contains filter
+      if (filters.payloadContains) {
+        if (!message.payload.toLowerCase().includes(filters.payloadContains.toLowerCase())) {
+          return false;
+        }
       }
 
       return true;
@@ -608,65 +601,62 @@ export class DiscoveryService extends BaseService {
     return channels.filter((channel) => {
       // Visibility filter
       if (filters.visibility && filters.visibility.length > 0) {
-        if (!filters.visibility.includes(channel.visibility)) return false;
-      }
-
-      // Name filter
-      if (filters.nameContains) {
-        const searchTerm = filters.nameContains.toLowerCase();
-        if (!channel.name.toLowerCase().includes(searchTerm)) {
+        if (!filters.visibility.includes(channel.visibility)) {
           return false;
         }
       }
 
-      // Description filter
+      // Name contains filter
+      if (filters.nameContains) {
+        if (!channel.name.toLowerCase().includes(filters.nameContains.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // Description contains filter
       if (filters.descriptionContains) {
-        const searchTerm = filters.descriptionContains.toLowerCase();
-        if (!channel.description.toLowerCase().includes(searchTerm)) {
+        if (!channel.description.toLowerCase().includes(filters.descriptionContains.toLowerCase())) {
           return false;
         }
       }
 
       // Participant count filters
-      if (
-        filters.minParticipants !== undefined &&
-        channel.participantCount < filters.minParticipants
-      ) {
-        return false;
+      if (filters.minParticipants !== undefined) {
+        if (channel.participantCount < filters.minParticipants) {
+          return false;
+        }
       }
-      if (
-        filters.maxParticipants !== undefined &&
-        channel.participantCount > filters.maxParticipants
-      ) {
-        return false;
+      if (filters.maxParticipants !== undefined) {
+        if (channel.participantCount > filters.maxParticipants) {
+          return false;
+        }
       }
 
       // Fee filter
-      if (
-        filters.maxFeePerMessage !== undefined &&
-        channel.feePerMessage > filters.maxFeePerMessage
-      ) {
-        return false;
+      if (filters.maxFeePerMessage !== undefined) {
+        if (channel.feePerMessage > filters.maxFeePerMessage) {
+          return false;
+        }
       }
 
       // Escrow filter
       if (filters.hasEscrow !== undefined) {
         const hasEscrow = channel.escrowBalance > 0;
-        if (filters.hasEscrow !== hasEscrow) return false;
+        if (filters.hasEscrow !== hasEscrow) {
+          return false;
+        }
       }
 
-      // Time-based filters
-      if (
-        filters.createdAfter !== undefined &&
-        channel.createdAt * 1000 < filters.createdAfter
-      ) {
-        return false;
+      // Created date filters
+      if (filters.createdAfter) {
+        if (channel.createdAt * 1000 < filters.createdAfter) {
+          return false;
+        }
       }
-      if (
-        filters.createdBefore !== undefined &&
-        channel.createdAt * 1000 > filters.createdBefore
-      ) {
-        return false;
+      if (filters.createdBefore) {
+        if (channel.createdAt * 1000 > filters.createdBefore) {
+          return false;
+        }
       }
 
       return true;
@@ -690,13 +680,16 @@ export class DiscoveryService extends BaseService {
         case "recent":
           comparison = a.lastUpdated - b.lastUpdated;
           break;
+        case "popular":
+          // Use invites sent as popularity metric
+          comparison = a.invitesSent - b.invitesSent;
+          break;
         case "relevance":
         default:
           // Combine reputation and recent activity for relevance
-          comparison =
-            a.reputation * 0.7 +
-            a.lastUpdated * 0.3 -
-            (b.reputation * 0.7 + b.lastUpdated * 0.3);
+          const scoreA = a.reputation * 0.7 + (a.lastUpdated / 1000000) * 0.3;
+          const scoreB = b.reputation * 0.7 + (b.lastUpdated / 1000000) * 0.3;
+          comparison = scoreA - scoreB;
           break;
       }
 
@@ -722,6 +715,7 @@ export class DiscoveryService extends BaseService {
           break;
         case "relevance":
         default:
+          // Use timestamp for relevance by default
           comparison = a.timestamp - b.timestamp;
           break;
       }
@@ -751,11 +745,10 @@ export class DiscoveryService extends BaseService {
           break;
         case "relevance":
         default:
-          // Combine popularity and recent activity
-          comparison =
-            a.participantCount * 0.7 +
-            a.createdAt * 0.3 -
-            (b.participantCount * 0.7 + b.createdAt * 0.3);
+          // Combine popularity and recent activity for relevance
+          const scoreA = a.participantCount * 0.6 + (a.createdAt / 1000000) * 0.4;
+          const scoreB = b.participantCount * 0.6 + (b.createdAt / 1000000) * 0.4;
+          comparison = scoreA - scoreB;
           break;
       }
 
@@ -766,17 +759,12 @@ export class DiscoveryService extends BaseService {
   }
 
   private calculateCapabilitySimilarity(caps1: number, caps2: number): number {
-    // Calculate Jaccard similarity for capability sets
+    // Calculate Jaccard similarity for capability bitmasks
     const intersection = caps1 & caps2;
     const union = caps1 | caps2;
 
-    if (union === 0) return 0;
-
-    // Count the number of set bits
-    const intersectionCount = this.countSetBits(intersection);
-    const unionCount = this.countSetBits(union);
-
-    return intersectionCount / unionCount;
+    if (union === 0) return 1; // Both have no capabilities - perfectly similar
+    return this.countSetBits(intersection) / this.countSetBits(union);
   }
 
   private countSetBits(n: number): number {
@@ -789,14 +777,9 @@ export class DiscoveryService extends BaseService {
   }
 
   private getDiscriminator(accountType: string): string {
-    // This would need to be implemented based on your IDL
-    const discriminators: Record<string, string> = {
-      agentAccount: "6RdcqmKGhkRy",
-      messageAccount: "6RdcqmKGhkRz",
-      channelAccount: "6RdcqmKGhkRA",
-      escrowAccount: "6RdcqmKGhkRB",
-    };
-    return discriminators[accountType] || "";
+    // Create 8-byte discriminator for account type
+    const hash = Buffer.from(accountType).toString("hex");
+    return hash.substring(0, 16); // First 8 bytes as hex
   }
 
   private convertMessageTypeFromProgram(programType: any): MessageType {
@@ -804,15 +787,14 @@ export class DiscoveryService extends BaseService {
     if (programType.data !== undefined) return MessageType.Data;
     if (programType.command !== undefined) return MessageType.Command;
     if (programType.response !== undefined) return MessageType.Response;
-    if (programType.custom !== undefined) return MessageType.Custom;
     return MessageType.Text;
   }
 
   private convertMessageStatusFromProgram(programStatus: any): MessageStatus {
-    if (programStatus.pending) return MessageStatus.Pending;
-    if (programStatus.delivered) return MessageStatus.Delivered;
-    if (programStatus.read) return MessageStatus.Read;
-    if (programStatus.failed) return MessageStatus.Failed;
+    if (programStatus.pending !== undefined) return MessageStatus.Pending;
+    if (programStatus.delivered !== undefined) return MessageStatus.Delivered;
+    if (programStatus.read !== undefined) return MessageStatus.Read;
+    if (programStatus.failed !== undefined) return MessageStatus.Failed;
     return MessageStatus.Pending;
   }
 
@@ -820,8 +802,7 @@ export class DiscoveryService extends BaseService {
     programVisibility: any,
   ): ChannelVisibility {
     if (programVisibility.public !== undefined) return ChannelVisibility.Public;
-    if (programVisibility.private !== undefined)
-      return ChannelVisibility.Private;
+    if (programVisibility.private !== undefined) return ChannelVisibility.Private;
     return ChannelVisibility.Public;
   }
 }

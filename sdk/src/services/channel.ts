@@ -1,6 +1,6 @@
-import { Address, KeyPairSigner, SystemProgram } from "@solana/web3.js";
+import { Address, KeyPairSigner, address, lamports } from "@solana/web3.js";
 import anchor from "@coral-xyz/anchor";
-const { BN, utils } = anchor;
+const { BN, utils, web3 } = anchor;
 import { BaseService } from "./base";
 import {
   CreateChannelOptions,
@@ -8,7 +8,7 @@ import {
   ChannelVisibility,
   BroadcastMessageOptions,
 } from "../types";
-import { findAgentPDA, findChannelPDA } from "../utils";
+import { findAgentPDA, findChannelPDA, findParticipantPDA, findInvitationPDA } from "../utils";
 import type { IdlAccounts } from "@coral-xyz/anchor";
 import type { PodCom } from "../pod_com";
 
@@ -20,23 +20,23 @@ export class ChannelService extends BaseService {
    * Create a new channel
    */
   async createChannel(
-    wallet: Signer,
+    wallet: KeyPairSigner,
     options: CreateChannelOptions,
   ): Promise<string> {
     const program = this.ensureInitialized();
 
     // Derive agent PDA
-    const [agentPDA] = findAgentPDA(wallet.publicKey, this.programId);
+    const [agentPDA] = findAgentPDA(wallet.address, this.programId);
 
     // Derive channel PDA
     const [channelPDA] = findChannelPDA(
-      wallet.publicKey,
+      wallet.address,
       options.name,
       this.programId,
     );
 
     // Derive participant PDA for creator
-    const [participantPDA] = this.findParticipantPDA(channelPDA, agentPDA);
+    const [participantPDA] = findParticipantPDA(address(agentPDA), address(channelPDA), address(this.programId));
 
     const visibilityObj = this.convertChannelVisibility(options.visibility);
 
@@ -52,8 +52,8 @@ export class ChannelService extends BaseService {
         agentAccount: agentPDA,
         channelAccount: channelPDA,
         participantAccount: participantPDA,
-        creator: wallet.publicKey,
-        systemProgram: SystemProgram.programId,
+        creator: wallet.address,
+        systemProgram: address("11111111111111111111111111111112"), // SystemProgram.programId
       })
       .signers([wallet])
       .rpc({ commitment: this.commitment });
@@ -64,13 +64,13 @@ export class ChannelService extends BaseService {
   /**
    * Get channel data
    */
-  async getChannel(channelPDA: PublicKey): Promise<ChannelAccount | null> {
+  async getChannel(channelPDA: Address): Promise<ChannelAccount | null> {
     try {
       const channelAccount = this.getAccount("channelAccount");
       const account = await channelAccount.fetch(channelPDA);
       return this.convertChannelAccountFromProgram(account, channelPDA);
     } catch (error) {
-      console.warn(`Channel not found: ${channelPDA.toString()}`, error);
+      console.warn(`Channel not found: ${channelPDA}`, error);
       return null;
     }
   }
@@ -116,7 +116,7 @@ export class ChannelService extends BaseService {
    * Get channels created by a specific user
    */
   async getChannelsByCreator(
-    creator: PublicKey,
+    creator: Address,
     limit: number = 50,
   ): Promise<ChannelAccount[]> {
     try {
@@ -125,7 +125,7 @@ export class ChannelService extends BaseService {
         {
           memcmp: {
             offset: 8, // After discriminator
-            bytes: creator.toBase58(),
+            bytes: creator, // Address can be used directly in memcmp
           },
         },
       ];
@@ -145,24 +145,17 @@ export class ChannelService extends BaseService {
   /**
    * Join a channel
    */
-  async joinChannel(wallet: Signer, channelPDA: PublicKey): Promise<string> {
+  async joinChannel(wallet: KeyPairSigner, channelPDA: Address): Promise<string> {
     const program = this.ensureInitialized();
 
     // Derive agent PDA
-    const [agentPDA] = findAgentPDA(wallet.publicKey, this.programId);
+    const [agentPDA] = findAgentPDA(wallet.address, this.programId);
 
     // Derive participant PDA
-    const [participantPDA] = this.findParticipantPDA(channelPDA, agentPDA);
+    const [participantPDA] = findParticipantPDA(address(channelPDA), address(agentPDA), address(this.programId));
 
     // Check if channel requires invitation (for private channels)
-    const [invitationPDA] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from("invitation"),
-        channelPDA.toBuffer(),
-        wallet.publicKey.toBuffer(),
-      ],
-      this.programId,
-    );
+    const [invitationPDA] = findInvitationPDA(address(channelPDA), address(wallet.address), address(this.programId));
 
     // Check if invitation exists for private channels
     let invitationAccount: any = null;
@@ -180,8 +173,8 @@ export class ChannelService extends BaseService {
         participantAccount: participantPDA,
         agentAccount: agentPDA,
         invitationAccount: invitationAccount ? invitationPDA : null,
-        user: wallet.publicKey,
-        systemProgram: SystemProgram.programId,
+        user: wallet.address,
+        systemProgram: address("11111111111111111111111111111112"), // SystemProgram.programId
       })
       .signers([wallet])
       .rpc({ commitment: this.commitment });
@@ -192,11 +185,11 @@ export class ChannelService extends BaseService {
   /**
    * Leave a channel
    */
-  async leaveChannel(wallet: Signer, channelPDA: PublicKey): Promise<string> {
+  async leaveChannel(wallet: KeyPairSigner, channelPDA: Address): Promise<string> {
     const program = this.ensureInitialized();
 
     // Derive agent PDA
-    const [agentPDA] = findAgentPDA(wallet.publicKey, this.programId);
+    const [agentPDA] = findAgentPDA(wallet.address, this.programId);
 
     // Derive participant PDA
     const [participantPDA] = this.findParticipantPDA(channelPDA, agentPDA);
@@ -207,7 +200,7 @@ export class ChannelService extends BaseService {
         channelAccount: channelPDA,
         participantAccount: participantPDA,
         agentAccount: agentPDA,
-        user: wallet.publicKey,
+        user: wallet.address,
       })
       .signers([wallet])
       .rpc({ commitment: this.commitment });
@@ -219,7 +212,7 @@ export class ChannelService extends BaseService {
    * Broadcast a message to a channel
    */
   async broadcastMessage(
-    wallet: Signer,
+    wallet: KeyPairSigner,
     options: BroadcastMessageOptions,
   ): Promise<string> {
     const program = this.ensureInitialized();
@@ -228,7 +221,7 @@ export class ChannelService extends BaseService {
     const nonce = Date.now();
 
     // Derive agent PDA
-    const [agentPDA] = findAgentPDA(wallet.publicKey, this.programId);
+    const [agentPDA] = findAgentPDA(wallet.address, this.programId);
 
     // Derive participant PDA
     const [participantPDA] = this.findParticipantPDA(
@@ -237,17 +230,10 @@ export class ChannelService extends BaseService {
     );
 
     // Derive message PDA
-    const nonceBuffer = Buffer.alloc(8);
-    nonceBuffer.writeBigUInt64LE(BigInt(nonce), 0);
-
-    const [messagePDA] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from("channel_message"),
-        options.channelPDA.toBuffer(),
-        wallet.publicKey.toBuffer(),
-        nonceBuffer,
-      ],
-      this.programId,
+    const [messagePDA] = this.findChannelMessagePDA(
+      options.channelPDA,
+      wallet.address,
+      nonce,
     );
 
     const messageTypeObj = this.convertMessageType(
@@ -266,8 +252,8 @@ export class ChannelService extends BaseService {
         participantAccount: participantPDA,
         agentAccount: agentPDA,
         messageAccount: messagePDA,
-        user: wallet.publicKey,
-        systemProgram: SystemProgram.programId,
+        user: wallet.address,
+        systemProgram: address("11111111111111111111111111111112"), // SystemProgram.programId
       })
       .signers([wallet])
       .rpc({ commitment: this.commitment });
@@ -279,23 +265,20 @@ export class ChannelService extends BaseService {
    * Invite a user to a channel
    */
   async inviteToChannel(
-    wallet: Signer,
-    channelPDA: PublicKey,
-    invitee: PublicKey,
+    wallet: KeyPairSigner,
+    channelPDA: Address,
+    invitee: Address,
   ): Promise<string> {
     const program = this.ensureInitialized();
 
     // Derive agent PDA
-    const [agentPDA] = findAgentPDA(wallet.publicKey, this.programId);
+    const [agentPDA] = findAgentPDA(wallet.address, this.programId);
 
     // Derive participant PDA (for inviter)
     const [participantPDA] = this.findParticipantPDA(channelPDA, agentPDA);
 
     // Derive invitation PDA
-    const [invitationPDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from("invitation"), channelPDA.toBuffer(), invitee.toBuffer()],
-      this.programId,
-    );
+    const [invitationPDA] = this.findInvitationPDA(channelPDA, invitee);
 
     const tx = await (program.methods as any)
       .inviteToChannel(invitee)
@@ -304,8 +287,8 @@ export class ChannelService extends BaseService {
         participantAccount: participantPDA,
         agentAccount: agentPDA,
         invitationAccount: invitationPDA,
-        inviter: wallet.publicKey,
-        systemProgram: SystemProgram.programId,
+        inviter: wallet.address,
+        systemProgram: address("11111111111111111111111111111112"), // SystemProgram.programId
       })
       .signers([wallet])
       .rpc({ commitment: this.commitment });
@@ -317,7 +300,7 @@ export class ChannelService extends BaseService {
    * Get channel participants
    */
   async getChannelParticipants(
-    channelPDA: PublicKey,
+    channelPDA: Address,
     limit: number = 50
   ): Promise<Array<any>> {
     try {
@@ -326,7 +309,7 @@ export class ChannelService extends BaseService {
         {
           memcmp: {
             offset: 8, // After discriminator
-            bytes: channelPDA.toBase58(),
+            bytes: channelPDA,
           },
         },
       ];
@@ -343,7 +326,7 @@ export class ChannelService extends BaseService {
    * Get channel messages
    */
   async getChannelMessages(
-    channelPDA: PublicKey,
+    channelPDA: Address,
     limit: number = 50
   ): Promise<Array<any>> {
     try {
@@ -352,7 +335,7 @@ export class ChannelService extends BaseService {
         {
           memcmp: {
             offset: 8, // After discriminator
-            bytes: channelPDA.toBase58(),
+            bytes: channelPDA,
           },
         },
       ];
@@ -409,7 +392,7 @@ export class ChannelService extends BaseService {
 
   private convertChannelAccountFromProgram(
     account: any,
-    publicKey: PublicKey,
+    publicKey: Address,
   ): ChannelAccount {
     return {
       pubkey: publicKey,
@@ -428,13 +411,24 @@ export class ChannelService extends BaseService {
     };
   }
 
-  private findParticipantPDA(
-    channelPDA: PublicKey,
-    agentPDA: PublicKey,
-  ): [PublicKey, number] {
-    return PublicKey.findProgramAddressSync(
-      [Buffer.from("participant"), channelPDA.toBuffer(), agentPDA.toBuffer()],
-      this.programId,
+  private findChannelMessagePDA(
+    channelPDA: Address,
+    sender: Address,
+    nonce: number,
+  ): [Address, number] {
+    const nonceBuffer = Buffer.alloc(8);
+    nonceBuffer.writeBigUInt64LE(BigInt(nonce), 0);
+
+    // Using legacy PDA derivation through anchor utils
+    const [pda, bump] = web3.PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("channel_message"),
+        new web3.PublicKey(channelPDA).toBuffer(),
+        new web3.PublicKey(sender).toBuffer(),
+        nonceBuffer,
+      ],
+      new web3.PublicKey(this.programId),
     );
+    return [address(pda.toBase58()), bump];
   }
 }
