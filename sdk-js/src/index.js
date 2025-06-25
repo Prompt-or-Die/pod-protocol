@@ -8,7 +8,7 @@
  * @version 1.5.0
  */
 
-import { Connection, PublicKey, Keypair, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { Program, AnchorProvider, Wallet, BN } from '@coral-xyz/anchor';
 import { AgentService } from './services/agent.js';
 import { MessageService } from './services/message.js';
