@@ -446,5 +446,8 @@ function rateLimitCheck(key, maxRequests, windowMs) {
   return true;
 }
 
-// Export the advanced security functions
-export { detectInjectionAttempt, sanitizeInput, isolateContext }; 
+export default {
+  detectInjectionAttempt,
+  sanitizeInput,
+  isolateContext
+}; 

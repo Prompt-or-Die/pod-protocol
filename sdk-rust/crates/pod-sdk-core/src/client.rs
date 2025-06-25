@@ -90,6 +90,16 @@ impl PodComClient {
             timeout: config.network.timeout,
             rate_limit_config: config.rate_limit_config.clone(),
             cache_config: config.cache_config.clone(),
+            cluster: config.rpc_url.clone(),
+            rpc_timeout_secs: config.network.timeout.as_secs(),
+            message_config: None,
+            channel_config: None,
+            escrow_config: None,
+            analytics_config: None,
+            discovery_config: None,
+            compression_config: None,
+            ipfs_endpoint: Some(config.ipfs_config.ipfs_endpoint.clone()),
+            zk_compression_config: Some(config.zk_compression_config.clone()),
         };
         
         Ok(Self {
@@ -143,36 +153,34 @@ impl PodComClient {
             // Create program instance
             let program = client.program(self.config.program_id)?;
             
-            // Initialize all services with the program - note: Program doesn't implement Clone
-            // so we need to handle this differently
-            self.agents.initialize(program).await?;
-            
-            // For now, create a fresh program for each service until we resolve the Clone issue
-            let program2 = client.program(self.config.program_id)?;
-            self.messages.initialize(program2).await?;
-            
-            let program3 = client.program(self.config.program_id)?;
-            self.channels.initialize(program3).await?;
-            
-            let program4 = client.program(self.config.program_id)?;
-            self.escrow.initialize(program4).await?;
-            
-            let program5 = client.program(self.config.program_id)?;
-            self.analytics.initialize(program5).await?;
-            
-            let program6 = client.program(self.config.program_id)?;
-            self.discovery.initialize(program6).await?;
-            
-            let program7 = client.program(self.config.program_id)?;
-            self.ipfs.initialize(program7).await?;
-            
-            let program8 = client.program(self.config.program_id)?;
-            self.zk_compression.initialize(program8).await?;
-            
-            // Store the main program instance
-            let main_program = client.program(self.config.program_id)?;
-            self.program = Some(main_program);
+            // Store the main program instance first
+            self.program = Some(program);
             self.wallet = Some(wallet);
+            
+            // Initialize all services with individual program instances since Program doesn't implement Clone
+            let agents_program = client.program(self.config.program_id)?;
+            self.agents.initialize(agents_program).await?;
+            
+            let messages_program = client.program(self.config.program_id)?;
+            self.messages.initialize(messages_program).await?;
+            
+            let channels_program = client.program(self.config.program_id)?;
+            self.channels.initialize(channels_program).await?;
+            
+            let escrow_program = client.program(self.config.program_id)?;
+            self.escrow.initialize(escrow_program).await?;
+            
+            let analytics_program = client.program(self.config.program_id)?;
+            self.analytics.initialize(analytics_program).await?;
+            
+            let discovery_program = client.program(self.config.program_id)?;
+            self.discovery.initialize(discovery_program).await?;
+            
+            let ipfs_program = client.program(self.config.program_id)?;
+            self.ipfs.initialize(ipfs_program).await?;
+            
+            let zk_compression_program = client.program(self.config.program_id)?;
+            self.zk_compression.initialize(zk_compression_program).await?;
         }
         
         Ok(())

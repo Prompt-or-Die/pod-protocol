@@ -226,6 +226,8 @@ impl NetworkConfig {
 pub struct RetryConfig {
     /// Maximum number of retry attempts
     pub max_attempts: usize,
+    /// Maximum number of retry attempts (alias for max_attempts)
+    pub max_retries: usize,
     /// Base delay between retries
     pub base_delay: Duration,
     /// Maximum delay between retries
@@ -245,6 +247,7 @@ impl RetryConfig {
     pub fn default() -> Self {
         Self {
             max_attempts: 3,
+            max_retries: 3,
             base_delay: Duration::from_millis(100),
             max_delay: Duration::from_secs(10),
             backoff_multiplier: 2.0,
@@ -258,6 +261,7 @@ impl RetryConfig {
     pub fn conservative() -> Self {
         Self {
             max_attempts: 5,
+            max_retries: 5,
             base_delay: Duration::from_millis(200),
             max_delay: Duration::from_secs(30),
             backoff_multiplier: 1.5,
@@ -271,6 +275,7 @@ impl RetryConfig {
     pub fn aggressive() -> Self {
         Self {
             max_attempts: 10,
+            max_retries: 10,
             base_delay: Duration::from_millis(50),
             max_delay: Duration::from_secs(5),
             backoff_multiplier: 1.2,

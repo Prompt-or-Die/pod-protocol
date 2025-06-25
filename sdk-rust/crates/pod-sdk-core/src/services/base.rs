@@ -39,6 +39,89 @@ pub struct ServiceConfig {
     pub rate_limit_config: RateLimitConfig,
     /// Cache configuration
     pub cache_config: CacheConfig,
+    /// Cluster configuration
+    pub cluster: String,
+    /// RPC timeout in seconds
+    pub rpc_timeout_secs: u64,
+    /// Service-specific configurations
+    pub message_config: Option<MessageConfig>,
+    pub channel_config: Option<ChannelConfig>,
+    pub escrow_config: Option<EscrowConfig>,
+    pub analytics_config: Option<AnalyticsConfig>,
+    pub discovery_config: Option<DiscoveryConfig>,
+    pub compression_config: Option<CompressionConfig>,
+    pub ipfs_endpoint: Option<String>,
+    pub zk_compression_config: Option<ZKCompressionConfig>,
+}
+
+/// Message service configuration
+#[derive(Debug, Clone)]
+pub struct MessageConfig {
+    pub message_size_limit: u32,
+    pub encryption_enabled: bool,
+    pub retention_period_hours: u32,
+    pub compression_threshold: u32,
+}
+
+/// Channel service configuration  
+#[derive(Debug, Clone)]
+pub struct ChannelConfig {
+    pub participant_limit: u32,
+    pub invitation_expiry_hours: u32,
+    pub message_history_limit: u32,
+    pub moderation_enabled: bool,
+}
+
+/// Escrow service configuration
+#[derive(Debug, Clone)]
+pub struct EscrowConfig {
+    pub minimum_escrow: u64,
+    pub timeout_hours: u32,
+    pub arbitrator_config: Option<ArbitratorConfig>,
+}
+
+/// Arbitrator configuration
+#[derive(Debug, Clone)]
+pub struct ArbitratorConfig {
+    pub enabled: bool,
+    pub arbitrator_list: Vec<String>,
+    pub dispute_timeout_hours: u32,
+}
+
+/// Analytics service configuration
+#[derive(Debug, Clone)]
+pub struct AnalyticsConfig {
+    pub collection_interval: u32,
+    pub metrics_retention_days: u32,
+    pub anonymization_enabled: bool,
+}
+
+/// Discovery service configuration
+#[derive(Debug, Clone)]
+pub struct DiscoveryConfig {
+    pub search_result_limit: u32,
+    pub indexing_enabled: bool,
+    pub cache_duration_minutes: u32,
+}
+
+/// Compression configuration
+#[derive(Debug, Clone)]
+pub struct CompressionConfig {
+    pub enabled: bool,
+    pub algorithm: String,
+    pub level: u8,
+}
+
+/// ZK Compression configuration
+#[derive(Debug, Clone)]
+pub struct ZKCompressionConfig {
+    pub enabled: bool,
+    pub compression_level: u8,
+    pub cache_proofs: bool,
+    pub max_cache_size: usize,
+    pub proof_timeout: Duration,
+    pub proof_size_limit: usize,
+    pub batch_size: usize,
 }
 
 impl std::fmt::Debug for ServiceConfig {
@@ -51,6 +134,16 @@ impl std::fmt::Debug for ServiceConfig {
             .field("rate_limit_config", &self.rate_limit_config)
             .field("cache_config", &self.cache_config)
             .field("rpc_client", &"<RpcClient>")
+            .field("cluster", &self.cluster)
+            .field("rpc_timeout_secs", &self.rpc_timeout_secs)
+            .field("message_config", &self.message_config)
+            .field("channel_config", &self.channel_config)
+            .field("escrow_config", &self.escrow_config)
+            .field("analytics_config", &self.analytics_config)
+            .field("discovery_config", &self.discovery_config)
+            .field("compression_config", &self.compression_config)
+            .field("ipfs_endpoint", &self.ipfs_endpoint)
+            .field("zk_compression_config", &self.zk_compression_config)
             .finish()
     }
 }
