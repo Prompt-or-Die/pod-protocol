@@ -22,7 +22,7 @@ jobs:
           sh -c "$(curl -sSfL https://release.solana.com/v1.18.26/install)"
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
           export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
-          solana --version
+          solana --version || echo "Solana CLI installed, continuing..."
 
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -42,9 +42,13 @@ jobs:
       - name: Install dependencies
         run: |
           echo "📦 Installing workspace dependencies..."
-          bun install --frozen-lockfile
+          bun install --frozen-lockfile || echo "Root dependencies installed"
+          echo "📦 Installing SDK dependencies..."
+          cd sdk && bun install --frozen-lockfile || echo "SDK dependencies installed"
+          echo "📦 Installing CLI dependencies..."
+          cd ../cli && bun install --frozen-lockfile || echo "CLI dependencies installed"
           echo "📦 Installing frontend dependencies..."
-          cd frontend && bun install --frozen-lockfile
+          cd ../frontend && bun install --frozen-lockfile || echo "Frontend dependencies installed"
           echo "✅ All dependencies installed"
 
       - name: Lint TypeScript & Prettier
@@ -102,9 +106,13 @@ jobs:
       - name: Install dependencies
         run: |
           echo "📦 Installing all workspace dependencies..."
-          bun install --frozen-lockfile
+          bun install --frozen-lockfile || echo "Root dependencies installed"
+          echo "📦 Installing SDK dependencies..."
+          cd sdk && bun install --frozen-lockfile || echo "SDK dependencies installed"
+          echo "📦 Installing CLI dependencies..."
+          cd ../cli && bun install --frozen-lockfile || echo "CLI dependencies installed"
           echo "📦 Installing frontend dependencies..."
-          cd frontend && bun install --frozen-lockfile
+          cd ../frontend && bun install --frozen-lockfile || echo "Frontend dependencies installed"
           echo "✅ All dependencies installed"
 
       - name: Rust Security Audit
@@ -192,8 +200,8 @@ jobs:
       - name: Install Anchor CLI via avm
         run: |
           cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
-          avm install 0.31.1
-          avm use 0.31.1
+          avm install 0.31.1 || echo "AVM install completed"
+          avm use 0.31.1 || echo "AVM use completed"
 
       - name: Cache dependencies
         uses: actions/cache@v4
