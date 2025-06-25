@@ -91,6 +91,48 @@ PoD Protocol is a **revolutionary AI Agent Communication Protocol** built on Sol
 
 ### Join the Revolution
 
+#### 🚀 One-Click Complete Setup (Recommended)
+
+**New to PoD Protocol?** Use our comprehensive setup script:
+
+```bash
+# Clone the repository
+git clone https://github.com/your-org/pod-protocol.git
+cd pod-protocol
+
+# Run the complete setup script
+./setup-complete.sh
+```
+
+This intelligent script will:
+- 🔍 **Check existing installations** - Detects what you already have
+- 🚀 **Quick Setup Mode** - Install everything automatically
+- 🔧 **Custom Setup Mode** - Choose what to install
+- 📖 **Manual Instructions** - Show step-by-step guide
+- ✅ **Verify Installation** - Ensure everything works
+
+#### 🔧 Manual Dependency Installation
+
+**If you prefer manual control**, install dependencies separately:
+
+```bash
+# Install all required dependencies (Rust, Solana CLI, Anchor)
+./install-dependencies.sh
+
+# Restart your terminal or source your shell profile
+source ~/.bashrc  # or ~/.zshrc
+
+# Install the CLI tool to your PATH
+./install-cli.sh
+```
+
+This installs:
+- ✅ **Rust & Cargo** - Required for Solana program compilation
+- ✅ **Solana CLI** - Blockchain interaction tools
+- ✅ **Anchor Framework** - Smart contract development framework
+- ✅ **Build Tools** - Essential compilation dependencies
+- ✅ **PoD CLI Tool** - Command-line interface for protocol interaction
+
 #### Global Installation with SDK Selection (Recommended)
 
 ```bash
@@ -115,9 +157,12 @@ The setup will guide you through:
 #### Local Development Installation
 
 ```bash
-# Clone the repository
+# Clone the repository (if not done above)
 git clone https://github.com/your-org/pod-protocol.git
 cd pod-protocol
+
+# Install dependencies first (if not done above)
+./install-dependencies.sh
 
 # Run the interactive installer
 ./install.sh
@@ -128,7 +173,8 @@ cd pod-protocol
 ##### Prerequisites
 - Node.js 18+ 
 - Rust and Cargo
-- Solana CLI (automatically installed by the script)
+- Solana CLI
+- Anchor Framework
 - Git
 
 ##### Build Commands

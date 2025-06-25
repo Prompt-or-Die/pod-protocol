@@ -7,7 +7,7 @@
   "main": "index.js",
   "bin": {
     "pod": "cli/dist/index.js",
-    "pod-protocol-setup": "setup.js"
+    "pod-protocol-setup": "interactive-setup.js"
   },
   "scripts": {
     "postinstall": "node -e \"console.log('\\n🎉 PoD Protocol initiated successfully!\\n'); console.log('To complete setup and select your SDK, run: npx pod-protocol-setup\\n');\"",
