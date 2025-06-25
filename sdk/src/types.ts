@@ -3,7 +3,7 @@ import { Address, address } from "@solana/web3.js";
 /**
  * PoD Protocol Program ID on Solana Devnet
  */
-export const PROGRAM_ID = new PublicKey(
+export const PROGRAM_ID = address(
   "HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps",
 );
 
@@ -41,7 +41,7 @@ export enum ChannelVisibility {
  */
 export interface AgentAccount {
   /** Agent's wallet public key */
-  pubkey: PublicKey;
+  pubkey: Address;
   /** Bitmask representing agent capabilities */
   capabilities: number;
   /** URI to agent metadata (IPFS, Arweave, etc.) */
@@ -63,11 +63,11 @@ export interface AgentAccount {
  */
 export interface MessageAccount {
   /** Message account public key */
-  pubkey: PublicKey;
+  pubkey: Address;
   /** Sender's public key */
-  sender: PublicKey;
+  sender: Address;
   /** Recipient's public key */
-  recipient: PublicKey;
+  recipient: Address;
   /** SHA-256 hash of message payload */
   payloadHash: Uint8Array;
   /** Original message payload (for display) */
@@ -91,9 +91,9 @@ export interface MessageAccount {
  */
 export interface ChannelAccount {
   /** Channel account public key */
-  pubkey: PublicKey;
+  pubkey: Address;
   /** Channel creator's public key */
-  creator: PublicKey;
+  creator: Address;
   /** Channel name */
   name: string;
   /** Channel description */
@@ -123,9 +123,9 @@ export interface ChannelAccount {
  */
 export interface EscrowAccount {
   /** Associated channel public key */
-  channel: PublicKey;
+  channel: Address;
   /** Depositor's public key */
-  depositor: PublicKey;
+  depositor: Address;
   /** Deposited amount in lamports */
   balance: number;
   /** Deposited amount in lamports (alias for compatibility) */
@@ -169,7 +169,7 @@ export interface PodComConfig {
   /** Solana cluster endpoint */
   endpoint?: string;
   /** Program ID (defaults to devnet) */
-  programId?: PublicKey;
+  programId?: Address;
   /** Default commitment level */
   commitment?: "processed" | "confirmed" | "finalized";
   /** IPFS configuration for off-chain storage */
@@ -204,21 +204,21 @@ export interface PodComConfig {
     /** Batch timeout in milliseconds */
     batchTimeout?: number;
     /** Light system program public key */
-    lightSystemProgram?: PublicKey;
+    lightSystemProgram?: Address;
     /** Nullifier queue public key */
-    nullifierQueuePubkey?: PublicKey;
+    nullifierQueuePubkey?: Address;
     /** CPI authority PDA */
-    cpiAuthorityPda?: PublicKey;
+    cpiAuthorityPda?: Address;
     /** Compressed Token program */
-    compressedTokenProgram?: PublicKey;
+    compressedTokenProgram?: Address;
     /** Registered Program ID */
-    registeredProgramId?: PublicKey;
+    registeredProgramId?: Address;
     /** No-op Program */
-    noopProgram?: PublicKey;
+    noopProgram?: Address;
     /** Account Compression authority */
-    accountCompressionAuthority?: PublicKey;
+    accountCompressionAuthority?: Address;
     /** Account Compression program */
-    accountCompressionProgram?: PublicKey;
+    accountCompressionProgram?: Address;
   };
   /** Jito RPC URL for bundle transactions */
   jitoRpcUrl?: string;
@@ -258,7 +258,7 @@ export interface UpdateAgentOptions {
  */
 export interface SendMessageOptions {
   /** Recipient's public key */
-  recipient: PublicKey;
+  recipient: Address;
   /** Message payload (will be hashed) */
   payload: string | Uint8Array;
   /** Message type */
@@ -288,7 +288,7 @@ export interface CreateChannelOptions {
  */
 export interface DepositEscrowOptions {
   /** Channel public key */
-  channel: PublicKey;
+  channel: Address;
   /** Amount to deposit in lamports */
   amount: number;
 }
@@ -298,7 +298,7 @@ export interface DepositEscrowOptions {
  */
 export interface WithdrawEscrowOptions {
   /** Channel public key */
-  channel: PublicKey;
+  channel: Address;
   /** Amount to withdraw in lamports */
   amount: number;
 }
@@ -308,11 +308,11 @@ export interface WithdrawEscrowOptions {
  */
 export interface BroadcastMessageOptions {
   /** Channel public key */
-  channelPDA: PublicKey;
+  channelPDA: Address;
   /** Message content */
   content: string;
   /** Message type (defaults to "Text") */
   messageType?: any;
   /** Optional reply-to message */
-  replyTo?: PublicKey;
+  replyTo?: Address;
 }

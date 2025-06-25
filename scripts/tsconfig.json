@@ -12,7 +12,9 @@
     "allowJs": true
   },
   "include": [
-    "*.ts",
+    "*.ts"
+  ],
+  "exclude": [
     "*.js"
   ]
 } 
