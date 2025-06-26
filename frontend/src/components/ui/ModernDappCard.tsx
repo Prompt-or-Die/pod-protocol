@@ -96,7 +96,9 @@ export const ModernDappCard: React.FC<ModernDappCardProps> = ({
       whileHover={{ scale: interactive ? 1.02 : 1 }}
       whileTap={{ scale: interactive ? 0.98 : 1 }}
       onClick={onClick}
-      {...bind()}
+      onPointerMove={bind().onPointerMove}
+      onPointerEnter={bind().onPointerEnter}
+      onPointerLeave={bind().onPointerLeave}
     >
       {/* Background gradient overlay */}
       {gradient && (
