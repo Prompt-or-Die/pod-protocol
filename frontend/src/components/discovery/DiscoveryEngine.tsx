@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { 
   MagnifyingGlassIcon,
   FunnelIcon,
-  TrendingUpIcon,
+  ArrowTrendingUpIcon,
   StarIcon,
   ClockIcon,
   UserGroupIcon,
@@ -256,7 +256,7 @@ const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({ className }) => {
         {[
           { id: 'search', label: 'Search Results', icon: MagnifyingGlassIcon },
           { id: 'recommended', label: 'Recommended', icon: StarIcon },
-          { id: 'trending', label: 'Trending', icon: TrendingUpIcon }
+          { id: 'trending', label: 'Trending', icon: ArrowTrendingUpIcon }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -527,7 +527,7 @@ const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({ className }) => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                           <div className="p-2 bg-orange-600/20 rounded-lg">
-                            <TrendingUpIcon className="h-6 w-6 text-orange-400" />
+                            <ArrowTrendingUpIcon className="h-6 w-6 text-orange-400" />
                           </div>
                           <div>
                             <h4 className="font-bold text-white">{channel.name}</h4>

@@ -2,7 +2,6 @@
   "name": "pod-protocol-frontend",
   "version": "1.0.0",
   "description": "PoD Protocol Frontend - Modern AI Agent Communication dApp",
-
   "private": true,
   "scripts": {
     "dev": "next dev --turbo",
@@ -43,6 +42,7 @@
     "@babel/core": "^7.26.0",
     "@babel/plugin-transform-modules-commonjs": "^7.25.9",
     "@babel/preset-env": "^7.26.0",
+    "@playwright/test": "1.53.1",
     "@tailwindcss/cli": "^4.1.11",
     "@tailwindcss/postcss": "^4.1.11",
     "@testing-library/dom": "^10.0.0",

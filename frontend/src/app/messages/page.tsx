@@ -20,9 +20,8 @@ import {
   Agent,
   MessageType,
 } from "@/components/store/types";
-import { usePodClient } from "@/hooks/usePodClient";
-import LoadingState from '../../components/ui/LoadingState';
-import ErrorBoundary from '../../components/ErrorBoundary';
+import usePodClient from "@/hooks/usePodClient";
+
 
 // Web3.js v2.0 imports
 import { address } from '@solana/addresses';
