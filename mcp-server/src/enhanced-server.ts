@@ -46,7 +46,7 @@ import {
 export interface EnhancedMCPServerConfig extends MCPServerConfig {
   transport: EnhancedTransportConfig;
   registry: MCPRegistryConfig;
-  security: SecurityConfig;
+  enhancedSecurity?: SecurityConfig;
   a2aProtocol?: {
     enabled: boolean;
     discoveryMode: 'local' | 'network' | 'hybrid';
@@ -74,16 +74,16 @@ export interface EnhancedMCPServerConfig extends MCPServerConfig {
 }
 
 export class EnhancedPodProtocolMCPServer {
-  private server: Server;
-  private client: PodComClient;
+  private server!: Server;
+  private client!: PodComClient;
   private config: EnhancedMCPServerConfig;
-  private logger: winston.Logger;
+  private logger!: winston.Logger;
   
   // Enhanced components
-  private transport: EnhancedMCPTransport;
-  private registryManager: MCPRegistryManager;
-  private securityManager: MCPSecurityManager;
-  private wsEventManager: WebSocketEventManager;
+  private transport!: EnhancedMCPTransport;
+  private registryManager!: MCPRegistryManager;
+  private securityManager!: MCPSecurityManager;
+  private wsEventManager!: WebSocketEventManager;
   
   // Performance and caching
   private cache: Map<string, { data: any; timestamp: number; ttl: number }> = new Map();
@@ -167,7 +167,14 @@ export class EnhancedPodProtocolMCPServer {
     
     // Security manager
     this.securityManager = new MCPSecurityManager(
-      this.config.security,
+      this.config.enhancedSecurity || {
+        enableInputValidation: true,
+        enableRateLimiting: true,
+        enableToolSigning: false,
+        maxRequestSize: 1024000,
+        allowedOrigins: ['*'],
+        requireAuthentication: false
+      },
       this.logger
     );
     

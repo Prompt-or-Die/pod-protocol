@@ -13,7 +13,7 @@ import {
   ProgressNotification,
   CancelledNotification,
   LoggingMessageNotification,
-  ResourcesUpdatedNotification
+  ResourceUpdatedNotification
 } from '@modelcontextprotocol/sdk/types.js';
 import winston from 'winston';
 
@@ -66,7 +66,7 @@ export class AdvancedMCPFeatures {
   private progressTrackers: Map<string, ProgressTracker> = new Map();
   private cancellationTokens: Map<string, CancellationToken> = new Map();
   private resourceSubscriptions: Map<string, Set<string>> = new Map();
-  private loggingLevel: 'debug' | 'info' | 'warn' | 'error' = 'info';
+  private loggingLevel: 'debug' | 'info' | 'error' | 'notice' | 'warning' | 'critical' | 'alert' | 'emergency' = 'info';
 
   constructor(server: Server, logger: winston.Logger) {
     this.server = server;
@@ -152,7 +152,15 @@ export class AdvancedMCPFeatures {
   // =====================================================
 
   private setupCancellationSupport(): void {
-    this.server.setNotificationHandler('notifications/cancelled', async (notification) => {
+    const CancelledNotificationSchema = z.object({
+      method: z.literal('notifications/cancelled'),
+      params: z.object({
+        requestId: z.string(),
+        reason: z.string().optional()
+      })
+    });
+
+    this.server.setNotificationHandler(CancelledNotificationSchema, async (notification) => {
       const { requestId, reason } = notification.params;
       
       this.cancellationTokens.set(requestId, {
@@ -424,7 +432,24 @@ export class AdvancedMCPFeatures {
   // =====================================================
 
   private setupSampling(): void {
-    this.server.setRequestHandler('sampling/createMessage', async (request) => {
+    const SamplingRequestSchema = z.object({
+      method: z.literal('sampling/createMessage'),
+      params: z.object({
+        messages: z.array(z.object({
+          role: z.enum(['system', 'user', 'assistant']),
+          content: z.object({
+            type: z.enum(['text', 'image']),
+            text: z.string().optional(),
+            image_url: z.string().optional()
+          })
+        })),
+        maxTokens: z.number().optional(),
+        temperature: z.number().optional(),
+        stopSequences: z.array(z.string()).optional()
+      })
+    });
+
+    this.server.setRequestHandler(SamplingRequestSchema, async (request) => {
       const { messages, maxTokens, temperature, stopSequences } = request.params;
       
       try {
@@ -480,7 +505,14 @@ export class AdvancedMCPFeatures {
   // =====================================================
 
   private setupResourceSubscriptions(): void {
-    this.server.setRequestHandler('resources/subscribe', async (request) => {
+    const SubscribeRequestSchema = z.object({
+      method: z.literal('resources/subscribe'),
+      params: z.object({
+        uri: z.string()
+      })
+    });
+
+    this.server.setRequestHandler(SubscribeRequestSchema, async (request) => {
       const { uri } = request.params;
       const clientId = 'client-' + Date.now(); // In real implementation, get from context
       
@@ -494,7 +526,14 @@ export class AdvancedMCPFeatures {
       return { subscribed: true };
     });
 
-    this.server.setRequestHandler('resources/unsubscribe', async (request) => {
+    const UnsubscribeRequestSchema = z.object({
+      method: z.literal('resources/unsubscribe'),
+      params: z.object({
+        uri: z.string()
+      })
+    });
+
+    this.server.setRequestHandler(UnsubscribeRequestSchema, async (request) => {
       const { uri } = request.params;
       const clientId = 'client-' + Date.now(); // In real implementation, get from context
       
@@ -515,7 +554,7 @@ export class AdvancedMCPFeatures {
     const subscribers = this.resourceSubscriptions.get(uri);
     if (!subscribers || subscribers.size === 0) return;
 
-    const notification: ResourcesUpdatedNotification = {
+    const notification: ResourceUpdatedNotification = {
       method: 'notifications/resources/updated',
       params: {
         updates: [{
@@ -554,10 +593,13 @@ export class AdvancedMCPFeatures {
     message: string,
     data?: any
   ): Promise<void> {
+    // Map winston log levels to MCP log levels
+    const mcpLevel = level === 'warn' ? 'warning' : level;
+    
     const logNotification: LoggingMessageNotification = {
       method: 'notifications/message',
       params: {
-        level,
+        level: mcpLevel as 'debug' | 'info' | 'error' | 'notice' | 'warning' | 'critical' | 'alert' | 'emergency',
         logger: 'pod-protocol-mcp',
         message,
         data: this.sanitizeLogData(data)
