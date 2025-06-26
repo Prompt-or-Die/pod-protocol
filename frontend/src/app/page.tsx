@@ -21,6 +21,7 @@ import AgentManagement from '../components/agent/AgentManagement';
 import ChannelManagement from '../components/channel/ChannelManagement';
 import AnalyticsDashboard from '../components/analytics/AnalyticsDashboard';
 import ZKCompressionInterface from '../components/zk-compression/ZKCompressionInterface';
+import DiscoveryEngine from '../components/discovery/DiscoveryEngine';
 import { GlassCard, NeuralCard } from '../components/ui/ModernDappCard';
 import Button from '../components/ui/Button';
 
@@ -51,7 +52,7 @@ export default function HomePage() {
       case 'zk-compression':
         return <ZKCompressionInterface />;
       case 'discovery':
-        return <DiscoveryPage />;
+        return <DiscoveryEngine />;
       case 'settings':
         return <SettingsPage />;
       default:
