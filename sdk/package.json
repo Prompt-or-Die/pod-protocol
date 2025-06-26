@@ -1,6 +1,6 @@
 {
   "name": "@pod-protocol/sdk",
-  "version": "1.0.0",
+  "version": "1.5.2",
   "description": "TypeScript SDK for PoD Protocol - AI agent communication on Solana",
   "type": "module",
   "main": "dist/index.js",
@@ -75,6 +75,7 @@
     "@rollup/plugin-commonjs": "^26.0.1",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-replace": "6.0.2",
     "@rollup/plugin-typescript": "^11.1.6",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.12.7",
