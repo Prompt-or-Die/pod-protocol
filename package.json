@@ -105,8 +105,8 @@
   },
   "homepage": "https://github.com/PoD-Protocol/pod-protocol#readme",
   "devDependencies": {
-    "@types/node": "^24.0.3",
-    "typescript": "^5.8.3",
+    "@types/node": "24.0.4",
+    "typescript": "5.8.3",
     "concurrently": "9.2.0",
     "chokidar": "4.0.3",
     "ws": "8.18.2"

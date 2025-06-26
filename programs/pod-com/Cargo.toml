@@ -33,38 +33,38 @@ spl-account-compression = { version = "1.0.0", features = ["cpi"], default-featu
 spl-concurrent-merkle-tree = { version = "1.0.0", default-features = false }
 # New ZK-SNARKs integration for advanced privacy
 # zk-sdk = { version = "0.3.0", optional = true } # Commented out - not available on crates.io
-ark-std = { version = "0.4", optional = true }
+ark-std = { version = "0.5.0", optional = true }
 
 # Enhanced Token Standards for 2025
-spl-token = { version = "3.5.0", features = ["no-entrypoint"], default-features = false }
-spl-token-2022 = { version = "0.9.0", features = ["no-entrypoint"], default-features = false }
-spl-associated-token-account = { version = "1.1.3", features = ["no-entrypoint"], default-features = false }
+spl-token = { version = "8.0.0", features = ["no-entrypoint"], default-features = false }
+spl-token-2022 = { version = "9.0.0", features = ["no-entrypoint"], default-features = false }
+spl-associated-token-account = { version = "7.0.0", features = ["no-entrypoint"], default-features = false }
 
 # Advanced DeFi Integration - temporarily commented out due to version conflicts
 # spl-governance = { version = "3.1.1", features = ["no-entrypoint"], optional = true }
 
 # Error handling
 thiserror = "2.0.12"
-anyhow = "1.0.93"
+anyhow = "1.0.98"
 
 # Enhanced cryptographic operations for 2025 - temporarily commented out due to version conflicts
 # blake3 = { version = "1.5.0", features = ["traits-preview"] }
 bs58 = { version = "0.5.1", default-features = false, features = ["alloc"] }
-sha2 = { version = "0.10.8", default-features = false }
+sha2 = { version = "0.10.9", default-features = false }
 sha3 = { version = "0.10.8", default-features = false }
 # Quantum-resistant cryptography preparation - temporarily commented out due to version conflicts
 # kyber = { version = "0.1.1", optional = true }
 # dilithium = { version = "0.2.0-alpha.3", optional = true }
 
 # AI Agent Integration
-borsh = { version = "1.5.3", default-features = false }
-serde = { version = "1.0.217", features = ["derive"] }
-serde_json = { version = "1.0.133", default-features = false, features = ["alloc"] }
+borsh = { version = "1.5.7", default-features = false }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = { version = "1.0.140", default-features = false, features = ["alloc"] }
 
 # Enhanced utilities for 2025
-bytemuck = { version = "1.21.0", features = ["derive"] }
+bytemuck = { version = "1.23.1", features = ["derive"] }
 # solana-program-test = { version = "2.1.0", optional = true }
-log = "0.4.25"
+log = "0.4.27"
 
 # Cross-chain compatibility - temporarily commented out due to version conflicts
 # solana-sdk = { version = "2.1.0", optional = true }
@@ -72,8 +72,8 @@ log = "0.4.25"
 [dev-dependencies]
 anchor-lang = { version = "0.31.1", features = ["derive"] }
 # solana-program-test = "2.1.0" # Temporarily commented out due to version conflicts
-tokio = { version = "1.42.0", features = ["macros", "rt-multi-thread"] }
-proptest = "1.5.0"
+tokio = { version = "1.45.1", features = ["macros", "rt-multi-thread"] }
+proptest = "1.7.0"
 
 [package.metadata.docs.rs]
 all-features = false

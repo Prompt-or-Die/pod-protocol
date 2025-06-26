@@ -1,6 +1,12 @@
 import { address } from "@solana/web3.js";
 import type { Address } from "@solana/web3.js";
-import { MessageType } from "@pod-protocol/sdk";
+// Local constants to avoid import issues during Web3.js v2 migration
+enum MessageType {
+  TEXT = 0,
+  IMAGE = 1,
+  CODE = 2,
+  FILE = 3,
+}
 import inquirer from "inquirer";
 import {
   createSpinner,

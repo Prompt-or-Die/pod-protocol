@@ -4,7 +4,13 @@ import {
   validateMessage,
 } from "../../utils/validation.js";
 import { ChannelData } from "./types.js";
-import { ChannelVisibility } from "@pod-protocol/sdk";
+
+// Local constants to avoid import issues during Web3.js v2 migration
+enum ChannelVisibility {
+  Public = 0,
+  Private = 1,
+  Restricted = 2,
+}
 
 export class ChannelValidators {
   static validateChannelData(data: ChannelData): void {

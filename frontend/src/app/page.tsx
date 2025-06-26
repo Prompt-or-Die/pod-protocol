@@ -1,417 +1,373 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useWallet } from '@solana/wallet-adapter-react';
 import { 
-  SparklesIcon,
   CpuChipIcon,
-  GlobeAltIcon,
-  ShieldCheckIcon,
-  BoltIcon,
-  ArrowRightIcon,
-  PlayIcon
+  ChatBubbleLeftRightIcon,
+  ChartBarIcon,
+  CubeTransparentIcon,
+  MagnifyingGlassIcon,
+  Cog6ToothIcon,
+  HomeIcon,
+  Bars3Icon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
-import { ModernDappCard, GlassCard, NeuralCard, QuantumCard } from '../components/ui/ModernDappCard';
-import WalletConnectionHub from '../components/ui/WalletConnectionHub';
-import DappDashboard from '../components/ui/DappDashboard';
-import Button from '../components/ui/Button';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { cn } from '../lib/utils';
-import React from 'react';
+
+// Import all the new components
+import AgentManagement from '../components/agent/AgentManagement';
+import ChannelManagement from '../components/channel/ChannelManagement';
+import AnalyticsDashboard from '../components/analytics/AnalyticsDashboard';
+import ZKCompressionInterface from '../components/zk-compression/ZKCompressionInterface';
+import { GlassCard, NeuralCard } from '../components/ui/ModernDappCard';
+import Button from '../components/ui/Button';
+
+type ActivePage = 'home' | 'agents' | 'channels' | 'analytics' | 'zk-compression' | 'discovery' | 'settings';
+
+const navigation = [
+  { id: 'home', name: 'Dashboard', icon: HomeIcon, description: 'Overview and quick actions' },
+  { id: 'agents', name: 'AI Agents', icon: CpuChipIcon, description: 'Manage your AI agents' },
+  { id: 'channels', name: 'Channels', icon: ChatBubbleLeftRightIcon, description: 'Communication channels' },
+  { id: 'analytics', name: 'Analytics', icon: ChartBarIcon, description: 'Network insights and metrics' },
+  { id: 'zk-compression', name: 'ZK Compression', icon: CubeTransparentIcon, description: 'Compressed NFTs and trees' },
+  { id: 'discovery', name: 'Discovery', icon: MagnifyingGlassIcon, description: 'Find agents and channels' },
+  { id: 'settings', name: 'Settings', icon: Cog6ToothIcon, description: 'Platform configuration' }
+];
 
 export default function HomePage() {
-  const { connected } = useWallet();
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [activeFeature, setActiveFeature] = useState(0);
+  const [activePage, setActivePage] = useState<ActivePage>('home');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    setIsLoaded(true);
-  }, []);
-
-  // Features showcase
-  const features = [
-    {
-      id: 'ai-agents',
-      title: 'Autonomous AI Agents',
-      description: 'Deploy intelligent agents that can communicate, trade, and execute tasks autonomously on the Solana blockchain.',
-      icon: CpuChipIcon,
-      gradient: 'from-purple-600 to-blue-600',
-      stats: ['24/7 Operation', 'Smart Contracts', 'Multi-Agent Systems']
-    },
-    {
-      id: 'real-time',
-      title: 'Real-time Communication',
-      description: 'Instant messaging and data streaming between users and AI agents with sub-second latency.',
-      icon: BoltIcon,
-      gradient: 'from-cyan-600 to-teal-600',
-      stats: ['<100ms Latency', 'WebSocket Streams', 'Global Network']
-    },
-    {
-      id: 'security',
-      title: 'Quantum-Resistant Security',
-      description: 'Future-proof encryption and post-quantum cryptography to secure your communications.',
-      icon: ShieldCheckIcon,
-      gradient: 'from-emerald-600 to-green-600',
-      stats: ['Post-Quantum Crypto', 'Zero-Knowledge Proofs', 'End-to-End Encryption']
-    },
-    {
-      id: 'decentralized',
-      title: 'Fully Decentralized',
-      description: 'Built on Solana with no central points of failure. Your data, your control.',
-      icon: GlobeAltIcon,
-      gradient: 'from-orange-600 to-red-600',
-      stats: ['No Central Servers', 'IPFS Storage', 'Blockchain Native']
+  const renderPageContent = () => {
+    switch (activePage) {
+      case 'agents':
+        return <AgentManagement />;
+      case 'channels':
+        return <ChannelManagement />;
+      case 'analytics':
+        return <AnalyticsDashboard />;
+      case 'zk-compression':
+        return <ZKCompressionInterface />;
+      case 'discovery':
+        return <DiscoveryPage />;
+      case 'settings':
+        return <SettingsPage />;
+      default:
+        return <DashboardHome />;
     }
-  ];
-
-  // Auto-rotate features
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveFeature((prev) => (prev + 1) % features.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [features.length]);
-
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full"
-        />
-      </div>
-    );
-  }
-
-  if (connected) {
-    return (
-      <div className="min-h-screen bg-gray-900">
-        <div className="container mx-auto px-4 py-8">
-          <DappDashboard />
-        </div>
-      </div>
-    );
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-900 overflow-hidden">
-      {/* Animated background */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-blue-900/20 to-cyan-900/20" />
-        <div className="absolute inset-0">
-          {[...Array(50)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1 h-1 bg-white rounded-full opacity-30"
-              initial={{ 
-                x: Math.random() * window.innerWidth, 
-                y: Math.random() * window.innerHeight,
-                scale: Math.random() * 0.5 + 0.5
-              }}
-              animate={{
-                y: [null, -100],
-                opacity: [0.3, 0, 0.3]
-              }}
-              transition={{
-                duration: Math.random() * 3 + 2,
-                repeat: Infinity,
-                delay: Math.random() * 2
-              }}
-            />
-          ))}
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900">
+      {/* Animated Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,119,198,0.1),transparent_50%)]" />
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+      </div>
+
+      {/* Mobile sidebar backdrop */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={cn(
+        'fixed inset-y-0 left-0 z-50 w-72 transform transition-transform duration-300 ease-in-out lg:translate-x-0',
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      )}>
+        <div className="h-full bg-gray-900/90 backdrop-blur-md border-r border-gray-700/50">
+          <div className="flex items-center justify-between p-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">P</span>
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                PoD Protocol
+              </span>
+            </div>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden p-2 text-gray-400 hover:text-white"
+            >
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          </div>
+
+          <nav className="px-4 space-y-2">
+            {navigation.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActivePage(item.id as ActivePage);
+                  setSidebarOpen(false);
+                }}
+                className={cn(
+                  'w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all group',
+                  activePage === item.id
+                    ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+                )}
+              >
+                <item.icon className={cn(
+                  'h-5 w-5 transition-colors',
+                  activePage === item.id ? 'text-purple-400' : 'text-gray-400 group-hover:text-white'
+                )} />
+                <div className="text-left">
+                  <div className="font-medium">{item.name}</div>
+                  <div className="text-xs text-gray-500">{item.description}</div>
+                </div>
+              </button>
+            ))}
+          </nav>
+
+          <div className="absolute bottom-6 left-4 right-4">
+            <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+              <div className="text-sm text-gray-400 mb-2">Wallet Connection</div>
+              <WalletMultiButton className="!bg-purple-600 hover:!bg-purple-700 !rounded-lg !text-sm !h-10 !w-full !justify-center" />
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="relative z-10">
-        {/* Header */}
-        <header className="container mx-auto px-4 py-6">
-          <nav className="flex items-center justify-between">
-            <motion.div 
-              className="flex items-center space-x-2"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-            >
-              <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-lg flex items-center justify-center">
-                <SparklesIcon className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-white">PoD Protocol</span>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center space-x-4"
-            >
-              <Button variant="ghost" size="sm">
-                Docs
-              </Button>
-              <Button variant="ghost" size="sm">
-                GitHub
-              </Button>
-              <Button variant="primary" size="sm">
-                <PlayIcon className="h-4 w-4 mr-2" />
-                Demo
-              </Button>
-            </motion.div>
-          </nav>
-        </header>
-
-        {/* Hero Section */}
-        <section className="container mx-auto px-4 py-16 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-w-4xl mx-auto space-y-8"
-          >
-            <div className="space-y-4">
-              <motion.h1 
-                className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
+      {/* Main content */}
+      <div className="lg:pl-72">
+        {/* Top bar */}
+        <div className="sticky top-0 z-30 bg-gray-900/80 backdrop-blur-md border-b border-gray-700/50">
+          <div className="flex items-center justify-between px-6 py-4">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden p-2 text-gray-400 hover:text-white"
               >
-                The Future of
-                <br />
-                AI Communication
-              </motion.h1>
-              
-              <motion.p 
-                className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                Deploy autonomous AI agents that communicate, collaborate, and execute tasks 
-                on the Solana blockchain with unprecedented security and speed.
-              </motion.p>
-            </div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4"
-            >
-              <Button variant="neural" size="xl" className="w-full sm:w-auto">
-                <SparklesIcon className="h-5 w-5 mr-2" />
-                Get Started
-              </Button>
-              <Button variant="glass" size="xl" className="w-full sm:w-auto">
-                <PlayIcon className="h-5 w-5 mr-2" />
-                Watch Demo
-              </Button>
-            </motion.div>
-
-            {/* Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
-              className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16"
-            >
-              {[
-                { label: 'Active Agents', value: '2,847+', suffix: '' },
-                { label: 'Messages/Day', value: '1.2M+', suffix: '' },
-                { label: 'Uptime', value: '99.9', suffix: '%' }
-              ].map((stat, index) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.9 + index * 0.1 }}
-                  className="text-center"
-                >
-                  <div className="text-3xl md:text-4xl font-bold text-white mb-2">
-                    {stat.value}{stat.suffix}
-                  </div>
-                  <div className="text-gray-400">{stat.label}</div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </motion.div>
-        </section>
-
-        {/* Wallet Connection Section */}
-        <section className="container mx-auto px-4 py-16">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.0 }}
-          >
-            <WalletConnectionHub />
-          </motion.div>
-        </section>
-
-        {/* Features Section */}
-        <section className="container mx-auto px-4 py-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.2 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Powered by Advanced Technology
-            </h2>
-            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-              Built with cutting-edge blockchain technology and AI to deliver 
-              unparalleled performance and security.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-            {/* Feature Showcase */}
-            <div className="space-y-4">
-              {features.map((feature, index) => {
-                const IconComponent = feature.icon;
-                const isActive = index === activeFeature;
-                
-                return (
-                  <motion.div
-                    key={feature.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 1.4 + index * 0.1 }}
-                  >
-                    <ModernDappCard
-                      variant={isActive ? 'neural' : 'glass'}
-                      interactive
-                      className={cn(
-                        'cursor-pointer transition-all duration-500',
-                        isActive && 'ring-2 ring-purple-500/50'
-                      )}
-                      onClick={() => setActiveFeature(index)}
-                    >
-                      <div className="flex items-start space-x-4">
-                        <div className={cn(
-                          'p-3 rounded-xl bg-gradient-to-r',
-                          feature.gradient,
-                          'text-white'
-                        )}>
-                          <IconComponent className="h-6 w-6" />
-                        </div>
-                        
-                        <div className="flex-1">
-                          <h3 className="text-lg font-bold text-white mb-2">
-                            {feature.title}
-                          </h3>
-                          <p className="text-gray-400 text-sm mb-3">
-                            {feature.description}
-                          </p>
-                          
-                          <div className="flex flex-wrap gap-2">
-                            {feature.stats.map((stat) => (
-                              <span
-                                key={stat}
-                                className="px-2 py-1 bg-gray-700/50 text-gray-300 text-xs rounded-full"
-                              >
-                                {stat}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        <ArrowRightIcon className={cn(
-                          'h-5 w-5 transition-all duration-300',
-                          isActive ? 'text-purple-400 transform rotate-90' : 'text-gray-500'
-                        )} />
-                      </div>
-                    </ModernDappCard>
-                  </motion.div>
-                );
-              })}
-            </div>
-
-            {/* Active Feature Detail */}
-            <div className="lg:sticky lg:top-8">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeFeature}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <NeuralCard className="h-96 flex items-center justify-center">
-                    <div className="text-center space-y-6">
-                      <div className={cn(
-                        'p-6 rounded-2xl bg-gradient-to-r mx-auto w-fit',
-                        features[activeFeature].gradient
-                      )}>
-                        {React.createElement(features[activeFeature].icon, { 
-                          className: "h-12 w-12 text-white" 
-                        })}
-                      </div>
-                      
-                      <div>
-                        <h3 className="text-2xl font-bold text-white mb-3">
-                          {features[activeFeature].title}
-                        </h3>
-                        <p className="text-gray-300">
-                          {features[activeFeature].description}
-                        </p>
-                      </div>
-                      
-                      <Button variant="glass" size="lg">
-                        Learn More
-                        <ArrowRightIcon className="h-4 w-4 ml-2" />
-                      </Button>
-                    </div>
-                  </NeuralCard>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="container mx-auto px-4 py-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.8 }}
-          >
-            <QuantumCard className="text-center max-w-4xl mx-auto">
-              <div className="space-y-6">
-                <h2 className="text-3xl md:text-4xl font-bold text-white">
-                  Ready to Build the Future?
-                </h2>
-                <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-                  Join thousands of developers building the next generation of 
-                  AI-powered applications on Solana.
+                <Bars3Icon className="h-5 w-5" />
+              </button>
+              <div>
+                <h1 className="text-xl font-bold text-white">
+                  {navigation.find(nav => nav.id === activePage)?.name || 'Dashboard'}
+                </h1>
+                <p className="text-sm text-gray-400">
+                  {navigation.find(nav => nav.id === activePage)?.description}
                 </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-                  <Button variant="neural" size="xl">
-                    <SparklesIcon className="h-5 w-5 mr-2" />
-                    Start Building
-                  </Button>
-                  <Button variant="glass" size="xl">
-                    Read Documentation
-                  </Button>
-                </div>
               </div>
-            </QuantumCard>
-          </motion.div>
-        </section>
-
-        {/* Footer */}
-        <footer className="container mx-auto px-4 py-8 border-t border-gray-800">
-          <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
-            <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-md flex items-center justify-center">
-                <SparklesIcon className="h-4 w-4 text-white" />
-              </div>
-              <span className="text-gray-400">© 2025 PoD Protocol. Built with ❤️ on Solana.</span>
             </div>
-            <div className="flex items-center space-x-6 text-gray-400 text-sm">
-              <a href="#" className="hover:text-white transition-colors">Privacy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms</a>
-              <a href="#" className="hover:text-white transition-colors">Support</a>
+
+            <div className="flex items-center space-x-4">
+              <div className="hidden lg:block">
+                <WalletMultiButton className="!bg-purple-600 hover:!bg-purple-700 !rounded-lg !text-sm !h-10" />
+              </div>
             </div>
           </div>
-        </footer>
+        </div>
+
+        {/* Page content */}
+        <main className="p-6">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activePage}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {renderPageContent()}
+            </motion.div>
+          </AnimatePresence>
+        </main>
       </div>
     </div>
   );
 }
+
+// Dashboard Home Component
+const DashboardHome: React.FC = () => {
+  return (
+    <div className="max-w-7xl mx-auto space-y-8">
+      {/* Welcome Section */}
+      <div className="text-center space-y-4">
+        <motion.h1 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-4xl lg:text-6xl font-bold bg-gradient-to-r from-purple-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent"
+        >
+          PoD Protocol
+        </motion.h1>
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="text-xl text-gray-300 max-w-3xl mx-auto"
+        >
+          The next-generation AI agent communication protocol on Solana. 
+          Create, manage, and scale intelligent agents with advanced features.
+        </motion.p>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { label: 'Active Agents', value: '1,247', change: '+12.5%', color: 'purple' },
+          { label: 'Total Channels', value: '456', change: '+8.2%', color: 'cyan' },
+          { label: 'Messages Today', value: '12.8K', change: '+23.1%', color: 'green' },
+          { label: 'Network TPS', value: '2,847', change: '+5.7%', color: 'yellow' }
+        ].map((stat, index) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 + index * 0.1 }}
+          >
+            <NeuralCard className="p-6">
+              <div className="space-y-2">
+                <div className="text-sm text-gray-400">{stat.label}</div>
+                <div className="text-2xl font-bold text-white">{stat.value}</div>
+                <div className={cn(
+                  'text-sm font-medium',
+                  stat.color === 'purple' && 'text-purple-400',
+                  stat.color === 'cyan' && 'text-cyan-400',
+                  stat.color === 'green' && 'text-green-400',
+                  stat.color === 'yellow' && 'text-yellow-400'
+                )}>
+                  {stat.change}
+                </div>
+              </div>
+            </NeuralCard>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Feature Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[
+          {
+            title: 'AI Agent Management',
+            description: 'Create and manage intelligent agents with custom capabilities',
+            icon: CpuChipIcon,
+            color: 'purple',
+            action: 'agents'
+          },
+          {
+            title: 'Communication Channels',
+            description: 'Set up secure channels for agent-to-agent communication',
+            icon: ChatBubbleLeftRightIcon,
+            color: 'cyan',
+            action: 'channels'
+          },
+          {
+            title: 'Network Analytics',
+            description: 'Monitor performance and gain insights into network activity',
+            icon: ChartBarIcon,
+            color: 'green',
+            action: 'analytics'
+          },
+          {
+            title: 'ZK Compression',
+            description: 'Manage compressed NFTs and Merkle trees efficiently',
+            icon: CubeTransparentIcon,
+            color: 'yellow',
+            action: 'zk-compression'
+          },
+          {
+            title: 'Discovery Engine',
+            description: 'Find and connect with agents and channels across the network',
+            icon: MagnifyingGlassIcon,
+            color: 'pink',
+            action: 'discovery'
+          },
+          {
+            title: 'Platform Settings',
+            description: 'Configure your PoD Protocol experience and preferences',
+            icon: Cog6ToothIcon,
+            color: 'indigo',
+            action: 'settings'
+          }
+        ].map((feature, index) => (
+          <motion.div
+            key={feature.title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 + index * 0.1 }}
+          >
+            <NeuralCard interactive tilt className="p-6 h-full cursor-pointer group">
+              <div className="space-y-4">
+                <div className={cn(
+                  'w-12 h-12 rounded-lg flex items-center justify-center',
+                  feature.color === 'purple' && 'bg-purple-600/20',
+                  feature.color === 'cyan' && 'bg-cyan-600/20',
+                  feature.color === 'green' && 'bg-green-600/20',
+                  feature.color === 'yellow' && 'bg-yellow-600/20',
+                  feature.color === 'pink' && 'bg-pink-600/20',
+                  feature.color === 'indigo' && 'bg-indigo-600/20'
+                )}>
+                  <feature.icon className={cn(
+                    'h-6 w-6',
+                    feature.color === 'purple' && 'text-purple-400',
+                    feature.color === 'cyan' && 'text-cyan-400',
+                    feature.color === 'green' && 'text-green-400',
+                    feature.color === 'yellow' && 'text-yellow-400',
+                    feature.color === 'pink' && 'text-pink-400',
+                    feature.color === 'indigo' && 'text-indigo-400'
+                  )} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white group-hover:text-purple-400 transition-colors">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-400 text-sm mt-1">
+                    {feature.description}
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <Button variant="ghost" size="sm" className="group-hover:text-purple-400">
+                    Explore →
+                  </Button>
+                </div>
+              </div>
+            </NeuralCard>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Discovery Page Component (placeholder)
+const DiscoveryPage: React.FC = () => {
+  return (
+    <div className="max-w-7xl mx-auto">
+      <GlassCard className="p-8 text-center">
+        <MagnifyingGlassIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold text-white mb-2">Discovery Engine</h2>
+        <p className="text-gray-400 mb-6">
+          Advanced search and discovery features coming soon. Find agents, channels, and opportunities across the PoD Protocol network.
+        </p>
+        <Button variant="primary">
+          Join Beta Program
+        </Button>
+      </GlassCard>
+    </div>
+  );
+};
+
+// Settings Page Component (placeholder)
+const SettingsPage: React.FC = () => {
+  return (
+    <div className="max-w-7xl mx-auto">
+      <GlassCard className="p-8 text-center">
+        <Cog6ToothIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold text-white mb-2">Platform Settings</h2>
+        <p className="text-gray-400 mb-6">
+          Comprehensive settings and configuration options coming soon. Customize your PoD Protocol experience.
+        </p>
+        <Button variant="primary">
+          Configure Platform
+        </Button>
+      </GlassCard>
+    </div>
+  );
+};

@@ -1,5 +1,10 @@
 import { address as createAddress } from "@solana/web3.js";
-import { ChannelVisibility } from "@pod-protocol/sdk";
+// Local constants to avoid import issues during Web3.js v2 migration
+enum ChannelVisibility {
+  Public = 0,
+  Private = 1,
+  Restricted = 2,
+}
 import { createSpinner } from "../../utils/shared.js";
 import { BaseChannelHandler } from "./base-handler.js";
 import { ChannelDataHandler } from "./data-handler.js";

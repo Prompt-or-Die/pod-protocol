@@ -1,5 +1,10 @@
 import inquirer from "inquirer";
-import { ChannelVisibility } from "@pod-protocol/sdk";
+// Local constants to avoid import issues during Web3.js v2 migration
+enum ChannelVisibility {
+  Public = 0,
+  Private = 1,
+  Restricted = 2,
+}
 import { ChannelData } from "./types.js";
 import { ChannelValidators } from "./validators.js";
 
