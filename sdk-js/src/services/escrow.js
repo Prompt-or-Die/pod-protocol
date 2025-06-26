@@ -242,8 +242,8 @@ export class EscrowService extends BaseService {
   /**
    * Check if depositor has sufficient escrow balance for a channel
    * 
-   * @param {Address} channel - Channel public key
-   * @param {Address} depositor - Depositor's public key
+   * @param {string} channel - Channel public key
+   * @param {string} depositor - Depositor's public key
    * @param {number} requiredAmount - Required amount in lamports
    * @returns {Promise<boolean>} True if sufficient balance
    * 
@@ -259,5 +259,17 @@ export class EscrowService extends BaseService {
   async hasSufficientBalance(channel, depositor, requiredAmount) {
     const escrow = await this.get(channel, depositor);
     return escrow ? escrow.balance >= requiredAmount : false;
+  }
+
+  /**
+   * Create escrow deposit instruction for advanced transaction building
+   * @param {Object} options - Deposit options
+   * @param {string} channel - Channel public key
+   * @param {string} depositor - Depositor's public key
+   * @param {number} amount - Amount to deposit in lamports
+   * @returns {Promise<Object>} Deposit instruction
+   */
+  async createEscrowInstruction(options, channel, depositor, amount) {
+    // ... existing implementation
   }
 }

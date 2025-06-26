@@ -6,7 +6,7 @@
  */
 
 import { BaseService } from './base.js';
-import { SystemProgram, Transaction, ComputeBudgetProgram } from '@solana/web3.js';
+import { SystemProgram, Transaction, ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
 
 /**
  * Service for managing Jito bundles for optimized transaction processing
@@ -28,12 +28,13 @@ export class JitoBundlesService extends BaseService {
 
     this.jitoRpcUrl = jitoRpcUrl || 'https://mainnet.block-engine.jito.wtf/api/v1/bundles';
     this.wallet = null;
+    this.bundleTimeouts = new Map();
   }
 
   /**
    * Set the wallet for this service
    * 
-   * @param {KeyPairSigner|Wallet} wallet - Wallet to use for signing
+   * @param {Object} wallet - Wallet to use for signing
    */
   setWallet(wallet) {
     this.wallet = wallet;
@@ -54,8 +55,8 @@ export class JitoBundlesService extends BaseService {
    * Create and send a Jito bundle
    * 
    * @param {Object[]} transactions - Array of bundle transactions
-   * @param {Transaction|VersionedTransaction} transactions[].transaction - Transaction to include
-   * @param {KeyPairSigner[]} [transactions[].signers] - Optional signers
+   * @param {Object} transactions[].transaction - Transaction to include
+   * @param {Object[]} [transactions[].signers] - Optional signers
    * @param {string} [transactions[].description] - Description for logging
    * @param {Object} config - Bundle configuration
    * @param {number} config.tipLamports - Tip amount in lamports (minimum 1000)
@@ -133,8 +134,10 @@ export class JitoBundlesService extends BaseService {
             tx.recentBlockhash = blockhash;
             tx.feePayer = wallet.publicKey;
             
-            // Sign transaction
+            // Sign transaction  
+            // @ts-ignore - Allow optional signers property
             if (bundleTx.signers && bundleTx.signers.length > 0) {
+              // @ts-ignore
               tx.partialSign(...bundleTx.signers);
             }
             
@@ -170,7 +173,7 @@ export class JitoBundlesService extends BaseService {
   /**
    * Create a bundle for AI agent messaging operations
    * 
-   * @param {TransactionInstruction[]} messageInstructions - Message instructions
+   * @param {Object[]} messageInstructions - Message instructions
    * @param {Object} [config] - Bundle configuration
    * @returns {Promise<Object>} Bundle result
    * 
@@ -212,7 +215,7 @@ export class JitoBundlesService extends BaseService {
   /**
    * Create a bundle for channel operations
    * 
-   * @param {TransactionInstruction[]} channelInstructions - Channel instructions
+   * @param {Object[]} channelInstructions - Channel instructions
    * @param {Object} [config] - Bundle configuration
    * @returns {Promise<Object>} Bundle result
    * 
@@ -323,7 +326,8 @@ export class JitoBundlesService extends BaseService {
     
     // Select random tip account
     const tipAccountIndex = Math.floor(Math.random() * this.JITO_TIP_ACCOUNTS.length);
-    const tipAccount = new Address(this.JITO_TIP_ACCOUNTS[tipAccountIndex]);
+    const tipAccountString = this.JITO_TIP_ACCOUNTS[tipAccountIndex];
+    const tipAccount = new PublicKey(tipAccountString);
 
     const tipInstruction = SystemProgram.transfer({
       fromPubkey: wallet.publicKey,
@@ -386,10 +390,86 @@ export class JitoBundlesService extends BaseService {
   }
 
   /**
+   * Submit a bundle of transactions to Jito
+   * 
+   * @param {Object[]|Object} transactions - Transactions to bundle
+   * @param {Object} wallet - Wallet to use for signing
+   * @param {Object} [options] - Additional options
+   * @returns {Promise<string>} Bundle ID
+   * 
+   * @example
+   * ```javascript
+   * const bundleId = await client.jitoBundles.submit([
+   *   {
+   *     transaction: sendMessageTx,
+   *     description: 'Send message to agent'
+   *   }
+   * ], wallet);
+   * ```
+   */
+  async submit(transactions, wallet, options = {}) {
+    // Delegate to sendBundle method for now
+    this.setWallet(wallet);
+    const config = { tipLamports: 10000, ...options };
+    const result = await this.sendBundle(Array.isArray(transactions) ? transactions : [transactions], config);
+    return result.bundleId;
+  }
+
+  /**
+   * Submit a transaction bundle with optional signers
+   * 
+   * @param {Object[]} transactions - Array of transaction objects
+   * @param {Object} transactions[].transaction - Transaction to include
+   * @param {Object[]} [transactions[].signers] - Optional signers
+   * @param {string} [transactions[].description] - Transaction description
+   * @param {Object} wallet - Wallet for signing
+   * @param {Object} [options] - Additional options
+   * @returns {Promise<string>} Bundle ID
+   */
+  async submitBundle(transactions, wallet, options = {}) {
+    this.setWallet(wallet);
+    const config = { tipLamports: 10000, ...options };
+    const result = await this.sendBundle(transactions, config);
+    return result.bundleId;
+  }
+
+  /**
+   * Create an optimized message bundle
+   * 
+   * @param {Object[]} messageInstructions - Message instructions
+   * @param {Object} wallet - Wallet for signing
+   * @param {Object} [options] - Bundle options
+   * @returns {Promise<Object[]>} Array of bundled transactions
+   */
+  async createMessageBundle(messageInstructions, wallet, options = {}) {
+    this.setWallet(wallet);
+    const config = { tipLamports: 10000, ...options };
+    const result = await this.sendMessagingBundle(messageInstructions, config);
+    return [result]; // Return as array of bundled transactions
+  }
+
+  /**
+   * Create an optimized channel bundle
+   * 
+   * @param {Object[]} channelInstructions - Channel instructions
+   * @param {Object} wallet - Wallet for signing
+   * @param {Object} [options] - Bundle options
+   * @returns {Promise<Object[]>} Array of bundled transactions
+   */
+  async createChannelBundle(channelInstructions, wallet, options = {}) {
+    this.setWallet(wallet);
+    const config = { tipLamports: 15000, ...options };
+    const result = await this.sendChannelBundle(channelInstructions, config);
+    return [result]; // Return as array of bundled transactions
+  }
+
+  /**
    * Cleanup resources
    */
-  cleanup() {
-    // Clear any stored data if needed
+  async cleanup() {
+    if (this.bundleTimeouts) {
+      this.bundleTimeouts.clear();
+    }
     this.wallet = null;
   }
 } 

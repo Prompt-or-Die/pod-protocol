@@ -15,7 +15,11 @@ describe('End-to-End Protocol Tests', () => {
     // Setup test environment
     connection = new Connection('http://localhost:8899', 'confirmed');
     programId = new PublicKey('11111111111111111111111111111111');
-    client = new PodProtocolClient(connection, programId);
+    client = new PodProtocolClient({
+      endpoint: 'http://localhost:8899',
+      programId: programId.toBase58(),
+      commitment: 'confirmed'
+    });
     
     // Generate test keypairs
     senderKeypair = Keypair.generate();

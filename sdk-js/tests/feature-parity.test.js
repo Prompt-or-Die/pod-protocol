@@ -31,7 +31,7 @@ describe('PoD Protocol JavaScript SDK Feature Parity', () => {
   beforeEach(() => {
     client = new PodComClient({
       endpoint: 'http://localhost:8899',
-      programId: new PublicKey('11111111111111111111111111111111'),
+      programId: '11111111111111111111111111111111',
       commitment: 'confirmed',
       jitoRpcUrl: 'https://mainnet.block-engine.jito.wtf/api/v1/bundles'
     });
@@ -295,9 +295,9 @@ describe('TypeScript SDK Compatibility', () => {
     const client = new PodComClient();
     
     // Check that all service properties exist
-    expect(client.agents).toBeDefined();
-    expect(client.messages).toBeDefined();
-    expect(client.channels).toBeDefined();
+          expect(client.agent).toBeDefined();
+      expect(client.message).toBeDefined();
+      expect(client.channel).toBeDefined();
     expect(client.escrow).toBeDefined();
     expect(client.analytics).toBeDefined();
     expect(client.discovery).toBeDefined();
@@ -310,7 +310,7 @@ describe('TypeScript SDK Compatibility', () => {
   it('should support same configuration options', () => {
     const config = {
       endpoint: 'https://api.devnet.solana.com',
-      programId: new PublicKey('11111111111111111111111111111111'),
+      programId: '11111111111111111111111111111111',
       commitment: 'confirmed',
       ipfs: {
         disabled: false,
