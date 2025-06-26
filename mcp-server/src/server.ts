@@ -18,7 +18,7 @@ import {
   EmbeddedResource
 } from '@modelcontextprotocol/sdk/types.js';
 import { PodComClient } from '@pod-protocol/sdk';
-import { createKeyPairFromBytes } from '@solana/web3.js';
+// Legacy Web3.js import removed for v2.0 compatibility
 import winston from 'winston';
 import { readFileSync } from 'fs';
 import {

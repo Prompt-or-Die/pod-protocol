@@ -4,7 +4,7 @@
  */
 
 import { z } from 'zod';
-import type { Address, Signature } from '@solana/web3.js';
+import type { Address } from '@solana/addresses';
 
 // =====================================================
 // MCP Tool Schemas (Zod validation for safety)
@@ -169,7 +169,7 @@ export interface PodMessage {
   metadata?: Record<string, any>;
   created_at: number;
   expires_at?: number;
-  signature: Signature;
+  signature: string;
 }
 
 export interface PodChannel {
@@ -319,13 +319,5 @@ export interface PodEvent {
 export type PodEventHandler = (event: PodEvent) => Promise<void>;
 
 // =====================================================
-// Type Exports
-// =====================================================
-
-export type {
-  RegisterAgentSchema,
-  DiscoverAgentsSchema,
-  SendMessageSchema,
-  CreateChannelSchema,
-  CreateEscrowSchema
-}; 
+// Type Exports (schemas are already exported above)
+// ===================================================== 

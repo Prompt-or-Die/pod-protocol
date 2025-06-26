@@ -4,7 +4,7 @@
 
 import { BaseService } from './base.js';
 import { address } from '@solana/addresses';
-import { BN, SystemProgram } from '@coral-xyz/anchor';
+import { BN } from '@coral-xyz/anchor';
 import { findAgentPDA } from '../utils/pda.js';
 
 /**
@@ -34,7 +34,7 @@ export class AgentService extends BaseService {
       throw new Error('Service not initialized. Call client.initialize() first.');
     }
 
-    const [agentPDA] = findAgentPDA(wallet.publicKey, this.programId);
+    const [agentPDA] = await findAgentPDA(wallet.publicKey, this.programId);
 
     return this.retry(async () => {
       try {
@@ -43,7 +43,7 @@ export class AgentService extends BaseService {
           .accounts({
             agentAccount: agentPDA,
             signer: wallet.publicKey,
-            systemProgram: SystemProgram.programId
+            systemProgram: "11111111111111111111111111111112"
           })
           .rpc();
 
@@ -84,7 +84,7 @@ export class AgentService extends BaseService {
       throw new Error('Service not initialized. Call client.initialize() first.');
     }
 
-    const [agentPDA] = findAgentPDA(wallet.publicKey, this.programId);
+    const [agentPDA] = await findAgentPDA(wallet.publicKey, this.programId);
 
     return this.retry(async () => {
       const tx = await this.program.methods
@@ -123,7 +123,7 @@ export class AgentService extends BaseService {
     }
 
     try {
-      const [agentPDA] = findAgentPDA(agentPubkey, this.programId);
+      const [agentPDA] = await findAgentPDA(agentPubkey, this.programId);
       const agentAccount = await this.program.account.agentAccount.fetch(agentPDA);
       
       return {
@@ -259,7 +259,7 @@ export class AgentService extends BaseService {
    * @returns {Address} Agent PDA
    */
   async getAgentPDA(agentPubkey) {
-    const [pda] = findAgentPDA(agentPubkey, this.programId);
+    const [pda] = await findAgentPDA(agentPubkey, this.programId);
     return pda;
   }
 
@@ -288,14 +288,14 @@ export class AgentService extends BaseService {
       throw new Error('Program not initialized');
     }
 
-    const [agentPDA] = findAgentPDA(agentPubkey, this.programId);
+    const [agentPDA] = await findAgentPDA(agentPubkey, this.programId);
 
     return this.program.methods
       .registerAgent(new BN(capabilities), metadataUri)
       .accounts({
         agentAccount: agentPDA,
         signer: agentPubkey,
-        systemProgram: SystemProgram.programId
+        systemProgram: "11111111111111111111111111111112"
       })
       .instruction();
   }
@@ -313,7 +313,7 @@ export class AgentService extends BaseService {
       throw new Error('Program not initialized');
     }
 
-    const [agentPDA] = findAgentPDA(agentPubkey, this.programId);
+    const [agentPDA] = await findAgentPDA(agentPubkey, this.programId);
 
     return this.program.methods
       .updateAgent(

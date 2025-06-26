@@ -30,7 +30,7 @@
     "@metaplex-foundation/mpl-token-metadata": "3.4.0",
     "@metaplex-foundation/umi": "1.2.0",
     "@metaplex-foundation/umi-bundle-defaults": "1.2.0",
-    "@pod-protocol/sdk": "workspace:*",
+    "@pod-protocol/sdk": "1.5.2",
     "@solana-program/system": "0.7.0",
     "@solana-program/token": "0.5.1",
     "@solana/addresses": "2.1.1",
