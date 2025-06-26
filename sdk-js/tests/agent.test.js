@@ -68,7 +68,7 @@ describe('AgentService Tests', () => {
 
   it('should validate agent data correctly', () => {
     const validData = {
-      pubkey: keypair.publicKey,
+      pubkey: keypair.publicKey.toBase58(),
       capabilities: 1,
       metadataUri: 'https://example.com/metadata',
       messageCount: 0,
