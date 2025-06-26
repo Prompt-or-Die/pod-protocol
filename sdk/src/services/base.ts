@@ -1,11 +1,14 @@
 import { createSolanaRpc } from '@solana/rpc';
 import { address } from '@solana/addresses';
 import type { Address } from '@solana/addresses';
-import type { Commitment, Rpc } from '@solana/rpc';
+import type { Rpc } from '@solana/rpc';
 import anchor from "@coral-xyz/anchor";
 const { Program } = anchor;
 import type { Program as ProgramType } from "@coral-xyz/anchor";
 type AnchorProgram = ProgramType<any>;
+
+// Use string literal types for commitment in Web3.js v2.0
+type Commitment = 'confirmed' | 'finalized' | 'processed';
 
 /**
  * Configuration object for BaseService constructor

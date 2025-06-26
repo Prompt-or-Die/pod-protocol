@@ -491,20 +491,19 @@ export class AnalyticsService extends BaseService {
         throw new Error("Agent not found");
       }
 
-      // Get all program accounts using @solana/kit RPC
-      const agentAccounts = await this.rpc
-        .getProgramAccounts(this.programId, {
-          commitment: this.commitment,
-          filters: [
-            {
-              memcmp: {
-                offset: 0,
-                bytes: "agent_account" // Account discriminator
-              }
+      // Get all program accounts using Web3.js v2.0 RPC
+      const agentAccountsResponse = await this.rpc.getProgramAccounts(this.programId, {
+        commitment: this.commitment,
+        filters: [
+          {
+            memcmp: {
+              offset: 0,
+              bytes: "agent_account" // Account discriminator
             }
-          ]
-        })
-        .send();
+          }
+        ]
+      }).send();
+      const agentAccounts = agentAccountsResponse.value;
 
       // Analyze message activity
       let messagesSent = 0;
@@ -512,26 +511,25 @@ export class AnalyticsService extends BaseService {
       let averageResponseTime = 0;
       let totalInteractions = 0;
 
-      // Get messages sent by this agent using @solana/kit RPC
-      const messageAccounts = await this.rpc
-        .getProgramAccounts(this.programId, {
-          commitment: this.commitment,
-          filters: [
-            {
-              memcmp: {
-                offset: 0,
-                bytes: "message_account"
-              }
-            },
-            {
-              memcmp: {
-                offset: 8, // After discriminator
-                bytes: agentAddress
-              }
+      // Get messages sent by this agent using Web3.js v2.0 RPC
+      const messageAccountsResponse = await this.rpc.getProgramAccounts(this.programId, {
+        commitment: this.commitment,
+        filters: [
+          {
+            memcmp: {
+              offset: 0,
+              bytes: "message_account"
             }
-          ]
-        })
-        .send();
+          },
+          {
+            memcmp: {
+              offset: 8, // After discriminator
+              bytes: agentAddress
+            }
+          }
+        ]
+      }).send();
+      const messageAccounts = messageAccountsResponse.value;
 
       messagesSent = messageAccounts.length;
       totalInteractions = messagesSent;
@@ -567,20 +565,19 @@ export class AnalyticsService extends BaseService {
         throw new Error("Program not initialized");
       }
 
-      // Get all message accounts using @solana/kit RPC
-      const messageAccounts = await this.rpc
-        .getProgramAccounts(this.programId, {
-          commitment: this.commitment,
-          filters: [
-            {
-              memcmp: {
-                offset: 0,
-                bytes: "message_account"
-              }
+      // Get all message accounts using Web3.js v2.0 RPC
+      const messageAccountsResponse = await this.rpc.getProgramAccounts(this.programId, {
+        commitment: this.commitment,
+        filters: [
+          {
+            memcmp: {
+              offset: 0,
+              bytes: "message_account"
             }
-          ]
-        })
-        .send();
+          }
+        ]
+      }).send();
+      const messageAccounts = messageAccountsResponse.value;
 
       const now = Date.now();
       const timeframeMs = this.getTimeframeMs(timeframe);

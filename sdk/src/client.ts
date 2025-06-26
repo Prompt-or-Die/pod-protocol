@@ -2,7 +2,7 @@ import { createSolanaRpc } from '@solana/rpc';
 import { address } from '@solana/addresses';
 import { generateKeyPairSigner } from '@solana/signers';
 import type { Address } from '@solana/addresses';
-import type { Rpc, Commitment } from '@solana/rpc';
+import type { Rpc } from '@solana/rpc';
 import type { KeyPairSigner } from '@solana/signers';
 import anchor from "@coral-xyz/anchor";
 const { Program, AnchorProvider } = anchor;
@@ -41,6 +41,9 @@ import { DiscoveryService } from "./services/discovery";
 import { IPFSService, IPFSConfig } from "./services/ipfs";
 import { ZKCompressionService, ZKCompressionConfig } from "./services/zk-compression";
 // Note: JitoBundleService import removed - using JitoBundlesService
+
+// Use string literal types for commitment in Web3.js v2.0
+type Commitment = 'confirmed' | 'finalized' | 'processed';
 
 // Client configuration with 2025 enhancements
 export interface PodClientConfig {
@@ -84,7 +87,7 @@ export class PodComClient {
     this.programId = typeof programId === 'string' ? address(programId) : programId;
 
     // Initialize services with proper v2 types
-    const programIdStr = typeof programId === 'string' ? programId : programId.toString();
+    const programIdStr = typeof programId === 'string' ? programId : address(programId as string);
     this.agents = new AgentService(endpoint, programIdStr, commitment);
     this.messages = new MessageService(endpoint, programIdStr, commitment);
     this.channels = new ChannelService(endpoint, programIdStr, commitment);
@@ -502,7 +505,7 @@ export class PodComClient {
   /**
    * Register agent method for enhanced MCP server compatibility
    */
-  async registerAgent(
+  async registerAgentMCP(
     agentData: {
       name: string;
       description: string;
