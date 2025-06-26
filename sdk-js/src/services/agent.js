@@ -3,7 +3,7 @@
  */
 
 import { BaseService } from './base.js';
-import { address } from '@solana/web3.js';
+import { address } from '@solana/addresses';
 import { BN, SystemProgram } from '@coral-xyz/anchor';
 import { findAgentPDA } from '../utils/pda.js';
 

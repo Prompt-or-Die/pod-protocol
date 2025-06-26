@@ -5,7 +5,7 @@
  * Optimizes transaction processing and provides atomic execution guarantees
  */
 
-import { Address, address } from '@solana/web3.js';
+import { address } from '@solana/addresses';
 import { BaseService } from './base.js';
 
 /**

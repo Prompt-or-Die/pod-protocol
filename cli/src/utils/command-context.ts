@@ -1,5 +1,5 @@
 import { PodComClient } from "@pod-protocol/sdk";
-import type { KeyPairSigner } from "@solana/web3.js";
+import type { KeyPairSigner } from "@solana/signers";
 import { EnhancedErrorHandler } from "./enhanced-error-handler.js";
 import { OutputFormatter } from "./output-formatter.js";
 import { showBanner, showMiniHeader } from "./branding.js";

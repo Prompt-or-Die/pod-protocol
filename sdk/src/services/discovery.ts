@@ -1,4 +1,6 @@
-import { Address, KeyPairSigner, address } from '@solana/web3.js';
+import { address } from '@solana/addresses';
+import type { Address } from '@solana/addresses';
+import type { KeyPairSigner } from '@solana/signers';
 import { BaseService } from "./base.js";
 import {
   AgentAccount,

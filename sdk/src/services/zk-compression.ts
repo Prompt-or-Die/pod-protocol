@@ -1,15 +1,6 @@
-import { 
-  // Web3.js v2 imports
-  address,
-  Address,
-  KeyPairSigner,
-  createTransactionMessage,
-  pipe,
-  signTransaction,
-  appendTransactionMessageInstructions,
-  setTransactionMessageLifetimeUsingBlockhash,
-  setTransactionMessageFeePayer
-} from "@solana/web3.js";
+import { address } from "@solana/addresses";
+import type { Address } from "@solana/addresses";
+import type { KeyPairSigner } from "@solana/signers";
 import anchor from "@coral-xyz/anchor";
 const { BN, utils, web3 } = anchor;
 import { BaseService } from "./base.js";

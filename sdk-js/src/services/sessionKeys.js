@@ -5,7 +5,7 @@
  * Based on Gum session keys protocol
  */
 
-import { Address, address } from '@solana/web3.js';
+import { address } from '@solana/addresses';
 import { BaseService } from './base.js';
 
 /**

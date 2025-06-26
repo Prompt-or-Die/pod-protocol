@@ -1,5 +1,8 @@
 import { describe, it, expect, afterAll } from '@jest/globals';
-import { Address, createSolanaRpc, generateKeyPairSigner, address } from '@solana/web3.js';
+import { address } from '@solana/addresses';
+import type { Address } from '@solana/addresses';
+import { generateKeyPairSigner } from '@solana/signers';
+import { createSolanaRpc } from '@solana/rpc';
 
 // Mock ZKCompressionService to avoid heavy dependencies
 class MockZKCompressionService {

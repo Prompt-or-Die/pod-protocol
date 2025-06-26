@@ -6,7 +6,8 @@ import { table } from "table";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { homedir } from "os";
 import { join, dirname, resolve } from "path";
-import { generateKeyPairSigner, address as createAddress } from "@solana/web3.js";
+import { generateKeyPairSigner } from "@solana/signers";
+import { address as createAddress } from "@solana/addresses";
 // Note: Keypair functionality temporarily disabled for Web3.js v2 compatibility
 import qrcode from "qrcode-terminal";
 import { loadConfig as loadSharedConfig } from "../utils/config.js";

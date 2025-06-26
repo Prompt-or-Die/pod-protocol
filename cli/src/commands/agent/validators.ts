@@ -1,4 +1,5 @@
-import { address as createAddress, type Address } from "@solana/web3.js";
+import { address as createAddress } from "@solana/addresses";
+import type { Address } from "@solana/addresses";
 
 export class AgentValidators {
   static validateAgentAddress = (addressString: string): Address => {

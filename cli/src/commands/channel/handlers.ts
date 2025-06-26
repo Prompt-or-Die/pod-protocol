@@ -1,4 +1,4 @@
-import { address as createAddress } from "@solana/web3.js";
+import { address as createAddress } from "@solana/addresses";
 // Local constants to avoid import issues during Web3.js v2 migration
 enum ChannelVisibility {
   Public = 0,

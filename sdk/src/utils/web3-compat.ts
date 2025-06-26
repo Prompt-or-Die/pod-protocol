@@ -7,17 +7,22 @@
  * - Legacy SDK types and modern types
  */
 
-import { 
-  Address,
-  address,
-  KeyPairSigner,
-  generateKeyPairSigner,
-  Signature,
-  signature,
-  TransactionMessage,
-  createTransactionMessage,
-  Rpc
-} from "@solana/web3.js";
+import { address } from "@solana/addresses";
+import type { Address } from "@solana/addresses";
+import { generateKeyPairSigner } from "@solana/signers";
+import type { KeyPairSigner } from "@solana/signers";
+import type { Rpc } from "@solana/rpc";
+
+// Simplified types for compatibility during Web3.js v2.0 transition
+type Signature = string;
+type TransactionMessage = {
+  version: number;
+  [key: string]: any;
+};
+
+// Mock functions for compatibility during transition
+const signature = (sig: string): Signature => sig;
+const createTransactionMessage = (options: { version: number }): TransactionMessage => options;
 import { Wallet } from "@coral-xyz/anchor";
 import { logger } from "./debug.js";
 

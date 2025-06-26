@@ -1,7 +1,9 @@
 import { Command } from "commander";
 import inquirer from "inquirer";
 import { table } from "table";
-import { address as createAddress, type Address, type KeyPairSigner } from "@solana/web3.js";
+import { address as createAddress } from "@solana/addresses";
+import type { Address } from "@solana/addresses";
+import type { KeyPairSigner } from "@solana/signers";
 import { PodComClient, lamportsToSol, solToLamports } from "@pod-protocol/sdk";
 import {
   createCommandHandler,

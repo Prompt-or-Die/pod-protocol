@@ -2,7 +2,7 @@ import { Command } from "commander";
 import chalk from "chalk";
 import inquirer from "inquirer";
 import { table } from "table";
-import { address as createAddress } from "@solana/web3.js";
+import { address as createAddress } from "@solana/addresses";
 import {
   PodComClient,
   ChannelVisibility,

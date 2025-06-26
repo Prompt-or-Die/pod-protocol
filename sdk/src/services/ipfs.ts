@@ -1,4 +1,5 @@
-import { Address, address } from "@solana/web3.js";
+import { address } from "@solana/addresses";
+import type { Address } from "@solana/addresses";
 import { BaseService } from "./base.js";
 import { CID } from 'multiformats/cid';
 import keccak from 'keccak';

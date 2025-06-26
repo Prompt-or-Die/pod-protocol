@@ -1,9 +1,5 @@
-import {
-  address,
-  Address,
-  getAddressEncoder,
-  getProgramDerivedAddress
-} from "@solana/web3.js";
+import { address, getAddressEncoder, getProgramDerivedAddress } from "@solana/addresses";
+import type { Address } from "@solana/addresses";
 import { PROGRAM_ID, MessageType, AGENT_CAPABILITIES } from "./types";
 
 // Helper function to convert string to bytes

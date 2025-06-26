@@ -5,7 +5,8 @@
  */
 
 import { Command } from 'commander';
-import { address as createAddress, type Address } from '@solana/web3.js';
+import { address as createAddress } from '@solana/addresses';
+import type { Address } from '@solana/addresses';
 import { getWallet } from '../utils/client.js';
 import { displayError } from '../utils/error-handler.js';
 import { outputFormatter } from '../utils/output-formatter.js';
