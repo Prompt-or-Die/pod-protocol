@@ -5,8 +5,8 @@
  * Based on Gum session keys protocol
  */
 
-import { address } from '@solana/addresses';
 import { BaseService } from './base.js';
+import { SystemProgram, Transaction, Keypair } from '@solana/web3.js';
 
 /**
  * Service for managing session keys for AI agent interactions

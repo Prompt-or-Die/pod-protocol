@@ -3,7 +3,7 @@
  */
 
 import { BaseService } from './base.js';
-import { address } from '@solana/addresses';
+import { SystemProgram } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';
 import { findAgentPDA, findEscrowPDA } from '../utils/pda.js';
 
@@ -34,20 +34,20 @@ export class EscrowService extends BaseService {
       throw new Error('Service not initialized. Call client.initialize() first.');
     }
 
-    // Derive agent PDA
-    const [agentPDA] = findAgentPDA(wallet.publicKey, this.programId);
+    // Derive PDAs
+    const [agentPDA] = await findAgentPDA(wallet.publicKey, this.programId);
 
     // Derive escrow PDA
-    const [escrowPDA] = findEscrowPDA(options.channel, wallet.publicKey, this.programId);
+    const [escrowPDA] = await findEscrowPDA(options.channel, wallet.publicKey, this.programId);
 
     return this.retry(async () => {
       const tx = await this.program.methods
         .depositEscrow(new BN(options.amount))
         .accounts({
           escrowAccount: escrowPDA,
-          channelAccount: options.channel,
-          depositorAgent: agentPDA,
+          channel: options.channel,
           depositor: wallet.publicKey,
+          depositorAgent: agentPDA,
           systemProgram: SystemProgram.programId
         })
         .rpc();
@@ -76,20 +76,20 @@ export class EscrowService extends BaseService {
       throw new Error('Service not initialized. Call client.initialize() first.');
     }
 
-    // Derive agent PDA
-    const [agentPDA] = findAgentPDA(wallet.publicKey, this.programId);
+    // Derive PDAs
+    const [agentPDA] = await findAgentPDA(wallet.publicKey, this.programId);
 
     // Derive escrow PDA
-    const [escrowPDA] = findEscrowPDA(options.channel, wallet.publicKey, this.programId);
+    const [escrowPDA] = await findEscrowPDA(options.channel, wallet.publicKey, this.programId);
 
     return this.retry(async () => {
       const tx = await this.program.methods
         .withdrawEscrow(new BN(options.amount))
         .accounts({
           escrowAccount: escrowPDA,
-          channelAccount: options.channel,
-          depositorAgent: agentPDA,
+          channel: options.channel,
           depositor: wallet.publicKey,
+          depositorAgent: agentPDA,
           systemProgram: SystemProgram.programId
         })
         .rpc();
@@ -119,17 +119,16 @@ export class EscrowService extends BaseService {
     }
 
     try {
-      const [escrowPDA] = findEscrowPDA(channel, depositor, this.programId);
-      const account = await this.program.account.escrowAccount.fetch(escrowPDA);
+      const [escrowPDA] = await findEscrowPDA(channel, depositor, this.programId);
+      const escrowAccount = await this.program.account.escrowAccount.fetch(escrowPDA);
       
       return {
-        channel: account.channel,
-        depositor: account.depositor,
-        balance: account.balance?.toNumber() || 0,
-        amount: account.balance?.toNumber() || 0, // alias for compatibility
-        createdAt: account.createdAt?.toNumber() || Date.now(),
-        lastUpdated: account.lastUpdated?.toNumber() || Date.now(),
-        bump: account.bump
+        pubkey: escrowPDA,
+        ...escrowAccount,
+        // Convert BN to number for JavaScript compatibility
+        balance: escrowAccount.balance.toNumber(),
+        createdAt: escrowAccount.createdAt.toNumber(),
+        lastUpdated: escrowAccount.lastUpdated.toNumber()
       };
     } catch (error) {
       if (error.message?.includes('Account does not exist')) {

@@ -5,8 +5,8 @@
  * Optimizes transaction processing and provides atomic execution guarantees
  */
 
-import { address } from '@solana/addresses';
 import { BaseService } from './base.js';
+import { SystemProgram, Transaction, ComputeBudgetProgram } from '@solana/web3.js';
 
 /**
  * Service for managing Jito bundles for optimized transaction processing

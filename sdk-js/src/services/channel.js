@@ -39,10 +39,10 @@ export class ChannelService extends BaseService {
     }
 
     // Derive agent PDA
-    const [agentPDA] = findAgentPDA(wallet.publicKey, this.programId);
+    const [agentPDA] = await findAgentPDA(wallet.publicKey, this.programId);
 
     // Derive channel PDA
-    const [channelPDA] = findChannelPDA(wallet.publicKey, options.name, this.programId);
+    const [channelPDA] = await findChannelPDA(wallet.publicKey, options.name, this.programId);
 
     // Derive participant PDA for creator
     const [participantPDA] = this._findParticipantPDA(channelPDA, agentPDA);
@@ -99,7 +99,7 @@ export class ChannelService extends BaseService {
         creator: account.creator,
         name: account.name,
         description: account.description,
-        visibility: this._convertChannelVisibilityFromProgram(account.visibility),
+        visibility: this._convertProgramVisibility(account.visibility),
         maxParticipants: account.maxParticipants,
         participantCount: account.currentParticipants,
         currentParticipants: account.currentParticipants,
@@ -146,7 +146,7 @@ export class ChannelService extends BaseService {
         creator: account.account.creator,
         name: account.account.name,
         description: account.account.description,
-        visibility: this._convertChannelVisibilityFromProgram(account.account.visibility),
+        visibility: this._convertProgramVisibility(account.account.visibility),
         maxParticipants: account.account.maxParticipants,
         participantCount: account.account.currentParticipants,
         currentParticipants: account.account.currentParticipants,
@@ -457,7 +457,7 @@ export class ChannelService extends BaseService {
     }
   }
 
-  _convertChannelVisibilityFromProgram(programVisibility) {
+  _convertProgramVisibility(programVisibility) {
     if (programVisibility.public !== undefined) return ChannelVisibility.PUBLIC;
     if (programVisibility.private !== undefined) return ChannelVisibility.PRIVATE;
     return ChannelVisibility.PUBLIC;

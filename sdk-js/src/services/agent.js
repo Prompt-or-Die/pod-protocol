@@ -3,7 +3,7 @@
  */
 
 import { BaseService } from './base.js';
-import { address } from '@solana/addresses';
+import { SystemProgram } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';
 import { findAgentPDA } from '../utils/pda.js';
 
@@ -43,7 +43,7 @@ export class AgentService extends BaseService {
           .accounts({
             agentAccount: agentPDA,
             signer: wallet.publicKey,
-            systemProgram: "11111111111111111111111111111112"
+            systemProgram: SystemProgram.programId,
           })
           .rpc();
 
@@ -295,7 +295,7 @@ export class AgentService extends BaseService {
       .accounts({
         agentAccount: agentPDA,
         signer: agentPubkey,
-        systemProgram: "11111111111111111111111111111112"
+        systemProgram: SystemProgram.programId,
       })
       .instruction();
   }

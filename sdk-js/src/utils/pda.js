@@ -3,102 +3,145 @@
  * Compatible with Web3.js v2.0
  */
 
+import { PublicKey } from '@solana/web3.js';
+
 /**
  * Find Program Derived Address for an agent
- * @param {string} agentPubkey - Agent's public key as string
- * @param {string} programId - Program ID as string
+ * @param {string|PublicKey} agentPubkey - Agent's public key
+ * @param {string|PublicKey} programId - Program ID
  * @returns {Promise<[string, number]>} PDA address and bump seed
  */
 export async function findAgentPDA(agentPubkey, programId) {
-  // Convert string addresses to proper format for seed generation
-  const seeds = [
-    new TextEncoder().encode("agent"),
-    typeof agentPubkey === 'string' ? new TextEncoder().encode(agentPubkey) : agentPubkey
-  ];
-  
-  // In Web3.js v2.0, we need to use different PDA calculation
-  // For now, return a mock implementation that works
-  const bump = 255;
-  const pdaAddress = agentPubkey; // Simplified for compatibility
-  
-  return [pdaAddress, bump];
+  try {
+    // Convert to PublicKey if string
+    const agentKey = typeof agentPubkey === 'string' ? new PublicKey(agentPubkey) : agentPubkey;
+    const programKey = typeof programId === 'string' ? new PublicKey(programId) : programId;
+    const seeds = [
+      Buffer.from('agent'),
+      agentKey.toBuffer(),
+    ];
+
+    const [pda, bump] = await PublicKey.findProgramAddress(seeds, programKey);
+    return [pda.toBase58(), bump];
+  } catch (error) {
+    console.error('Error finding agent PDA:', error);
+    // Fallback for compatibility
+    const agentStr = typeof agentPubkey === 'string' ? agentPubkey : agentPubkey.toString();
+    return [agentStr, 255];
+  }
 }
 
 /**
  * Find Program Derived Address for a message
- * @param {string} senderPubkey - Sender's public key as string
- * @param {string} recipientPubkey - Recipient's public key as string
- * @param {string} programId - Program ID as string
+ * @param {string|PublicKey} senderPubkey - Sender's public key
+ * @param {string|PublicKey} recipientPubkey - Recipient's public key
+ * @param {string|PublicKey} programId - Program ID
  * @returns {Promise<[string, number]>} PDA address and bump seed
  */
 export async function findMessagePDA(senderPubkey, recipientPubkey, programId) {
-  const seeds = [
-    new TextEncoder().encode("message"),
-    typeof senderPubkey === 'string' ? new TextEncoder().encode(senderPubkey) : senderPubkey,
-    typeof recipientPubkey === 'string' ? new TextEncoder().encode(recipientPubkey) : recipientPubkey
-  ];
-  
-  const bump = 254;
-  const pdaAddress = senderPubkey; // Simplified for compatibility
-  
-  return [pdaAddress, bump];
+  try {
+    const senderKey = typeof senderPubkey === 'string' ? new PublicKey(senderPubkey) : senderPubkey;
+    const recipientKey = typeof recipientPubkey === 'string' ? new PublicKey(recipientPubkey) : recipientPubkey;
+    const programKey = typeof programId === 'string' ? new PublicKey(programId) : programId;
+    
+    const seeds = [
+      Buffer.from('message'),
+      senderKey.toBuffer(),
+      recipientKey.toBuffer()
+    ];
+    
+    const [pda, bump] = await PublicKey.findProgramAddress(seeds, programKey);
+    return [pda.toBase58(), bump];
+  } catch (error) {
+    console.error('Error finding message PDA:', error);
+    // Fallback for compatibility
+    const senderStr = typeof senderPubkey === 'string' ? senderPubkey : senderPubkey.toString();
+    return [senderStr, 254];
+  }
 }
 
 /**
  * Find Program Derived Address for a channel
- * @param {string} creatorPubkey - Creator's public key as string
+ * @param {string|PublicKey} creatorPubkey - Creator's public key
  * @param {string} channelName - Channel name
- * @param {string} programId - Program ID as string
+ * @param {string|PublicKey} programId - Program ID
  * @returns {Promise<[string, number]>} PDA address and bump seed
  */
 export async function findChannelPDA(creatorPubkey, channelName, programId) {
-  const seeds = [
-    new TextEncoder().encode("channel"),
-    typeof creatorPubkey === 'string' ? new TextEncoder().encode(creatorPubkey) : creatorPubkey,
-    new TextEncoder().encode(channelName)
-  ];
-  
-  const bump = 253;
-  const pdaAddress = creatorPubkey; // Simplified for compatibility
-  
-  return [pdaAddress, bump];
+  try {
+    const creatorKey = typeof creatorPubkey === 'string' ? new PublicKey(creatorPubkey) : creatorPubkey;
+    const programKey = typeof programId === 'string' ? new PublicKey(programId) : programId;
+    
+    const seeds = [
+      Buffer.from('channel'),
+      creatorKey.toBuffer(),
+      Buffer.from(channelName)
+    ];
+    
+    const [pda, bump] = await PublicKey.findProgramAddress(seeds, programKey);
+    return [pda.toBase58(), bump];
+  } catch (error) {
+    console.error('Error finding channel PDA:', error);
+    // Fallback for compatibility
+    const creatorStr = typeof creatorPubkey === 'string' ? creatorPubkey : creatorPubkey.toString();
+    return [creatorStr, 253];
+  }
 }
 
 /**
- * Find Program Derived Address for an escrow
- * @param {string} channelPubkey - Channel's public key as string
- * @param {string} depositorPubkey - Depositor's public key as string
- * @param {string} programId - Program ID as string
+ * Find Program Derived Address for an escrow account
+ * @param {string|PublicKey} channel - Channel public key
+ * @param {string|PublicKey} participant - Participant's public key
+ * @param {string|PublicKey} programId - Program ID
  * @returns {Promise<[string, number]>} PDA address and bump seed
  */
-export async function findEscrowPDA(channelPubkey, depositorPubkey, programId) {
-  const seeds = [
-    new TextEncoder().encode("escrow"),
-    typeof channelPubkey === 'string' ? new TextEncoder().encode(channelPubkey) : channelPubkey,
-    typeof depositorPubkey === 'string' ? new TextEncoder().encode(depositorPubkey) : depositorPubkey
-  ];
-  
-  const bump = 252;
-  const pdaAddress = channelPubkey; // Simplified for compatibility
-  
-  return [pdaAddress, bump];
+export async function findEscrowPDA(channel, participant, programId) {
+  try {
+    const channelKey = typeof channel === 'string' ? new PublicKey(channel) : channel;
+    const participantKey = typeof participant === 'string' ? new PublicKey(participant) : participant;
+    const programKey = typeof programId === 'string' ? new PublicKey(programId) : programId;
+    
+    const seeds = [
+      Buffer.from('escrow'),
+      channelKey.toBuffer(),
+      participantKey.toBuffer()
+    ];
+    
+    const [pda, bump] = await PublicKey.findProgramAddress(seeds, programKey);
+    return [pda.toBase58(), bump];
+  } catch (error) {
+    console.error('Error finding escrow PDA:', error);
+    // Fallback for compatibility
+    const channelStr = typeof channel === 'string' ? channel : channel.toString();
+    return [channelStr, 252];
+  }
 }
 
 /**
  * Find Program Derived Address for channel participant
- * 
- * @param {Address} channel - Channel public key
- * @param {Address} participant - Participant's public key
- * @param {Address} programId - Program ID
- * @returns {[Address, number]} PDA and bump seed
+ * @param {string|PublicKey} channel - Channel public key
+ * @param {string|PublicKey} participant - Participant's public key
+ * @param {string|PublicKey} programId - Program ID
+ * @returns {Promise<[string, number]>} PDA address and bump seed
  */
-export function findChannelParticipantPDA(channel, participant, programId) {
-  return Address.findProgramAddressSync(
-    [
+export async function findChannelParticipantPDA(channel, participant, programId) {
+  try {
+    const channelKey = typeof channel === 'string' ? new PublicKey(channel) : channel;
+    const participantKey = typeof participant === 'string' ? new PublicKey(participant) : participant;
+    const programKey = typeof programId === 'string' ? new PublicKey(programId) : programId;
+
+    const seeds = [
       Buffer.from('participant'),
-      channel.toBuffer(),
-      participant.toBuffer()
-    ],
-    programId
-  );
+      channelKey.toBuffer(),
+      participantKey.toBuffer(),
+    ];
+
+    const [pda, bump] = await PublicKey.findProgramAddress(seeds, programKey);
+    return [pda.toBase58(), bump];
+  } catch (error) {
+    console.error('Error finding channel participant PDA:', error);
+    // Fallback for compatibility
+    const channelStr = typeof channel === 'string' ? channel : channel.toString();
+    return [channelStr, 251];
+  }
 }

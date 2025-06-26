@@ -1,7 +1,7 @@
 {
   "name": "@pod-protocol/mcp-server",
-  "version": "1.0.0",
-  "description": "Model Context Protocol server for PoD Protocol - Bridging AI agent runtimes with decentralized agent communication",
+  "version": "2.0.0",
+  "description": "Enhanced Model Context Protocol server for PoD Protocol - Enterprise-grade AI agent communication with blockchain integration",
   "homepage": "https://github.com/pod-protocol/pod-protocol",
   "bugs": {
     "url": "https://github.com/pod-protocol/pod-protocol/issues"
@@ -10,18 +10,34 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "pod-mcp-server": "dist/cli.js"
+    "pod-mcp-server": "dist/cli.js",
+    "pod-mcp-enhanced": "dist/enhanced-cli.js"
   },
   "scripts": {
     "build": "tsc",
+    "build:watch": "tsc --watch",
     "dev": "tsx watch src/index.ts",
+    "dev:enhanced": "tsx watch src/enhanced-server.ts",
     "start": "node dist/index.js",
+    "start:enhanced": "node dist/enhanced-server.js",
+    "start:enterprise": "node dist/examples/enterprise-deployment.js",
     "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run build",
     "prepack": "npm run build",
-    "validate": "chmod +x scripts/prepublish.sh && ./scripts/prepublish.sh"
+    "validate": "chmod +x scripts/prepublish.sh && ./scripts/prepublish.sh",
+    "docker:build": "docker build -t pod-protocol/mcp-server:latest .",
+    "docker:run": "docker run -p 3000:3000 pod-protocol/mcp-server:latest",
+    "deploy:staging": "npm run build && node scripts/deploy-staging.js",
+    "deploy:production": "npm run build && node scripts/deploy-production.js",
+    "health-check": "node dist/scripts/health-check.js",
+    "registry:register": "node dist/scripts/registry-register.js",
+    "registry:update": "node dist/scripts/registry-update.js",
+    "metrics:export": "node dist/scripts/export-metrics.js"
   },
   "keywords": [
     "mcp",
@@ -33,43 +49,70 @@
     "agent-communication",
     "eliza",
     "autogen",
-    "crewai"
+    "crewai",
+    "langchain",
+    "enterprise",
+    "oauth2.1",
+    "real-time",
+    "multi-agent",
+    "a2a-protocol",
+    "enhanced"
   ],
   "author": "PoD Protocol Team",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.13.1",
-    "@pod-protocol/sdk": "1.5.2",
-    "@solana/web3.js": "1.98.2",
-    "@solana/rpc": "2.1.1",
-    "@solana/addresses": "2.1.1",
-    "@solana/signers": "2.1.1",
-    "winston": "3.17.0",
-    "zod": "3.25.67",
-    "ws": "8.18.2",
-    "express-rate-limit": "7.5.1",
-    "helmet": "8.1.0",
-    "@coral-xyz/anchor": "0.31.1",
-    "dotenv": "16.5.0",
-    "commander": "14.0.0",
-    "chalk": "5.4.1",
-    "ora": "8.2.0"
+    "@modelcontextprotocol/sdk": "^1.13.1",
+    "@pod-protocol/sdk": "^1.5.2",
+    "@solana/web3.js": "^1.98.2",
+    "@solana/rpc": "^2.1.1",
+    "@solana/addresses": "^2.1.1",
+    "@solana/signers": "^2.1.1",
+    "winston": "^3.17.0",
+    "zod": "^3.25.67",
+    "ws": "^8.18.2",
+    "express": "^4.21.0",
+    "express-rate-limit": "^7.5.1",
+    "helmet": "^8.1.0",
+    "@coral-xyz/anchor": "^0.31.1",
+    "dotenv": "^16.5.0",
+    "commander": "^14.0.0",
+    "chalk": "^5.4.1",
+    "ora": "^8.2.0",
+    "node-fetch": "^3.3.2",
+    "jsonwebtoken": "^9.0.2",
+    "crypto": "^1.0.1",
+    "uuid": "^11.0.3",
+    "compression": "^1.7.5",
+    "cors": "^2.8.5",
+    "morgan": "^1.10.0",
+    "prometheus-client": "^1.0.0"
   },
   "devDependencies": {
-    "@types/node": "24.0.4",
-    "@types/ws": "8.18.1",
-    "typescript": "5.8.3",
-    "tsx": "4.20.3",
-    "jest": "30.0.3",
-    "@types/jest": "30.0.0",
-    "eslint": "9.29.0",
-    "@typescript-eslint/eslint-plugin": "8.35.0",
-    "@typescript-eslint/parser": "8.35.0"
+    "@types/node": "^24.0.4",
+    "@types/ws": "^8.18.1",
+    "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/uuid": "^10.0.0",
+    "@types/compression": "^1.7.5",
+    "@types/cors": "^2.8.17",
+    "@types/morgan": "^1.9.9",
+    "typescript": "^5.8.3",
+    "tsx": "^4.20.3",
+    "jest": "^30.0.3",
+    "@types/jest": "^30.0.0",
+    "eslint": "^9.29.0",
+    "@typescript-eslint/eslint-plugin": "^8.35.0",
+    "@typescript-eslint/parser": "^8.35.0",
+    "supertest": "^7.0.0",
+    "@types/supertest": "^6.0.2",
+    "docker": "^0.2.14"
   },
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "examples",
+    "scripts"
   ],
   "repository": {
     "type": "git",
@@ -82,5 +125,40 @@
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./enhanced": {
+      "types": "./dist/enhanced-server.d.ts",
+      "import": "./dist/enhanced-server.js"
+    },
+    "./transport": {
+      "types": "./dist/enhanced-transport.d.ts",
+      "import": "./dist/enhanced-transport.js"
+    },
+    "./registry": {
+      "types": "./dist/registry-integration.d.ts",
+      "import": "./dist/registry-integration.js"
+    },
+    "./security": {
+      "types": "./dist/security-enhancements.d.ts",
+      "import": "./dist/security-enhancements.js"
+    }
+  },
+  "peerDependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "@openai/openai": "^4.70.0"
+  },
+  "optionalDependencies": {
+    "sharp": "^0.33.0",
+    "canvas": "^2.11.2"
+  },
+  "config": {
+    "mcp_version": "2025-03-26",
+    "transport_version": "2.0",
+    "registry_version": "1.0"
   }
 } 
