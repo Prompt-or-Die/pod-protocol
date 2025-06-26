@@ -4,7 +4,42 @@ import { useMemo } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useConnection } from '@solana/wallet-adapter-react';
 
-// Mock SDK interfaces - replace with real SDK imports when available
+// Enhanced interface definitions
+interface MessageSearchFilters {
+  agent?: string;
+  channel?: string;
+  status?: string;
+  limit?: number;
+  content?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+interface ChannelSearchFilters {
+  visibility?: 'public' | 'private';
+  creator?: string;
+  limit?: number;
+  minMembers?: number;
+  maxMembers?: number;
+}
+
+interface AgentSearchFilters {
+  capabilities?: string[];
+  minReputation?: number;
+  limit?: number;
+}
+
+interface NetworkStatistics {
+  totalTransactions: number;
+  tps: number;
+  slotHeight: number;
+  epoch: number;
+  health: string;
+  activeNodes?: number;
+  stakingRatio?: number;
+}
+
+// Core account interfaces
 interface AgentAccount {
   pubkey: string;
   name: string;
@@ -72,13 +107,7 @@ interface AnalyticsData {
     totalMessages: number;
     popularChannels: ChannelAccount[];
   };
-  network: {
-    totalTransactions: number;
-    tps: number;
-    slotHeight: number;
-    epoch: number;
-    health: string;
-  };
+  network: NetworkStatistics;
   zkCompression: {
     totalTrees: number;
     totalCompressedNFTs: number;
@@ -87,7 +116,7 @@ interface AnalyticsData {
   };
 }
 
-// Enhanced PodClient interface
+// Enhanced PodClient interface with proper typing
 interface PodClientInterface {
   // Agent operations
   agents: {
@@ -99,12 +128,8 @@ interface PodClientInterface {
     }) => Promise<{ signature: string; agentAddress: string }>;
     getAgent: (address: string) => Promise<AgentAccount>;
     updateAgent: (address: string, params: Partial<AgentAccount>) => Promise<{ signature: string }>;
-    listAgents: (filters?: {
-      capabilities?: string[];
-      minReputation?: number;
-      limit?: number;
-    }) => Promise<AgentAccount[]>;
-    searchAgents: (query: string, filters?: any) => Promise<{
+    listAgents: (filters?: AgentSearchFilters) => Promise<AgentAccount[]>;
+    searchAgents: (query: string, filters?: AgentSearchFilters) => Promise<{
       items: AgentAccount[];
       total: number;
       hasMore: boolean;
@@ -121,15 +146,11 @@ interface PodClientInterface {
       feePerMessage: number;
     }) => Promise<{ signature: string; channelAddress: string }>;
     getChannel: (address: string) => Promise<ChannelAccount>;
-    listChannels: (filters?: {
-      visibility?: 'public' | 'private';
-      creator?: string;
-      limit?: number;
-    }) => Promise<ChannelAccount[]>;
+    listChannels: (filters?: ChannelSearchFilters) => Promise<ChannelAccount[]>;
     join: (channelAddress: string) => Promise<{ signature: string }>;
     leave: (channelAddress: string) => Promise<{ signature: string }>;
     getParticipants: (channelAddress: string) => Promise<string[]>;
-    searchChannels: (query: string, filters?: any) => Promise<{
+    searchChannels: (query: string, filters?: ChannelSearchFilters) => Promise<{
       items: ChannelAccount[];
       total: number;
       hasMore: boolean;
@@ -145,25 +166,14 @@ interface PodClientInterface {
       encrypted?: boolean;
     }) => Promise<{ signature: string; messageId: string }>;
     getMessage: (messageId: string) => Promise<MessageAccount>;
-    listMessages: (filters?: {
-      agent?: string;
-      channel?: string;
-      status?: string;
-      limit?: number;
-    }) => Promise<MessageAccount[]>;
+    listMessages: (filters?: MessageSearchFilters) => Promise<MessageAccount[]>;
     updateStatus: (messageId: string, status: string) => Promise<{ signature: string }>;
   };
 
-  // Discovery operations
+  // Discovery operations - removed duplicate searchChannels
   discovery: {
-    searchAgents: (filters?: any) => Promise<{
+    searchAgents: (filters?: AgentSearchFilters) => Promise<{
       items: AgentAccount[];
-      total: number;
-      executionTime: number;
-      hasMore: boolean;
-    }>;
-    searchChannels: (query: string, filters?: any) => Promise<{
-      items: ChannelAccount[];
       total: number;
       executionTime: number;
       hasMore: boolean;
@@ -209,7 +219,7 @@ interface PodClientInterface {
     }>>;
   };
 
-  // Analytics operations
+  // Analytics operations with proper return types
   analytics: {
     getDashboard: () => Promise<AnalyticsData>;
     getAgentAnalytics: (agentAddress: string) => Promise<{
@@ -218,12 +228,7 @@ interface PodClientInterface {
       successRate: number;
       reputationHistory: Array<{ date: string; value: number }>;
     }>;
-    getNetworkAnalytics: () => Promise<{
-      tps: number;
-      totalTransactions: number;
-      activeAgents: number;
-      networkHealth: string;
-    }>;
+    getNetworkAnalytics: () => Promise<NetworkStatistics>;
     getChannelAnalytics: (channelAddress: string) => Promise<{
       messageCount: number;
       activeParticipants: number;
@@ -233,13 +238,25 @@ interface PodClientInterface {
   };
 }
 
-// Mock implementation - replace with real SDK integration
-const createMockPodClient = (wallet: any, connection: any): PodClientInterface => {
+// Mock implementation with fixed types
+/* eslint-disable @typescript-eslint/no-unused-vars */
+const createMockPodClient = (wallet: { 
+  publicKey?: { toString(): string }; 
+  signTransaction?: unknown;
+  signAllTransactions?: unknown;
+}, _connection: unknown): PodClientInterface => {
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  // Helper function to get random capabilities array
+  const getRandomCapabilities = (): string[] => {
+    const allCapabilities = ["trading", "analysis", "content", "data", "security"];
+    const count = Math.floor(Math.random() * 3) + 1;
+    return allCapabilities.slice(0, count);
+  };
 
   return {
     agents: {
-      register: async (params) => {
+      register: async (_params) => {
         await delay(1000);
         return {
           signature: `mock_sig_${Date.now()}`,
@@ -258,23 +275,23 @@ const createMockPodClient = (wallet: any, connection: any): PodClientInterface =
           isActive: true
         };
       },
-      updateAgent: async (address, params) => {
+      updateAgent: async (_address, _params) => {
         await delay(800);
         return { signature: `mock_update_${Date.now()}` };
       },
-      listAgents: async (filters) => {
+      listAgents: async (_filters) => {
         await delay(600);
         return Array.from({ length: 10 }, (_, i) => ({
           pubkey: `agent_${i}`,
           name: `Agent ${i + 1}`,
-          capabilities: ["trading", "analysis", "content"][Math.floor(Math.random() * 3)] as any,
+          capabilities: getRandomCapabilities(),
           reputation: Math.floor(Math.random() * 100),
           metadataUri: `https://example.com/agent${i}.json`,
           lastUpdated: Date.now() - Math.random() * 86400000,
           isActive: Math.random() > 0.3
         }));
       },
-      searchAgents: async (query, filters) => {
+      searchAgents: async (query, _filters) => {
         await delay(400);
         const items = Array.from({ length: 20 }, (_, i) => ({
           pubkey: `search_agent_${i}`,
@@ -290,7 +307,7 @@ const createMockPodClient = (wallet: any, connection: any): PodClientInterface =
     },
 
     channels: {
-      create: async (params) => {
+      create: async (_params) => {
         await delay(1200);
         return {
           signature: `mock_channel_sig_${Date.now()}`,
@@ -312,13 +329,13 @@ const createMockPodClient = (wallet: any, connection: any): PodClientInterface =
           createdAt: Date.now() - 86400000
         };
       },
-      listChannels: async (filters) => {
+      listChannels: async (_filters) => {
         await delay(600);
         return Array.from({ length: 15 }, (_, i) => ({
           pubkey: `channel_${i}`,
           name: `Channel ${i + 1}`,
           description: `Description for channel ${i + 1}`,
-          visibility: Math.random() > 0.5 ? "public" : "private",
+          visibility: (Math.random() > 0.5 ? "public" : "private") as 'public' | 'private',
           creator: `creator_${i}`,
           participantCount: Math.floor(Math.random() * 50),
           maxParticipants: 100,
@@ -327,19 +344,19 @@ const createMockPodClient = (wallet: any, connection: any): PodClientInterface =
           createdAt: Date.now() - Math.random() * 2592000000
         }));
       },
-      join: async (channelAddress) => {
+      join: async (_channelAddress) => {
         await delay(800);
         return { signature: `mock_join_${Date.now()}` };
       },
-      leave: async (channelAddress) => {
+      leave: async (_channelAddress) => {
         await delay(800);
         return { signature: `mock_leave_${Date.now()}` };
       },
-      getParticipants: async (channelAddress) => {
+      getParticipants: async (_channelAddress) => {
         await delay(400);
         return Array.from({ length: 10 }, (_, i) => `participant_${i}`);
       },
-      searchChannels: async (query, filters) => {
+      searchChannels: async (query, _filters) => {
         await delay(500);
         const items = Array.from({ length: 15 }, (_, i) => ({
           pubkey: `search_channel_${i}`,
@@ -372,20 +389,21 @@ const createMockPodClient = (wallet: any, connection: any): PodClientInterface =
           sender: wallet?.publicKey?.toString() || "mock_sender",
           recipient: "mock_recipient",
           content: "Mock message content",
-          status: "delivered",
+          status: "delivered" as const,
           timestamp: Date.now(),
           encrypted: false
         };
       },
       listMessages: async (filters) => {
         await delay(500);
+        const statuses: Array<'pending' | 'delivered' | 'read' | 'failed'> = ["pending", "delivered", "read", "failed"];
         return Array.from({ length: 20 }, (_, i) => ({
           pubkey: `message_${i}`,
           sender: `sender_${i}`,
           recipient: `recipient_${i}`,
           content: `Message content ${i + 1}`,
           channelId: filters?.channel || undefined,
-          status: ["pending", "delivered", "read"][Math.floor(Math.random() * 3)] as any,
+          status: statuses[Math.floor(Math.random() * statuses.length)],
           timestamp: Date.now() - Math.random() * 86400000,
           encrypted: Math.random() > 0.5
         }));
@@ -409,22 +427,6 @@ const createMockPodClient = (wallet: any, connection: any): PodClientInterface =
           isActive: true
         }));
         return { items, total: 150, executionTime: 250, hasMore: true };
-      },
-      searchChannels: async (query, filters) => {
-        await delay(500);
-        const items = Array.from({ length: 20 }, (_, i) => ({
-          pubkey: `discovery_channel_${i}`,
-          name: `${query || 'Discovery'} Channel ${i + 1}`,
-          description: `Discovery channel ${i + 1}`,
-          visibility: "public" as const,
-          creator: `creator_${i}`,
-          participantCount: Math.floor(Math.random() * 50),
-          maxParticipants: 100,
-          feePerMessage: 1000,
-          escrowBalance: Math.floor(Math.random() * 100000),
-          createdAt: Date.now()
-        }));
-        return { items, total: 80, executionTime: 180, hasMore: true };
       },
       getRecommendedAgents: async (options) => {
         await delay(700);
@@ -593,7 +595,9 @@ const createMockPodClient = (wallet: any, connection: any): PodClientInterface =
             tps: 2847,
             slotHeight: 245892103,
             epoch: 489,
-            health: "Excellent"
+            health: "Excellent",
+            activeNodes: 2150,
+            stakingRatio: 68.5
           },
           zkCompression: {
             totalTrees: 123,
@@ -620,8 +624,11 @@ const createMockPodClient = (wallet: any, connection: any): PodClientInterface =
         return {
           tps: 2847,
           totalTransactions: 2847291,
-          activeAgents: 892,
-          networkHealth: "Excellent"
+          slotHeight: 245892103,
+          epoch: 489,
+          health: "Excellent",
+          activeNodes: 2150,
+          stakingRatio: 68.5
         };
       },
       getChannelAnalytics: async (channelAddress) => {
@@ -636,6 +643,7 @@ const createMockPodClient = (wallet: any, connection: any): PodClientInterface =
     }
   };
 };
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 const usePodClient = () => {
   const { publicKey, signTransaction, signAllTransactions } = useWallet();
@@ -660,4 +668,16 @@ const usePodClient = () => {
 };
 
 export default usePodClient;
-export type { PodClientInterface as PodClient, AgentAccount, ChannelAccount, MessageAccount, ZKCompressionTree, CompressedNFT, AnalyticsData };
+export type { 
+  PodClientInterface as PodClient, 
+  AgentAccount, 
+  ChannelAccount, 
+  MessageAccount, 
+  ZKCompressionTree, 
+  CompressedNFT, 
+  AnalyticsData,
+  MessageSearchFilters,
+  ChannelSearchFilters,
+  AgentSearchFilters,
+  NetworkStatistics
+};

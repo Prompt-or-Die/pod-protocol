@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton, WalletDisconnectButton } from '@solana/wallet-adapter-react-ui';
@@ -256,7 +256,7 @@ const WalletConnectionHub: React.FC<WalletConnectionHubProps> = ({
                 exit={{ opacity: 0, y: -10 }}
                 className="grid grid-cols-1 md:grid-cols-3 gap-4"
               >
-                <ModernDappCard variant="minimal" className="text-center">
+                <ModernDappCard variant="glass" className="text-center">
                   <div className="space-y-2">
                     <div className="p-2 bg-blue-600/20 rounded-lg mx-auto w-fit">
                       <GlobeAltIcon className="h-5 w-5 text-blue-400" />
@@ -266,7 +266,7 @@ const WalletConnectionHub: React.FC<WalletConnectionHubProps> = ({
                   </div>
                 </ModernDappCard>
 
-                <ModernDappCard variant="minimal" className="text-center">
+                <ModernDappCard variant="glass" className="text-center">
                   <div className="space-y-2">
                     <div className="p-2 bg-orange-600/20 rounded-lg mx-auto w-fit">
                       <ExclamationTriangleIcon className="h-5 w-5 text-orange-400" />
@@ -276,7 +276,7 @@ const WalletConnectionHub: React.FC<WalletConnectionHubProps> = ({
                   </div>
                 </ModernDappCard>
 
-                <ModernDappCard variant="minimal" className="text-center">
+                <ModernDappCard variant="glass" className="text-center">
                   <div className="space-y-2">
                     <div className="p-2 bg-green-600/20 rounded-lg mx-auto w-fit">
                       <SparklesIcon className="h-5 w-5 text-green-400" />

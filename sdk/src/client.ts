@@ -533,10 +533,10 @@ export class PodComClient {
     },
     filters: any = {}
   ): Promise<{ agents: any[]; totalCount: number; hasMore: boolean }> {
-    // Convert string capabilities to numbers for compatibility
+    // Convert string capabilities to number array for compatibility
     const agentFilters: AgentSearchFilters = {
       capabilities: Array.isArray(searchParams.capabilities) 
-        ? searchParams.capabilities.reduce((mask, cap) => mask | (typeof cap === 'string' ? parseInt(cap) || 0 : cap), 0)
+        ? searchParams.capabilities.map(cap => typeof cap === 'string' ? parseInt(cap) || 0 : cap)
         : undefined,
       limit: searchParams.limit
     };
