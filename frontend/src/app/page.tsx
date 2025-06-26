@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   CpuChipIcon,
@@ -15,15 +15,14 @@ import {
 } from '@heroicons/react/24/outline';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { cn } from '../lib/utils';
-
-// Import all the new components
-import AgentManagement from '../components/agent/AgentManagement';
-import ChannelManagement from '../components/channel/ChannelManagement';
-import AnalyticsDashboard from '../components/analytics/AnalyticsDashboard';
-import ZKCompressionInterface from '../components/zk-compression/ZKCompressionInterface';
-import DiscoveryEngine from '../components/discovery/DiscoveryEngine';
-import { GlassCard, NeuralCard } from '../components/ui/ModernDappCard';
 import Button from '../components/ui/Button';
+
+// Lazy load heavy components to reduce initial bundle size
+const AgentManagement = lazy(() => import('../components/agent/AgentManagement'));
+const ChannelManagement = lazy(() => import('../components/channel/ChannelManagement'));
+const AnalyticsDashboard = lazy(() => import('../components/analytics/AnalyticsDashboard'));
+const ZKCompressionInterface = lazy(() => import('../components/zk-compression/ZKCompressionInterface'));
+const DiscoveryEngine = lazy(() => import('../components/discovery/DiscoveryEngine'));
 
 type ActivePage = 'home' | 'agents' | 'channels' | 'analytics' | 'zk-compression' | 'discovery' | 'settings';
 
@@ -37,36 +36,57 @@ const navigation = [
   { id: 'settings', name: 'Settings', icon: Cog6ToothIcon, description: 'Platform configuration' }
 ];
 
+// Loading component for lazy loaded pages
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-[400px]">
+    <div className="flex flex-col items-center space-y-4">
+      <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+      <p className="text-gray-400">Loading...</p>
+    </div>
+  </div>
+);
+
 export default function HomePage() {
   const [activePage, setActivePage] = useState<ActivePage>('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const renderPageContent = () => {
-    switch (activePage) {
-      case 'agents':
-        return <AgentManagement />;
-      case 'channels':
-        return <ChannelManagement />;
-      case 'analytics':
-        return <AnalyticsDashboard />;
-      case 'zk-compression':
-        return <ZKCompressionInterface />;
-      case 'discovery':
-        return <DiscoveryEngine />;
-      case 'settings':
-        return <SettingsPage />;
-      default:
-        return <DashboardHome />;
+    const content = (() => {
+      switch (activePage) {
+        case 'agents':
+          return <AgentManagement />;
+        case 'channels':
+          return <ChannelManagement />;
+        case 'analytics':
+          return <AnalyticsDashboard />;
+        case 'zk-compression':
+          return <ZKCompressionInterface />;
+        case 'discovery':
+          return <DiscoveryEngine />;
+        case 'settings':
+          return <SettingsPage />;
+        default:
+          return <DashboardHome />;
+      }
+    })();
+
+    // Only wrap lazy components in Suspense
+    if (activePage !== 'home' && activePage !== 'settings') {
+      return (
+        <Suspense fallback={<PageLoader />}>
+          {content}
+        </Suspense>
+      );
     }
+
+    return content;
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900">
-      {/* Animated Background */}
+      {/* Simplified animated background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,119,198,0.1),transparent_50%)]" />
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
       </div>
 
       {/* Mobile sidebar backdrop */}
@@ -185,7 +205,7 @@ export default function HomePage() {
   );
 }
 
-// Dashboard Home Component
+// Simplified Dashboard Home Component
 const DashboardHome: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-8">
@@ -222,27 +242,26 @@ const DashboardHome: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 + index * 0.1 }}
+            className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-lg p-6"
           >
-            <NeuralCard className="p-6">
-              <div className="space-y-2">
-                <div className="text-sm text-gray-400">{stat.label}</div>
-                <div className="text-2xl font-bold text-white">{stat.value}</div>
-                <div className={cn(
-                  'text-sm font-medium',
-                  stat.color === 'purple' && 'text-purple-400',
-                  stat.color === 'cyan' && 'text-cyan-400',
-                  stat.color === 'green' && 'text-green-400',
-                  stat.color === 'yellow' && 'text-yellow-400'
-                )}>
-                  {stat.change}
-                </div>
+            <div className="space-y-2">
+              <div className="text-sm text-gray-400">{stat.label}</div>
+              <div className="text-2xl font-bold text-white">{stat.value}</div>
+              <div className={cn(
+                'text-sm font-medium',
+                stat.color === 'purple' && 'text-purple-400',
+                stat.color === 'cyan' && 'text-cyan-400',
+                stat.color === 'green' && 'text-green-400',
+                stat.color === 'yellow' && 'text-yellow-400'
+              )}>
+                {stat.change}
               </div>
-            </NeuralCard>
+            </div>
           </motion.div>
         ))}
       </div>
 
-      {/* Feature Cards */}
+      {/* Simplified Feature Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[
           {
@@ -250,42 +269,36 @@ const DashboardHome: React.FC = () => {
             description: 'Create and manage intelligent agents with custom capabilities',
             icon: CpuChipIcon,
             color: 'purple',
-            action: 'agents'
           },
           {
             title: 'Communication Channels',
             description: 'Set up secure channels for agent-to-agent communication',
             icon: ChatBubbleLeftRightIcon,
             color: 'cyan',
-            action: 'channels'
           },
           {
             title: 'Network Analytics',
             description: 'Monitor performance and gain insights into network activity',
             icon: ChartBarIcon,
             color: 'green',
-            action: 'analytics'
           },
           {
             title: 'ZK Compression',
             description: 'Manage compressed NFTs and Merkle trees efficiently',
             icon: CubeTransparentIcon,
             color: 'yellow',
-            action: 'zk-compression'
           },
           {
             title: 'Discovery Engine',
             description: 'Find and connect with agents and channels across the network',
             icon: MagnifyingGlassIcon,
             color: 'pink',
-            action: 'discovery'
           },
           {
             title: 'Platform Settings',
             description: 'Configure your PoD Protocol experience and preferences',
             icon: Cog6ToothIcon,
             color: 'indigo',
-            action: 'settings'
           }
         ].map((feature, index) => (
           <motion.div
@@ -293,43 +306,42 @@ const DashboardHome: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 + index * 0.1 }}
+            className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-lg p-6 hover:border-purple-500/30 transition-all cursor-pointer group"
           >
-            <NeuralCard interactive tilt className="p-6 h-full cursor-pointer group">
-              <div className="space-y-4">
-                <div className={cn(
-                  'w-12 h-12 rounded-lg flex items-center justify-center',
-                  feature.color === 'purple' && 'bg-purple-600/20',
-                  feature.color === 'cyan' && 'bg-cyan-600/20',
-                  feature.color === 'green' && 'bg-green-600/20',
-                  feature.color === 'yellow' && 'bg-yellow-600/20',
-                  feature.color === 'pink' && 'bg-pink-600/20',
-                  feature.color === 'indigo' && 'bg-indigo-600/20'
-                )}>
-                  <feature.icon className={cn(
-                    'h-6 w-6',
-                    feature.color === 'purple' && 'text-purple-400',
-                    feature.color === 'cyan' && 'text-cyan-400',
-                    feature.color === 'green' && 'text-green-400',
-                    feature.color === 'yellow' && 'text-yellow-400',
-                    feature.color === 'pink' && 'text-pink-400',
-                    feature.color === 'indigo' && 'text-indigo-400'
-                  )} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white group-hover:text-purple-400 transition-colors">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-400 text-sm mt-1">
-                    {feature.description}
-                  </p>
-                </div>
-                <div className="pt-2">
-                  <Button variant="ghost" size="sm" className="group-hover:text-purple-400">
-                    Explore →
-                  </Button>
-                </div>
+            <div className="space-y-4">
+              <div className={cn(
+                'w-12 h-12 rounded-lg flex items-center justify-center',
+                feature.color === 'purple' && 'bg-purple-600/20',
+                feature.color === 'cyan' && 'bg-cyan-600/20',
+                feature.color === 'green' && 'bg-green-600/20',
+                feature.color === 'yellow' && 'bg-yellow-600/20',
+                feature.color === 'pink' && 'bg-pink-600/20',
+                feature.color === 'indigo' && 'bg-indigo-600/20'
+              )}>
+                <feature.icon className={cn(
+                  'h-6 w-6',
+                  feature.color === 'purple' && 'text-purple-400',
+                  feature.color === 'cyan' && 'text-cyan-400',
+                  feature.color === 'green' && 'text-green-400',
+                  feature.color === 'yellow' && 'text-yellow-400',
+                  feature.color === 'pink' && 'text-pink-400',
+                  feature.color === 'indigo' && 'text-indigo-400'
+                )} />
               </div>
-            </NeuralCard>
+              <div>
+                <h3 className="text-lg font-bold text-white group-hover:text-purple-400 transition-colors">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-400 text-sm mt-1">
+                  {feature.description}
+                </p>
+              </div>
+              <div className="pt-2">
+                <Button variant="ghost" size="sm" className="group-hover:text-purple-400">
+                  Explore →
+                </Button>
+              </div>
+            </div>
           </motion.div>
         ))}
       </div>
@@ -337,29 +349,11 @@ const DashboardHome: React.FC = () => {
   );
 };
 
-// Discovery Page Component (placeholder)
-const DiscoveryPage: React.FC = () => {
-  return (
-    <div className="max-w-7xl mx-auto">
-      <GlassCard className="p-8 text-center">
-        <MagnifyingGlassIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-white mb-2">Discovery Engine</h2>
-        <p className="text-gray-400 mb-6">
-          Advanced search and discovery features coming soon. Find agents, channels, and opportunities across the PoD Protocol network.
-        </p>
-        <Button variant="primary">
-          Join Beta Program
-        </Button>
-      </GlassCard>
-    </div>
-  );
-};
-
-// Settings Page Component (placeholder)
+// Settings Page Component (simple placeholder)
 const SettingsPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto">
-      <GlassCard className="p-8 text-center">
+      <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-lg p-8 text-center">
         <Cog6ToothIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
         <h2 className="text-2xl font-bold text-white mb-2">Platform Settings</h2>
         <p className="text-gray-400 mb-6">
@@ -368,7 +362,7 @@ const SettingsPage: React.FC = () => {
         <Button variant="primary">
           Configure Platform
         </Button>
-      </GlassCard>
+      </div>
     </div>
   );
 };

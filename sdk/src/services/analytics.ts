@@ -276,6 +276,8 @@ export class AnalyticsService extends BaseService {
             maxMembers: account.maxParticipants || account.maxMembers || 0,
             memberCount: account.currentParticipants || account.memberCount || 0,
             currentParticipants: account.currentParticipants || account.memberCount || 0,
+            maxParticipants: account.maxParticipants || account.maxMembers || 0,
+            participantCount: account.currentParticipants || account.memberCount || 0,
             feePerMessage: account.feePerMessage?.toNumber() || 0,
             escrowBalance: account.escrowBalance?.toNumber() || 0,
             createdAt: account.createdAt?.toNumber() || Date.now(),
@@ -697,10 +699,8 @@ export class AnalyticsService extends BaseService {
 
   async getNetworkMetrics(): Promise<NetworkMetrics> {
     try {
-      // Get real network performance data using @solana/kit
-      const performanceSamples = await this.rpc
-        .getRecentPerformanceSamples({ limit: 10 })
-        .send();
+      // Get real network performance data using Web3.js v2.0
+      const performanceSamples = await this.rpc.getRecentPerformanceSamples({ limit: 10 }).send();
       
       let averageTps = 0;
       let blockTime = 400;

@@ -1084,21 +1084,19 @@ export class DiscoveryService extends BaseService {
 
       // Apply filters
       if (options.capabilities !== undefined) {
+        // Convert capabilities array to bitmask if needed
+        const capabilityMask = Array.isArray(options.capabilities) 
+          ? options.capabilities.reduce((mask, cap) => mask | (typeof cap === 'number' ? cap : 0), 0)
+          : options.capabilities;
         agents = agents.filter(agent => 
-          (agent.capabilities & options.capabilities!) === options.capabilities);
+          (agent.capabilities & capabilityMask) === capabilityMask);
       }
 
       if (options.minReputation !== undefined) {
         agents = agents.filter(agent => agent.reputation >= options.minReputation!);
       }
 
-      if (options.location) {
-        // Filter by location metadata (if available in metadataUri)
-        agents = agents.filter(agent => {
-          // In a real implementation, this would parse metadata
-          return true; // Placeholder for location filtering
-        });
-      }
+      // Location filtering removed - property not in interface
 
       // Sort by relevance (reputation by default)
       agents.sort((a, b) => b.reputation - a.reputation);
@@ -1257,7 +1255,7 @@ export class DiscoveryService extends BaseService {
       const allAgents = await this.findAgents({ limit: 1000 });
       
       // Get the requesting agent's data for recommendation algorithm with interaction history
-      const requesterData = allAgents.find(agent => agent.pubkey.equals(forAgent));
+      const requesterData = allAgents.find(agent => agent.pubkey.toString() === forAgent.toString());
       
       if (!requesterData) {
         throw new Error("Requester agent not found");
@@ -1265,7 +1263,7 @@ export class DiscoveryService extends BaseService {
 
       // Implement advanced recommendation algorithm based on interaction history
       const recommendations = allAgents
-        .filter(agent => !agent.pubkey.equals(forAgent)) // Exclude self
+        .filter(agent => agent.pubkey.toString() !== forAgent.toString()) // Exclude self
         .map(agent => {
           let score = 0;
           
@@ -1298,7 +1296,7 @@ export class DiscoveryService extends BaseService {
     try {
       // Get all public channels
       const allChannels = await this.searchChannels("", { 
-        visibility: ChannelVisibility.PUBLIC,
+        visibility: ChannelVisibility.Public,
         limit: 1000 
       });
       

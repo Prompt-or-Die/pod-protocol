@@ -411,7 +411,7 @@ export interface PerformanceMetrics {
 
 // Discovery interfaces
 export interface AgentSearchFilters {
-  capabilities?: number;
+  capabilities?: number[];
   minReputation?: number;
   limit?: number;
 }
@@ -421,6 +421,9 @@ export interface MessageSearchFilters {
   recipient?: Address;
   messageType?: MessageType;
   limit?: number;
+  payloadContains?: string;
+  createdAfter?: number;
+  createdBefore?: number;
 }
 
 export interface ChannelSearchFilters {
@@ -428,6 +431,8 @@ export interface ChannelSearchFilters {
   minMembers?: number;
   maxMembers?: number;
   limit?: number;
+  nameContains?: string;
+  descriptionContains?: string;
 }
 
 export interface RecommendationOptions {

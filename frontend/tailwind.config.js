@@ -9,6 +9,42 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        primary: {
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0ea5e9',
+          600: '#0284c7',
+          700: '#0369a1',
+          800: '#075985',
+          900: '#0c4a6e',
+        },
+        purple: {
+          50: '#faf5ff',
+          100: '#f3e8ff',
+          200: '#e9d5ff',
+          300: '#d8b4fe',
+          400: '#c084fc',
+          500: '#a855f7',
+          600: '#9333ea',
+          700: '#7c3aed',
+          800: '#6b21a8',
+          900: '#581c87',
+        },
+        cyan: {
+          50: '#ecfeff',
+          100: '#cffafe',
+          200: '#a5f3fc',
+          300: '#67e8f9',
+          400: '#22d3ee',
+          500: '#06b6d4',
+          600: '#0891b2',
+          700: '#0e7490',
+          800: '#155e75',
+          900: '#164e63',
+        },
         pod: {
           violet: {
             DEFAULT: '#6B46C1',
@@ -75,11 +111,6 @@ module.exports = {
             dark: '#D97706',
             light: '#FBBF24',
           },
-          cyan: {
-            DEFAULT: '#06B6D4',
-            dark: '#0891B2',
-            light: '#22D3EE',
-          },
           pink: {
             DEFAULT: '#EC4899',
             dark: '#DB2777',
@@ -125,45 +156,6 @@ module.exports = {
           warning: '#F59E0B',
           info: '#3B82F6',
         },
-        primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
-          950: '#082f49',
-        },
-        purple: {
-          50: '#faf5ff',
-          100: '#f3e8ff',
-          200: '#e9d5ff',
-          300: '#d8b4fe',
-          400: '#c084fc',
-          500: '#a855f7',
-          600: '#9333ea',
-          700: '#7c3aed',
-          800: '#6b21a8',
-          900: '#581c87',
-          950: '#3b0764',
-        },
-        cyan: {
-          50: '#ecfeff',
-          100: '#cffafe',
-          200: '#a5f3fc',
-          300: '#67e8f9',
-          400: '#22d3ee',
-          500: '#06b6d4',
-          600: '#0891b2',
-          700: '#0e7490',
-          800: '#155e75',
-          900: '#164e63',
-          950: '#083344',
-        },
         neural: {
           50: '#f8fafc',
           100: '#f1f5f9',
@@ -193,8 +185,7 @@ module.exports = {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
-        display: ['Cal Sans', 'Inter', 'system-ui', 'sans-serif'],
+        mono: ['monospace'],
       },
       fontSize: {
         '2xs': ['0.625rem', { lineHeight: '0.75rem' }],
@@ -214,200 +205,25 @@ module.exports = {
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
-        'fade-out': 'fadeOut 0.5s ease-in-out',
         'slide-up': 'slideUp 0.3s ease-out',
-        'slide-down': 'slideDown 0.3s ease-out',
-        'slide-left': 'slideLeft 0.3s ease-out',
-        'slide-right': 'slideRight 0.3s ease-out',
-        'scale-in': 'scaleIn 0.2s ease-out',
-        'scale-out': 'scaleOut 0.2s ease-out',
-        'float': 'float 6s ease-in-out infinite',
-        'glow': 'glow 2s ease-in-out infinite alternate',
         'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'spin-slow': 'spin 3s linear infinite',
-        'spin-fast': 'spin 0.5s linear infinite',
-        'bounce-subtle': 'bounceSubtle 2s infinite',
-        'wiggle': 'wiggle 1s ease-in-out infinite',
-        'shimmer': 'shimmer 2s linear infinite',
-        'neural-pulse': 'neuralPulse 3s ease-in-out infinite',
-        'quantum-shift': 'quantumShift 4s ease-in-out infinite',
-        'hologram': 'hologram 5s ease-in-out infinite',
-        'matrix-rain': 'matrixRain 10s linear infinite',
-        'cyber-glitch': 'cyberGlitch 0.3s ease-in-out infinite',
-        'neon-flicker': 'neonFlicker 1.5s ease-in-out infinite',
-        'data-stream': 'dataStream 8s linear infinite',
-        'energy-flow': 'energyFlow 3s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
         },
-        fadeOut: {
-          '0%': { opacity: '1' },
-          '100%': { opacity: '0' },
-        },
         slideUp: {
           '0%': { transform: 'translateY(100%)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
         },
-        slideDown: {
-          '0%': { transform: 'translateY(-100%)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
-        },
-        slideLeft: {
-          '0%': { transform: 'translateX(100%)', opacity: '0' },
-          '100%': { transform: 'translateX(0)', opacity: '1' },
-        },
-        slideRight: {
-          '0%': { transform: 'translateX(-100%)', opacity: '0' },
-          '100%': { transform: 'translateX(0)', opacity: '1' },
-        },
-        scaleIn: {
-          '0%': { transform: 'scale(0.9)', opacity: '0' },
-          '100%': { transform: 'scale(1)', opacity: '1' },
-        },
-        scaleOut: {
-          '0%': { transform: 'scale(1)', opacity: '1' },
-          '100%': { transform: 'scale(0.9)', opacity: '0' },
-        },
-        float: {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-20px)' },
-        },
-        glow: {
-          '0%': { boxShadow: '0 0 5px rgba(168, 85, 247, 0.5)' },
-          '100%': { boxShadow: '0 0 20px rgba(168, 85, 247, 0.8)' },
-        },
-        bounceSubtle: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-5px)' },
-        },
-        wiggle: {
-          '0%, 100%': { transform: 'rotate(-3deg)' },
-          '50%': { transform: 'rotate(3deg)' },
-        },
-        shimmer: {
-          '0%': { transform: 'translateX(-100%)' },
-          '100%': { transform: 'translateX(100%)' },
-        },
-        neuralPulse: {
-          '0%, 100%': { 
-            opacity: '0.3',
-            transform: 'scale(1)',
-          },
-          '50%': { 
-            opacity: '0.8',
-            transform: 'scale(1.05)',
-          },
-        },
-        quantumShift: {
-          '0%, 100%': { 
-            background: 'linear-gradient(45deg, #8b5cf6, #06b6d4)',
-            transform: 'rotate(0deg)',
-          },
-          '25%': { 
-            background: 'linear-gradient(135deg, #06b6d4, #10b981)',
-            transform: 'rotate(90deg)',
-          },
-          '50%': { 
-            background: 'linear-gradient(225deg, #10b981, #f59e0b)',
-            transform: 'rotate(180deg)',
-          },
-          '75%': { 
-            background: 'linear-gradient(315deg, #f59e0b, #ef4444)',
-            transform: 'rotate(270deg)',
-          },
-        },
-        hologram: {
-          '0%, 100%': { 
-            opacity: '0.8',
-            filter: 'hue-rotate(0deg)',
-          },
-          '50%': { 
-            opacity: '1',
-            filter: 'hue-rotate(180deg)',
-          },
-        },
-        matrixRain: {
-          '0%': { transform: 'translateY(-100vh)' },
-          '100%': { transform: 'translateY(100vh)' },
-        },
-        cyberGlitch: {
-          '0%, 100%': { 
-            transform: 'translateX(0)',
-            filter: 'hue-rotate(0deg)',
-          },
-          '20%': { 
-            transform: 'translateX(-2px)',
-            filter: 'hue-rotate(90deg)',
-          },
-          '40%': { 
-            transform: 'translateX(2px)',
-            filter: 'hue-rotate(180deg)',
-          },
-          '60%': { 
-            transform: 'translateX(-1px)',
-            filter: 'hue-rotate(270deg)',
-          },
-          '80%': { 
-            transform: 'translateX(1px)',
-            filter: 'hue-rotate(360deg)',
-          },
-        },
-        neonFlicker: {
-          '0%, 100%': { opacity: '1' },
-          '50%': { opacity: '0.8' },
-          '75%': { opacity: '0.9' },
-        },
-        dataStream: {
-          '0%': { 
-            transform: 'translateX(-100%) translateY(0)',
-            opacity: '0',
-          },
-          '10%': { opacity: '1' },
-          '90%': { opacity: '1' },
-          '100%': { 
-            transform: 'translateX(100vw) translateY(-50px)',
-            opacity: '0',
-          },
-        },
-        energyFlow: {
-          '0%, 100%': { 
-            background: 'linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.3), transparent)',
-          },
-          '50%': { 
-            background: 'linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.5), transparent)',
-          },
-        },
       },
       boxShadow: {
-        'glow-sm': '0 0 10px rgba(168, 85, 247, 0.3)',
         'glow': '0 0 20px rgba(168, 85, 247, 0.4)',
-        'glow-lg': '0 0 30px rgba(168, 85, 247, 0.5)',
-        'glow-xl': '0 0 40px rgba(168, 85, 247, 0.6)',
         'glow-cyan': '0 0 20px rgba(6, 182, 212, 0.4)',
-        'glow-green': '0 0 20px rgba(16, 185, 129, 0.4)',
-        'glow-red': '0 0 20px rgba(239, 68, 68, 0.4)',
-        'neural': '0 8px 32px rgba(168, 85, 247, 0.15)',
-        'quantum': '0 8px 32px rgba(6, 182, 212, 0.15)',
-        'glass': '0 8px 32px rgba(0, 0, 0, 0.3)',
-        'neon': '0 0 20px currentColor',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        'neural-gradient': 'linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%)',
-        'quantum-gradient': 'linear-gradient(45deg, rgba(168, 85, 247, 0.2) 0%, rgba(6, 182, 212, 0.2) 50%, rgba(16, 185, 129, 0.2) 100%)',
-        'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
-        'cyber-grid': `
-          linear-gradient(rgba(6, 182, 212, 0.1) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(6, 182, 212, 0.1) 1px, transparent 1px)
-        `,
-      },
-      backgroundSize: {
-        'cyber-grid': '20px 20px',
       },
       blur: {
         '4xl': '128px',
@@ -432,58 +248,5 @@ module.exports = {
   plugins: [
     require('@tailwindcss/forms'),
     require('@tailwindcss/typography'),
-    require('@tailwindcss/aspect-ratio'),
-    function({ addUtilities, addComponents, theme }) {
-      addUtilities({
-        '.text-glow': {
-          textShadow: '0 0 10px currentColor',
-        },
-        '.text-glow-lg': {
-          textShadow: '0 0 20px currentColor',
-        },
-        '.backdrop-blur-glass': {
-          backdropFilter: 'blur(16px) saturate(180%)',
-        },
-        '.backdrop-blur-neural': {
-          backdropFilter: 'blur(24px) saturate(200%) brightness(110%)',
-        },
-        '.transform-gpu': {
-          transform: 'translateZ(0)',
-        },
-        '.perspective-1000': {
-          perspective: '1000px',
-        },
-        '.preserve-3d': {
-          transformStyle: 'preserve-3d',
-        },
-        '.backface-hidden': {
-          backfaceVisibility: 'hidden',
-        },
-      });
-
-      addComponents({
-        '.glass-morphism': {
-          background: 'rgba(255, 255, 255, 0.05)',
-          backdropFilter: 'blur(16px) saturate(180%)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-        },
-        '.neural-morphism': {
-          background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%)',
-          backdropFilter: 'blur(24px) saturate(200%)',
-          border: '1px solid rgba(168, 85, 247, 0.2)',
-        },
-        '.quantum-morphism': {
-          background: 'linear-gradient(45deg, rgba(168, 85, 247, 0.15) 0%, rgba(6, 182, 212, 0.15) 50%, rgba(16, 185, 129, 0.15) 100%)',
-          backdropFilter: 'blur(32px) saturate(250%)',
-          border: '1px solid rgba(168, 85, 247, 0.3)',
-        },
-        '.cyber-border': {
-          border: '1px solid transparent',
-          backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0)), linear-gradient(135deg, #8b5cf6, #06b6d4)',
-          backgroundOrigin: 'border-box',
-          backgroundClip: 'content-box, border-box',
-        },
-      });
-    },
   ],
 }

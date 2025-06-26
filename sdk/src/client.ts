@@ -23,6 +23,7 @@ import {
   BroadcastMessageOptions,
   MessageStatus,
   ChannelVisibility,
+  AgentSearchFilters,
 } from "./types";
 import { PodCom, IDL } from "./pod_com";
 import type { IdlAccounts } from "@coral-xyz/anchor";
@@ -281,15 +282,14 @@ export class PodComClient {
   async createChannel(
     wallet: KeyPairSigner,
     options: CreateChannelOptions,
-  ): Promise<Address> {
-    // Convert CreateChannelOptions to ChannelConfig
+  ): Promise<string> {
+    // Convert CreateChannelOptions to the format expected by channel service
     const channelConfig = {
       name: options.name,
       description: options.description,
-      isPublic: options.visibility === ChannelVisibility.Public,
-      maxParticipants: options.maxParticipants,
-      requiresApproval: false,
-      tags: []
+      visibility: options.visibility,
+      maxMembers: options.maxMembers,
+      feePerMessage: options.feePerMessage
     };
     return this.channels.createChannel(wallet, channelConfig);
   }
@@ -297,7 +297,7 @@ export class PodComClient {
   /**
    * @deprecated Use client.channels.getChannel() instead
    */
-  async getChannel(channelPDA: Address): Promise<ChannelData | null> {
+  async getChannel(channelPDA: Address): Promise<ChannelAccount | null> {
     return this.channels.getChannel(channelPDA);
   }
 
@@ -306,9 +306,8 @@ export class PodComClient {
    */
   async getAllChannels(
     limit: number = 50,
-    visibilityFilter?: ChannelVisibility,
-  ): Promise<ChannelData[]> {
-    return this.channels.getAllChannels(limit, visibilityFilter);
+  ): Promise<ChannelAccount[]> {
+    return this.channels.getAllChannels(limit);
   }
 
   /**
@@ -317,7 +316,7 @@ export class PodComClient {
   async getChannelsByCreator(
     creator: Address,
     limit: number = 50,
-  ): Promise<ChannelData[]> {
+  ): Promise<ChannelAccount[]> {
     return this.channels.getChannelsByCreator(creator, limit);
   }
 
@@ -325,14 +324,14 @@ export class PodComClient {
    * @deprecated Use client.channels.joinChannel() instead
    */
   async joinChannel(wallet: KeyPairSigner, channelPDA: Address): Promise<void> {
-    return this.channels.joinChannel(wallet, channelPDA);
+    await this.channels.joinChannel(channelPDA.toString(), wallet);
   }
 
   /**
    * @deprecated Use client.channels.leaveChannel() instead
    */
   async leaveChannel(wallet: KeyPairSigner, channelPDA: Address): Promise<void> {
-    return this.channels.leaveChannel(wallet, channelPDA);
+    await this.channels.leaveChannel(wallet, channelPDA);
   }
 
   /**
@@ -348,7 +347,7 @@ export class PodComClient {
     return this.channels.broadcastMessage(wallet, {
       channelPDA,
       content,
-      messageType,
+      messageType: messageType as any,
       replyTo,
     });
   }
@@ -534,7 +533,20 @@ export class PodComClient {
     },
     filters: any = {}
   ): Promise<{ agents: any[]; totalCount: number; hasMore: boolean }> {
-    return await this.discovery.findAgents(searchParams);
+    // Convert string capabilities to numbers for compatibility
+    const agentFilters: AgentSearchFilters = {
+      capabilities: Array.isArray(searchParams.capabilities) 
+        ? searchParams.capabilities.reduce((mask, cap) => mask | (typeof cap === 'string' ? parseInt(cap) || 0 : cap), 0)
+        : undefined,
+      limit: searchParams.limit
+    };
+    
+    const agents = await this.discovery.findAgents(agentFilters);
+    return {
+      agents,
+      totalCount: agents.length,
+      hasMore: false
+    };
   }
 
   /**
@@ -564,7 +576,7 @@ export * from "./utils";
 export * from "./services/agent";
 export * from "./services/channel";
 export * from "./services/message";
-export * from "./services/discovery";
+// Removed to avoid export conflicts - types are in ./types
 export * from "./services/escrow";
 export * from "./services/zk-compression";
 export * from "./services/analytics";

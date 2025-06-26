@@ -63,7 +63,7 @@ export class ChannelService extends BaseService {
     wallet: KeyPairSigner,
     options: CreateChannelOptions,
   ): Promise<string> {
-    const [channelPDA] = await findChannelPDA(wallet.address, options.name, this.programId);
+    const [channelPDA] = await findChannelPDA(wallet.address as any, options.name, this.programId);
 
     return retry(async () => {
       if (!this.program) {
@@ -75,7 +75,7 @@ export class ChannelService extends BaseService {
           .createChannel(
             options.name,
             options.description || "",
-            options.visibility || ChannelVisibility.PUBLIC,
+            options.visibility || ChannelVisibility.Public,
             new BN(options.maxMembers || 100)
           )
           .accounts({
@@ -118,6 +118,14 @@ export class ChannelService extends BaseService {
         visibility: account.visibility,
         maxMembers: account.maxMembers.toNumber(),
         memberCount: account.memberCount.toNumber(),
+        currentParticipants: account.memberCount.toNumber(),
+        maxParticipants: account.maxMembers.toNumber(),
+        participantCount: account.memberCount.toNumber(),
+        feePerMessage: account.feePerMessage?.toNumber() || 0,
+        requiresApproval: account.requiresApproval || false,
+        isActive: true,
+        escrowBalance: account.escrowBalance?.toNumber() || 0,
+        createdAt: account.createdAt?.toNumber() || Date.now(),
         lastUpdated: getAccountLastUpdated(account),
         bump: account.bump,
       };
@@ -627,7 +635,7 @@ export class ChannelService extends BaseService {
   /**
    * Get public channels method for MCP server compatibility
    */
-  async getPublicChannels(options: {
+  async getPublicChannelsMCP(options: {
     limit?: number;
   }): Promise<{ channels: any[] }> {
     // Mock implementation for MCP compatibility
