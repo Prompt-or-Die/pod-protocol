@@ -270,6 +270,7 @@ export interface MCPServerConfig {
 export interface ToolResponse<T = any> {
   success: boolean;
   data?: T;
+  content?: Array<{ type: 'text'; text: string }>;
   error?: string;
   transaction_signature?: string;
   timestamp: number;
@@ -310,7 +311,7 @@ export interface EscrowResponse extends ToolResponse {
 // =====================================================
 
 export interface PodEvent {
-  type: 'message_received' | 'channel_message' | 'agent_registered' | 'escrow_updated';
+  type: 'message_received' | 'channel_message' | 'agent_registered' | 'escrow_updated' | 'message_sent';
   agent_id: string;
   data: any;
   timestamp: number;

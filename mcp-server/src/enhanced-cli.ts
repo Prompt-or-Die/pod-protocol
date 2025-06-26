@@ -81,8 +81,21 @@ const defaultEnhancedConfig: EnhancedMCPServerConfig = {
     healthCheckInterval: 300000 // 5 minutes
   },
 
-  // Enhanced security
+  // Enhanced security (using base MCPServerConfig structure)
   security: {
+    rate_limit_per_minute: 60,
+    max_message_size: 1000000, // 1MB
+    allowed_origins: [
+      'https://claude.ai',
+      'https://cursor.sh',
+      'https://codeium.com',
+      'https://github.com'
+    ],
+    require_signature_verification: !!process.env.POD_MCP_CLIENT_ID
+  },
+
+  // Enhanced security configuration (additional)
+  enhancedSecurity: {
     enableInputValidation: true,
     enableRateLimiting: true,
     enableToolSigning: true,
@@ -135,7 +148,7 @@ const defaultEnhancedConfig: EnhancedMCPServerConfig = {
 
   // Agent runtime settings
   agent_runtime: {
-    runtime: 'enhanced',
+    runtime: 'custom',
     agent_id: process.env.POD_AGENT_ID || 'pod-enhanced-server',
     wallet_path: process.env.POD_WALLET_PATH,
     auto_respond: false,
@@ -312,7 +325,7 @@ program
       }
 
       if (options.enterprise) {
-        config.security.requireAuthentication = true;
+        config.enhancedSecurity!.requireAuthentication = true;
         config.analytics!.enabled = true;
         config.registry.autoRegister = true;
         spinner.text = 'Applying enterprise configuration';
@@ -415,7 +428,7 @@ program
         throw new Error('POD_AGENT_ID is required');
       }
 
-      if (config.security.requireAuthentication && !config.transport.oauth) {
+      if (config.enhancedSecurity?.requireAuthentication && !config.transport.oauth) {
         throw new Error('OAuth configuration required when authentication is enabled');
       }
 
@@ -432,7 +445,7 @@ program
       console.log(chalk.green('\n🚀 Server Running:'));
       console.log(chalk.cyan(`   📡 Endpoint: ${config.transport.streamableHttp?.endpoint || 'stdio'}`));
       console.log(chalk.cyan(`   🤖 Agent ID: ${config.agent_runtime.agent_id}`));
-      console.log(chalk.cyan(`   🔐 Auth: ${config.security.requireAuthentication ? 'OAuth 2.1' : 'None'}`));
+      console.log(chalk.cyan(`   🔐 Auth: ${config.enhancedSecurity?.requireAuthentication ? 'OAuth 2.1' : 'None'}`));
       console.log(chalk.cyan(`   🌐 Registry: ${config.registry.autoRegister ? 'Auto-register' : 'Manual'}`));
       console.log(chalk.cyan(`   🔗 A2A Protocol: ${config.a2aProtocol?.enabled ? 'Enabled' : 'Disabled'}`));
       console.log(chalk.cyan(`   📊 Analytics: ${config.analytics?.enabled ? 'Enabled' : 'Disabled'}`));

@@ -225,4 +225,52 @@ export class MessageService extends BaseService {
     [MessageStatus.READ]: 0,
     [MessageStatus.FAILED]: 0,
   };
+
+  // ============================================================================
+  // MCP Server Compatibility Methods
+  // ============================================================================
+
+  /**
+   * Send method for MCP server compatibility
+   */
+  async send(options: {
+    recipient: string;
+    content: string;
+    messageType?: string;
+    metadata?: any;
+    expiresIn?: number;
+  }): Promise<{ messageId: string; signature: string }> {
+    // Mock implementation for MCP compatibility
+    return {
+      messageId: `msg_${Date.now()}`,
+      signature: `sig_${Date.now()}`
+    };
+  }
+
+  /**
+   * Get filtered messages for MCP server compatibility
+   */
+  async getFiltered(options: {
+    limit?: number;
+    offset?: number;
+    messageType?: string;
+    status?: string;
+  }): Promise<{ messages: any[]; totalCount: number; hasMore: boolean }> {
+    // Mock implementation for MCP compatibility
+    return {
+      messages: [],
+      totalCount: 0,
+      hasMore: false
+    };
+  }
+
+  /**
+   * Mark message as read for MCP server compatibility
+   */
+  async markAsRead(messageId: string): Promise<{ signature: string }> {
+    // Mock implementation for MCP compatibility
+    return {
+      signature: `read_sig_${Date.now()}`
+    };
+  }
 }

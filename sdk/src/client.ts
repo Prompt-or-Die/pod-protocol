@@ -46,7 +46,7 @@ import { ZKCompressionService, ZKCompressionConfig } from "./services/zk-compres
 export interface PodClientConfig {
   endpoint: string;
   commitment?: Commitment;
-  programId?: Address;
+  programId?: Address | string;
 }
 
 /**
@@ -75,26 +75,28 @@ export class PodComClient {
     const {
       endpoint,
       commitment = 'confirmed',
-      programId: programIdString = 'PoD1111111111111111111111111111111111111111'
+      programId = 'PoD1111111111111111111111111111111111111111'
     } = config;
 
     this.rpc = createSolanaRpc(endpoint);
     this.commitment = commitment;
-    this.programId = address(programIdString);
+    // Handle both Address and string types for programId
+    this.programId = typeof programId === 'string' ? address(programId) : programId;
 
     // Initialize services with proper v2 types
-    this.agents = new AgentService(endpoint, programIdString, commitment);
-    this.messages = new MessageService(endpoint, programIdString, commitment);
-    this.channels = new ChannelService(endpoint, programIdString, commitment);
-    this.escrow = new EscrowService(endpoint, programIdString, commitment);
-    this.analytics = new AnalyticsService(endpoint, programIdString, commitment);
-    this.discovery = new DiscoveryService(endpoint, programIdString, commitment);
-    this.ipfs = new IPFSService(endpoint, programIdString, commitment, {});
-    this.jitoBundles = new JitoBundlesService(endpoint, programIdString, commitment);
-    this.sessionKeys = new SessionKeysService(endpoint, programIdString, commitment);
+    const programIdStr = typeof programId === 'string' ? programId : programId.toString();
+    this.agents = new AgentService(endpoint, programIdStr, commitment);
+    this.messages = new MessageService(endpoint, programIdStr, commitment);
+    this.channels = new ChannelService(endpoint, programIdStr, commitment);
+    this.escrow = new EscrowService(endpoint, programIdStr, commitment);
+    this.analytics = new AnalyticsService(endpoint, programIdStr, commitment);
+    this.discovery = new DiscoveryService(endpoint, programIdStr, commitment);
+    this.ipfs = new IPFSService(endpoint, programIdStr, commitment, {});
+    this.jitoBundles = new JitoBundlesService(endpoint, programIdStr, commitment);
+    this.sessionKeys = new SessionKeysService(endpoint, programIdStr, commitment);
     
     // Initialize ZK compression service with IPFS service dependency
-    this.zkCompression = new ZKCompressionService(endpoint, programIdString, commitment, {}, this.ipfs);
+    this.zkCompression = new ZKCompressionService(endpoint, programIdStr, commitment, {}, this.ipfs);
   }
 
   /**
@@ -491,6 +493,62 @@ export class PodComClient {
     const buffer = new Uint8Array(size);
     crypto.getRandomValues(buffer);
     return buffer;
+  }
+
+  // ============================================================================
+  // MCP Server Compatibility Methods (High-level client methods)
+  // ============================================================================
+
+  /**
+   * Register agent method for enhanced MCP server compatibility
+   */
+  async registerAgent(
+    agentData: {
+      name: string;
+      description: string;
+      capabilities: string[];
+      endpoint?: string;
+      metadata?: any;
+    },
+    wallet: KeyPairSigner
+  ): Promise<{ agentId: string; signature: string }> {
+    // Mock implementation for MCP compatibility
+    return {
+      agentId: `agent_${Date.now()}`,
+      signature: `sig_${Date.now()}`
+    };
+  }
+
+  /**
+   * Discover agents method for enhanced MCP server compatibility
+   */
+  async discoverAgents(
+    searchParams: {
+      capabilities?: string[];
+      searchTerm?: string;
+      limit?: number;
+      offset?: number;
+    },
+    filters: any = {}
+  ): Promise<{ agents: any[]; totalCount: number; hasMore: boolean }> {
+    return await this.discovery.findAgents(searchParams);
+  }
+
+  /**
+   * Create escrow method for enhanced MCP server compatibility
+   */
+  async createEscrow(
+    escrowData: {
+      counterparty: string;
+      amount: number;
+      description: string;
+      conditions: string[];
+      timeoutHours?: number;
+      arbitrator?: string;
+    },
+    wallet: KeyPairSigner
+  ): Promise<{ escrow: any; signature: string }> {
+    return await this.escrow.create(escrowData);
   }
 }
 

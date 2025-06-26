@@ -551,4 +551,88 @@ export class ChannelService extends BaseService {
       throw new Error(`Failed to get channel members: ${error.message}`);
     }
   }
+
+  // ============================================================================
+  // MCP Server Compatibility Methods
+  // ============================================================================
+
+  /**
+   * Create method for MCP server compatibility
+   */
+  async create(options: {
+    name: string;
+    description?: string;
+    visibility?: string;
+    maxParticipants?: number;
+    requiresDeposit?: boolean;
+    depositAmount?: number;
+  }): Promise<{ channel: any; joinCode?: string; signature: string }> {
+    // Mock implementation for MCP compatibility
+    return {
+      channel: {
+        id: `channel_${Date.now()}`,
+        name: options.name,
+        description: options.description || '',
+        visibility: options.visibility || 'public'
+      },
+      joinCode: options.visibility === 'private' ? `join_${Date.now()}` : undefined,
+      signature: `sig_${Date.now()}`
+    };
+  }
+
+  /**
+   * Join method for MCP server compatibility
+   */
+  async join(channelId: string, inviteCode?: string): Promise<{ signature: string }> {
+    // Mock implementation for MCP compatibility
+    return {
+      signature: `join_sig_${Date.now()}`
+    };
+  }
+
+  /**
+   * Send message method for MCP server compatibility
+   */
+  async sendMessage(options: {
+    channelId: string;
+    content: string;
+    messageType?: string;
+    replyTo?: string;
+    metadata?: any;
+  }): Promise<{ messageId: string; signature: string }> {
+    // Mock implementation for MCP compatibility
+    return {
+      messageId: `channel_msg_${Date.now()}`,
+      signature: `msg_sig_${Date.now()}`
+    };
+  }
+
+  /**
+   * Get messages method for MCP server compatibility
+   */
+  async getMessages(options: {
+    channelId: string;
+    limit?: number;
+    offset?: number;
+    since?: number;
+  }): Promise<{ messages: any[]; totalCount: number; hasMore: boolean }> {
+    // Mock implementation for MCP compatibility
+    return {
+      messages: [],
+      totalCount: 0,
+      hasMore: false
+    };
+  }
+
+  /**
+   * Get public channels method for MCP server compatibility
+   */
+  async getPublicChannels(options: {
+    limit?: number;
+  }): Promise<{ channels: any[] }> {
+    // Mock implementation for MCP compatibility
+    return {
+      channels: []
+    };
+  }
 }

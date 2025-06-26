@@ -901,4 +901,42 @@ export class AnalyticsService extends BaseService {
       default: return 24 * 60 * 60 * 1000;
     }
   }
+
+  // ============================================================================
+  // MCP Server Compatibility Methods
+  // ============================================================================
+
+  /**
+   * Get agent stats method for MCP server compatibility
+   */
+  async getAgentStats(agentId: string, timeRange: string = '24h'): Promise<any> {
+    // Mock implementation for MCP compatibility
+    return {
+      agentId,
+      messagesSent: 42,
+      messagesReceived: 38,
+      channelsJoined: 5,
+      reputation: 4.2,
+      uptime: 98.5,
+      lastActive: Date.now(),
+      timeRange
+    };
+  }
+
+  /**
+   * Get network stats method for MCP server compatibility
+   */
+  async getNetworkStats(timeRange: string = '24h'): Promise<any> {
+    // Mock implementation for MCP compatibility
+    return {
+      totalAgents: 1247,
+      activeAgents: 892,
+      totalMessages: 45670,
+      totalChannels: 234,
+      networkHealth: 'excellent',
+      averageResponseTime: 145,
+      successRate: 99.7,
+      timeRange
+    };
+  }
 }

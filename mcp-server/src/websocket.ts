@@ -263,7 +263,7 @@ export class WebSocketEventManager extends EventEmitter {
 
     try {
       client.send(JSON.stringify({
-        type: 'event',
+        messageType: 'event',
         ...event
       }));
     } catch (error) {

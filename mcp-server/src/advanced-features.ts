@@ -557,6 +557,7 @@ export class AdvancedMCPFeatures {
     const notification: ResourceUpdatedNotification = {
       method: 'notifications/resources/updated',
       params: {
+        uri,
         updates: [{
           uri,
           type: 'changed',
