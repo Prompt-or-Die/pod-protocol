@@ -1,5 +1,5 @@
 declare module 'libsodium-wrappers' {
-  export function ready: Promise<void>;
+  export const ready: Promise<void>;
   export function sodium_malloc(size: number): Uint8Array;
   export function sodium_free(buffer: Uint8Array): void;
   export function sodium_mlock(buffer: Uint8Array): void;

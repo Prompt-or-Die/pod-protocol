@@ -1,24 +1,26 @@
 {
   "name": "@pod-protocol/cli",
   "version": "1.5.2",
-  "description": "Pod Protocol CLI tool",
-  "main": "dist/index.js",
+  "description": "Official CLI for the PoD Protocol",
   "type": "module",
   "bin": {
-    "pod": "dist/index.js"
+    "pod": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js"
   },
   "scripts": {
-    "dev": "tsx src/index.ts",
-    "build": "tsc && chmod +x dist/index.js",
+    "build": "tsc",
     "build:watch": "tsc --watch",
-    "clean": "rm -rf dist",
+    "dev": "bun run build && node dist/index.js",
+    "start": "node dist/index.js",
+    "clean": "rimraf dist",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "test:zk": "jest tests/zk-compression.test.ts",
-    "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix",
-    "prepublishOnly": "bun run clean && bun run build"
+    "lint": "eslint src --ext .ts,.js",
+    "lint:fix": "eslint src --ext .ts,.js --fix",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",

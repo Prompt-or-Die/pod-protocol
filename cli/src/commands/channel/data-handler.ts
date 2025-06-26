@@ -32,7 +32,8 @@ export class ChannelDataHandler {
       name,
       description,
       visibility: visibility as ChannelVisibility,
-      maxParticipants,
+      maxMembers: maxParticipants,
+      maxParticipants, // Legacy alias for compatibility
       feePerMessage,
     };
 

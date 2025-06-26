@@ -1,4 +1,5 @@
-import { type Address, address } from "@solana/web3.js";
+import { address } from "@solana/web3.js";
+import type { Address } from "@solana/web3.js";
 import { MessageType } from "@pod-protocol/sdk";
 import inquirer from "inquirer";
 import {
@@ -104,7 +105,8 @@ export class MessageHandlers {
       },
       recipient: {
         toBase58: () => String(messageData.recipient)
-      }
+      },
+      messageType: MessageType[messageData.messageType]
     };
     this.displayer.displayMessageInfo(displayData);
   }
@@ -180,7 +182,8 @@ export class MessageHandlers {
       },
       recipient: {
         toBase58: () => String(msg.recipient)
-      }
+      },
+      messageType: MessageType[msg.messageType]
     }));
     this.displayer.displayMessagesList(displayMessages);
   }
@@ -200,23 +203,19 @@ export class MessageHandlers {
         choices: [
           {
             name: "Text - Plain text message",
-            value: MessageType.Text,
+            value: MessageType.TEXT,
           },
           {
-            name: "Data - Structured data transfer",
-            value: MessageType.Data,
+            name: "Image - Image content",
+            value: MessageType.IMAGE,
           },
           {
-            name: "Command - Command/instruction",
-            value: MessageType.Command,
+            name: "Code - Code or script content",
+            value: MessageType.CODE,
           },
           {
-            name: "Response - Response to command",
-            value: MessageType.Response,
-          },
-          {
-            name: "Custom - Custom message type",
-            value: MessageType.Custom,
+            name: "File - File transfer",
+            value: MessageType.FILE,
           },
         ],
       },
@@ -231,7 +230,7 @@ export class MessageHandlers {
         name: "customValue",
         message: "Custom value (for custom message types):",
         default: 0,
-        when: (answers) => answers.messageType === MessageType.Custom,
+        when: (answers) => answers.messageType === MessageType.FILE,
       },
     ]);
   }
@@ -245,7 +244,7 @@ export class MessageHandlers {
 
     try {
       const validatedPayload = options.payload;
-      const messageType = options.type || MessageType.Text;
+      const messageType = options.type || MessageType.TEXT;
 
       // For now, use regular messaging since broadcastCompressedMessage is not implemented
       const result = await this.context.client.sendMessage(
@@ -277,7 +276,7 @@ export class MessageHandlers {
       {
         recipient: recipientAddress,
         payload: options.payload,
-        messageType: options.type || MessageType.Text,
+        messageType: options.type || MessageType.TEXT,
       },
     );
 

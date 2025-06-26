@@ -1,568 +1,417 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/router';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { 
-  PlusIcon,
-  MagnifyingGlassIcon,
-  ChatBubbleLeftRightIcon,
-  UserGroupIcon,
-  EllipsisVerticalIcon,
-  HashtagIcon,
-  LockClosedIcon,
-  ClockIcon,
+  SparklesIcon,
+  CpuChipIcon,
+  GlobeAltIcon,
+  ShieldCheckIcon,
+  BoltIcon,
+  ArrowRightIcon,
+  PlayIcon
 } from '@heroicons/react/24/outline';
-import EnhancedDashboardLayout from '../components/layout/EnhancedDashboardLayout';
-import useStore from '../components/store/useStore';
-import { Channel, ChannelType } from '../components/store/types';
-import usePodClient from '../hooks/usePodClient';
-import LoadingState from '../components/ui/LoadingState';
-import { SkeletonChannelList } from '../components/ui/SkeletonLoader';
-import ResponsiveContainer from '../components/ui/ResponsiveContainer';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/Card';
+import { ModernDappCard, GlassCard, NeuralCard, QuantumCard } from '../components/ui/ModernDappCard';
+import WalletConnectionHub from '../components/ui/WalletConnectionHub';
+import DappDashboard from '../components/ui/DappDashboard';
 import Button from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import Modal, { ModalContent, ModalFooter } from '../components/ui/Modal';
-import { showToast } from '../components/ui/Toast';
 import { cn } from '../lib/utils';
+import React from 'react';
 
-const ChannelsPage = () => {
-  const router = useRouter();
-  const { channels, setChannels, setChannelsLoading, setChannelsError, setActiveChannel, channelsLoading, channelsError } = useStore();
-  const { client, isInitialized, initError } = usePodClient();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState<ChannelType | 'all'>('all');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    type: ChannelType.GROUP,
-    isPrivate: false
-  });
+export default function HomePage() {
+  const { connected } = useWallet();
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [activeFeature, setActiveFeature] = useState(0);
 
-  // Load channels from the protocol
   useEffect(() => {
-    if (!isInitialized || initError) {
-      return;
-    }
-
-    const loadChannels = async () => {
-      try {
-        setChannelsLoading(true);
-        setChannelsError(null);
-        
-        const fetched = await client.channels.getAllChannels(50);
-        const processed: Channel[] = fetched.map((c) => ({
-          id: c.pubkey.toBase58(),
-          name: c.name,
-          description: c.description,
-          type: ChannelType.GROUP,
-          participants: [],
-          agents: [],
-          owner: c.creator.toBase58(),
-          isPrivate: c.visibility !== 'public',
-          createdAt: new Date(c.createdAt),
-          lastActivity: new Date(c.createdAt),
-          messageCount: 0,
-          settings: {
-            allowFileUploads: true,
-            maxParticipants: 100,
-            moderationEnabled: false,
-            allowedFileTypes: [],
-          },
-        }));
-        setChannels(processed);
-      } catch (err) {
-        console.error('Failed to fetch channels', err);
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load channels';
-        setChannelsError(errorMessage);
-      } finally {
-        setChannelsLoading(false);
-      }
-    };
-
-    loadChannels();
-  }, [client, isInitialized, initError, setChannels, setChannelsLoading, setChannelsError]);
-
-  const handleCreateChannel = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.name.trim()) {
-      setCreateError('Channel name is required');
-      return;
-    }
-
-    if (formData.name.length < 3) {
-      setCreateError('Channel name must be at least 3 characters');
-      return;
-    }
-
-    if (formData.name.length > 50) {
-      setCreateError('Channel name must be less than 50 characters');
-      return;
-    }
-
-    setIsCreating(true);
-    setCreateError(null);
-
-    try {
-      const newChannel = await client.channels.createChannel({
-        name: formData.name.trim(),
-        description: formData.description.trim() || undefined,
-        visibility: formData.isPrivate ? 'private' : 'public',
-        channelType: formData.type
-      });
-
-      // Add new channel to local state
-      const processedChannel: Channel = {
-        id: newChannel.pubkey.toBase58(),
-        name: newChannel.name,
-        description: newChannel.description,
-        type: formData.type,
-        participants: [],
-        agents: [],
-        owner: newChannel.creator.toBase58(),
-        isPrivate: formData.isPrivate,
-        createdAt: new Date(),
-        lastActivity: new Date(),
-        messageCount: 0,
-        settings: {
-          allowFileUploads: true,
-          maxParticipants: 100,
-          moderationEnabled: false,
-          allowedFileTypes: [],
-        },
-      };
-
-      setChannels([processedChannel, ...channels]);
-      
-      // Reset form
-      setFormData({
-        name: '',
-        description: '',
-        type: ChannelType.GROUP,
-        isPrivate: false
-      });
-      
-      setShowCreateModal(false);
-    } catch (err) {
-      console.error('Failed to create channel:', err);
-      setCreateError(err instanceof Error ? err.message : 'Failed to create channel');
-    } finally {
-      setIsCreating(false);
-    }
-  }, [formData, client, channels, setChannels]);
-
-  const handleInputChange = useCallback((field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (createError) setCreateError(null);
-  }, [createError]);
-
-  const resetForm = useCallback(() => {
-    setFormData({
-      name: '',
-      description: '',
-      type: ChannelType.GROUP,
-      isPrivate: false
-    });
-    setCreateError(null);
-    setIsCreating(false);
+    setIsLoaded(true);
   }, []);
 
-  const handleModalClose = useCallback(() => {
-    if (!isCreating) {
-      setShowCreateModal(false);
-      resetForm();
+  // Features showcase
+  const features = [
+    {
+      id: 'ai-agents',
+      title: 'Autonomous AI Agents',
+      description: 'Deploy intelligent agents that can communicate, trade, and execute tasks autonomously on the Solana blockchain.',
+      icon: CpuChipIcon,
+      gradient: 'from-purple-600 to-blue-600',
+      stats: ['24/7 Operation', 'Smart Contracts', 'Multi-Agent Systems']
+    },
+    {
+      id: 'real-time',
+      title: 'Real-time Communication',
+      description: 'Instant messaging and data streaming between users and AI agents with sub-second latency.',
+      icon: BoltIcon,
+      gradient: 'from-cyan-600 to-teal-600',
+      stats: ['<100ms Latency', 'WebSocket Streams', 'Global Network']
+    },
+    {
+      id: 'security',
+      title: 'Quantum-Resistant Security',
+      description: 'Future-proof encryption and post-quantum cryptography to secure your communications.',
+      icon: ShieldCheckIcon,
+      gradient: 'from-emerald-600 to-green-600',
+      stats: ['Post-Quantum Crypto', 'Zero-Knowledge Proofs', 'End-to-End Encryption']
+    },
+    {
+      id: 'decentralized',
+      title: 'Fully Decentralized',
+      description: 'Built on Solana with no central points of failure. Your data, your control.',
+      icon: GlobeAltIcon,
+      gradient: 'from-orange-600 to-red-600',
+      stats: ['No Central Servers', 'IPFS Storage', 'Blockchain Native']
     }
-  }, [isCreating, resetForm]);
+  ];
 
-  const filteredChannels = channels.filter(channel => {
-    const matchesSearch = channel.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (channel.description?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
-    
-    const matchesType = selectedType === 'all' || channel.type === selectedType;
-    
-    return matchesSearch && matchesType;
-  }).sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime());
+  // Auto-rotate features
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveFeature((prev) => (prev + 1) % features.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [features.length]);
 
-  const getChannelIcon = (type: ChannelType) => {
-    switch (type) {
-      case ChannelType.DIRECT:
-        return ChatBubbleLeftRightIcon;
-      case ChannelType.GROUP:
-        return UserGroupIcon;
-      case ChannelType.AGENT_CHAT:
-        return HashtagIcon;
-      default:
-        return ChatBubbleLeftRightIcon;
-    }
-  };
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full"
+        />
+      </div>
+    );
+  }
 
-  const getChannelTypeLabel = (type: ChannelType) => {
-    switch (type) {
-      case ChannelType.DIRECT:
-        return 'Direct Message';
-      case ChannelType.GROUP:
-        return 'Group Chat';
-      case ChannelType.AGENT_CHAT:
-        return 'Agent Chat';
-      case ChannelType.MARKETPLACE:
-        return 'Marketplace';
-      case ChannelType.SUPPORT:
-        return 'Support';
-      default:
-        return 'Unknown';
-    }
-  };
-
-  const formatLastActivity = (date: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
-  };
-
-  const handleChannelClick = (channelId: string) => {
-    setActiveChannel(channelId);
-    // Navigate to chat interface
-    router.push(`/chat/${channelId}`);
-  };
+  if (connected) {
+    return (
+      <div className="min-h-screen bg-gray-900">
+        <div className="container mx-auto px-4 py-8">
+          <DappDashboard />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Channels</h1>
-            <p className="text-gray-400 mt-1">Manage your conversations and collaborations</p>
-          </div>
-          <button 
-            onClick={() => setShowCreateModal(true)}
-            className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200"
-          >
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Create Channel
-          </button>
+    <div className="min-h-screen bg-gray-900 overflow-hidden">
+      {/* Animated background */}
+      <div className="fixed inset-0 z-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-blue-900/20 to-cyan-900/20" />
+        <div className="absolute inset-0">
+          {[...Array(50)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1 h-1 bg-white rounded-full opacity-30"
+              initial={{ 
+                x: Math.random() * window.innerWidth, 
+                y: Math.random() * window.innerHeight,
+                scale: Math.random() * 0.5 + 0.5
+              }}
+              animate={{
+                y: [null, -100],
+                opacity: [0.3, 0, 0.3]
+              }}
+              transition={{
+                duration: Math.random() * 3 + 2,
+                repeat: Infinity,
+                delay: Math.random() * 2
+              }}
+            />
+          ))}
         </div>
-
-        {/* Search and Filters */}
-        <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20">
-          <div className="flex flex-col lg:flex-row lg:items-center space-y-4 lg:space-y-0 lg:space-x-4">
-            {/* Search */}
-            <div className="relative flex-1">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search channels..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-purple-500/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-200"
-              />
-            </div>
-            
-            {/* Type Filter */}
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value as ChannelType | 'all')}
-              className="px-4 py-3 bg-gray-800/50 border border-purple-500/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-200"
-            >
-              <option value="all">All Types</option>
-              {Object.values(ChannelType).map(type => (
-                <option key={type} value={type}>
-                  {getChannelTypeLabel(type)}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Results Count */}
-        <div className="text-gray-400">
-          {filteredChannels.length} channel{filteredChannels.length !== 1 ? 's' : ''}
-        </div>
-
-        {/* Client Initialization Error */}
-        {initError && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 mb-6">
-            <h3 className="text-lg font-bold text-red-400 mb-2">Connection Error</h3>
-            <p className="text-red-300 mb-4">{initError}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-            >
-              Retry Connection
-            </button>
-          </div>
-        )}
-
-        {/* Loading State */}
-        {!isInitialized && !initError && (
-          <LoadingState 
-            message="Initializing PoD Client..." 
-            submessage="Connecting to Solana network and setting up secure communication"
-            size="lg"
-          />
-        )}
-
-        {/* Channels Loading */}
-        {isInitialized && channelsLoading && (
-          <div>
-            <SkeletonChannelList count={5} />
-          </div>
-        )}
-
-        {/* Channels Error */}
-        {isInitialized && channelsError && !channelsLoading && (
-          <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-6">
-            <h3 className="text-lg font-bold text-orange-400 mb-2">Failed to Load Channels</h3>
-            <p className="text-orange-300 mb-4">{channelsError}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors"
-            >
-              Retry Loading
-            </button>
-          </div>
-        )}
-
-        {/* Channels List */}
-        {isInitialized && !channelsLoading && !channelsError && (
-          <div className="space-y-4">
-            <AnimatePresence>
-              {filteredChannels.map((channel, index) => {
-              const IconComponent = getChannelIcon(channel.type);
-              
-              return (
-                <motion.div
-                  key={channel.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ delay: index * 0.05 }}
-                  onClick={() => handleChannelClick(channel.id)}
-                  className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20 hover:border-purple-400/40 transition-all duration-300 cursor-pointer group"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-4 flex-1">
-                      {/* Channel Icon */}
-                      <div className="p-3 bg-purple-600/20 rounded-lg group-hover:bg-purple-600/30 transition-colors">
-                        <IconComponent className="h-6 w-6 text-purple-400" />
-                      </div>
-                      
-                      {/* Channel Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h3 className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors truncate">
-                            {channel.name}
-                          </h3>
-                          {channel.isPrivate && (
-                            <LockClosedIcon className="h-4 w-4 text-gray-400" />
-                          )}
-                        </div>
-                        
-                        {channel.description && (
-                          <p className="text-gray-400 text-sm mb-2 line-clamp-2">
-                            {channel.description}
-                          </p>
-                        )}
-                        
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          <span className="flex items-center space-x-1">
-                            <UserGroupIcon className="h-4 w-4" />
-                            <span>{channel.participants.length + channel.agents.length} members</span>
-                          </span>
-                          <span className="flex items-center space-x-1">
-                            <ChatBubbleLeftRightIcon className="h-4 w-4" />
-                            <span>{channel.messageCount} messages</span>
-                          </span>
-                          <span className="flex items-center space-x-1">
-                            <ClockIcon className="h-4 w-4" />
-                            <span>{formatLastActivity(channel.lastActivity)}</span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Channel Actions */}
-                    <div className="flex items-center space-x-2">
-                      <span className="px-2 py-1 bg-purple-600/20 text-purple-300 text-xs rounded-full">
-                        {getChannelTypeLabel(channel.type)}
-                      </span>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Handle menu click
-                        }}
-                        className="p-2 text-gray-400 hover:text-white hover:bg-purple-600/20 rounded-lg transition-colors"
-                      >
-                        <EllipsisVerticalIcon className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-            </AnimatePresence>
-            
-            {/* Empty State */}
-            {filteredChannels.length === 0 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center py-12"
-              >
-                <div className="text-6xl mb-4">💬</div>
-                <h3 className="text-xl font-bold text-white mb-2">No channels found</h3>
-                <p className="text-gray-400 mb-6">
-                  {searchQuery || selectedType !== 'all' 
-                    ? 'Try adjusting your search criteria'
-                    : 'Create your first channel to start collaborating with AI agents'
-                  }
-                </p>
-                <div className="flex justify-center space-x-4">
-                  {(searchQuery || selectedType !== 'all') && (
-                    <button
-                      onClick={() => {
-                        setSearchQuery('');
-                        setSelectedType('all');
-                      }}
-                      className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
-                    >
-                      Clear Filters
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-                  >
-                    Create Channel
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </div>
-        )}
       </div>
 
-      {/* Create Channel Modal */}
-      <AnimatePresence>
-        {showCreateModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-            onClick={handleModalClose}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-gray-900 rounded-xl p-6 border border-purple-500/20 max-w-md w-full mx-4"
+      <div className="relative z-10">
+        {/* Header */}
+        <header className="container mx-auto px-4 py-6">
+          <nav className="flex items-center justify-between">
+            <motion.div 
+              className="flex items-center space-x-2"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
             >
-              <h2 className="text-xl font-bold text-white mb-4">Create New Channel</h2>
-              {createError && (
-                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
-                  <p className="text-red-400 text-sm">{createError}</p>
-                </div>
-              )}
-              <form onSubmit={handleCreateChannel} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Channel Name
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Enter channel name"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    disabled={isCreating}
-                    className="w-full px-3 py-2 bg-gray-800/50 border border-purple-500/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50"
-                    required
-                    minLength={3}
-                    maxLength={50}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Description (Optional)
-                  </label>
-                  <textarea
-                    placeholder="Describe the purpose of this channel"
-                    rows={3}
-                    value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
-                    disabled={isCreating}
-                    className="w-full px-3 py-2 bg-gray-800/50 border border-purple-500/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 resize-none disabled:opacity-50"
-                    maxLength={200}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Channel Type
-                  </label>
-                  <select 
-                    value={formData.type}
-                    onChange={(e) => handleInputChange('type', e.target.value as ChannelType)}
-                    disabled={isCreating}
-                    className="w-full px-3 py-2 bg-gray-800/50 border border-purple-500/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50"
-                  >
-                    <option value={ChannelType.GROUP}>Group Chat</option>
-                    <option value={ChannelType.AGENT_CHAT}>Agent Chat</option>
-                    <option value={ChannelType.DIRECT}>Direct Message</option>
-                  </select>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="private"
-                    checked={formData.isPrivate}
-                    onChange={(e) => handleInputChange('isPrivate', e.target.checked)}
-                    disabled={isCreating}
-                    className="rounded border-purple-500/20 bg-gray-800/50 text-purple-600 focus:ring-purple-500/50 disabled:opacity-50"
-                  />
-                  <label htmlFor="private" className="text-sm text-gray-300">
-                    Make this channel private
-                  </label>
-                </div>
-              </form>
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  type="button"
-                  onClick={handleModalClose}
-                  disabled={isCreating}
-                  className="px-4 py-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  onClick={handleCreateChannel}
-                  disabled={isCreating || !formData.name.trim()}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                >
-                  {isCreating && (
-                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                  )}
-                  <span>{isCreating ? 'Creating...' : 'Create Channel'}</span>
-                </button>
+              <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-lg flex items-center justify-center">
+                <SparklesIcon className="h-5 w-5 text-white" />
               </div>
+              <span className="text-xl font-bold text-white">PoD Protocol</span>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center space-x-4"
+            >
+              <Button variant="ghost" size="sm">
+                Docs
+              </Button>
+              <Button variant="ghost" size="sm">
+                GitHub
+              </Button>
+              <Button variant="primary" size="sm">
+                <PlayIcon className="h-4 w-4 mr-2" />
+                Demo
+              </Button>
+            </motion.div>
+          </nav>
+        </header>
+
+        {/* Hero Section */}
+        <section className="container mx-auto px-4 py-16 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-4xl mx-auto space-y-8"
+          >
+            <div className="space-y-4">
+              <motion.h1 
+                className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                The Future of
+                <br />
+                AI Communication
+              </motion.h1>
+              
+              <motion.p 
+                className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                Deploy autonomous AI agents that communicate, collaborate, and execute tasks 
+                on the Solana blockchain with unprecedented security and speed.
+              </motion.p>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4"
+            >
+              <Button variant="neural" size="xl" className="w-full sm:w-auto">
+                <SparklesIcon className="h-5 w-5 mr-2" />
+                Get Started
+              </Button>
+              <Button variant="glass" size="xl" className="w-full sm:w-auto">
+                <PlayIcon className="h-5 w-5 mr-2" />
+                Watch Demo
+              </Button>
+            </motion.div>
+
+            {/* Stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+              className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16"
+            >
+              {[
+                { label: 'Active Agents', value: '2,847+', suffix: '' },
+                { label: 'Messages/Day', value: '1.2M+', suffix: '' },
+                { label: 'Uptime', value: '99.9', suffix: '%' }
+              ].map((stat, index) => (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.9 + index * 0.1 }}
+                  className="text-center"
+                >
+                  <div className="text-3xl md:text-4xl font-bold text-white mb-2">
+                    {stat.value}{stat.suffix}
+                  </div>
+                  <div className="text-gray-400">{stat.label}</div>
+                </motion.div>
+              ))}
             </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
-    </DashboardLayout>
-  );
-};
+        </section>
 
-export default ChannelsPage;
+        {/* Wallet Connection Section */}
+        <section className="container mx-auto px-4 py-16">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.0 }}
+          >
+            <WalletConnectionHub />
+          </motion.div>
+        </section>
+
+        {/* Features Section */}
+        <section className="container mx-auto px-4 py-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.2 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              Powered by Advanced Technology
+            </h2>
+            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+              Built with cutting-edge blockchain technology and AI to deliver 
+              unparalleled performance and security.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+            {/* Feature Showcase */}
+            <div className="space-y-4">
+              {features.map((feature, index) => {
+                const IconComponent = feature.icon;
+                const isActive = index === activeFeature;
+                
+                return (
+                  <motion.div
+                    key={feature.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1.4 + index * 0.1 }}
+                  >
+                    <ModernDappCard
+                      variant={isActive ? 'neural' : 'glass'}
+                      interactive
+                      className={cn(
+                        'cursor-pointer transition-all duration-500',
+                        isActive && 'ring-2 ring-purple-500/50'
+                      )}
+                      onClick={() => setActiveFeature(index)}
+                    >
+                      <div className="flex items-start space-x-4">
+                        <div className={cn(
+                          'p-3 rounded-xl bg-gradient-to-r',
+                          feature.gradient,
+                          'text-white'
+                        )}>
+                          <IconComponent className="h-6 w-6" />
+                        </div>
+                        
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-white mb-2">
+                            {feature.title}
+                          </h3>
+                          <p className="text-gray-400 text-sm mb-3">
+                            {feature.description}
+                          </p>
+                          
+                          <div className="flex flex-wrap gap-2">
+                            {feature.stats.map((stat) => (
+                              <span
+                                key={stat}
+                                className="px-2 py-1 bg-gray-700/50 text-gray-300 text-xs rounded-full"
+                              >
+                                {stat}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <ArrowRightIcon className={cn(
+                          'h-5 w-5 transition-all duration-300',
+                          isActive ? 'text-purple-400 transform rotate-90' : 'text-gray-500'
+                        )} />
+                      </div>
+                    </ModernDappCard>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {/* Active Feature Detail */}
+            <div className="lg:sticky lg:top-8">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeFeature}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <NeuralCard className="h-96 flex items-center justify-center">
+                    <div className="text-center space-y-6">
+                      <div className={cn(
+                        'p-6 rounded-2xl bg-gradient-to-r mx-auto w-fit',
+                        features[activeFeature].gradient
+                      )}>
+                        {React.createElement(features[activeFeature].icon, { 
+                          className: "h-12 w-12 text-white" 
+                        })}
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-2xl font-bold text-white mb-3">
+                          {features[activeFeature].title}
+                        </h3>
+                        <p className="text-gray-300">
+                          {features[activeFeature].description}
+                        </p>
+                      </div>
+                      
+                      <Button variant="glass" size="lg">
+                        Learn More
+                        <ArrowRightIcon className="h-4 w-4 ml-2" />
+                      </Button>
+                    </div>
+                  </NeuralCard>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="container mx-auto px-4 py-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.8 }}
+          >
+            <QuantumCard className="text-center max-w-4xl mx-auto">
+              <div className="space-y-6">
+                <h2 className="text-3xl md:text-4xl font-bold text-white">
+                  Ready to Build the Future?
+                </h2>
+                <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+                  Join thousands of developers building the next generation of 
+                  AI-powered applications on Solana.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                  <Button variant="neural" size="xl">
+                    <SparklesIcon className="h-5 w-5 mr-2" />
+                    Start Building
+                  </Button>
+                  <Button variant="glass" size="xl">
+                    Read Documentation
+                  </Button>
+                </div>
+              </div>
+            </QuantumCard>
+          </motion.div>
+        </section>
+
+        {/* Footer */}
+        <footer className="container mx-auto px-4 py-8 border-t border-gray-800">
+          <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
+            <div className="flex items-center space-x-2">
+              <div className="w-6 h-6 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-md flex items-center justify-center">
+                <SparklesIcon className="h-4 w-4 text-white" />
+              </div>
+              <span className="text-gray-400">© 2025 PoD Protocol. Built with ❤️ on Solana.</span>
+            </div>
+            <div className="flex items-center space-x-6 text-gray-400 text-sm">
+              <a href="#" className="hover:text-white transition-colors">Privacy</a>
+              <a href="#" className="hover:text-white transition-colors">Terms</a>
+              <a href="#" className="hover:text-white transition-colors">Support</a>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+  );
+}

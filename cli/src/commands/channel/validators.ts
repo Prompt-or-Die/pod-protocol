@@ -1,16 +1,19 @@
 import {
   validateChannelName,
-  validateEnum,
   validatePositiveInteger,
   validateMessage,
 } from "../../utils/validation.js";
 import { ChannelData } from "./types.js";
+import { ChannelVisibility } from "@pod-protocol/sdk";
 
 export class ChannelValidators {
   static validateChannelData(data: ChannelData): void {
     validateChannelName(data.name);
-    validateEnum(data.visibility, ["public", "private"], "visibility");
-    validatePositiveInteger(data.maxParticipants);
+    // Validate enum value (ChannelVisibility.Public = 0, Private = 1, Restricted = 2)
+    if (![ChannelVisibility.Public, ChannelVisibility.Private, ChannelVisibility.Restricted].includes(data.visibility)) {
+      throw new Error("Invalid channel visibility");
+    }
+    validatePositiveInteger(data.maxMembers);
     validatePositiveInteger(data.feePerMessage);
   }
 

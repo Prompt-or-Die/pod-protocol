@@ -3,7 +3,8 @@ import { homedir } from "os";
 import { join } from "path";
 import { generateKeyPairSigner } from '@solana/signers';
 import { address } from '@solana/addresses';
-import type { KeyPairSigner, Address } from '@solana/kit';
+import type { KeyPairSigner } from '@solana/signers';
+import type { Address } from '@solana/addresses';
 import chalk from "chalk";
 import { SecureKeypairLoader, secureWipe } from "./secure-memory.js";
 import { safeParseConfig, safeParseKeypair } from "./safe-json.js";
@@ -128,7 +129,7 @@ export async function loadKeypairSecure(keypairPath?: string): Promise<KeyPairSi
  * Load keypair from file path with enhanced security (MED-03)
  * SECURITY ENHANCEMENT: Secure keypair handling with validation and protection
  */
-export function loadKeypair(keypairPath?: string): KeyPairSigner {
+export async function loadKeypair(keypairPath?: string): Promise<KeyPairSigner> {
   const config = loadConfig();
   const path = keypairPath || config.keypairPath;
 
@@ -194,15 +195,13 @@ export function loadKeypair(keypairPath?: string): KeyPairSigner {
       }
     }
 
-    // @ts-ignore - Temporary during migration
-    const keypair = generateKeyPairSigner();
+    // Generate a new keypair for now (temporary fix during Web3.js v2 migration)
+    const keypair = await generateKeyPairSigner();
     
     // SECURITY: Clear sensitive data from memory (basic attempt)
     keypairData.fill(0);
     
-    // @ts-ignore - Temporary during migration 
-    console.log(chalk.gray(`✓ Loaded keypair: ${keypair.publicKey?.toBase58()?.slice(0, 8) || 'unknown'}...`));
-    // @ts-ignore - Temporary during migration
+    console.log(chalk.gray(`✓ Generated development keypair: ${keypair.address.toString().slice(0, 8)}...`));
     return keypair;
     
   } catch (error) {

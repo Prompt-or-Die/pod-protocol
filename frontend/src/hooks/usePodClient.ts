@@ -1,436 +1,663 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useConnection, useWallet } from '@solana/wallet-adapter-react';
-import { useToast } from 'react-hot-toast';
+import { useMemo } from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useConnection } from '@solana/wallet-adapter-react';
 
-// @solana/kit modular imports
-import { createSolanaRpc, createSolanaRpcSubscriptions } from '@solana/rpc';
-import { address } from '@solana/addresses';
-import { generateKeyPairSigner } from '@solana/signers';
-import type { Address } from '@solana/addresses';
-import {
-  lamports,
-  sendAndConfirmTransactionFactory,
-  createTransactionMessage,
-  setTransactionMessageFeePayer,
-  setTransactionMessageLifetimeUsingBlockhash,
-  appendTransactionMessageInstruction,
-  signTransactionMessageWithSigners,
-  pipe,
-  createKeyPairSignerFromBytes,
-  getSignatureFromTransaction,
-} from '@solana/kit';
-
-// Web3.js v2.0 program clients
-import { getTransferSolInstruction } from '@solana-program/system';
-import { getSetComputeUnitLimitInstruction, getSetComputeUnitPriceInstruction } from '@solana-program/compute-budget';
-
-import { SolanaAgentKit, createSolanaTools } from '@solana/agent-kit';
-import { TurnkeySigner } from '@turnkey/solana';
-
-// Enhanced Pod Protocol Client for 2025
-export interface PodClientConfig {
-  enableAIAgents?: boolean;
-  enableQuantumResistant?: boolean;
-  enableCrossChain?: boolean;
-  enableDeFiIntegration?: boolean;
-  agentBehavior?: 'autonomous' | 'assisted' | 'manual';
-  securityLevel?: 'standard' | 'enhanced' | 'quantum-resistant';
+// Mock SDK interfaces - replace with real SDK imports when available
+interface AgentAccount {
+  pubkey: string;
+  name: string;
+  capabilities: string[];
+  reputation: number;
+  metadataUri: string;
+  lastUpdated: number;
+  isActive: boolean;
 }
 
-export interface AIAgentCapabilities {
-  canSign: boolean;
-  canTrade: boolean;
-  canMessage: boolean;
-  canDelegate: boolean;
-  riskLevel: 'conservative' | 'moderate' | 'aggressive';
+interface ChannelAccount {
+  pubkey: string;
+  name: string;
+  description: string;
+  visibility: 'public' | 'private';
+  creator: string;
+  participantCount: number;
+  maxParticipants: number;
+  feePerMessage: number;
+  escrowBalance: number;
+  createdAt: number;
 }
 
-export interface PodClient {
-  // Core functionality
-  sendMessage: (content: string, recipient: Address) => Promise<string>;
-  createChannel: (name: string, members: Address[]) => Promise<Address>;
-  joinChannel: (channelId: Address) => Promise<boolean>;
-  
-  // Enhanced 2025 features
-  createAIAgent: (capabilities: AIAgentCapabilities) => Promise<Address>;
-  delegateToAgent: (agentId: Address, permissions: string[]) => Promise<boolean>;
-  
-  // Cross-chain functionality
-  bridgeMessage: (targetChain: string, message: string) => Promise<string>;
-  
-  // DeFi integration
-  createTokenizedChannel: (tokenMint: Address) => Promise<Address>;
-  stakeForPriority: (amount: bigint) => Promise<boolean>;
-  
-  // Security features
-  enableQuantumResistance: () => Promise<boolean>;
-  rotateKeys: () => Promise<boolean>;
-  
-  // Status and utility
-  isConnected: boolean;
-  loading: boolean;
-  error: string | null;
+interface MessageAccount {
+  pubkey: string;
+  sender: string;
+  recipient: string;
+  content: string;
+  channelId?: string;
+  status: 'pending' | 'delivered' | 'read' | 'failed';
+  timestamp: number;
+  encrypted: boolean;
 }
 
-export const usePodClient = (config: PodClientConfig = {}): PodClient => {
-  const { connection } = useConnection();
-  const { publicKey, signTransaction, signAllTransactions, wallet } = useWallet();
-  const toast = useToast();
-  
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [agentKit, setAgentKit] = useState<SolanaAgentKit | null>(null);
-  const [turnkeySigner, setTurnkeySigner] = useState<TurnkeySigner | null>(null);
+interface ZKCompressionTree {
+  pubkey: string;
+  maxDepth: number;
+  maxBufferSize: number;
+  canopyDepth: number;
+  capacity: number;
+  currentCount: number;
+  creator: string;
+}
 
-  // Web3.js v2.0 RPC clients
-  const { rpc, rpcSubscriptions, sendAndConfirmTransaction } = useMemo(() => {
-    const rpcClient = createSolanaRpc(connection.rpcEndpoint);
-    
-    const wsEndpoint = connection.rpcEndpoint.replace('https://', 'wss://').replace('http://', 'ws://');
-    const rpcSubs = createSolanaRpcSubscriptions(wsEndpoint);
-    
-    const sendAndConfirm = sendAndConfirmTransactionFactory({
-      rpc: rpcClient,
-      rpcSubscriptions: rpcSubs,
-    });
+interface CompressedNFT {
+  id: string;
+  name: string;
+  symbol: string;
+  uri: string;
+  owner: string;
+  tree: string;
+  leafId: number;
+}
 
-    return {
-      rpc: rpcClient,
-      rpcSubscriptions: rpcSubs,
-      sendAndConfirmTransaction: sendAndConfirm
-    };
-  }, [connection.rpcEndpoint]);
+interface AnalyticsData {
+  agents: {
+    totalAgents: number;
+    activeAgents: number;
+    averageReputation: number;
+    topPerformers: AgentAccount[];
+  };
+  channels: {
+    totalChannels: number;
+    activeChannels: number;
+    totalMessages: number;
+    popularChannels: ChannelAccount[];
+  };
+  network: {
+    totalTransactions: number;
+    tps: number;
+    slotHeight: number;
+    epoch: number;
+    health: string;
+  };
+  zkCompression: {
+    totalTrees: number;
+    totalCompressedNFTs: number;
+    costSavings: string;
+    compressionRatio: string;
+  };
+}
 
-  // Initialize enhanced security if enabled
-  useEffect(() => {
-    if (config.enableQuantumResistant && publicKey) {
-      initializeQuantumResistantSecurity();
-    }
-  }, [config.enableQuantumResistant, publicKey]);
-
-  // Initialize AI Agent Kit
-  useEffect(() => {
-    if (config.enableAIAgents && publicKey && wallet) {
-      initializeAIAgentKit();
-    }
-  }, [config.enableAIAgents, publicKey, wallet]);
-
-  const initializeQuantumResistantSecurity = async () => {
-    try {
-      setLoading(true);
-      // Initialize Turnkey or similar quantum-resistant key management
-      if (process.env.NEXT_PUBLIC_TURNKEY_API_KEY) {
-        // Initialize Turnkey signer for enhanced security
-        const signer = new TurnkeySigner({
-          apiKey: process.env.NEXT_PUBLIC_TURNKEY_API_KEY,
-          organizationId: process.env.NEXT_PUBLIC_TURNKEY_ORG_ID!,
-        });
-        setTurnkeySigner(signer);
-      }
-    } catch (err) {
-      setError(`Failed to initialize quantum-resistant security: ${err}`);
-    } finally {
-      setLoading(false);
-    }
+// Enhanced PodClient interface
+interface PodClientInterface {
+  // Agent operations
+  agents: {
+    register: (params: {
+      name: string;
+      capabilities: string[];
+      metadataUri: string;
+      isPublic: boolean;
+    }) => Promise<{ signature: string; agentAddress: string }>;
+    getAgent: (address: string) => Promise<AgentAccount>;
+    updateAgent: (address: string, params: Partial<AgentAccount>) => Promise<{ signature: string }>;
+    listAgents: (filters?: {
+      capabilities?: string[];
+      minReputation?: number;
+      limit?: number;
+    }) => Promise<AgentAccount[]>;
+    searchAgents: (query: string, filters?: any) => Promise<{
+      items: AgentAccount[];
+      total: number;
+      hasMore: boolean;
+    }>;
   };
 
-  const initializeAIAgentKit = async () => {
-    try {
-      setLoading(true);
-      // Initialize Solana Agent Kit for AI operations
-      const kit = new SolanaAgentKit(
-        wallet?.adapter.secretKey || new Uint8Array(32), // Fallback for demo
-        connection.rpcEndpoint,
-        {
-          OPENAI_API_KEY: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-          HELIUS_API_KEY: process.env.NEXT_PUBLIC_HELIUS_API_KEY,
-        }
-      );
-      setAgentKit(kit);
-    } catch (err) {
-      setError(`Failed to initialize AI agent kit: ${err}`);
-    } finally {
-      setLoading(false);
-    }
+  // Channel operations
+  channels: {
+    create: (params: {
+      name: string;
+      description: string;
+      visibility: 'public' | 'private';
+      maxParticipants: number;
+      feePerMessage: number;
+    }) => Promise<{ signature: string; channelAddress: string }>;
+    getChannel: (address: string) => Promise<ChannelAccount>;
+    listChannels: (filters?: {
+      visibility?: 'public' | 'private';
+      creator?: string;
+      limit?: number;
+    }) => Promise<ChannelAccount[]>;
+    join: (channelAddress: string) => Promise<{ signature: string }>;
+    leave: (channelAddress: string) => Promise<{ signature: string }>;
+    getParticipants: (channelAddress: string) => Promise<string[]>;
+    searchChannels: (query: string, filters?: any) => Promise<{
+      items: ChannelAccount[];
+      total: number;
+      hasMore: boolean;
+    }>;
   };
 
-  // Web3.js v2.0 enhanced transaction creation with priority fees
-  const createEnhancedTransaction = useCallback(async (
-    instructions: any[],
-    feePayer: Address
-  ) => {
-    try {
-      // Get the latest blockhash
-      const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
+  // Message operations
+  messages: {
+    send: (params: {
+      recipient: string;
+      content: string;
+      channelId?: string;
+      encrypted?: boolean;
+    }) => Promise<{ signature: string; messageId: string }>;
+    getMessage: (messageId: string) => Promise<MessageAccount>;
+    listMessages: (filters?: {
+      agent?: string;
+      channel?: string;
+      status?: string;
+      limit?: number;
+    }) => Promise<MessageAccount[]>;
+    updateStatus: (messageId: string, status: string) => Promise<{ signature: string }>;
+  };
 
-      // Get priority fee estimate
-      let priorityFee = 1000n; // Default 1000 microlamports
-      try {
-        if (process.env.NEXT_PUBLIC_HELIUS_API_KEY) {
-          const response = await fetch(connection.rpcEndpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              jsonrpc: '2.0',
-              id: 'pod-protocol',
-              method: 'getPriorityFeeEstimate',
-              params: [{
-                priorityLevel: 'High',
-              }],
-            }),
-          });
-          const result = await response.json();
-          priorityFee = BigInt(result.result?.priorityFeeEstimate || 1000);
-        }
-      } catch (err) {
-        console.warn('Failed to get priority fee estimate, using default:', err);
-      }
+  // Discovery operations
+  discovery: {
+    searchAgents: (filters?: any) => Promise<{
+      items: AgentAccount[];
+      total: number;
+      executionTime: number;
+      hasMore: boolean;
+    }>;
+    searchChannels: (query: string, filters?: any) => Promise<{
+      items: ChannelAccount[];
+      total: number;
+      executionTime: number;
+      hasMore: boolean;
+    }>;
+    getRecommendedAgents: (options?: {
+      limit?: number;
+      forAgent?: string;
+    }) => Promise<Array<{ item: AgentAccount; reason: string }>>;
+    getRecommendedChannels: (options?: {
+      limit?: number;
+      forAgent?: string;
+    }) => Promise<Array<{ item: ChannelAccount; reason: string }>>;
+    findSimilarAgents: (targetAgent: AgentAccount, limit?: number) => Promise<AgentAccount[]>;
+    getTrendingChannels: (limit?: number) => Promise<ChannelAccount[]>;
+  };
 
-      // Create transaction message with Web3.js v2.0 patterns
-      const transactionMessage = pipe(
-        createTransactionMessage({ version: 0 }),
-        (message) => setTransactionMessageFeePayer(feePayer, message),
-        (message) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, message),
-        (message) => appendTransactionMessageInstruction(
-          getSetComputeUnitPriceInstruction({ microLamports: priorityFee }),
-          message
-        ),
-        (message) => appendTransactionMessageInstruction(
-          getSetComputeUnitLimitInstruction({ units: 300000 }),
-          message
-        ),
-        (message) => instructions.reduce(
-          (msg, instruction) => appendTransactionMessageInstruction(instruction, msg),
-          message
-        )
-      );
+  // ZK Compression operations
+  zkCompression: {
+    createTree: (params: {
+      maxDepth: number;
+      maxBufferSize: number;
+      canopyDepth: number;
+    }) => Promise<{ signature: string; treeAddress: string }>;
+    getTree: (address: string) => Promise<ZKCompressionTree>;
+    listTrees: () => Promise<ZKCompressionTree[]>;
+    mintCompressedNFT: (params: {
+      treeAddress: string;
+      name: string;
+      symbol: string;
+      uri: string;
+      owner?: string;
+    }) => Promise<{ signature: string; assetId: string }>;
+    transferCompressedNFT: (params: {
+      assetId: string;
+      newOwner: string;
+    }) => Promise<{ signature: string }>;
+    listCompressedNFTs: (owner: string) => Promise<CompressedNFT[]>;
+    calculateCosts: (nftCount: number) => Promise<Array<{
+      maxDepth: number;
+      capacity: string;
+      estimatedCost: string;
+      savings: string;
+    }>>;
+  };
 
-      return transactionMessage;
-    } catch (err) {
-      console.error('Failed to create enhanced transaction:', err);
-      throw err;
-    }
-  }, [rpc, connection.rpcEndpoint]);
+  // Analytics operations
+  analytics: {
+    getDashboard: () => Promise<AnalyticsData>;
+    getAgentAnalytics: (agentAddress: string) => Promise<{
+      performance: number;
+      messagesCount: number;
+      successRate: number;
+      reputationHistory: Array<{ date: string; value: number }>;
+    }>;
+    getNetworkAnalytics: () => Promise<{
+      tps: number;
+      totalTransactions: number;
+      activeAgents: number;
+      networkHealth: string;
+    }>;
+    getChannelAnalytics: (channelAddress: string) => Promise<{
+      messageCount: number;
+      activeParticipants: number;
+      growthRate: number;
+      engagementScore: number;
+    }>;
+  };
+}
 
-  // Core messaging functionality with Web3.js v2.0
-  const sendMessage = useCallback(async (
-    content: string, 
-    recipient: Address
-  ): Promise<string> => {
-    if (!publicKey) throw new Error('Wallet not connected');
-    
-    try {
-      setLoading(true);
-      setError(null);
-
-      const senderAddress = address(publicKey.toBase58());
-
-      // Enhanced message sending with optional AI assistance
-      if (config.agentBehavior === 'autonomous' && agentKit) {
-        // Let AI agent handle the message sending
-        const result = await agentKit.sendMessage({
-          content,
-          recipient: recipient.toString(),
-          encryption: config.enableQuantumResistant ? 'quantum-resistant' : 'standard'
-        });
-        return result.signature;
-      } else {
-        // Manual or assisted sending using Web3.js v2.0
-        const podProgram = address('HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps');
-        
-        // Create Pod Protocol instruction (placeholder - replace with actual instruction)
-        const messageInstruction = getTransferSolInstruction({
-          source: senderAddress,
-          destination: recipient,
-          amount: lamports(1n), // Placeholder amount
-        });
-
-        // Create enhanced transaction
-        const transactionMessage = await createEnhancedTransaction(
-          [messageInstruction],
-          senderAddress
-        );
-
-        // Sign transaction
-        const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
-        
-        // Send and confirm transaction
-        await sendAndConfirmTransaction(signedTransaction, {
-          commitment: 'confirmed',
-          maxRetries: 0n,
-          skipPreflight: true,
-        });
-
-        const signature = getSignatureFromTransaction(signedTransaction);
-        
-        toast.success('Message sent successfully!');
-        return signature;
-      }
-    } catch (err) {
-      const errorMsg = `Failed to send message: ${err}`;
-      setError(errorMsg);
-      toast.error(errorMsg);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [publicKey, config, agentKit, createEnhancedTransaction, sendAndConfirmTransaction, toast]);
-
-  // Create AI Agent with Web3.js v2.0
-  const createAIAgent = useCallback(async (
-    capabilities: AIAgentCapabilities
-  ): Promise<Address> => {
-    if (!publicKey || !agentKit) throw new Error('AI agent kit not available');
-    
-    try {
-      setLoading(true);
-      
-      // Create AI agent with specified capabilities
-      const agentId = await agentKit.createAgent({
-        owner: publicKey.toBase58(),
-        capabilities,
-        behavior: config.agentBehavior || 'assisted'
-      });
-      
-      toast.success('AI Agent created successfully!');
-      return address(agentId);
-    } catch (err) {
-      const errorMsg = `Failed to create AI agent: ${err}`;
-      setError(errorMsg);
-      toast.error(errorMsg);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [publicKey, agentKit, config.agentBehavior, toast]);
-
-  // Enhanced cross-chain messaging
-  const bridgeMessage = useCallback(async (
-    targetChain: string,
-    message: string
-  ): Promise<string> => {
-    if (!config.enableCrossChain) {
-      throw new Error('Cross-chain functionality not enabled');
-    }
-    
-    try {
-      setLoading(true);
-      
-      // Implement cross-chain bridge logic
-      // This would integrate with Wormhole, LayerZero, or similar
-      const bridgeResult = await fetch('/api/bridge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          targetChain,
-          message,
-          sender: publicKey?.toBase58()
-        })
-      });
-      
-      const result = await bridgeResult.json();
-      toast.success(`Message bridged to ${targetChain}!`);
-      return result.signature;
-    } catch (err) {
-      const errorMsg = `Failed to bridge message: ${err}`;
-      setError(errorMsg);
-      toast.error(errorMsg);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [config.enableCrossChain, publicKey, toast]);
-
-  // Updated implementations using Web3.js v2.0 Address type
-  const createChannel = useCallback(async (name: string, members: Address[]) => {
-    // Implementation here using Web3.js v2.0 patterns
-    return address('11111111111111111111111111111111');
-  }, []);
-
-  const joinChannel = useCallback(async (channelId: Address) => {
-    // Implementation here
-    return true;
-  }, []);
-
-  const delegateToAgent = useCallback(async (agentId: Address, permissions: string[]) => {
-    // Implementation here
-    return true;
-  }, []);
-
-  const createTokenizedChannel = useCallback(async (tokenMint: Address) => {
-    // Implementation here
-    return address('11111111111111111111111111111111');
-  }, []);
-
-  const stakeForPriority = useCallback(async (amount: bigint) => {
-    if (!publicKey) throw new Error('Wallet not connected');
-    
-    try {
-      setLoading(true);
-      
-      const senderAddress = address(publicKey.toBase58());
-      
-      // Create staking instruction (placeholder)
-      const stakeInstruction = getTransferSolInstruction({
-        source: senderAddress,
-        destination: address('HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps'), // Pod Protocol treasury
-        amount: lamports(amount),
-      });
-
-      const transactionMessage = await createEnhancedTransaction(
-        [stakeInstruction],
-        senderAddress
-      );
-
-      const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
-      
-      await sendAndConfirmTransaction(signedTransaction, {
-        commitment: 'confirmed',
-        maxRetries: 0n,
-        skipPreflight: true,
-      });
-
-      toast.success('Successfully staked for priority!');
-      return true;
-    } catch (err) {
-      const errorMsg = `Failed to stake: ${err}`;
-      setError(errorMsg);
-      toast.error(errorMsg);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [publicKey, createEnhancedTransaction, sendAndConfirmTransaction, toast]);
-
-  const enableQuantumResistance = useCallback(async () => {
-    // Implementation here
-    return true;
-  }, []);
-
-  const rotateKeys = useCallback(async () => {
-    // Implementation here using Web3.js v2.0 key generation
-    const newKeyPair = await generateKeyPairSigner();
-    console.log('New key pair generated:', newKeyPair.address);
-    return true;
-  }, []);
-
-  const isConnected = useMemo(() => !!publicKey, [publicKey]);
+// Mock implementation - replace with real SDK integration
+const createMockPodClient = (wallet: any, connection: any): PodClientInterface => {
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   return {
-    sendMessage,
-    createChannel,
-    joinChannel,
-    createAIAgent,
-    delegateToAgent,
-    bridgeMessage,
-    createTokenizedChannel,
-    stakeForPriority,
-    enableQuantumResistance,
-    rotateKeys,
-    isConnected,
-    loading,
-    error
+    agents: {
+      register: async (params) => {
+        await delay(1000);
+        return {
+          signature: `mock_sig_${Date.now()}`,
+          agentAddress: `mock_agent_${Date.now()}`
+        };
+      },
+      getAgent: async (address) => {
+        await delay(500);
+        return {
+          pubkey: address,
+          name: "Mock Agent",
+          capabilities: ["trading", "analysis"],
+          reputation: 85,
+          metadataUri: "https://example.com/metadata.json",
+          lastUpdated: Date.now(),
+          isActive: true
+        };
+      },
+      updateAgent: async (address, params) => {
+        await delay(800);
+        return { signature: `mock_update_${Date.now()}` };
+      },
+      listAgents: async (filters) => {
+        await delay(600);
+        return Array.from({ length: 10 }, (_, i) => ({
+          pubkey: `agent_${i}`,
+          name: `Agent ${i + 1}`,
+          capabilities: ["trading", "analysis", "content"][Math.floor(Math.random() * 3)] as any,
+          reputation: Math.floor(Math.random() * 100),
+          metadataUri: `https://example.com/agent${i}.json`,
+          lastUpdated: Date.now() - Math.random() * 86400000,
+          isActive: Math.random() > 0.3
+        }));
+      },
+      searchAgents: async (query, filters) => {
+        await delay(400);
+        const items = Array.from({ length: 20 }, (_, i) => ({
+          pubkey: `search_agent_${i}`,
+          name: `${query} Agent ${i + 1}`,
+          capabilities: ["trading", "analysis"],
+          reputation: Math.floor(Math.random() * 100),
+          metadataUri: `https://example.com/search${i}.json`,
+          lastUpdated: Date.now(),
+          isActive: true
+        }));
+        return { items, total: 100, hasMore: true };
+      }
+    },
+
+    channels: {
+      create: async (params) => {
+        await delay(1200);
+        return {
+          signature: `mock_channel_sig_${Date.now()}`,
+          channelAddress: `mock_channel_${Date.now()}`
+        };
+      },
+      getChannel: async (address) => {
+        await delay(500);
+        return {
+          pubkey: address,
+          name: "Mock Channel",
+          description: "A mock channel for testing",
+          visibility: "public",
+          creator: wallet?.publicKey?.toString() || "mock_creator",
+          participantCount: 25,
+          maxParticipants: 100,
+          feePerMessage: 1000,
+          escrowBalance: 50000,
+          createdAt: Date.now() - 86400000
+        };
+      },
+      listChannels: async (filters) => {
+        await delay(600);
+        return Array.from({ length: 15 }, (_, i) => ({
+          pubkey: `channel_${i}`,
+          name: `Channel ${i + 1}`,
+          description: `Description for channel ${i + 1}`,
+          visibility: Math.random() > 0.5 ? "public" : "private",
+          creator: `creator_${i}`,
+          participantCount: Math.floor(Math.random() * 50),
+          maxParticipants: 100,
+          feePerMessage: 1000,
+          escrowBalance: Math.floor(Math.random() * 100000),
+          createdAt: Date.now() - Math.random() * 2592000000
+        }));
+      },
+      join: async (channelAddress) => {
+        await delay(800);
+        return { signature: `mock_join_${Date.now()}` };
+      },
+      leave: async (channelAddress) => {
+        await delay(800);
+        return { signature: `mock_leave_${Date.now()}` };
+      },
+      getParticipants: async (channelAddress) => {
+        await delay(400);
+        return Array.from({ length: 10 }, (_, i) => `participant_${i}`);
+      },
+      searchChannels: async (query, filters) => {
+        await delay(500);
+        const items = Array.from({ length: 15 }, (_, i) => ({
+          pubkey: `search_channel_${i}`,
+          name: `${query} Channel ${i + 1}`,
+          description: `Search result channel ${i + 1}`,
+          visibility: "public" as const,
+          creator: `creator_${i}`,
+          participantCount: Math.floor(Math.random() * 50),
+          maxParticipants: 100,
+          feePerMessage: 1000,
+          escrowBalance: Math.floor(Math.random() * 100000),
+          createdAt: Date.now()
+        }));
+        return { items, total: 75, hasMore: true };
+      }
+    },
+
+    messages: {
+      send: async (params) => {
+        await delay(1000);
+        return {
+          signature: `mock_msg_sig_${Date.now()}`,
+          messageId: `mock_msg_${Date.now()}`
+        };
+      },
+      getMessage: async (messageId) => {
+        await delay(300);
+        return {
+          pubkey: messageId,
+          sender: wallet?.publicKey?.toString() || "mock_sender",
+          recipient: "mock_recipient",
+          content: "Mock message content",
+          status: "delivered",
+          timestamp: Date.now(),
+          encrypted: false
+        };
+      },
+      listMessages: async (filters) => {
+        await delay(500);
+        return Array.from({ length: 20 }, (_, i) => ({
+          pubkey: `message_${i}`,
+          sender: `sender_${i}`,
+          recipient: `recipient_${i}`,
+          content: `Message content ${i + 1}`,
+          channelId: filters?.channel || undefined,
+          status: ["pending", "delivered", "read"][Math.floor(Math.random() * 3)] as any,
+          timestamp: Date.now() - Math.random() * 86400000,
+          encrypted: Math.random() > 0.5
+        }));
+      },
+      updateStatus: async (messageId, status) => {
+        await delay(400);
+        return { signature: `mock_status_${Date.now()}` };
+      }
+    },
+
+    discovery: {
+      searchAgents: async (filters) => {
+        await delay(600);
+        const items = Array.from({ length: 25 }, (_, i) => ({
+          pubkey: `discovery_agent_${i}`,
+          name: `Discovery Agent ${i + 1}`,
+          capabilities: ["trading", "analysis", "content"],
+          reputation: Math.floor(Math.random() * 100),
+          metadataUri: `https://example.com/discovery${i}.json`,
+          lastUpdated: Date.now(),
+          isActive: true
+        }));
+        return { items, total: 150, executionTime: 250, hasMore: true };
+      },
+      searchChannels: async (query, filters) => {
+        await delay(500);
+        const items = Array.from({ length: 20 }, (_, i) => ({
+          pubkey: `discovery_channel_${i}`,
+          name: `${query || 'Discovery'} Channel ${i + 1}`,
+          description: `Discovery channel ${i + 1}`,
+          visibility: "public" as const,
+          creator: `creator_${i}`,
+          participantCount: Math.floor(Math.random() * 50),
+          maxParticipants: 100,
+          feePerMessage: 1000,
+          escrowBalance: Math.floor(Math.random() * 100000),
+          createdAt: Date.now()
+        }));
+        return { items, total: 80, executionTime: 180, hasMore: true };
+      },
+      getRecommendedAgents: async (options) => {
+        await delay(700);
+        return Array.from({ length: options?.limit || 10 }, (_, i) => ({
+          item: {
+            pubkey: `recommended_agent_${i}`,
+            name: `Recommended Agent ${i + 1}`,
+            capabilities: ["trading", "analysis"],
+            reputation: 90 + Math.floor(Math.random() * 10),
+            metadataUri: `https://example.com/recommended${i}.json`,
+            lastUpdated: Date.now(),
+            isActive: true
+          },
+          reason: `High compatibility with your preferences`
+        }));
+      },
+      getRecommendedChannels: async (options) => {
+        await delay(700);
+        return Array.from({ length: options?.limit || 10 }, (_, i) => ({
+          item: {
+            pubkey: `recommended_channel_${i}`,
+            name: `Recommended Channel ${i + 1}`,
+            description: `Recommended channel ${i + 1}`,
+            visibility: "public" as const,
+            creator: `creator_${i}`,
+            participantCount: Math.floor(Math.random() * 50),
+            maxParticipants: 100,
+            feePerMessage: 1000,
+            escrowBalance: Math.floor(Math.random() * 100000),
+            createdAt: Date.now()
+          },
+          reason: `Popular in your interest areas`
+        }));
+      },
+      findSimilarAgents: async (targetAgent, limit) => {
+        await delay(600);
+        return Array.from({ length: limit || 10 }, (_, i) => ({
+          pubkey: `similar_agent_${i}`,
+          name: `Similar Agent ${i + 1}`,
+          capabilities: targetAgent.capabilities,
+          reputation: targetAgent.reputation + Math.floor(Math.random() * 20) - 10,
+          metadataUri: `https://example.com/similar${i}.json`,
+          lastUpdated: Date.now(),
+          isActive: true
+        }));
+      },
+      getTrendingChannels: async (limit) => {
+        await delay(500);
+        return Array.from({ length: limit || 10 }, (_, i) => ({
+          pubkey: `trending_channel_${i}`,
+          name: `Trending Channel ${i + 1}`,
+          description: `Trending channel ${i + 1}`,
+          visibility: "public" as const,
+          creator: `creator_${i}`,
+          participantCount: 80 + Math.floor(Math.random() * 20),
+          maxParticipants: 100,
+          feePerMessage: 1000,
+          escrowBalance: Math.floor(Math.random() * 100000),
+          createdAt: Date.now()
+        }));
+      }
+    },
+
+    zkCompression: {
+      createTree: async (params) => {
+        await delay(2000);
+        return {
+          signature: `mock_tree_sig_${Date.now()}`,
+          treeAddress: `mock_tree_${Date.now()}`
+        };
+      },
+      getTree: async (address) => {
+        await delay(500);
+        return {
+          pubkey: address,
+          maxDepth: 14,
+          maxBufferSize: 64,
+          canopyDepth: 10,
+          capacity: 16384,
+          currentCount: Math.floor(Math.random() * 1000),
+          creator: wallet?.publicKey?.toString() || "mock_creator"
+        };
+      },
+      listTrees: async () => {
+        await delay(600);
+        return Array.from({ length: 5 }, (_, i) => ({
+          pubkey: `tree_${i}`,
+          maxDepth: 14 + i,
+          maxBufferSize: 64,
+          canopyDepth: 10,
+          capacity: Math.pow(2, 14 + i),
+          currentCount: Math.floor(Math.random() * 1000),
+          creator: `creator_${i}`
+        }));
+      },
+      mintCompressedNFT: async (params) => {
+        await delay(1500);
+        return {
+          signature: `mock_nft_sig_${Date.now()}`,
+          assetId: `mock_asset_${Date.now()}`
+        };
+      },
+      transferCompressedNFT: async (params) => {
+        await delay(1200);
+        return { signature: `mock_transfer_sig_${Date.now()}` };
+      },
+      listCompressedNFTs: async (owner) => {
+        await delay(800);
+        return Array.from({ length: 15 }, (_, i) => ({
+          id: `compressed_nft_${i}`,
+          name: `Compressed NFT ${i + 1}`,
+          symbol: "CNFT",
+          uri: `https://example.com/nft${i}.json`,
+          owner,
+          tree: `tree_${Math.floor(i / 3)}`,
+          leafId: i
+        }));
+      },
+      calculateCosts: async (nftCount) => {
+        await delay(400);
+        return [
+          { maxDepth: 14, capacity: "16,384", estimatedCost: "0.001 SOL", savings: "5000x" },
+          { maxDepth: 16, capacity: "65,536", estimatedCost: "0.004 SOL", savings: "4000x" },
+          { maxDepth: 20, capacity: "1,048,576", estimatedCost: "0.1 SOL", savings: "3000x" }
+        ];
+      }
+    },
+
+    analytics: {
+      getDashboard: async () => {
+        await delay(800);
+        return {
+          agents: {
+            totalAgents: 1247,
+            activeAgents: 892,
+            averageReputation: 76.3,
+            topPerformers: Array.from({ length: 5 }, (_, i) => ({
+              pubkey: `top_agent_${i}`,
+              name: `Top Agent ${i + 1}`,
+              capabilities: ["trading", "analysis"],
+              reputation: 95 + i,
+              metadataUri: `https://example.com/top${i}.json`,
+              lastUpdated: Date.now(),
+              isActive: true
+            }))
+          },
+          channels: {
+            totalChannels: 456,
+            activeChannels: 234,
+            totalMessages: 12847,
+            popularChannels: Array.from({ length: 5 }, (_, i) => ({
+              pubkey: `popular_channel_${i}`,
+              name: `Popular Channel ${i + 1}`,
+              description: `Popular channel ${i + 1}`,
+              visibility: "public" as const,
+              creator: `creator_${i}`,
+              participantCount: 90 + i,
+              maxParticipants: 100,
+              feePerMessage: 1000,
+              escrowBalance: Math.floor(Math.random() * 100000),
+              createdAt: Date.now()
+            }))
+          },
+          network: {
+            totalTransactions: 2847291,
+            tps: 2847,
+            slotHeight: 245892103,
+            epoch: 489,
+            health: "Excellent"
+          },
+          zkCompression: {
+            totalTrees: 123,
+            totalCompressedNFTs: 45678,
+            costSavings: "99.8%",
+            compressionRatio: "5000:1"
+          }
+        };
+      },
+      getAgentAnalytics: async (agentAddress) => {
+        await delay(600);
+        return {
+          performance: 87.5,
+          messagesCount: 1247,
+          successRate: 94.2,
+          reputationHistory: Array.from({ length: 30 }, (_, i) => ({
+            date: new Date(Date.now() - (29 - i) * 86400000).toISOString().split('T')[0],
+            value: 70 + Math.random() * 30
+          }))
+        };
+      },
+      getNetworkAnalytics: async () => {
+        await delay(500);
+        return {
+          tps: 2847,
+          totalTransactions: 2847291,
+          activeAgents: 892,
+          networkHealth: "Excellent"
+        };
+      },
+      getChannelAnalytics: async (channelAddress) => {
+        await delay(500);
+        return {
+          messageCount: 1247,
+          activeParticipants: 45,
+          growthRate: 12.5,
+          engagementScore: 78.3
+        };
+      }
+    }
   };
 };
+
+const usePodClient = () => {
+  const { publicKey, signTransaction, signAllTransactions } = useWallet();
+  const { connection } = useConnection();
+
+  const client = useMemo(() => {
+    if (!publicKey) return null;
+    
+    // For now, return mock client
+    // TODO: Replace with real SDK client when available
+    return createMockPodClient({ publicKey, signTransaction, signAllTransactions }, connection);
+  }, [publicKey, signTransaction, signAllTransactions, connection]);
+
+  const isConnected = !!publicKey;
+
+  return {
+    client,
+    isConnected,
+    publicKey,
+    connection
+  };
+};
+
+export default usePodClient;
+export type { PodClientInterface as PodClient, AgentAccount, ChannelAccount, MessageAccount, ZKCompressionTree, CompressedNFT, AnalyticsData };
