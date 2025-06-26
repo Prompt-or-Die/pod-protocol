@@ -15,10 +15,9 @@ import { findAgentPDA, findEscrowPDA } from '../utils/pda.js';
  */
 export class EscrowService extends BaseService {
   /**
-   * Deposit funds to escrow for a channel
-   * 
-   * @param {DepositEscrowOptions} options - Deposit options
-   * @param {KeyPairSigner} wallet - Depositor's wallet
+   * Deposit funds into escrow for a channel
+   * @param {Object} options - Deposit options
+   * @param {Object} wallet - Depositor's wallet
    * @returns {Promise<string>} Transaction signature
    * 
    * @example
@@ -58,9 +57,8 @@ export class EscrowService extends BaseService {
 
   /**
    * Withdraw funds from escrow
-   * 
-   * @param {WithdrawEscrowOptions} options - Withdrawal options
-   * @param {KeyPairSigner} wallet - Depositor's wallet
+   * @param {Object} options - Withdrawal options  
+   * @param {Object} wallet - Depositor's wallet
    * @returns {Promise<string>} Transaction signature
    * 
    * @example
@@ -99,11 +97,10 @@ export class EscrowService extends BaseService {
   }
 
   /**
-   * Get escrow account data
-   * 
-   * @param {Address} channel - Channel public key
-   * @param {Address} depositor - Depositor's public key
-   * @returns {Promise<EscrowAccount|null>} Escrow account data
+   * Get escrow account by channel and depositor
+   * @param {string} channel - Channel public key
+   * @param {string} depositor - Depositor's public key
+   * @returns {Promise<Object|null>} Escrow account data
    * 
    * @example
    * ```javascript
@@ -139,12 +136,11 @@ export class EscrowService extends BaseService {
   }
 
   /**
-   * Get all escrow accounts by depositor
-   * 
-   * @param {Address} depositor - Depositor's public key
+   * List escrow accounts by depositor
+   * @param {string} depositor - Depositor's public key
    * @param {Object} [options] - Query options
    * @param {number} [options.limit=50] - Maximum number of results
-   * @returns {Promise<EscrowAccount[]>} Array of escrow accounts
+   * @returns {Promise<Object[]>} Array of escrow accounts
    * 
    * @example
    * ```javascript
@@ -184,12 +180,11 @@ export class EscrowService extends BaseService {
   }
 
   /**
-   * Get all escrow accounts for a channel
-   * 
-   * @param {Address} channel - Channel public key
+   * List escrow accounts by channel
+   * @param {string} channel - Channel public key
    * @param {Object} [options] - Query options
    * @param {number} [options.limit=50] - Maximum number of results
-   * @returns {Promise<EscrowAccount[]>} Array of escrow accounts
+   * @returns {Promise<Object[]>} Array of escrow accounts
    * 
    * @example
    * ```javascript
@@ -230,9 +225,8 @@ export class EscrowService extends BaseService {
 
   /**
    * Get total escrow balance for a channel
-   * 
-   * @param {Address} channel - Channel public key
-   * @returns {Promise<number>} Total escrow balance in lamports
+   * @param {string} channel - Channel public key
+   * @returns {Promise<number>} Total balance in lamports
    * 
    * @example
    * ```javascript

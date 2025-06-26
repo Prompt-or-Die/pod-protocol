@@ -17,8 +17,8 @@ export class AgentService extends BaseService {
   /**
    * Register a new agent
    * 
-   * @param {CreateAgentOptions} options - Agent creation options
-   * @param {KeyPairSigner} wallet - Wallet to sign the transaction
+   * @param {Object} options - Agent creation options
+   * @param {Object} wallet - Wallet to sign the transaction
    * @returns {Promise<string>} Transaction signature
    * 
    * @example
@@ -67,8 +67,8 @@ export class AgentService extends BaseService {
   /**
    * Update an existing agent
    * 
-   * @param {UpdateAgentOptions} options - Update options
-   * @param {KeyPairSigner} wallet - Wallet to sign the transaction
+   * @param {Object} options - Update options
+   * @param {Object} wallet - Wallet to sign the transaction
    * @returns {Promise<string>} Transaction signature
    * 
    * @example
@@ -105,7 +105,7 @@ export class AgentService extends BaseService {
   /**
    * Get agent information by public key
    * 
-   * @param {Address} agentPubkey - Agent's public key
+   * @param {string} agentPubkey - Agent's public key
    * @returns {Promise<Object|null>} Agent account data
    * 
    * @example
@@ -206,7 +206,7 @@ export class AgentService extends BaseService {
   /**
    * Check if an agent exists
    * 
-   * @param {Address} agentPubkey - Agent's public key
+   * @param {string} agentPubkey - Agent's public key
    * @returns {Promise<boolean>} True if agent exists
    * 
    * @example
@@ -225,7 +225,7 @@ export class AgentService extends BaseService {
   /**
    * Get agent statistics
    * 
-   * @param {Address} agentPubkey - Agent's public key
+   * @param {string} agentPubkey - Agent's public key
    * @returns {Promise<Object>} Agent statistics
    * 
    * @example
@@ -255,8 +255,8 @@ export class AgentService extends BaseService {
   /**
    * Get agent PDA for a public key
    * 
-   * @param {Address} agentPubkey - Agent's public key
-   * @returns {Address} Agent PDA
+   * @param {string} agentPubkey - Agent's public key
+   * @returns {Promise<string>} Agent PDA
    */
   async getAgentPDA(agentPubkey) {
     const [pda] = await findAgentPDA(agentPubkey, this.programId);
@@ -278,10 +278,10 @@ export class AgentService extends BaseService {
   /**
    * Create register agent instruction
    * 
-   * @param {Address} agentPubkey - Agent's public key
+   * @param {string} agentPubkey - Agent's public key
    * @param {number} capabilities - Capabilities bitmask
    * @param {string} metadataUri - Metadata URI
-   * @returns {TransactionInstruction} Register instruction
+   * @returns {Promise<Object>} Register instruction
    */
   async createRegisterInstruction(agentPubkey, capabilities, metadataUri) {
     if (!this.program) {
@@ -303,10 +303,10 @@ export class AgentService extends BaseService {
   /**
    * Create update agent instruction
    * 
-   * @param {Address} agentPubkey - Agent's public key
+   * @param {string} agentPubkey - Agent's public key
    * @param {number} capabilities - New capabilities bitmask
    * @param {string} metadataUri - New metadata URI
-   * @returns {TransactionInstruction} Update instruction
+   * @returns {Promise<Object>} Update instruction
    */
   async createUpdateInstruction(agentPubkey, capabilities, metadataUri) {
     if (!this.program) {

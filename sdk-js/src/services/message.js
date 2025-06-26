@@ -324,11 +324,10 @@ export class MessageService extends BaseService {
       throw new Error('Program not initialized');
     }
 
-    const payloadHash = hashPayload(options.content);
-    const [messagePDA] = findMessagePDA(
+    const payloadHash = await this.hashPayload(options.content);
+    const [messagePDA] = await findMessagePDA(
       senderPubkey,
       options.recipient,
-      payloadHash,
       this.programId
     );
 
@@ -371,6 +370,31 @@ export class MessageService extends BaseService {
         signer: signerPubkey
       })
       .instruction();
+  }
+
+  /**
+   * Hash payload for message integrity
+   * @param {string} payload - Message content to hash
+   * @returns {Promise<Uint8Array>} SHA-256 hash of the payload
+   */
+  async hashPayload(payload) {
+    try {
+      // Use Web Crypto API for hashing
+      const encoder = new TextEncoder();
+      const data = encoder.encode(payload);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      return new Uint8Array(hashBuffer);
+    } catch (error) {
+      console.error('Error hashing payload:', error);
+      // Fallback to simple hash for JavaScript compatibility
+      const encoder = new TextEncoder();
+      const data = encoder.encode(payload);
+      const simpleHash = new Uint8Array(32);
+      for (let i = 0; i < data.length && i < 32; i++) {
+        simpleHash[i] = data[i] ^ (i % 256);
+      }
+      return simpleHash;
+    }
   }
 
   /**

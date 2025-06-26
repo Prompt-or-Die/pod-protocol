@@ -197,7 +197,7 @@ export class ChannelService extends BaseService {
     }
 
     // Derive agent PDA
-    const [agentPDA] = findAgentPDA(wallet.publicKey, this.programId);
+    const [agentPDA] = await findAgentPDA(wallet.publicKey, this.programId);
 
     // Derive participant PDA
     const [participantPDA] = this._findParticipantPDA(channelPDA, agentPDA);
@@ -246,7 +246,7 @@ export class ChannelService extends BaseService {
     }
 
     // Derive agent PDA
-    const [agentPDA] = findAgentPDA(wallet.publicKey, this.programId);
+    const [agentPDA] = await findAgentPDA(wallet.publicKey, this.programId);
 
     // Derive participant PDA
     const [participantPDA] = this._findParticipantPDA(channelPDA, agentPDA);
@@ -294,7 +294,7 @@ export class ChannelService extends BaseService {
     const nonce = Date.now();
 
     // Derive agent PDA
-    const [agentPDA] = findAgentPDA(wallet.publicKey, this.programId);
+    const [agentPDA] = await findAgentPDA(wallet.publicKey, this.programId);
 
     // Derive participant PDA
     const [participantPDA] = this._findParticipantPDA(channelPDA, agentPDA);
@@ -345,7 +345,7 @@ export class ChannelService extends BaseService {
     }
 
     // Derive agent PDA
-    const [agentPDA] = findAgentPDA(wallet.publicKey, this.programId);
+    const [agentPDA] = await findAgentPDA(wallet.publicKey, this.programId);
 
     // Derive participant PDA (for inviter)
     const [participantPDA] = this._findParticipantPDA(channelPDA, agentPDA);
@@ -499,8 +499,8 @@ export class ChannelService extends BaseService {
       throw new Error('Program not initialized');
     }
 
-    const [agentPDA] = findAgentPDA(creatorPubkey, this.programId);
-    const [channelPDA] = findChannelPDA(creatorPubkey, options.name, this.programId);
+    const [agentPDA] = await findAgentPDA(creatorPubkey, this.programId);
+    const [channelPDA] = await findChannelPDA(creatorPubkey, options.name, this.programId);
     const [participantPDA] = this._findParticipantPDA(channelPDA, agentPDA);
 
     const visibilityObj = this._convertChannelVisibility(options.visibility || ChannelVisibility.PUBLIC);
@@ -535,7 +535,7 @@ export class ChannelService extends BaseService {
       throw new Error('Program not initialized');
     }
 
-    const [agentPDA] = findAgentPDA(userPubkey, this.programId);
+    const [agentPDA] = await findAgentPDA(userPubkey, this.programId);
     const [participantPDA] = this._findParticipantPDA(channelPDA, agentPDA);
 
     return this.program.methods

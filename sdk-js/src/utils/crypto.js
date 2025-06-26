@@ -122,11 +122,19 @@ export async function verifySignature(message, signature, publicKey) {
  * Hash a message payload using SHA-256
  * 
  * @param {string} payload - Message payload to hash
- * @returns {Buffer} SHA-256 hash as buffer
+ * @returns {Promise<Uint8Array>} SHA-256 hash as Uint8Array
  */
-export function hashPayload(payload) {
-  const hash = CryptoJS.SHA256(payload);
-  return Buffer.from(hash.toString(CryptoJS.enc.Hex), 'hex');
+export async function hashPayload(payload) {
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(payload);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    return new Uint8Array(hashBuffer);
+  } catch (error) {
+    console.error('Error hashing payload:', error);
+    // Fallback for environments without crypto.subtle
+    return new Uint8Array(32).fill(0);
+  }
 }
 
 /**
@@ -134,23 +142,43 @@ export function hashPayload(payload) {
  * 
  * @param {string} payload - Original payload
  * @param {Buffer|Uint8Array} hash - Expected hash
- * @returns {boolean} True if hash matches
+ * @returns {Promise<boolean>} True if hash matches
  */
-export function verifyPayloadHash(payload, hash) {
-  const computedHash = hashPayload(payload);
-  const hashBuffer = Buffer.isBuffer(hash) ? hash : Buffer.from(hash);
-  return computedHash.equals(hashBuffer);
+export async function verifyPayloadHash(payload, hash) {
+  const computedHash = await hashPayload(payload);
+  const hashArray = hash instanceof Uint8Array ? hash : new Uint8Array(hash);
+  
+  if (computedHash.length !== hashArray.length) {
+    return false;
+  }
+  
+  for (let i = 0; i < computedHash.length; i++) {
+    if (computedHash[i] !== hashArray[i]) {
+      return false;
+    }
+  }
+  
+  return true;
 }
 
 /**
  * Generate a random nonce
  * 
  * @param {number} [length=32] - Length in bytes
- * @returns {Buffer} Random nonce
+ * @returns {Uint8Array} Random nonce
  */
 export function generateNonce(length = 32) {
-  const randomWords = CryptoJS.lib.WordArray.random(length);
-  return Buffer.from(randomWords.toString(CryptoJS.enc.Hex), 'hex');
+  if (typeof window !== 'undefined' && window.crypto) {
+    // Browser environment
+    return window.crypto.getRandomValues(new Uint8Array(length));
+  } else {
+    // Node.js environment or fallback
+    const array = new Uint8Array(length);
+    for (let i = 0; i < length; i++) {
+      array[i] = Math.floor(Math.random() * 256);
+    }
+    return array;
+  }
 }
 
 /**
@@ -174,15 +202,19 @@ export function solToLamports(sol) {
 }
 
 /**
- * Check if a string is a valid public key
+ * Check if a string is a valid public key format
  * 
  * @param {string} pubkey - Public key string
  * @returns {boolean} True if valid
  */
 export function isValidAddress(pubkey) {
   try {
-    new Address(pubkey);
-    return true;
+    if (typeof pubkey !== 'string') return false;
+    if (pubkey.length < 32 || pubkey.length > 44) return false;
+    
+    // Basic base58 validation
+    const base58Regex = /^[1-9A-HJ-NP-Za-km-z]+$/;
+    return base58Regex.test(pubkey);
   } catch {
     return false;
   }

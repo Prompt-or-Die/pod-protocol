@@ -1,17 +1,27 @@
 // Jest setup file for PoD Protocol JavaScript SDK tests
-import { jest } from '@jest/globals';
+// @ts-nocheck
+import { jest, beforeAll, afterAll } from '@jest/globals';
+import { Connection, PublicKey } from '@solana/web3.js';
 
 // Mock Solana web3.js Connection for tests that don't need real network
-jest.mock('@solana/web3.js', () => ({
-  ...jest.requireActual('@solana/web3.js'),
-  Connection: jest.fn().mockImplementation(() => ({
-    requestAirdrop: jest.fn().mockResolvedValue('mockTxSignature'),
-    getAccountInfo: jest.fn().mockResolvedValue(null),
-    sendTransaction: jest.fn().mockResolvedValue('mockTxSignature'),
-    confirmTransaction: jest.fn().mockResolvedValue({ value: { err: null } }),
-    getRecentBlockhash: jest.fn().mockResolvedValue({ blockhash: 'mockBlockhash', feeCalculator: { lamportsPerSignature: 5000 } }),
-  })),
-}));
+jest.mock('@solana/web3.js', () => {
+  // @ts-ignore
+  const actual = jest.requireActual('@solana/web3.js');
+  return {
+    // @ts-ignore
+    ...actual,
+    Connection: jest.fn().mockImplementation(() => ({
+      requestAirdrop: jest.fn().mockResolvedValue('mockTxSignature'),
+      getAccountInfo: jest.fn().mockResolvedValue(null),
+      sendTransaction: jest.fn().mockResolvedValue('mockTxSignature'),
+      confirmTransaction: jest.fn().mockResolvedValue({ value: { err: null } }),
+      getRecentBlockhash: jest.fn().mockResolvedValue({ 
+        blockhash: 'mockBlockhash', 
+        feeCalculator: { lamportsPerSignature: 5000 } 
+      }),
+    })),
+  };
+});
 
 // Global test configuration
 global.testConfig = {

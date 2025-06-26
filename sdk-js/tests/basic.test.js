@@ -8,7 +8,7 @@ describe('SDK Basic Tests', () => {
   beforeEach(() => {
     client = new PodComClient({
       endpoint: 'http://localhost:8899',
-      programId: new PublicKey('11111111111111111111111111111111')
+      programId: '11111111111111111111111111111111'
     });
   });
 
