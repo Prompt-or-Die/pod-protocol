@@ -567,8 +567,7 @@ export class PodComClient {
   }
 }
 
-// Enhanced default export for 2025
-export default PodComClient;
+// Named export for consistency (no default export)
 
 // Re-export all types and utilities for 2025
 export * from "./types";

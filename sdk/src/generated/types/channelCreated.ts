@@ -30,7 +30,7 @@ import {
   getChannelVisibilityEncoder,
   type ChannelVisibility,
   type ChannelVisibilityArgs,
-} from '.';
+} from './channelVisibility';
 
 export type ChannelCreated = {
   channel: Address;
