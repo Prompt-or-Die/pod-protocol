@@ -1,5 +1,10 @@
-import { address as createAddress, type Address } from "@solana/web3.js";
-import { ChannelVisibility } from "@pod-protocol/sdk";
+import { address as createAddress } from "@solana/web3.js";
+// Local constants to avoid import issues during Web3.js v2 migration
+enum ChannelVisibility {
+  Public = 0,
+  Private = 1,
+  Restricted = 2,
+}
 import { createSpinner } from "../../utils/shared.js";
 import { BaseChannelHandler } from "./base-handler.js";
 import { ChannelDataHandler } from "./data-handler.js";
@@ -28,12 +33,18 @@ export class ChannelHandlers extends BaseChannelHandler {
       const result = await this.executeWithSpinner(
         "Creating channel...",
         () =>
-          this.context.client.createChannel(this.context.wallet, channelData),
+          this.context.client.createChannel(this.context.wallet, {
+            name: channelData.name,
+            description: channelData.description,
+            visibility: channelData.visibility,
+            maxMembers: channelData.maxMembers,
+            feePerMessage: channelData.feePerMessage,
+          }),
         {
           Name: channelData.name,
           Description: channelData.description,
-          Visibility: channelData.visibility,
-          "Max Participants": channelData.maxParticipants.toString(),
+          Visibility: ChannelVisibility[channelData.visibility],
+          "Max Members": channelData.maxMembers.toString(),
           "Fee per Message": `${channelData.feePerMessage} lamports`,
         },
       );
@@ -46,7 +57,7 @@ export class ChannelHandlers extends BaseChannelHandler {
           {
             Name: channelData.name,
             Description: channelData.description,
-            Visibility: channelData.visibility,
+            Visibility: ChannelVisibility[channelData.visibility],
           },
         );
       }
@@ -87,7 +98,8 @@ export class ChannelHandlers extends BaseChannelHandler {
         );
       } else {
         const visibilityFilter = options.visibility
-          ? (options.visibility as ChannelVisibility)
+          ? (ChannelVisibility[options.visibility as keyof typeof ChannelVisibility] ?? 
+             parseInt(options.visibility) as ChannelVisibility)
           : undefined;
         channels = await this.context.client.getAllChannels(
           limit,

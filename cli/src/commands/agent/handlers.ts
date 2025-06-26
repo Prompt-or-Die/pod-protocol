@@ -1,9 +1,9 @@
-import { address as createAddress, type Address } from "@solana/web3.js";
+import { address as createAddress } from "@solana/web3.js";
 import { AGENT_CAPABILITIES, getCapabilityNames } from "@pod-protocol/sdk";
 import { input, select, checkbox, confirm } from '@inquirer/prompts';
 import { AgentDisplayer } from "./displayer.js";
 import { CommandContext, AgentRegisterOptions, AgentUpdateOptions, AgentListOptions } from "./types.js";
-import { BRAND_COLORS, ICONS, showCommandHeader, progressIndicator, statusMessage } from "../../utils/branding.js";
+import { BRAND_COLORS, ICONS, showCommandHeader, statusMessage } from "../../utils/branding.js";
 import { errorHandler } from "../../utils/enhanced-error-handler.js";
 import ora from "ora";
 
@@ -30,9 +30,9 @@ export class AgentHandlers {
           { name: 'Analysis 🧠', value: AGENT_CAPABILITIES.ANALYSIS, checked: false },
           { name: 'Trading 💰', value: AGENT_CAPABILITIES.TRADING, checked: false },
           { name: 'Content Creation ✍️', value: AGENT_CAPABILITIES.CONTENT_GENERATION, checked: false },
-          { name: 'Communication 💬', value: AGENT_CAPABILITIES.CUSTOM_1, checked: false },
+          { name: 'Communication 💬', value: AGENT_CAPABILITIES.CUSTOM1, checked: false },
           { name: 'Data Processing 📊', value: AGENT_CAPABILITIES.DATA_PROCESSING, checked: false },
-          { name: 'Automation ⚙️', value: AGENT_CAPABILITIES.CUSTOM_2, checked: false },
+          { name: 'Automation ⚙️', value: AGENT_CAPABILITIES.CUSTOM2, checked: false },
         ];
 
         const selectedCapabilities = await checkbox({
@@ -80,7 +80,7 @@ export class AgentHandlers {
           return;
         }
       } else {
-        capabilities = options.capabilities ? parseInt(options.capabilities) : AGENT_CAPABILITIES.CUSTOM_1;
+        capabilities = options.capabilities ? parseInt(options.capabilities) : AGENT_CAPABILITIES.CUSTOM1;
         metadataUri = options.metadata || "";
       }
 
@@ -225,9 +225,9 @@ export class AgentHandlers {
             { name: 'Analysis 🧠', value: AGENT_CAPABILITIES.ANALYSIS, checked: (currentAgent.capabilities & AGENT_CAPABILITIES.ANALYSIS) !== 0 },
             { name: 'Trading 💰', value: AGENT_CAPABILITIES.TRADING, checked: (currentAgent.capabilities & AGENT_CAPABILITIES.TRADING) !== 0 },
             { name: 'Content Creation ✍️', value: AGENT_CAPABILITIES.CONTENT_GENERATION, checked: (currentAgent.capabilities & AGENT_CAPABILITIES.CONTENT_GENERATION) !== 0 },
-            { name: 'Communication 💬', value: AGENT_CAPABILITIES.CUSTOM_1, checked: (currentAgent.capabilities & AGENT_CAPABILITIES.CUSTOM_1) !== 0 },
-            { name: 'Data Processing 📊', value: AGENT_CAPABILITIES.DATA_PROCESSING, checked: (currentAgent.capabilities & AGENT_CAPABILITIES.DATA_PROCESSING) !== 0 },
-            { name: 'Automation ⚙️', value: AGENT_CAPABILITIES.CUSTOM_2, checked: (currentAgent.capabilities & AGENT_CAPABILITIES.CUSTOM_2) !== 0 },
+                    { name: 'Communication 💬', value: AGENT_CAPABILITIES.CUSTOM1, checked: (currentAgent.capabilities & AGENT_CAPABILITIES.CUSTOM1) !== 0 },
+        { name: 'Data Processing 📊', value: AGENT_CAPABILITIES.DATA_PROCESSING, checked: (currentAgent.capabilities & AGENT_CAPABILITIES.DATA_PROCESSING) !== 0 },
+        { name: 'Automation ⚙️', value: AGENT_CAPABILITIES.CUSTOM2, checked: (currentAgent.capabilities & AGENT_CAPABILITIES.CUSTOM2) !== 0 },
           ];
 
           const selectedCapabilities = await checkbox({

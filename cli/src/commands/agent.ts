@@ -3,7 +3,6 @@ import chalk from "chalk";
 import inquirer from "inquirer";
 import { table } from "table";
 import { address, type Address } from "@solana/web3.js";
-import { AGENT_CAPABILITIES, getCapabilityNames } from "@pod-protocol/sdk";
 import {
   createCommandHandler,
   handleDryRun,
@@ -13,6 +12,34 @@ import {
 import { createClient, getWallet, getKeypair } from "../utils/client.js";
 import ora from "ora";
 
+// Local constants to avoid import issues during Web3.js v2 migration
+const AGENT_CAPABILITIES = {
+  TEXT: 1,
+  IMAGE: 2,
+  CODE: 4,
+  ANALYSIS: 8,
+  TRADING: 16,
+  DATA_PROCESSING: 32,
+  CONTENT_GENERATION: 64,
+  CUSTOM1: 128,
+  CUSTOM2: 256,
+} as const;
+
+// Local utility function
+function getCapabilityNames(capabilities: number): string[] {
+  const names: string[] = [];
+  if (capabilities & AGENT_CAPABILITIES.TEXT) names.push("Text");
+  if (capabilities & AGENT_CAPABILITIES.IMAGE) names.push("Image");
+  if (capabilities & AGENT_CAPABILITIES.CODE) names.push("Code");
+  if (capabilities & AGENT_CAPABILITIES.ANALYSIS) names.push("Analysis");
+  if (capabilities & AGENT_CAPABILITIES.TRADING) names.push("Trading");
+  if (capabilities & AGENT_CAPABILITIES.DATA_PROCESSING) names.push("Data Processing");
+  if (capabilities & AGENT_CAPABILITIES.CONTENT_GENERATION) names.push("Content Generation");
+  if (capabilities & AGENT_CAPABILITIES.CUSTOM1) names.push("Custom 1");
+  if (capabilities & AGENT_CAPABILITIES.CUSTOM2) names.push("Custom 2");
+  return names;
+}
+
 // Interfaces for type safety
 interface AgentRegisterOptions {
   capabilities?: string;
@@ -20,16 +47,7 @@ interface AgentRegisterOptions {
   interactive?: boolean;
 }
 
-interface AgentListOptions {
-  limit?: string;
-}
-
-interface AgentUpdateOptions {
-  capabilities?: string;
-  metadata?: string;
-  agent?: string;
-  interactive?: boolean;
-}
+// Removed unused interfaces
 
 export class AgentCommands {
   register(program: Command) {
@@ -124,7 +142,6 @@ export class AgentCommands {
 
         try {
           const spinner = ora("Updating agent...").start();
-          const wallet = await getWallet(globalOpts.keypair);
           const keypair = await getKeypair(globalOpts.keypair);
           const client = createClient({ network: globalOpts.network });
           const updateOptions = this.prepareUpdateOptions(options);

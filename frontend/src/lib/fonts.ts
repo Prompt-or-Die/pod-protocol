@@ -50,25 +50,9 @@ export const orbitron = Orbitron({
   ],
 });
 
-// Custom local font for branding (if needed)
-export const customBrand = localFont({
-  src: [
-    {
-      path: '../assets/fonts/CustomBrand-Regular.woff2',
-      weight: '400',
-      style: 'normal',
-    },
-    {
-      path: '../assets/fonts/CustomBrand-Bold.woff2',
-      weight: '700',
-      style: 'normal',
-    },
-  ],
-  variable: '--font-custom-brand',
-  display: 'swap',
-  fallback: ['system-ui', 'sans-serif'],
-  preload: false,
-});
+// Custom local font for branding (disabled due to font loading issues)
+// Using Orbitron as the brand font instead
+export const customBrand = orbitron;
 
 // Font loading utility
 export const preloadFonts = () => {
@@ -111,7 +95,7 @@ export const fontVariables = {
   '--font-inter': inter.style.fontFamily,
   '--font-jetbrains-mono': jetbrainsMono.style.fontFamily,
   '--font-orbitron': orbitron.style.fontFamily,
-  '--font-custom-brand': customBrand.style.fontFamily,
+  '--font-custom-brand': orbitron.style.fontFamily, // Using Orbitron as brand font
 };
 
 export default {

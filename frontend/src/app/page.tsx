@@ -1,568 +1,374 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/router';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  PlusIcon,
-  MagnifyingGlassIcon,
+  CpuChipIcon,
   ChatBubbleLeftRightIcon,
-  UserGroupIcon,
-  EllipsisVerticalIcon,
-  HashtagIcon,
-  LockClosedIcon,
-  ClockIcon,
+  ChartBarIcon,
+  CubeTransparentIcon,
+  MagnifyingGlassIcon,
+  Cog6ToothIcon,
+  HomeIcon,
+  Bars3Icon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
-import EnhancedDashboardLayout from '../components/layout/EnhancedDashboardLayout';
-import useStore from '../components/store/useStore';
-import { Channel, ChannelType } from '../components/store/types';
-import usePodClient from '../hooks/usePodClient';
-import LoadingState from '../components/ui/LoadingState';
-import { SkeletonChannelList } from '../components/ui/SkeletonLoader';
-import ResponsiveContainer from '../components/ui/ResponsiveContainer';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/Card';
-import Button from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import Modal, { ModalContent, ModalFooter } from '../components/ui/Modal';
-import { showToast } from '../components/ui/Toast';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { cn } from '../lib/utils';
 
-const ChannelsPage = () => {
-  const router = useRouter();
-  const { channels, setChannels, setChannelsLoading, setChannelsError, setActiveChannel, channelsLoading, channelsError } = useStore();
-  const { client, isInitialized, initError } = usePodClient();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState<ChannelType | 'all'>('all');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    type: ChannelType.GROUP,
-    isPrivate: false
-  });
+// Import all the new components
+import AgentManagement from '../components/agent/AgentManagement';
+import ChannelManagement from '../components/channel/ChannelManagement';
+import AnalyticsDashboard from '../components/analytics/AnalyticsDashboard';
+import ZKCompressionInterface from '../components/zk-compression/ZKCompressionInterface';
+import DiscoveryEngine from '../components/discovery/DiscoveryEngine';
+import { GlassCard, NeuralCard } from '../components/ui/ModernDappCard';
+import Button from '../components/ui/Button';
 
-  // Load channels from the protocol
-  useEffect(() => {
-    if (!isInitialized || initError) {
-      return;
-    }
+type ActivePage = 'home' | 'agents' | 'channels' | 'analytics' | 'zk-compression' | 'discovery' | 'settings';
 
-    const loadChannels = async () => {
-      try {
-        setChannelsLoading(true);
-        setChannelsError(null);
-        
-        const fetched = await client.channels.getAllChannels(50);
-        const processed: Channel[] = fetched.map((c) => ({
-          id: c.pubkey.toBase58(),
-          name: c.name,
-          description: c.description,
-          type: ChannelType.GROUP,
-          participants: [],
-          agents: [],
-          owner: c.creator.toBase58(),
-          isPrivate: c.visibility !== 'public',
-          createdAt: new Date(c.createdAt),
-          lastActivity: new Date(c.createdAt),
-          messageCount: 0,
-          settings: {
-            allowFileUploads: true,
-            maxParticipants: 100,
-            moderationEnabled: false,
-            allowedFileTypes: [],
-          },
-        }));
-        setChannels(processed);
-      } catch (err) {
-        console.error('Failed to fetch channels', err);
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load channels';
-        setChannelsError(errorMessage);
-      } finally {
-        setChannelsLoading(false);
-      }
-    };
+const navigation = [
+  { id: 'home', name: 'Dashboard', icon: HomeIcon, description: 'Overview and quick actions' },
+  { id: 'agents', name: 'AI Agents', icon: CpuChipIcon, description: 'Manage your AI agents' },
+  { id: 'channels', name: 'Channels', icon: ChatBubbleLeftRightIcon, description: 'Communication channels' },
+  { id: 'analytics', name: 'Analytics', icon: ChartBarIcon, description: 'Network insights and metrics' },
+  { id: 'zk-compression', name: 'ZK Compression', icon: CubeTransparentIcon, description: 'Compressed NFTs and trees' },
+  { id: 'discovery', name: 'Discovery', icon: MagnifyingGlassIcon, description: 'Find agents and channels' },
+  { id: 'settings', name: 'Settings', icon: Cog6ToothIcon, description: 'Platform configuration' }
+];
 
-    loadChannels();
-  }, [client, isInitialized, initError, setChannels, setChannelsLoading, setChannelsError]);
+export default function HomePage() {
+  const [activePage, setActivePage] = useState<ActivePage>('home');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const handleCreateChannel = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.name.trim()) {
-      setCreateError('Channel name is required');
-      return;
-    }
-
-    if (formData.name.length < 3) {
-      setCreateError('Channel name must be at least 3 characters');
-      return;
-    }
-
-    if (formData.name.length > 50) {
-      setCreateError('Channel name must be less than 50 characters');
-      return;
-    }
-
-    setIsCreating(true);
-    setCreateError(null);
-
-    try {
-      const newChannel = await client.channels.createChannel({
-        name: formData.name.trim(),
-        description: formData.description.trim() || undefined,
-        visibility: formData.isPrivate ? 'private' : 'public',
-        channelType: formData.type
-      });
-
-      // Add new channel to local state
-      const processedChannel: Channel = {
-        id: newChannel.pubkey.toBase58(),
-        name: newChannel.name,
-        description: newChannel.description,
-        type: formData.type,
-        participants: [],
-        agents: [],
-        owner: newChannel.creator.toBase58(),
-        isPrivate: formData.isPrivate,
-        createdAt: new Date(),
-        lastActivity: new Date(),
-        messageCount: 0,
-        settings: {
-          allowFileUploads: true,
-          maxParticipants: 100,
-          moderationEnabled: false,
-          allowedFileTypes: [],
-        },
-      };
-
-      setChannels([processedChannel, ...channels]);
-      
-      // Reset form
-      setFormData({
-        name: '',
-        description: '',
-        type: ChannelType.GROUP,
-        isPrivate: false
-      });
-      
-      setShowCreateModal(false);
-    } catch (err) {
-      console.error('Failed to create channel:', err);
-      setCreateError(err instanceof Error ? err.message : 'Failed to create channel');
-    } finally {
-      setIsCreating(false);
-    }
-  }, [formData, client, channels, setChannels]);
-
-  const handleInputChange = useCallback((field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (createError) setCreateError(null);
-  }, [createError]);
-
-  const resetForm = useCallback(() => {
-    setFormData({
-      name: '',
-      description: '',
-      type: ChannelType.GROUP,
-      isPrivate: false
-    });
-    setCreateError(null);
-    setIsCreating(false);
-  }, []);
-
-  const handleModalClose = useCallback(() => {
-    if (!isCreating) {
-      setShowCreateModal(false);
-      resetForm();
-    }
-  }, [isCreating, resetForm]);
-
-  const filteredChannels = channels.filter(channel => {
-    const matchesSearch = channel.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (channel.description?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
-    
-    const matchesType = selectedType === 'all' || channel.type === selectedType;
-    
-    return matchesSearch && matchesType;
-  }).sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime());
-
-  const getChannelIcon = (type: ChannelType) => {
-    switch (type) {
-      case ChannelType.DIRECT:
-        return ChatBubbleLeftRightIcon;
-      case ChannelType.GROUP:
-        return UserGroupIcon;
-      case ChannelType.AGENT_CHAT:
-        return HashtagIcon;
+  const renderPageContent = () => {
+    switch (activePage) {
+      case 'agents':
+        return <AgentManagement />;
+      case 'channels':
+        return <ChannelManagement />;
+      case 'analytics':
+        return <AnalyticsDashboard />;
+      case 'zk-compression':
+        return <ZKCompressionInterface />;
+      case 'discovery':
+        return <DiscoveryEngine />;
+      case 'settings':
+        return <SettingsPage />;
       default:
-        return ChatBubbleLeftRightIcon;
+        return <DashboardHome />;
     }
-  };
-
-  const getChannelTypeLabel = (type: ChannelType) => {
-    switch (type) {
-      case ChannelType.DIRECT:
-        return 'Direct Message';
-      case ChannelType.GROUP:
-        return 'Group Chat';
-      case ChannelType.AGENT_CHAT:
-        return 'Agent Chat';
-      case ChannelType.MARKETPLACE:
-        return 'Marketplace';
-      case ChannelType.SUPPORT:
-        return 'Support';
-      default:
-        return 'Unknown';
-    }
-  };
-
-  const formatLastActivity = (date: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
-  };
-
-  const handleChannelClick = (channelId: string) => {
-    setActiveChannel(channelId);
-    // Navigate to chat interface
-    router.push(`/chat/${channelId}`);
   };
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Channels</h1>
-            <p className="text-gray-400 mt-1">Manage your conversations and collaborations</p>
-          </div>
-          <button 
-            onClick={() => setShowCreateModal(true)}
-            className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200"
-          >
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Create Channel
-          </button>
-        </div>
-
-        {/* Search and Filters */}
-        <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20">
-          <div className="flex flex-col lg:flex-row lg:items-center space-y-4 lg:space-y-0 lg:space-x-4">
-            {/* Search */}
-            <div className="relative flex-1">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search channels..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-purple-500/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-200"
-              />
-            </div>
-            
-            {/* Type Filter */}
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value as ChannelType | 'all')}
-              className="px-4 py-3 bg-gray-800/50 border border-purple-500/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-200"
-            >
-              <option value="all">All Types</option>
-              {Object.values(ChannelType).map(type => (
-                <option key={type} value={type}>
-                  {getChannelTypeLabel(type)}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Results Count */}
-        <div className="text-gray-400">
-          {filteredChannels.length} channel{filteredChannels.length !== 1 ? 's' : ''}
-        </div>
-
-        {/* Client Initialization Error */}
-        {initError && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 mb-6">
-            <h3 className="text-lg font-bold text-red-400 mb-2">Connection Error</h3>
-            <p className="text-red-300 mb-4">{initError}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-            >
-              Retry Connection
-            </button>
-          </div>
-        )}
-
-        {/* Loading State */}
-        {!isInitialized && !initError && (
-          <LoadingState 
-            message="Initializing PoD Client..." 
-            submessage="Connecting to Solana network and setting up secure communication"
-            size="lg"
-          />
-        )}
-
-        {/* Channels Loading */}
-        {isInitialized && channelsLoading && (
-          <div>
-            <SkeletonChannelList count={5} />
-          </div>
-        )}
-
-        {/* Channels Error */}
-        {isInitialized && channelsError && !channelsLoading && (
-          <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-6">
-            <h3 className="text-lg font-bold text-orange-400 mb-2">Failed to Load Channels</h3>
-            <p className="text-orange-300 mb-4">{channelsError}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors"
-            >
-              Retry Loading
-            </button>
-          </div>
-        )}
-
-        {/* Channels List */}
-        {isInitialized && !channelsLoading && !channelsError && (
-          <div className="space-y-4">
-            <AnimatePresence>
-              {filteredChannels.map((channel, index) => {
-              const IconComponent = getChannelIcon(channel.type);
-              
-              return (
-                <motion.div
-                  key={channel.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ delay: index * 0.05 }}
-                  onClick={() => handleChannelClick(channel.id)}
-                  className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20 hover:border-purple-400/40 transition-all duration-300 cursor-pointer group"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-4 flex-1">
-                      {/* Channel Icon */}
-                      <div className="p-3 bg-purple-600/20 rounded-lg group-hover:bg-purple-600/30 transition-colors">
-                        <IconComponent className="h-6 w-6 text-purple-400" />
-                      </div>
-                      
-                      {/* Channel Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h3 className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors truncate">
-                            {channel.name}
-                          </h3>
-                          {channel.isPrivate && (
-                            <LockClosedIcon className="h-4 w-4 text-gray-400" />
-                          )}
-                        </div>
-                        
-                        {channel.description && (
-                          <p className="text-gray-400 text-sm mb-2 line-clamp-2">
-                            {channel.description}
-                          </p>
-                        )}
-                        
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          <span className="flex items-center space-x-1">
-                            <UserGroupIcon className="h-4 w-4" />
-                            <span>{channel.participants.length + channel.agents.length} members</span>
-                          </span>
-                          <span className="flex items-center space-x-1">
-                            <ChatBubbleLeftRightIcon className="h-4 w-4" />
-                            <span>{channel.messageCount} messages</span>
-                          </span>
-                          <span className="flex items-center space-x-1">
-                            <ClockIcon className="h-4 w-4" />
-                            <span>{formatLastActivity(channel.lastActivity)}</span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Channel Actions */}
-                    <div className="flex items-center space-x-2">
-                      <span className="px-2 py-1 bg-purple-600/20 text-purple-300 text-xs rounded-full">
-                        {getChannelTypeLabel(channel.type)}
-                      </span>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Handle menu click
-                        }}
-                        className="p-2 text-gray-400 hover:text-white hover:bg-purple-600/20 rounded-lg transition-colors"
-                      >
-                        <EllipsisVerticalIcon className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-            </AnimatePresence>
-            
-            {/* Empty State */}
-            {filteredChannels.length === 0 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center py-12"
-              >
-                <div className="text-6xl mb-4">💬</div>
-                <h3 className="text-xl font-bold text-white mb-2">No channels found</h3>
-                <p className="text-gray-400 mb-6">
-                  {searchQuery || selectedType !== 'all' 
-                    ? 'Try adjusting your search criteria'
-                    : 'Create your first channel to start collaborating with AI agents'
-                  }
-                </p>
-                <div className="flex justify-center space-x-4">
-                  {(searchQuery || selectedType !== 'all') && (
-                    <button
-                      onClick={() => {
-                        setSearchQuery('');
-                        setSelectedType('all');
-                      }}
-                      className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
-                    >
-                      Clear Filters
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-                  >
-                    Create Channel
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </div>
-        )}
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900">
+      {/* Animated Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,119,198,0.1),transparent_50%)]" />
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
       </div>
 
-      {/* Create Channel Modal */}
-      <AnimatePresence>
-        {showCreateModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-            onClick={handleModalClose}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-gray-900 rounded-xl p-6 border border-purple-500/20 max-w-md w-full mx-4"
-            >
-              <h2 className="text-xl font-bold text-white mb-4">Create New Channel</h2>
-              {createError && (
-                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
-                  <p className="text-red-400 text-sm">{createError}</p>
-                </div>
-              )}
-              <form onSubmit={handleCreateChannel} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Channel Name
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Enter channel name"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    disabled={isCreating}
-                    className="w-full px-3 py-2 bg-gray-800/50 border border-purple-500/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50"
-                    required
-                    minLength={3}
-                    maxLength={50}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Description (Optional)
-                  </label>
-                  <textarea
-                    placeholder="Describe the purpose of this channel"
-                    rows={3}
-                    value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
-                    disabled={isCreating}
-                    className="w-full px-3 py-2 bg-gray-800/50 border border-purple-500/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 resize-none disabled:opacity-50"
-                    maxLength={200}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Channel Type
-                  </label>
-                  <select 
-                    value={formData.type}
-                    onChange={(e) => handleInputChange('type', e.target.value as ChannelType)}
-                    disabled={isCreating}
-                    className="w-full px-3 py-2 bg-gray-800/50 border border-purple-500/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50"
-                  >
-                    <option value={ChannelType.GROUP}>Group Chat</option>
-                    <option value={ChannelType.AGENT_CHAT}>Agent Chat</option>
-                    <option value={ChannelType.DIRECT}>Direct Message</option>
-                  </select>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="private"
-                    checked={formData.isPrivate}
-                    onChange={(e) => handleInputChange('isPrivate', e.target.checked)}
-                    disabled={isCreating}
-                    className="rounded border-purple-500/20 bg-gray-800/50 text-purple-600 focus:ring-purple-500/50 disabled:opacity-50"
-                  />
-                  <label htmlFor="private" className="text-sm text-gray-300">
-                    Make this channel private
-                  </label>
-                </div>
-              </form>
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  type="button"
-                  onClick={handleModalClose}
-                  disabled={isCreating}
-                  className="px-4 py-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  onClick={handleCreateChannel}
-                  disabled={isCreating || !formData.name.trim()}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                >
-                  {isCreating && (
-                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                  )}
-                  <span>{isCreating ? 'Creating...' : 'Create Channel'}</span>
-                </button>
+      {/* Mobile sidebar backdrop */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={cn(
+        'fixed inset-y-0 left-0 z-50 w-72 transform transition-transform duration-300 ease-in-out lg:translate-x-0',
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      )}>
+        <div className="h-full bg-gray-900/90 backdrop-blur-md border-r border-gray-700/50">
+          <div className="flex items-center justify-between p-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">P</span>
               </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                PoD Protocol
+              </span>
+            </div>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden p-2 text-gray-400 hover:text-white"
+            >
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          </div>
+
+          <nav className="px-4 space-y-2">
+            {navigation.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActivePage(item.id as ActivePage);
+                  setSidebarOpen(false);
+                }}
+                className={cn(
+                  'w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all group',
+                  activePage === item.id
+                    ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+                )}
+              >
+                <item.icon className={cn(
+                  'h-5 w-5 transition-colors',
+                  activePage === item.id ? 'text-purple-400' : 'text-gray-400 group-hover:text-white'
+                )} />
+                <div className="text-left">
+                  <div className="font-medium">{item.name}</div>
+                  <div className="text-xs text-gray-500">{item.description}</div>
+                </div>
+              </button>
+            ))}
+          </nav>
+
+          <div className="absolute bottom-6 left-4 right-4">
+            <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+              <div className="text-sm text-gray-400 mb-2">Wallet Connection</div>
+              <WalletMultiButton className="!bg-purple-600 hover:!bg-purple-700 !rounded-lg !text-sm !h-10 !w-full !justify-center" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="lg:pl-72">
+        {/* Top bar */}
+        <div className="sticky top-0 z-30 bg-gray-900/80 backdrop-blur-md border-b border-gray-700/50">
+          <div className="flex items-center justify-between px-6 py-4">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden p-2 text-gray-400 hover:text-white"
+              >
+                <Bars3Icon className="h-5 w-5" />
+              </button>
+              <div>
+                <h1 className="text-xl font-bold text-white">
+                  {navigation.find(nav => nav.id === activePage)?.name || 'Dashboard'}
+                </h1>
+                <p className="text-sm text-gray-400">
+                  {navigation.find(nav => nav.id === activePage)?.description}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <div className="hidden lg:block">
+                <WalletMultiButton className="!bg-purple-600 hover:!bg-purple-700 !rounded-lg !text-sm !h-10" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Page content */}
+        <main className="p-6">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activePage}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {renderPageContent()}
             </motion.div>
+          </AnimatePresence>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+// Dashboard Home Component
+const DashboardHome: React.FC = () => {
+  return (
+    <div className="max-w-7xl mx-auto space-y-8">
+      {/* Welcome Section */}
+      <div className="text-center space-y-4">
+        <motion.h1 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-4xl lg:text-6xl font-bold bg-gradient-to-r from-purple-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent"
+        >
+          PoD Protocol
+        </motion.h1>
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="text-xl text-gray-300 max-w-3xl mx-auto"
+        >
+          The next-generation AI agent communication protocol on Solana. 
+          Create, manage, and scale intelligent agents with advanced features.
+        </motion.p>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { label: 'Active Agents', value: '1,247', change: '+12.5%', color: 'purple' },
+          { label: 'Total Channels', value: '456', change: '+8.2%', color: 'cyan' },
+          { label: 'Messages Today', value: '12.8K', change: '+23.1%', color: 'green' },
+          { label: 'Network TPS', value: '2,847', change: '+5.7%', color: 'yellow' }
+        ].map((stat, index) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 + index * 0.1 }}
+          >
+            <NeuralCard className="p-6">
+              <div className="space-y-2">
+                <div className="text-sm text-gray-400">{stat.label}</div>
+                <div className="text-2xl font-bold text-white">{stat.value}</div>
+                <div className={cn(
+                  'text-sm font-medium',
+                  stat.color === 'purple' && 'text-purple-400',
+                  stat.color === 'cyan' && 'text-cyan-400',
+                  stat.color === 'green' && 'text-green-400',
+                  stat.color === 'yellow' && 'text-yellow-400'
+                )}>
+                  {stat.change}
+                </div>
+              </div>
+            </NeuralCard>
           </motion.div>
-        )}
-      </AnimatePresence>
-    </DashboardLayout>
+        ))}
+      </div>
+
+      {/* Feature Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[
+          {
+            title: 'AI Agent Management',
+            description: 'Create and manage intelligent agents with custom capabilities',
+            icon: CpuChipIcon,
+            color: 'purple',
+            action: 'agents'
+          },
+          {
+            title: 'Communication Channels',
+            description: 'Set up secure channels for agent-to-agent communication',
+            icon: ChatBubbleLeftRightIcon,
+            color: 'cyan',
+            action: 'channels'
+          },
+          {
+            title: 'Network Analytics',
+            description: 'Monitor performance and gain insights into network activity',
+            icon: ChartBarIcon,
+            color: 'green',
+            action: 'analytics'
+          },
+          {
+            title: 'ZK Compression',
+            description: 'Manage compressed NFTs and Merkle trees efficiently',
+            icon: CubeTransparentIcon,
+            color: 'yellow',
+            action: 'zk-compression'
+          },
+          {
+            title: 'Discovery Engine',
+            description: 'Find and connect with agents and channels across the network',
+            icon: MagnifyingGlassIcon,
+            color: 'pink',
+            action: 'discovery'
+          },
+          {
+            title: 'Platform Settings',
+            description: 'Configure your PoD Protocol experience and preferences',
+            icon: Cog6ToothIcon,
+            color: 'indigo',
+            action: 'settings'
+          }
+        ].map((feature, index) => (
+          <motion.div
+            key={feature.title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 + index * 0.1 }}
+          >
+            <NeuralCard interactive tilt className="p-6 h-full cursor-pointer group">
+              <div className="space-y-4">
+                <div className={cn(
+                  'w-12 h-12 rounded-lg flex items-center justify-center',
+                  feature.color === 'purple' && 'bg-purple-600/20',
+                  feature.color === 'cyan' && 'bg-cyan-600/20',
+                  feature.color === 'green' && 'bg-green-600/20',
+                  feature.color === 'yellow' && 'bg-yellow-600/20',
+                  feature.color === 'pink' && 'bg-pink-600/20',
+                  feature.color === 'indigo' && 'bg-indigo-600/20'
+                )}>
+                  <feature.icon className={cn(
+                    'h-6 w-6',
+                    feature.color === 'purple' && 'text-purple-400',
+                    feature.color === 'cyan' && 'text-cyan-400',
+                    feature.color === 'green' && 'text-green-400',
+                    feature.color === 'yellow' && 'text-yellow-400',
+                    feature.color === 'pink' && 'text-pink-400',
+                    feature.color === 'indigo' && 'text-indigo-400'
+                  )} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white group-hover:text-purple-400 transition-colors">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-400 text-sm mt-1">
+                    {feature.description}
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <Button variant="ghost" size="sm" className="group-hover:text-purple-400">
+                    Explore →
+                  </Button>
+                </div>
+              </div>
+            </NeuralCard>
+          </motion.div>
+        ))}
+      </div>
+    </div>
   );
 };
 
-export default ChannelsPage;
+// Discovery Page Component (placeholder)
+const DiscoveryPage: React.FC = () => {
+  return (
+    <div className="max-w-7xl mx-auto">
+      <GlassCard className="p-8 text-center">
+        <MagnifyingGlassIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold text-white mb-2">Discovery Engine</h2>
+        <p className="text-gray-400 mb-6">
+          Advanced search and discovery features coming soon. Find agents, channels, and opportunities across the PoD Protocol network.
+        </p>
+        <Button variant="primary">
+          Join Beta Program
+        </Button>
+      </GlassCard>
+    </div>
+  );
+};
+
+// Settings Page Component (placeholder)
+const SettingsPage: React.FC = () => {
+  return (
+    <div className="max-w-7xl mx-auto">
+      <GlassCard className="p-8 text-center">
+        <Cog6ToothIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold text-white mb-2">Platform Settings</h2>
+        <p className="text-gray-400 mb-6">
+          Comprehensive settings and configuration options coming soon. Customize your PoD Protocol experience.
+        </p>
+        <Button variant="primary">
+          Configure Platform
+        </Button>
+      </GlassCard>
+    </div>
+  );
+};

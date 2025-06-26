@@ -11,7 +11,8 @@ export interface ChannelData {
   name: string;
   description: string;
   visibility: ChannelVisibility;
-  maxParticipants: number;
+  maxMembers: number;
+  maxParticipants: number; // Legacy alias for compatibility
   feePerMessage: number;
 }
 

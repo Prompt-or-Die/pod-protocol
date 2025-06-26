@@ -32,7 +32,7 @@ ${chalk.gray("║")} ${chalk.magenta.bold("██╔═══╝ ██╔══
 ${chalk.gray("║")} ${chalk.magenta.bold("██║     ██║  ██║╚██████╔╝██║ ╚═╝ ██║██║        ██║   ")} ${chalk.white.bold(" ╚██████╔╝██║  ██║")} ${chalk.gray("║")}
 ${chalk.gray("║")} ${chalk.magenta.bold("╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝╚═╝        ╚═╝   ")} ${chalk.white.bold("  ╚═════╝ ╚═╝  ╚═╝")} ${chalk.gray("║")}
 ${chalk.gray("║")}                                                                               ${chalk.gray("║")}
-${chalk.gray("║")} ${chalk.magenta.bold("    ███████╗██╗██╗     ██╗")} ${chalk.red.bold("███████╗    ██████╗ ██╗███████╗    ")} ${chalk.gray("║")}
+${chalk.gray("║")} ${chalk.magenta.bold("    ██ █████╗██╗██╗     ██╗")} ${chalk.red.bold("███████╗   ██████╗ ██╗███████╗    ")} ${chalk.gray("║")}
 ${chalk.gray("║")} ${chalk.magenta.bold("    ██╔═════╝██║██║     ██║")} ${chalk.red.bold("██╔════╝    ██╔══██╗██║██╔════╝    ")} ${chalk.gray("║")}
 ${chalk.gray("║")} ${chalk.magenta.bold("    █████╗  ██║██║     ██║")} ${chalk.red.bold("█████╗      ██║  ██║██║█████╗      ")} ${chalk.gray("║")}
 ${chalk.gray("║")} ${chalk.magenta.bold("    ██╔══╝  ██║██║     ██║")} ${chalk.red.bold("██╔══╝      ██║  ██║██║██╔══╝      ")} ${chalk.gray("║")}
@@ -106,6 +106,7 @@ export const DECORATIVE_ELEMENTS = {
   lightningBorder: `${chalk.yellow("⚡")} ${chalk.magenta("━".repeat(48))} ${chalk.yellow("⚡")}`,
   violetGradient: chalk.magenta("▓".repeat(50)),
   thin: chalk.gray("─".repeat(60)),
+  line: chalk.gray("─".repeat(60)),
 };
 
 // Banner size options
@@ -169,6 +170,8 @@ export const ICONS = {
   fire: "🔥",
   gem: "💎",
   chain: "⛓️",
+  wave: "👋",
+  history: "📜",
 } as const;
 
 export const DIVIDERS = {
@@ -209,7 +212,6 @@ export function getColors() {
 }
 
 export function showBanner(size: BannerSize = BannerSize.FULL): void {
-  const colors = getColors();
   
   if (blackTerminalMode) {
     // Clear screen and set black background
@@ -268,7 +270,6 @@ export function showMiniHeader(command?: string): void {
   if (blackTerminalMode) {
     const purple = chalk.hex('#9D4EDD');
     const white = chalk.white;
-    const crimson = chalk.hex('#DC143C');
     
     if (command && BLACK_TERMINAL_COMMAND_BANNERS[command as keyof typeof BLACK_TERMINAL_COMMAND_BANNERS]) {
       console.log(BLACK_TERMINAL_COMMAND_BANNERS[command as keyof typeof BLACK_TERMINAL_COMMAND_BANNERS]());
