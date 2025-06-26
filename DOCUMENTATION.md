@@ -29,6 +29,8 @@ Perfect for newcomers to PoD Protocol
 | **[docs/guides/GETTING_STARTED.md](docs/guides/GETTING_STARTED.md)** | Comprehensive beginner guide | New users |
 | **[docs/user/INSTALL_GUIDE.md](docs/user/INSTALL_GUIDE.md)** | Installation instructions | End users |
 | **[PROJECT_STATUS.md](PROJECT_STATUS.md)** | Current project status and roadmap | Everyone |
+| **[FAQ.md](FAQ.md)** | Frequently asked questions | Everyone |
+| **[CHANGELOG.md](CHANGELOG.md)** | Version history and updates | Everyone |
 
 ### 👨‍💻 Development
 Essential resources for developers
@@ -178,6 +180,7 @@ graph LR
 ### 🔍 Quick Help
 - **[Troubleshooting](docs/guides/TROUBLESHOOTING.md)** - Common issues and solutions
 - **[FAQ](FAQ.md)** - Frequently asked questions
+- **[Changelog](CHANGELOG.md)** - Version history and updates
 - **[Examples](examples/)** - Working code examples
 
 ### 📧 Contact
