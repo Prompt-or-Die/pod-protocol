@@ -2,6 +2,10 @@ import { Server as HTTPServer } from 'http';
 import { Socket as NetSocket } from 'net';
 import { NextApiResponse } from 'next';
 import { Server as IOServer } from 'socket.io';
+import {
+  ChannelMessage,
+  UserPresence
+} from './websocket-types';
 
 export interface SocketServer extends HTTPServer {
   io?: IOServer | undefined;
@@ -15,65 +19,7 @@ export interface NextApiResponseWithSocket extends NextApiResponse {
   socket: SocketWithIO;
 }
 
-// Message types for type safety
-export interface ChannelMessage {
-  id: string;
-  channelId: string;
-  senderId: string;
-  senderName: string;
-  content: string;
-  timestamp: number;
-  type: 'text' | 'image' | 'file';
-  metadata?: Record<string, any>;
-}
-
-export interface UserPresence {
-  userId: string;
-  username: string;
-  status: 'online' | 'away' | 'offline';
-  lastSeen: number;
-  channelId?: string;
-}
-
-export interface TypingIndicator {
-  userId: string;
-  username: string;
-  channelId: string;
-  isTyping: boolean;
-}
-
-// Server-side events
-export interface ServerToClientEvents {
-  'message:new': (message: ChannelMessage) => void;
-  'message:updated': (message: ChannelMessage) => void;
-  'message:deleted': (messageId: string, channelId: string) => void;
-  
-  'channel:joined': (userId: string, channelId: string) => void;
-  'channel:left': (userId: string, channelId: string) => void;
-  'channel:updated': (channelId: string, updates: Record<string, any>) => void;
-  
-  'user:presence': (presence: UserPresence) => void;
-  'user:typing': (typing: TypingIndicator) => void;
-  
-  'notification:new': (notification: Record<string, any>) => void;
-  'error': (error: string) => void;
-}
-
-// Client-side events
-export interface ClientToServerEvents {
-  'message:send': (message: Omit<ChannelMessage, 'id' | 'timestamp'>) => void;
-  'message:edit': (messageId: string, content: string) => void;
-  'message:delete': (messageId: string, channelId: string) => void;
-  
-  'channel:join': (channelId: string) => void;
-  'channel:leave': (channelId: string) => void;
-  
-  'user:status': (status: UserPresence['status']) => void;
-  'user:typing:start': (channelId: string) => void;
-  'user:typing:stop': (channelId: string) => void;
-  
-  'ping': () => void;
-}
+// Types are now imported from websocket-types.ts
 
 // In-memory storage for demo (in production, use Redis or database)
 export class MessageStore {

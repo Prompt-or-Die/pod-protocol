@@ -1,4 +1,3 @@
- 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Enable experimental features for performance
@@ -6,6 +5,25 @@ const nextConfig = {
     // Optimize images
     optimizePackageImports: ['framer-motion', '@headlessui/react'],
   },
+
+  // Transpile packages that need special handling
+  transpilePackages: [
+    '@pod-protocol/sdk',
+    '@coral-xyz/anchor',
+    '@lightprotocol/stateless.js',
+    '@lightprotocol/compressed-token',
+    '@solana/wallet-adapter-base',
+    '@solana/wallet-adapter-react',
+    '@solana/wallet-adapter-react-ui',
+    '@solana/wallet-adapter-wallets',
+    '@solana/rpc',
+    '@solana/addresses',
+    '@solana/signers',
+    '@solana-program/system',
+    '@solana-program/compute-budget',
+    '@reown/appkit',
+    '@reown/appkit-adapter-solana',
+  ],
 
   // Turbopack configuration (moved from experimental)
   turbopack: {
@@ -96,6 +114,86 @@ const nextConfig = {
 
   // Bundle optimization
   webpack: (config, { dev, isServer, webpack }) => {
+    // Basic Node.js polyfills for client-side
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+        stream: false,
+        http: false,
+        https: false,
+        zlib: false,
+        path: false,
+        os: false,
+        events: false,
+        buffer: false,
+      };
+    }
+
+    // Handle Node.js URI scheme by stripping the node: prefix
+    const originalResolveLoader = config.resolveLoader;
+    config.resolveLoader = {
+      ...originalResolveLoader,
+      alias: {
+        ...originalResolveLoader?.alias,
+        'node:events': 'events',
+        'node:fs': 'fs',
+        'node:path': 'path',
+        'node:crypto': 'crypto',
+        'node:stream': 'stream',
+        'node:util': 'util',
+        'node:url': 'url',
+        'node:assert': 'assert',
+        'node:buffer': 'buffer',
+        'node:process': 'process',
+      },
+    };
+
+    // Handle external dependencies that should not be bundled
+    if (!isServer) {
+      config.externals = config.externals || [];
+      config.externals.push({
+        'utf-8-validate': 'commonjs utf-8-validate',
+        'bufferutil': 'commonjs bufferutil',
+        'encoding': 'commonjs encoding',
+      });
+    }
+
+    // Fix for @coral-xyz/anchor default import issue
+    config.module.rules.push({
+      test: /\.js$/,
+      include: /node_modules\/@coral-xyz\/anchor/,
+      use: {
+        loader: 'babel-loader',
+        options: {
+          presets: ['@babel/preset-env'],
+          plugins: [
+            ['@babel/plugin-transform-modules-commonjs', { allowTopLevelThis: true }]
+          ]
+        }
+      }
+    });
+
+    // Add module resolution for packages that might have import issues
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'node:events': 'events',
+      'node:fs': 'fs',
+      'node:path': 'path',
+      'node:crypto': 'crypto',
+      'node:stream': 'stream',
+      'node:util': 'util',
+      'node:url': 'url',
+      'node:assert': 'assert',
+      'node:buffer': 'buffer',
+      'node:process': 'process',
+      // Handle anchor import issues
+      '@coral-xyz/anchor$': '@coral-xyz/anchor/dist/cjs/index.js',
+    };
+
     // Only apply optimizations in production
     if (!dev && !isServer) {
       // Enable tree shaking
@@ -115,6 +213,12 @@ const nextConfig = {
             test: /[\\/]node_modules[\\/]@solana[\\/]/,
             name: 'solana',
             priority: 20,
+            chunks: 'all',
+          },
+          anchor: {
+            test: /[\\/]node_modules[\\/]@coral-xyz[\\/]/,
+            name: 'anchor',
+            priority: 25,
             chunks: 'all',
           },
           framer: {
@@ -139,7 +243,11 @@ const nextConfig = {
     // Ignore node modules warnings
     config.ignoreWarnings = [
       /Module not found: Can't resolve 'encoding'/,
+      /Module not found: Can't resolve 'node:*/,
       /Critical dependency: the request of a dependency is an expression/,
+      /Module not found: Can't resolve 'utf-8-validate'/,
+      /Module not found: Can't resolve 'bufferutil'/,
+      /Attempted import error:/,
     ];
 
     // Performance monitoring in production
@@ -205,4 +313,4 @@ const nextConfig = {
   }),
 };
 
-export default nextConfig;
+module.exports = nextConfig;

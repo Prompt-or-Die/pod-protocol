@@ -4,9 +4,8 @@ import { generateKeyPairSigner } from '@solana/signers';
 import type { Address } from '@solana/addresses';
 import type { Rpc } from '@solana/rpc';
 import type { KeyPairSigner } from '@solana/signers';
-import anchor from "@coral-xyz/anchor";
-const { Program, AnchorProvider } = anchor;
-import type { Program as ProgramType } from "@coral-xyz/anchor";
+import { Program, AnchorProvider } from "@coral-xyz/anchor";
+import type { Program as ProgramType, Wallet } from "@coral-xyz/anchor";
 import {
   PROGRAM_ID,
   PodComConfig,
@@ -106,7 +105,7 @@ export class PodComClient {
   /**
    * Initialize the Anchor program with a wallet (call this first)
    */
-  async initialize(wallet?: anchor.Wallet): Promise<void> {
+  async initialize(wallet?: Wallet): Promise<void> {
     try {
       if (wallet) {
         // If a wallet is provided, create the program with it

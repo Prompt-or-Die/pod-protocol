@@ -2,8 +2,7 @@ import type { Address } from '@solana/addresses';
 import type { KeyPairSigner } from '@solana/signers';
 import { address } from '@solana/addresses';
 import { lamports } from '@solana/kit';
-import anchor from "@coral-xyz/anchor";
-const { BN, utils, web3, AnchorProvider, Program } = anchor;
+import { BN, utils, web3, AnchorProvider, Program } from "@coral-xyz/anchor";
 import { BaseService } from "./base.js";
 import {
   CreateChannelOptions,

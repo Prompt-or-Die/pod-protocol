@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useAnchorWallet } from "@solana/wallet-adapter-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -19,27 +19,25 @@ import {
   Message,
   Agent,
   MessageType,
-  MessageStatus,
 } from "@/components/store/types";
 import { usePodClient } from "@/hooks/usePodClient";
-import { MessageStatus as SDKMessageStatus } from "@pod-protocol/sdk";
+import LoadingState from '../../components/ui/LoadingState';
+import ErrorBoundary from '../../components/ErrorBoundary';
 
 // Web3.js v2.0 imports
 import { address } from '@solana/addresses';
 import type { Address } from '@solana/addresses';
 
-function mapStatus(status: SDKMessageStatus): MessageStatus {
-  switch (status) {
-    case SDKMessageStatus.Delivered:
-      return MessageStatus.DELIVERED;
-    case SDKMessageStatus.Read:
-      return MessageStatus.READ;
-    case SDKMessageStatus.Failed:
-      return MessageStatus.FAILED;
-    case SDKMessageStatus.Pending:
-    default:
-      return MessageStatus.SENT;
-  }
+// Define MessageStatus locally instead of importing from SDK
+enum MessageStatus {
+  Pending = 'pending',
+  Delivered = 'delivered',
+  Read = 'read',
+  Failed = 'failed'
+}
+
+function mapStatus(status: MessageStatus): MessageStatus {
+  return status;
 }
 
 export default function MessagesPage() {
@@ -169,12 +167,12 @@ export default function MessagesPage() {
     const timeoutId = setTimeout(() => {
       controller.abort();
       console.error("Message sending timed out");
-      addMessage(channelId, { ...baseMessage, status: MessageStatus.FAILED });
+      addMessage(channelId, { ...baseMessage, status: MessageStatus.Failed });
     }, 10000); // 10 second timeout
 
     try {
       // Add optimistic message
-      addMessage(channelId, { ...baseMessage, status: MessageStatus.SENT });
+      addMessage(channelId, { ...baseMessage, status: MessageStatus.Pending });
 
       // Convert agent ID to Web3.js v2.0 Address
       const recipientAddress = address(selectedAgent.id);
@@ -185,14 +183,14 @@ export default function MessagesPage() {
       clearTimeout(timeoutId);
       
       // Update message status to delivered
-      addMessage(channelId, { ...baseMessage, status: MessageStatus.DELIVERED });
+      addMessage(channelId, { ...baseMessage, status: MessageStatus.Delivered });
       
       console.log(`Message sent with signature: ${signature}`);
     } catch (err) {
       clearTimeout(timeoutId);
       console.error("Failed to send message", err);
       if (!controller.signal.aborted) {
-        addMessage(channelId, { ...baseMessage, status: MessageStatus.FAILED });
+        addMessage(channelId, { ...baseMessage, status: MessageStatus.Failed });
       }
     }
 
@@ -341,13 +339,13 @@ export default function MessagesPage() {
                           </p>
                           {message.senderId === user?.id && (
                             <div className="ml-2">
-                              {message.status === MessageStatus.SENT && (
+                              {message.status === MessageStatus.Pending && (
                                 <div className="w-3 h-3 text-purple-300">✓</div>
                               )}
-                              {message.status === MessageStatus.DELIVERED && (
+                              {message.status === MessageStatus.Delivered && (
                                 <div className="w-3 h-3 text-green-400">✓✓</div>
                               )}
-                              {message.status === MessageStatus.FAILED && (
+                              {message.status === MessageStatus.Failed && (
                                 <div className="w-3 h-3 text-red-400">✗</div>
                               )}
                             </div>

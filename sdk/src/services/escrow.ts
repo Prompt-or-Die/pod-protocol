@@ -1,8 +1,7 @@
 import type { Address } from '@solana/addresses';
 import type { KeyPairSigner } from '@solana/signers';
 import { address } from '@solana/addresses';
-import anchor from "@coral-xyz/anchor";
-const { BN, web3 } = anchor;
+import { BN, web3 } from "@coral-xyz/anchor";
 import { BaseService } from "./base";
 import {
   DepositEscrowOptions,

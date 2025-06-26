@@ -3,8 +3,7 @@ import type { Address } from "@solana/addresses";
 import { generateKeyPairSigner } from "@solana/signers";
 import type { KeyPairSigner } from "@solana/signers";
 import { BaseService, BaseServiceConfig } from './base.js';
-import anchor from "@coral-xyz/anchor";
-const { BN, web3 } = anchor;
+import { BN, web3 } from "@coral-xyz/anchor";
 
 // Define the instruction type that matches what other services expect
 export interface TransactionInstruction {
