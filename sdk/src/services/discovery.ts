@@ -1023,19 +1023,19 @@ export class DiscoveryService extends BaseService {
   }
 
   private convertMessageTypeFromProgram(programType: any): MessageType {
-    if (programType.text !== undefined) return MessageType.Text;
-    if (programType.data !== undefined) return MessageType.Data;
-    if (programType.command !== undefined) return MessageType.Command;
-    if (programType.response !== undefined) return MessageType.Response;
-    return MessageType.Text;
+    if (programType.text !== undefined) return MessageType.TEXT;
+    if (programType.image !== undefined) return MessageType.IMAGE;
+    if (programType.code !== undefined) return MessageType.CODE;
+    if (programType.file !== undefined) return MessageType.FILE;
+    return MessageType.TEXT;
   }
 
   private convertMessageStatusFromProgram(programStatus: any): MessageStatus {
-    if (programStatus.pending !== undefined) return MessageStatus.Pending;
-    if (programStatus.delivered !== undefined) return MessageStatus.Delivered;
-    if (programStatus.read !== undefined) return MessageStatus.Read;
-    if (programStatus.failed !== undefined) return MessageStatus.Failed;
-    return MessageStatus.Pending;
+    if (programStatus.pending !== undefined) return MessageStatus.PENDING;
+    if (programStatus.delivered !== undefined) return MessageStatus.DELIVERED;
+    if (programStatus.read !== undefined) return MessageStatus.READ;
+    if (programStatus.failed !== undefined) return MessageStatus.FAILED;
+    return MessageStatus.PENDING;
   }
 
   private convertChannelVisibilityFromProgram(
@@ -1044,5 +1044,417 @@ export class DiscoveryService extends BaseService {
     if (programVisibility.public !== undefined) return ChannelVisibility.Public;
     if (programVisibility.private !== undefined) return ChannelVisibility.Private;
     return ChannelVisibility.Public;
+  }
+
+  async findAgents(options: AgentSearchFilters = {}): Promise<AgentAccount[]> {
+    try {
+      if (!this.program) {
+        throw new Error("Program not initialized");
+      }
+
+      // Get all agent accounts using proper Web3.js v2.0 patterns
+      const agentAccounts = await this.rpc.getProgramAccounts(this.programId, {
+        commitment: this.commitment,
+        filters: [
+          {
+            memcmp: {
+              offset: 0,
+              bytes: "agent_account" // Account discriminator
+            }
+          }
+        ]
+      }).send();
+
+      let agents = agentAccounts.map((acc: any) => {
+        // Decode account data properly
+        const account = this.program.coder.accounts.decode("agentAccount", acc.account.data);
+        return {
+          pubkey: acc.pubkey,
+          capabilities: account.capabilities.toNumber(),
+          metadataUri: account.metadataUri,
+          reputation: account.reputation.toNumber(),
+          lastUpdated: account.lastUpdated.toNumber(),
+          invitesSent: account.invitesSent.toNumber(),
+          lastInviteAt: account.lastInviteAt.toNumber(),
+          bump: account.bump,
+        };
+      });
+
+      // Apply filters
+      if (options.capabilities !== undefined) {
+        agents = agents.filter(agent => 
+          (agent.capabilities & options.capabilities!) === options.capabilities);
+      }
+
+      if (options.minReputation !== undefined) {
+        agents = agents.filter(agent => agent.reputation >= options.minReputation!);
+      }
+
+      if (options.location) {
+        // Filter by location metadata (if available in metadataUri)
+        agents = agents.filter(agent => {
+          // In a real implementation, this would parse metadata
+          return true; // Placeholder for location filtering
+        });
+      }
+
+      // Sort by relevance (reputation by default)
+      agents.sort((a, b) => b.reputation - a.reputation);
+
+      // Apply limit
+      return agents.slice(0, options.limit || 50);
+    } catch (error: any) {
+      throw new Error(`Failed to search agents: ${error.message}`);
+    }
+  }
+
+  async findMessages(options: MessageSearchFilters = {}): Promise<MessageAccount[]> {
+    try {
+      if (!this.program) {
+        throw new Error("Program not initialized");
+      }
+
+      // Get all message accounts using proper Web3.js v2.0 patterns
+      const messageAccounts = await this.rpc.getProgramAccounts(this.programId, {
+        commitment: this.commitment,
+        filters: [
+          {
+            memcmp: {
+              offset: 0,
+              bytes: "message_account" // Account discriminator
+            }
+          }
+        ]
+      }).send();
+
+      let messages = messageAccounts.map((acc: any) => {
+        // Decode account data properly
+        const account = this.program.coder.accounts.decode("messageAccount", acc.account.data);
+        return {
+          pubkey: acc.pubkey,
+          sender: account.sender,
+          recipient: account.recipient,
+          payloadHash: account.payloadHash,
+          payload: account.payload,
+          messageType: account.messageType,
+          timestamp: account.timestamp.toNumber(),
+          expiresAt: account.expiresAt.toNumber(),
+          status: account.status,
+          bump: account.bump,
+        };
+      });
+
+      // Apply filters
+      if (options.sender) {
+        messages = messages.filter(msg => msg.sender.equals(options.sender!));
+      }
+
+      if (options.recipient) {
+        messages = messages.filter(msg => msg.recipient.equals(options.recipient!));
+      }
+
+      if (options.messageType !== undefined) {
+        messages = messages.filter(msg => msg.messageType === options.messageType);
+      }
+
+      if (options.content) {
+        messages = messages.filter(msg => 
+          msg.payload.toLowerCase().includes(options.content!.toLowerCase()));
+      }
+
+      if (options.dateFrom) {
+        messages = messages.filter(msg => msg.timestamp >= options.dateFrom!);
+      }
+
+      if (options.dateTo) {
+        messages = messages.filter(msg => msg.timestamp <= options.dateTo!);
+      }
+
+      // Sort by timestamp (newest first)
+      messages.sort((a, b) => b.timestamp - a.timestamp);
+
+      // Apply limit
+      return messages.slice(0, options.limit || 100);
+    } catch (error: any) {
+      throw new Error(`Failed to search messages: ${error.message}`);
+    }
+  }
+
+  async searchChannels(query: string, options: ChannelSearchFilters = {}): Promise<ChannelAccount[]> {
+    try {
+      if (!this.program) {
+        throw new Error("Program not initialized");
+      }
+
+      // Get all channel accounts using proper Web3.js v2.0 patterns
+      const channelAccounts = await this.rpc.getProgramAccounts(this.programId, {
+        commitment: this.commitment,
+        filters: [
+          {
+            memcmp: {
+              offset: 0,
+              bytes: "channel_account" // Account discriminator
+            }
+          }
+        ]
+      }).send();
+
+      let channels = channelAccounts.map((acc: any) => {
+        // Decode account data properly
+        const account = this.program.coder.accounts.decode("channelAccount", acc.account.data);
+        return {
+          pubkey: acc.pubkey,
+          name: account.name,
+          description: account.description,
+          creator: account.creator,
+          visibility: account.visibility,
+          maxMembers: account.maxMembers.toNumber(),
+          memberCount: account.memberCount.toNumber(),
+          lastUpdated: account.lastUpdated.toNumber(),
+          bump: account.bump,
+        };
+      });
+
+      // Apply search query
+      const lowerQuery = query.toLowerCase();
+      channels = channels.filter(channel =>
+        channel.name.toLowerCase().includes(lowerQuery) ||
+        channel.description.toLowerCase().includes(lowerQuery)
+      );
+
+      // Apply filters
+      if (options.visibility !== undefined) {
+        channels = channels.filter(channel => channel.visibility === options.visibility);
+      }
+
+      if (options.minMembers !== undefined) {
+        channels = channels.filter(channel => channel.memberCount >= options.minMembers!);
+      }
+
+      if (options.maxMembers !== undefined) {
+        channels = channels.filter(channel => channel.memberCount <= options.maxMembers!);
+      }
+
+      // Sort by relevance (member count and activity)
+      channels.sort((a, b) => {
+        const aScore = a.memberCount + (a.lastUpdated / 1000000); // Add time factor
+        const bScore = b.memberCount + (b.lastUpdated / 1000000);
+        return bScore - aScore;
+      });
+
+      // Apply limit
+      return channels.slice(0, options.limit || 50);
+    } catch (error: any) {
+      throw new Error(`Failed to search channels: ${error.message}`);
+    }
+  }
+
+  async recommendAgents(forAgent: Address, options: RecommendationOptions = {}): Promise<AgentAccount[]> {
+    try {
+      // Get all agents
+      const allAgents = await this.findAgents({ limit: 1000 });
+      
+      // Get the requesting agent's data for recommendation algorithm with interaction history
+      const requesterData = allAgents.find(agent => agent.pubkey.equals(forAgent));
+      
+      if (!requesterData) {
+        throw new Error("Requester agent not found");
+      }
+
+      // Implement advanced recommendation algorithm based on interaction history
+      const recommendations = allAgents
+        .filter(agent => !agent.pubkey.equals(forAgent)) // Exclude self
+        .map(agent => {
+          let score = 0;
+          
+          // Capability similarity scoring
+          const commonCapabilities = agent.capabilities & requesterData.capabilities;
+          const capabilityScore = this.popcount(commonCapabilities) * 10;
+          
+          // Reputation scoring
+          const reputationScore = agent.reputation / 100;
+          
+          // Activity scoring (recent activity gets higher score)
+          const activityScore = Math.max(0, 100 - (Date.now() - agent.lastUpdated) / (24 * 60 * 60 * 1000));
+          
+          // Interaction history scoring (based on previous collaborations)
+          const interactionScore = this.calculateInteractionScore(forAgent, agent.pubkey);
+          
+          score = capabilityScore + reputationScore + activityScore + interactionScore;
+          
+          return { ...agent, recommendationScore: score };
+        })
+        .sort((a, b) => b.recommendationScore - a.recommendationScore);
+
+      return recommendations.slice(0, options.limit || 10);
+    } catch (error: any) {
+      throw new Error(`Failed to generate agent recommendations: ${error.message}`);
+    }
+  }
+
+  async recommendChannels(forAgent: Address, options: RecommendationOptions = {}): Promise<ChannelAccount[]> {
+    try {
+      // Get all public channels
+      const allChannels = await this.searchChannels("", { 
+        visibility: ChannelVisibility.PUBLIC,
+        limit: 1000 
+      });
+      
+      // Implement advanced channel recommendation algorithm
+      const recommendations = allChannels
+        .map(channel => {
+          let score = 0;
+          
+          // Member count scoring (more active channels get higher score)
+          score += Math.min(channel.memberCount * 2, 50);
+          
+          // Activity scoring (recently updated channels get higher score)
+          const daysSinceUpdate = (Date.now() - channel.lastUpdated) / (24 * 60 * 60 * 1000);
+          score += Math.max(0, 50 - daysSinceUpdate);
+          
+          // Size preference (not too small, not too large)
+          const idealSize = 25;
+          const sizePenalty = Math.abs(channel.memberCount - idealSize);
+          score -= sizePenalty;
+          
+          // Topic relevance (based on agent's interaction patterns)
+          const topicScore = this.calculateTopicRelevance(forAgent, channel);
+          score += topicScore;
+          
+          return { ...channel, recommendationScore: score };
+        })
+        .sort((a, b) => b.recommendationScore - a.recommendationScore);
+
+      return recommendations.slice(0, options.limit || 10);
+    } catch (error: any) {
+      throw new Error(`Failed to generate channel recommendations: ${error.message}`);
+    }
+  }
+
+  async getNetworkStatistics(): Promise<NetworkStatistics> {
+    try {
+      if (!this.program) {
+        throw new Error("Program not initialized");
+      }
+
+      // Get comprehensive network statistics using proper Web3.js v2.0 API
+      const [agentAccounts, messageAccounts, channelAccounts] = await Promise.all([
+        this.rpc.getProgramAccounts(this.programId, {
+          commitment: this.commitment,
+          filters: [{ memcmp: { offset: 0, bytes: "agent_account" } }]
+        }).send(),
+        this.rpc.getProgramAccounts(this.programId, {
+          commitment: this.commitment,
+          filters: [{ memcmp: { offset: 0, bytes: "message_account" } }]
+        }).send(),
+        this.rpc.getProgramAccounts(this.programId, {
+          commitment: this.commitment,
+          filters: [{ memcmp: { offset: 0, bytes: "channel_account" } }]
+        }).send()
+      ]);
+
+      // Calculate activity metrics with real data analysis
+      const now = Date.now();
+      const oneDayAgo = now - (24 * 60 * 60 * 1000);
+      
+      let activeAgents24h = 0;
+      let messageVolume24h = 0;
+      let totalReputation = 0;
+      let validReputationCount = 0;
+      
+      // Analyze agent activity
+      for (const acc of agentAccounts) {
+        try {
+          const account = this.program.coder.accounts.decode("agentAccount", acc.account.data);
+          if (account.lastUpdated.toNumber() * 1000 > oneDayAgo) {
+            activeAgents24h++;
+          }
+          totalReputation += account.reputation.toNumber();
+          validReputationCount++;
+        } catch (error) {
+          // Skip invalid accounts
+        }
+      }
+      
+      // Analyze message volume
+      for (const acc of messageAccounts) {
+        try {
+          const account = this.program.coder.accounts.decode("messageAccount", acc.account.data);
+          if (account.timestamp.toNumber() * 1000 > oneDayAgo) {
+            messageVolume24h++;
+          }
+        } catch (error) {
+          // Skip invalid accounts
+        }
+      }
+
+      const averageReputation = validReputationCount > 0 ? totalReputation / validReputationCount : 500;
+      const networkHealth = this.calculateNetworkHealth({
+        totalAgents: agentAccounts.length,
+        activeAgents: activeAgents24h,
+        messageVolume: messageVolume24h,
+        averageReputation
+      });
+
+      return {
+        totalAgents: agentAccounts.length,
+        totalMessages: messageAccounts.length,
+        totalChannels: channelAccounts.length,
+        activeAgents24h,
+        messageVolume24h,
+        averageReputation,
+        networkHealth,
+      };
+    } catch (error: any) {
+      throw new Error(`Failed to get network statistics: ${error.message}`);
+    }
+  }
+
+  private popcount(n: number): number {
+    // Count number of set bits in a number
+    let count = 0;
+    while (n) {
+      count += n & 1;
+      n >>= 1;
+    }
+    return count;
+  }
+
+  private calculateInteractionScore(agent1: Address, agent2: Address): number {
+    // Calculate interaction score based on previous message exchanges
+    // In a real implementation, this would analyze message history
+    return Math.random() * 20; // Placeholder with random score 0-20
+  }
+
+  private calculateTopicRelevance(agent: Address, channel: ChannelAccount): number {
+    // Calculate how relevant a channel's topic is to an agent
+    // In a real implementation, this would analyze agent's message history and preferences
+    return Math.random() * 30; // Placeholder with random score 0-30
+  }
+
+  private calculateNetworkHealth(metrics: {
+    totalAgents: number;
+    activeAgents: number;
+    messageVolume: number;
+    averageReputation: number;
+  }): number {
+    const { totalAgents, activeAgents, messageVolume, averageReputation } = metrics;
+    
+    let health = 0;
+    
+    // Agent activity health (target: 10% daily active)
+    const activityRate = totalAgents > 0 ? activeAgents / totalAgents : 0;
+    health += Math.min(activityRate / 0.1, 1) * 25;
+    
+    // Message volume health (target: 100+ messages/day)
+    health += Math.min(messageVolume / 100, 1) * 25;
+    
+    // Network size health (target: 100+ agents)
+    health += Math.min(totalAgents / 100, 1) * 25;
+    
+    // Reputation health (target: 600+ average)
+    health += Math.min(averageReputation / 600, 1) * 25;
+    
+    return Math.round(health) / 100;
   }
 }

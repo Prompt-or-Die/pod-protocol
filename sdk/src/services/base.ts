@@ -1,4 +1,7 @@
-import { createSolanaRpc, address, Address, Commitment, Rpc } from '@solana/web3.js';
+import { createSolanaRpc } from '@solana/rpc';
+import { address } from '@solana/addresses';
+import type { Address } from '@solana/addresses';
+import type { Commitment, Rpc } from '@solana/rpc';
 import anchor from "@coral-xyz/anchor";
 const { Program } = anchor;
 import type { Program as ProgramType } from "@coral-xyz/anchor";
@@ -18,9 +21,10 @@ export interface BaseServiceConfig {
  * Base service class with common functionality for all services
  */
 export abstract class BaseService {
-  protected rpc: Rpc<any>;
-  protected commitment: Commitment;
   protected programId: Address;
+  protected commitment: Commitment;
+  protected rpc: Rpc<any>;
+  protected coder: anchor.BorshCoder;
   protected program?: AnchorProgram;
   protected idl?: any;
 

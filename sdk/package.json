@@ -26,7 +26,6 @@
     "test:coverage": "jest --coverage",
     "docs": "typedoc src/index.ts",
     "docs:serve": "typedoc src/index.ts --watch --serve",
-    "analyze": "npm run build:prod && npx bundle-analyzer dist/index.js",
     "size": "npm run build:prod && size-limit",
     "validate": "npm run lint:check && npm run type-check && npm run test",
     "validate:full": "npm run format:check && npm run lint:check && npm run type-check && npm run test:coverage",
@@ -64,10 +63,13 @@
   ],
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.0",
-    "@solana/web3.js": "^2.0.0",
-    "@solana/kit": "^0.2.0",
-    "@solana-program/compute-budget": "^0.4.0",
-    "@solana-program/system": "^0.4.0"
+    "@solana/web3.js": "2.0.0-rc.1",
+    "@solana/rpc": "2.0.0-rc.1",
+    "@solana/addresses": "2.0.0-rc.1",
+    "@solana/signers": "2.0.0-rc.1",
+    "@solana/transactions": "2.0.0-rc.1",
+    "@solana/accounts": "2.0.0-rc.1",
+    "@solana/codecs": "2.0.0-rc.1"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^26.0.1",
@@ -78,7 +80,6 @@
     "@types/node": "^20.12.7",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
-    "bundle-analyzer": "^0.1.0",
     "concurrently": "^8.2.2",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",

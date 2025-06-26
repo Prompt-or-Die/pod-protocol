@@ -25,6 +25,15 @@ import {
 import { getTransferSolInstruction } from '@solana-program/system';
 import { getSetComputeUnitLimitInstruction, getSetComputeUnitPriceInstruction } from '@solana-program/compute-budget';
 
+// @solana/kit modular imports
+import { createSolanaRpc as createSolanaRpcKit } from '@solana/rpc';
+import { address as addressKit } from '@solana/addresses';
+import { generateKeyPairSigner } from '@solana/signers';
+import type { 
+  KeyPairSigner, 
+  Rpc
+} from '@solana/kit';
+
 /**
  * Web3.js v2.0 Enhanced Hook
  * Provides convenient access to all Web3.js v2.0 APIs and patterns

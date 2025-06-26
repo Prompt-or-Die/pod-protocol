@@ -172,78 +172,86 @@ export async function findEscrowPDA(
  */
 export function getMessageTypeId(
   messageType: MessageType,
-  customValue?: number,
+  customValue?: number
 ): number {
   switch (messageType) {
-    case MessageType.Text:
+    case MessageType.TEXT:
       return 0;
-    case MessageType.Data:
+    case MessageType.IMAGE:
       return 1;
-    case MessageType.Command:
+    case MessageType.CODE:
       return 2;
-    case MessageType.Response:
+    case MessageType.FILE:
       return 3;
-    case MessageType.Custom:
-      return 4 + (customValue ?? 0);
     default:
-      throw new Error(`Unknown message type: ${messageType}`);
+      return 0;
   }
 }
 
 /**
  * Convert numeric ID back to MessageType
  */
-export function getMessageTypeFromId(id: number): {
+export function parseMessageTypeFromNumber(id: number): {
   type: MessageType;
   customValue?: number;
 } {
-  if (id === 0) return { type: MessageType.Text };
-  if (id === 1) return { type: MessageType.Data };
-  if (id === 2) return { type: MessageType.Command };
-  if (id === 3) return { type: MessageType.Response };
-  if (id >= 4) return { type: MessageType.Custom, customValue: id - 4 };
+  if (id === 0) return { type: MessageType.TEXT };
+  if (id === 1) return { type: MessageType.IMAGE };
+  if (id === 2) return { type: MessageType.CODE };
+  if (id === 3) return { type: MessageType.FILE };
 
   throw new Error(`Unknown message type ID: ${id}`);
 }
 
 /**
+ * Alias for parseMessageTypeFromNumber for backward compatibility
+ */
+export const getMessageTypeFromId = parseMessageTypeFromNumber;
+
+/**
  * Convert MessageType enum to program format (object with empty record)
  */
-export function convertMessageTypeToProgram(
+export function serializeMessageTypeToProgram(
   messageType: MessageType,
-  customValue?: number,
+  customValue?: number
 ): any {
   switch (messageType) {
-    case MessageType.Text:
+    case MessageType.TEXT:
       return { text: {} };
-    case MessageType.Data:
-      return { data: {} };
-    case MessageType.Command:
-      return { command: {} };
-    case MessageType.Response:
-      return { response: {} };
-    case MessageType.Custom:
-      return { custom: customValue || 0 };
+    case MessageType.IMAGE:
+      return { image: {} };
+    case MessageType.CODE:
+      return { code: {} };
+    case MessageType.FILE:
+      return { file: {} };
     default:
       return { text: {} };
   }
 }
 
 /**
+ * Alias for serializeMessageTypeToProgram for backward compatibility
+ */
+export const convertMessageTypeToProgram = serializeMessageTypeToProgram;
+
+/**
  * Convert program format back to MessageType enum
  */
-export function convertMessageTypeFromProgram(programType: any): {
+export function parseMessageTypeFromProgram(programType: any): {
   type: MessageType;
   customValue?: number;
 } {
-  if (programType.text !== undefined) return { type: MessageType.Text };
-  if (programType.data !== undefined) return { type: MessageType.Data };
-  if (programType.command !== undefined) return { type: MessageType.Command };
-  if (programType.response !== undefined) return { type: MessageType.Response };
-  if (programType.custom !== undefined)
-    return { type: MessageType.Custom, customValue: programType.custom };
-  return { type: MessageType.Text };
+  if (programType.text !== undefined) return { type: MessageType.TEXT };
+  if (programType.image !== undefined) return { type: MessageType.IMAGE };
+  if (programType.code !== undefined) return { type: MessageType.CODE };
+  if (programType.file !== undefined) return { type: MessageType.FILE };
+  return { type: MessageType.TEXT };
 }
+
+/**
+ * Alias for parseMessageTypeFromProgram for backward compatibility
+ */
+export const convertMessageTypeFromProgram = parseMessageTypeFromProgram;
 
 /**
  * Handle legacy object-based message type format for backward compatibility
@@ -470,19 +478,17 @@ export function formatAddress(addr: Address | string, short: boolean = true): st
 /**
  * Validate and parse a message type string
  */
-export function parseMessageType(typeStr: string): MessageType {
-  const normalized = typeStr.toLowerCase();
+export function parseMessageTypeFromString(typeStr: string): MessageType {
+  const normalized = typeStr.toLowerCase().trim();
   switch (normalized) {
     case "text":
-      return MessageType.Text;
-    case "data":
-      return MessageType.Data;
-    case "command":
-      return MessageType.Command;
-    case "response":
-      return MessageType.Response;
-    case "custom":
-      return MessageType.Custom;
+      return MessageType.TEXT;
+    case "image":
+      return MessageType.IMAGE;
+    case "code":
+      return MessageType.CODE;
+    case "file":
+      return MessageType.FILE;
     default:
       throw new Error(`Invalid message type: ${typeStr}`);
   }
@@ -690,5 +696,59 @@ export function isValidAddress(
     return true;
   } catch {
     return false;
+  }
+}
+
+export function getMessageTypeName(type: MessageType): string {
+  switch (type) {
+    case MessageType.TEXT:
+      return "Text";
+    case MessageType.IMAGE:
+      return "Image";
+    case MessageType.CODE:
+      return "Code";
+    case MessageType.FILE:
+      return "File";
+    default:
+      return "Unknown";
+  }
+}
+
+export function parseMessageTypeFromId(id: number): any {
+  if (id === 0) return { type: MessageType.TEXT };
+  if (id === 1) return { type: MessageType.IMAGE };
+  if (id === 2) return { type: MessageType.CODE };
+  if (id === 3) return { type: MessageType.FILE };
+  return { type: MessageType.TEXT };
+}
+
+export function serializeMessageType(messageType: any): number {
+  switch (messageType.type) {
+    case MessageType.TEXT:
+      return 0;
+    case MessageType.IMAGE:
+      return 1;
+    case MessageType.CODE:
+      return 2;
+    case MessageType.FILE:
+      return 3;
+    default:
+      return 0;
+  }
+}
+
+export function mapMessageTypeToNumber(type: string): MessageType {
+  const lowerType = type.toLowerCase();
+  switch (lowerType) {
+    case "text":
+      return MessageType.TEXT;
+    case "image":
+      return MessageType.IMAGE;
+    case "code":
+      return MessageType.CODE;
+    case "file":
+      return MessageType.FILE;
+    default:
+      return MessageType.TEXT;
   }
 }

@@ -199,6 +199,14 @@ export class ConfigurationError extends PodProtocolError {
 }
 
 /**
+ * SDK Information interface
+ */
+export interface SDKInfo {
+  timestamp: number;
+  sdkVersion: string;
+}
+
+/**
  * Development Utilities
  */
 export class DevUtils {
@@ -322,6 +330,35 @@ export class DevUtils {
     };
     
     return JSON.stringify(report, null, 2);
+  }
+
+  async getSDKInfo(): Promise<SDKInfo> {
+    // Get SDK version from package.json
+    let sdkVersion = '1.0.0';
+    try {
+      if (typeof window === 'undefined') {
+        // Node.js environment
+        const fs = await import('fs');
+        const path = await import('path');
+        const { fileURLToPath } = await import('url');
+        
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename);
+        const packagePath = path.join(__dirname, '../../package.json');
+        
+        if (fs.existsSync(packagePath)) {
+          const packageData = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+          sdkVersion = packageData.version || '1.0.0';
+        }
+      }
+    } catch (error) {
+      // Fallback to default version
+    }
+
+    return {
+      timestamp: Date.now(),
+      sdkVersion,
+    };
   }
 }
 

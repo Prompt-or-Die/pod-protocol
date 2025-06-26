@@ -1,8 +1,9 @@
 import { existsSync, readFileSync, statSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
-import { generateKeyPairSigner, address } from "@solana/web3.js";
-import type { KeyPairSigner, Address } from "@solana/web3.js";
+import { generateKeyPairSigner } from '@solana/signers';
+import { address } from '@solana/addresses';
+import type { KeyPairSigner, Address } from '@solana/kit';
 import chalk from "chalk";
 import { SecureKeypairLoader, secureWipe } from "./secure-memory.js";
 import { safeParseConfig, safeParseKeypair } from "./safe-json.js";

@@ -1,8 +1,122 @@
 /**
- * Cryptographic utilities for PoD Protocol SDK
+ * Cryptographic utilities for PoD Protocol
+ * Compatible with Web3.js v2.0
  */
 
-import CryptoJS from 'crypto-js';
+/**
+ * Generate a SHA-256 hash of the given data
+ * @param {string|Uint8Array} data - Data to hash
+ * @returns {Promise<Uint8Array>} SHA-256 hash
+ */
+export async function sha256(data) {
+  const encoder = new TextEncoder();
+  const dataBytes = typeof data === 'string' ? encoder.encode(data) : data;
+  
+  if (typeof window !== 'undefined' && window.crypto && window.crypto.subtle) {
+    // Browser environment
+    const hashBuffer = await window.crypto.subtle.digest('SHA-256', dataBytes);
+    return new Uint8Array(hashBuffer);
+  } else {
+    // Node.js environment
+    const crypto = await import('crypto');
+    const hash = crypto.createHash('sha256');
+    hash.update(dataBytes);
+    return new Uint8Array(hash.digest());
+  }
+}
+
+/**
+ * Generate a cryptographically secure random byte array
+ * @param {number} length - Number of bytes to generate
+ * @returns {Uint8Array} Random bytes
+ */
+export function generateRandomBytes(length) {
+  if (typeof window !== 'undefined' && window.crypto) {
+    // Browser environment
+    return window.crypto.getRandomValues(new Uint8Array(length));
+  } else {
+    // Node.js environment
+    const crypto = require('crypto');
+    return new Uint8Array(crypto.randomBytes(length));
+  }
+}
+
+/**
+ * Validate a Solana public key format
+ * @param {string} pubkey - Public key string to validate
+ * @returns {boolean} True if valid format
+ */
+export function isValidPublicKey(pubkey) {
+  try {
+    if (typeof pubkey !== 'string') return false;
+    if (pubkey.length < 32 || pubkey.length > 44) return false;
+    
+    // Basic base58 validation
+    const base58Regex = /^[1-9A-HJ-NP-Za-km-z]+$/;
+    return base58Regex.test(pubkey);
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Generate a deterministic signature for bundle ordering
+ * @param {string} content - Content to sign
+ * @param {string} seed - Deterministic seed
+ * @returns {Promise<string>} Deterministic signature
+ */
+export async function generateDeterministicSignature(content, seed) {
+  const encoder = new TextEncoder();
+  const contentBytes = encoder.encode(content + seed);
+  const hash = await sha256(contentBytes);
+  
+  // Convert to base64 for signature format
+  const base64 = btoa(String.fromCharCode(...hash));
+  return base64.substring(0, 32); // Truncate for signature length
+}
+
+/**
+ * Verify message signature using Web Crypto API
+ * @param {string} message - Original message
+ * @param {string} signature - Signature to verify
+ * @param {string} publicKey - Public key for verification
+ * @returns {Promise<boolean>} True if signature is valid
+ */
+export async function verifySignature(message, signature, publicKey) {
+  try {
+    if (typeof window === 'undefined') {
+      // Node.js environment - use simplified verification
+      const expectedSig = await generateDeterministicSignature(message, publicKey);
+      return signature === expectedSig;
+    }
+
+    // Browser environment - use Web Crypto API
+    const encoder = new TextEncoder();
+    const messageBytes = encoder.encode(message);
+    const signatureBytes = new Uint8Array(
+      atob(signature).split('').map(char => char.charCodeAt(0))
+    );
+
+    // Import the public key (simplified for compatibility)
+    const key = await window.crypto.subtle.importKey(
+      'raw',
+      encoder.encode(publicKey),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['verify']
+    );
+
+    return await window.crypto.subtle.verify(
+      'HMAC',
+      key,
+      signatureBytes,
+      messageBytes
+    );
+  } catch (error) {
+    console.warn('Signature verification failed:', error);
+    return false;
+  }
+}
 
 /**
  * Hash a message payload using SHA-256

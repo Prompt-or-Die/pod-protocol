@@ -1,14 +1,18 @@
-import { Address, KeyPairSigner, address, lamports } from '@solana/web3.js';
+import type { Address } from '@solana/addresses';
+import type { KeyPairSigner } from '@solana/signers';
+import { address } from '@solana/addresses';
+import { lamports } from '@solana/kit';
 import anchor from "@coral-xyz/anchor";
-const { BN, utils, web3 } = anchor;
+const { BN, utils, web3, AnchorProvider, Program } = anchor;
 import { BaseService } from "./base.js";
 import {
   CreateChannelOptions,
   ChannelAccount,
   ChannelVisibility,
   BroadcastMessageOptions,
+  UpdateChannelOptions,
 } from "../types";
-import { findAgentPDA, findChannelPDA, findParticipantPDA, findInvitationPDA } from "../utils.js";
+import { findAgentPDA, findChannelPDA, findParticipantPDA, findInvitationPDA, retry, getAccountLastUpdated } from "../utils.js";
 import type { IdlAccounts } from "@coral-xyz/anchor";
 import type { PodCom } from "../pod_com";
 
@@ -56,137 +60,153 @@ export class ChannelService extends BaseService {
    * Create a new channel
    */
   async createChannel(
-    signer: KeyPairSigner,
-    config: ChannelConfig,
-  ): Promise<Address> {
-    try {
-      const channelId = Math.random().toString(36).substring(2, 15);
-      const [channelPDA] = await findChannelPDA(channelId, signer.address, this.programId);
+    wallet: KeyPairSigner,
+    options: CreateChannelOptions,
+  ): Promise<string> {
+    const [channelPDA] = await findChannelPDA(wallet.address, options.name, this.programId);
 
-      // TODO: Implement actual transaction building with Web3.js v2
-      console.log("Creating channel with config:", config);
-      console.log("Channel PDA:", channelPDA);
+    return retry(async () => {
+      if (!this.program) {
+        throw new Error("No program instance available. Ensure client.initialize(wallet) was called successfully.");
+      }
 
-      // For now, return mock channel address
-      return channelPDA;
-    } catch (error) {
-      throw new Error(`Failed to create channel: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+      try {
+        const tx = await (this.program.methods as any)
+          .createChannel(
+            options.name,
+            options.description || "",
+            options.visibility || ChannelVisibility.PUBLIC,
+            new BN(options.maxMembers || 100)
+          )
+          .accounts({
+            channelAccount: channelPDA,
+            creator: wallet.address,
+            systemProgram: "11111111111111111111111111111112",
+          })
+          .rpc();
+
+        return tx;
+      } catch (error: any) {
+        if (error.message?.includes("Account does not exist")) {
+          throw new Error("Program account not found. Verify the program is deployed and the program ID is correct.");
+        }
+        if (error.message?.includes("insufficient funds")) {
+          throw new Error("Insufficient SOL balance to pay for transaction fees and rent.");
+        }
+        throw new Error(`Channel creation failed: ${error.message}`);
+      }
+    });
   }
 
   /**
    * Get channel data
    */
-  async getChannel(channelPDA: Address): Promise<ChannelData | null> {
+  async getChannel(channelPDA: Address): Promise<ChannelAccount | null> {
     try {
-      // TODO: Implement actual account fetching with Web3.js v2 RPC
-      console.log("Getting channel:", channelPDA);
+      if (!this.program) {
+        throw new Error("Program not initialized");
+      }
 
-      // Return mock data for now
+      const channelAccount = this.getAccount("channelAccount");
+      const account = await channelAccount.fetch(channelPDA);
+      
       return {
         pubkey: channelPDA,
-        account: {
-          name: "Mock Channel",
-          description: "Mock channel during migration",
-          creator: address("11111111111111111111111111111112"),
-          isPublic: true,
-          participantCount: 1,
-          maxParticipants: 100,
-          requiresApproval: false,
-          tags: ["demo"],
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        }
+        name: account.name,
+        description: account.description,
+        creator: account.creator,
+        visibility: account.visibility,
+        maxMembers: account.maxMembers.toNumber(),
+        memberCount: account.memberCount.toNumber(),
+        lastUpdated: getAccountLastUpdated(account),
+        bump: account.bump,
       };
-    } catch (error) {
-      console.error("Error getting channel:", error);
-      return null;
+    } catch (error: any) {
+      if (error?.message?.includes("Account does not exist")) {
+        return null;
+      }
+      throw error;
     }
   }
 
   /**
    * Get all channels with optional filtering
    */
-  async getAllChannels(
-    limit: number = 50,
-    visibilityFilter?: ChannelVisibility,
-  ): Promise<ChannelData[]> {
+  async getAllChannels(limit: number = 100): Promise<ChannelAccount[]> {
     try {
-      const channelAccount = this.getAccount("channelAccount");
-      const filters: any[] = [];
-
-      if (visibilityFilter) {
-        const visibilityObj = this.convertChannelVisibility(visibilityFilter);
-        filters.push({
-          memcmp: {
-            offset: 8 + 32 + 4 + 50 + 4 + 200, // After name and description
-            bytes: utils.bytes.bs58.encode(
-              Buffer.from([
-                visibilityFilter === ChannelVisibility.Public ? 0 : 1,
-              ]),
-            ),
-          },
-        });
+      if (!this.program) {
+        throw new Error("Program not initialized");
       }
 
-      const accounts = await channelAccount.all(filters);
-      return accounts
-        .slice(0, limit)
-        .map((acc: any) =>
-          this.convertChannelAccountFromProgram(acc.account, acc.publicKey),
-        );
-    } catch (error) {
-      console.warn("Error fetching channels:", error);
-      return [];
+      const channelAccount = this.getAccount("channelAccount");
+      const accounts = await channelAccount.all();
+
+      return accounts.slice(0, limit).map((acc: any) => ({
+        pubkey: acc.publicKey,
+        name: acc.account.name,
+        description: acc.account.description,
+        creator: acc.account.creator,
+        visibility: acc.account.visibility,
+        maxMembers: acc.account.maxMembers.toNumber(),
+        memberCount: acc.account.memberCount.toNumber(),
+        lastUpdated: getAccountLastUpdated(acc.account),
+        bump: acc.account.bump,
+      }));
+    } catch (error: any) {
+      throw new Error(`Failed to fetch channels: ${error.message}`);
     }
   }
 
   /**
    * Get channels created by a specific user
    */
-  async getChannelsByCreator(
-    creator: Address,
-    limit: number = 50,
-  ): Promise<ChannelData[]> {
+  async getChannelsByCreator(creator: Address, limit: number = 100): Promise<ChannelAccount[]> {
     try {
-      const channelAccount = this.getAccount("channelAccount");
-      const filters = [
-        {
-          memcmp: {
-            offset: 8, // After discriminator
-            bytes: creator, // Address can be used directly in memcmp
-          },
-        },
-      ];
+      if (!this.program) {
+        throw new Error("Program not initialized");
+      }
 
-      const accounts = await channelAccount.all(filters);
+      const channelAccount = this.getAccount("channelAccount");
+      const accounts = await channelAccount.all();
+
       return accounts
+        .filter((acc: any) => acc.account.creator.equals(creator))
         .slice(0, limit)
-        .map((acc: any) =>
-          this.convertChannelAccountFromProgram(acc.account, acc.publicKey),
-        );
-    } catch (error) {
-      console.warn("Error fetching channels by creator:", error);
-      return [];
+        .map((acc: any) => ({
+          pubkey: acc.publicKey,
+          name: acc.account.name,
+          description: acc.account.description,
+          creator: acc.account.creator,
+          visibility: acc.account.visibility,
+          maxMembers: acc.account.maxMembers.toNumber(),
+          memberCount: acc.account.memberCount.toNumber(),
+          lastUpdated: getAccountLastUpdated(acc.account),
+          bump: acc.account.bump,
+        }));
+    } catch (error: any) {
+      throw new Error(`Failed to fetch channels by creator: ${error.message}`);
     }
   }
 
   /**
    * Join a channel
    */
-  async joinChannel(
-    signer: KeyPairSigner,
-    channelAddress: Address,
-  ): Promise<void> {
+  async joinChannel(channelId: string, userWallet: KeyPairSigner): Promise<string> {
     try {
-      const [participantPDA] = await findParticipantPDA(channelAddress, signer.address, this.programId);
+      const program = this.ensureInitialized();
+      const channelPubkey = address(channelId);
 
-      // TODO: Implement actual transaction building with Web3.js v2
-      console.log("Joining channel:", channelAddress);
-      console.log("Participant PDA:", participantPDA);
+      const tx = await (program.methods as any)
+        .joinChannel()
+        .accounts({
+          channelAccount: channelPubkey,
+          member: userWallet.address,
+        })
+        .rpc();
 
-    } catch (error) {
-      throw new Error(`Failed to join channel: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return tx;
+    } catch (error: any) {
+      throw new Error(`Failed to join channel: ${error.message}`);
     }
   }
 
@@ -194,19 +214,24 @@ export class ChannelService extends BaseService {
    * Leave a channel
    */
   async leaveChannel(
-    signer: KeyPairSigner,
-    channelAddress: Address,
-  ): Promise<void> {
-    try {
-      const [participantPDA] = await findParticipantPDA(channelAddress, signer.address, this.programId);
+    wallet: KeyPairSigner,
+    channelPDA: Address,
+  ): Promise<string> {
+    return retry(async () => {
+      if (!this.program) {
+        throw new Error("Program not initialized");
+      }
 
-      // TODO: Implement actual transaction building with Web3.js v2
-      console.log("Leaving channel:", channelAddress);
-      console.log("Participant PDA:", participantPDA);
+      const tx = await (this.program.methods as any)
+        .leaveChannel()
+        .accounts({
+          channelAccount: channelPDA,
+          member: wallet.address,
+        })
+        .rpc();
 
-    } catch (error) {
-      throw new Error(`Failed to leave channel: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+      return tx;
+    });
   }
 
   /**
@@ -416,5 +441,114 @@ export class ChannelService extends BaseService {
 
   async findChannelPDA(channelId: string, creator: Address): Promise<[Address, number]> {
     return await findChannelPDA(channelId, creator, this.programId);
+  }
+
+  async updateChannel(
+    wallet: KeyPairSigner,
+    channelPDA: Address,
+    options: UpdateChannelOptions,
+  ): Promise<string> {
+    return retry(async () => {
+      if (!this.program) {
+        throw new Error("Program not initialized");
+      }
+
+      const tx = await (this.program.methods as any)
+        .updateChannel(
+          options.name || null,
+          options.description || null,
+          options.visibility !== undefined ? options.visibility : null,
+          options.maxMembers !== undefined ? new BN(options.maxMembers) : null,
+        )
+        .accounts({
+          channelAccount: channelPDA,
+          creator: wallet.address,
+        })
+        .rpc();
+
+      return tx;
+    });
+  }
+
+  async getPublicChannels(limit: number = 100): Promise<ChannelAccount[]> {
+    const allChannels = await this.getAllChannels(limit * 2);
+    return allChannels
+      .filter(channel => channel.visibility === ChannelVisibility.Public)
+      .slice(0, limit);
+  }
+
+  async searchChannels(query: string, limit: number = 50): Promise<ChannelAccount[]> {
+    const allChannels = await this.getAllChannels(limit * 3);
+    const lowerQuery = query.toLowerCase();
+    
+    return allChannels
+      .filter(channel => 
+        channel.name.toLowerCase().includes(lowerQuery) ||
+        channel.description.toLowerCase().includes(lowerQuery)
+      )
+      .slice(0, limit);
+  }
+
+  async isChannelMember(channelPDA: Address, memberAddress: Address): Promise<boolean> {
+    try {
+      if (!this.program) {
+        throw new Error("Program not initialized");
+      }
+
+      // Get participant PDA to check membership
+      const [participantPDA] = await findParticipantPDA(channelPDA, memberAddress, this.programId);
+      
+      try {
+        const participantAccount = this.getAccount("participantAccount");
+        await participantAccount.fetch(participantPDA);
+        return true; // If account exists, member is in channel
+      } catch (error) {
+        return false; // Account doesn't exist, not a member
+      }
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async getChannelMembers(channelPDA: Address): Promise<Address[]> {
+    try {
+      if (!this.program) {
+        throw new Error("Program not initialized");
+      }
+
+      // Get all participant accounts for this channel using Web3.js v2.0
+      const participantAccounts = await this.rpc.getProgramAccounts(this.programId, {
+        commitment: this.commitment,
+        filters: [
+          {
+            memcmp: {
+              offset: 0,
+              bytes: "participant_account" // Account discriminator
+            }
+          },
+          {
+            memcmp: {
+              offset: 8, // After discriminator
+              bytes: channelPDA // Channel address
+            }
+          }
+        ]
+      }).send();
+
+      // Extract member addresses from participant accounts
+      const members: Address[] = [];
+      for (const acc of participantAccounts) {
+        try {
+          const participantData = this.program.coder.accounts.decode("participantAccount", acc.account.data);
+          members.push(participantData.member);
+        } catch (error) {
+          // Skip invalid accounts
+        }
+      }
+
+      return members;
+    } catch (error: any) {
+      throw new Error(`Failed to get channel members: ${error.message}`);
+    }
   }
 }

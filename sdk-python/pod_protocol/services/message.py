@@ -491,12 +491,14 @@ class MessageService(BaseService):
             failed_count = len([m for m in sent_messages + received_messages 
                               if m.status == MessageStatus.FAILED])
             
-            # Calculate average delivery time (simplified)
+            # Calculate average delivery time from confirmed messages
             delivery_times = []
             for msg in sent_messages:
                 if msg.status == MessageStatus.DELIVERED:
-                    # Estimate delivery time based on timestamp differences
-                    delivery_times.append(1.0)  # Placeholder
+                    # Calculate delivery time based on timestamp and creation time
+                    # In a real implementation, this would track actual delivery confirmations
+                    estimated_delivery_time = min(2.0, max(0.1, abs(msg.timestamp - msg.created_at) / 1000.0))
+                    delivery_times.append(estimated_delivery_time)
             
             avg_delivery_time = sum(delivery_times) / len(delivery_times) if delivery_times else 0.0
             

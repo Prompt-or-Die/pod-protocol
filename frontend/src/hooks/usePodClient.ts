@@ -4,10 +4,12 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useToast } from 'react-hot-toast';
 
-// Web3.js v2.0 modular imports
+// @solana/kit modular imports
+import { createSolanaRpc, createSolanaRpcSubscriptions } from '@solana/rpc';
+import { address } from '@solana/addresses';
+import { generateKeyPairSigner } from '@solana/signers';
+import type { Address } from '@solana/addresses';
 import {
-  address,
-  Address,
   lamports,
   sendAndConfirmTransactionFactory,
   createTransactionMessage,
@@ -17,11 +19,8 @@ import {
   signTransactionMessageWithSigners,
   pipe,
   createKeyPairSignerFromBytes,
-  generateKeyPairSigner,
   getSignatureFromTransaction,
-  createSolanaRpc,
-  createSolanaRpcSubscriptions,
-} from '@solana/web3.js';
+} from '@solana/kit';
 
 // Web3.js v2.0 program clients
 import { getTransferSolInstruction } from '@solana-program/system';

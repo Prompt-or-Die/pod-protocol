@@ -1,4 +1,6 @@
-import { Address, address } from '@solana/web3.js';
+import type { Address } from '@solana/addresses';
+import { address } from '@solana/addresses';
+import type { KeyPairSigner } from '@solana/signers';
 
 /**
  * PoD Protocol Program ID on Solana Devnet
@@ -11,30 +13,29 @@ export const PROGRAM_ID = address(
  * Message types supported by PoD Protocol
  */
 export enum MessageType {
-  Text = "text",
-  Chat = "chat",
-  Data = "data",
-  Command = "command",
-  Response = "response",
-  Custom = "custom",
+  TEXT = 0,
+  IMAGE = 1,
+  CODE = 2,
+  FILE = 3,
 }
 
 /**
  * Message status in the delivery lifecycle
  */
 export enum MessageStatus {
-  Pending = "pending",
-  Delivered = "delivered",
-  Read = "read",
-  Failed = "failed",
+  PENDING = "pending",
+  DELIVERED = "delivered", 
+  READ = "read",
+  FAILED = "failed",
 }
 
 /**
  * Channel visibility options
  */
 export enum ChannelVisibility {
-  Public = "public",
-  Private = "private",
+  Public = 0,
+  Private = 1,
+  Restricted = 2,
 }
 
 /**
@@ -102,17 +103,23 @@ export interface ChannelAccount {
   /** Channel visibility setting */
   visibility: ChannelVisibility;
   /** Maximum number of participants allowed */
-  maxParticipants: number;
+  maxMembers: number;
   /** Current number of participants */
-  participantCount: number;
+  memberCount: number;
   /** Current number of participants (alias for compatibility) */
   currentParticipants: number;
+  /** Legacy alias for maxMembers */
+  maxParticipants: number;
+  /** Legacy alias for memberCount */
+  participantCount: number;
   /** Fee per message in lamports */
   feePerMessage: number;
   /** Total escrow balance in lamports */
   escrowBalance: number;
   /** Creation timestamp */
   createdAt: number;
+  /** Last updated timestamp */
+  lastUpdated: number;
   /** Whether channel is active */
   isActive: boolean;
   /** PDA bump seed */
@@ -143,14 +150,15 @@ export interface EscrowAccount {
  * Agent capabilities as bitmask values
  */
 export const AGENT_CAPABILITIES = {
-  TRADING: 1 << 0, // 1
-  ANALYSIS: 1 << 1, // 2
-  DATA_PROCESSING: 1 << 2, // 4
-  CONTENT_GENERATION: 1 << 3, // 8
-  CUSTOM_1: 1 << 4, // 16
-  CUSTOM_2: 1 << 5, // 32
-  CUSTOM_3: 1 << 6, // 64
-  CUSTOM_4: 1 << 7, // 128
+  TEXT: 1,
+  IMAGE: 2,
+  CODE: 4,
+  ANALYSIS: 8,
+  TRADING: 16,
+  DATA_PROCESSING: 32,
+  CONTENT_GENERATION: 64,
+  CUSTOM1: 128,
+  CUSTOM2: 256,
 } as const;
 
 /**
@@ -258,6 +266,20 @@ export interface UpdateAgentOptions {
 }
 
 /**
+ * Options for updating a channel
+ */
+export interface UpdateChannelOptions {
+  /** New name (optional) */
+  name?: string;
+  /** New description (optional) */
+  description?: string;
+  /** New visibility (optional) */
+  visibility?: ChannelVisibility;
+  /** New max members (optional) */
+  maxMembers?: number;
+}
+
+/**
  * Options for sending a message
  */
 export interface SendMessageOptions {
@@ -269,6 +291,10 @@ export interface SendMessageOptions {
   messageType: MessageType;
   /** Custom message type value (for Custom type) */
   customValue?: number;
+  /** Message content for display */
+  content?: string;
+  /** Expiration in days */
+  expirationDays?: number;
 }
 
 /**
@@ -282,7 +308,9 @@ export interface CreateChannelOptions {
   /** Channel visibility */
   visibility: ChannelVisibility;
   /** Maximum participants */
-  maxParticipants: number;
+  maxMembers: number;
+  /** Legacy alias for maxMembers */
+  maxParticipants?: number;
   /** Fee per message in lamports */
   feePerMessage: number;
 }
@@ -315,8 +343,128 @@ export interface BroadcastMessageOptions {
   channelPDA: Address;
   /** Message content */
   content: string;
-  /** Message type (defaults to "Text") */
-  messageType?: any;
+  /** Message type (defaults to TEXT) */
+  messageType?: MessageType;
   /** Optional reply-to message */
   replyTo?: Address;
 }
+
+// Analytics interfaces
+export interface AgentMetrics {
+  agentAddress: Address;
+  messagesSent: number;
+  messagesReceived: number;
+  channelsJoined: number;
+  averageResponseTime: number;
+  reputation: number;
+  lastActive: number;
+  totalInteractions: number;
+  successRate: number;
+  peakActivityHours: number[];
+}
+
+export interface MessageMetrics {
+  totalMessages: number;
+  deliveredMessages: number;
+  failedMessages: number;
+  averageDeliveryTime: number;
+  deliveryRate: number;
+  messageVolume: number;
+  peakHours: number[];
+  timeframe: string;
+}
+
+export interface ChannelMetrics {
+  totalChannels: number;
+  activeChannels: number;
+  totalMembers: number;
+  averageMembers: number;
+  messageActivity: number;
+  growthRate: number;
+  mostActiveChannels: Address[];
+}
+
+export interface NetworkMetrics {
+  totalValueLocked: number;
+  activeEscrows: number;
+  networkHealth: number;
+  averageTps: number;
+  blockTime: number;
+  currentSlot: number;
+  activeNodes: number;
+  consensusHealth: number;
+  messageVolume24h: number;
+  activeAgents24h: number;
+  peakUsageHours: number[];
+}
+
+export interface PerformanceMetrics {
+  avgConfirmationTime: number;
+  avgTransactionFee: number;
+  successRate: number;
+  throughput: number;
+  errorRate: number;
+  networkLatency: number;
+  resourceUtilization: number;
+  queueDepth: number;
+}
+
+// Discovery interfaces
+export interface AgentSearchFilters {
+  capabilities?: number;
+  minReputation?: number;
+  limit?: number;
+}
+
+export interface MessageSearchFilters {
+  sender?: Address;
+  recipient?: Address;
+  messageType?: MessageType;
+  limit?: number;
+}
+
+export interface ChannelSearchFilters {
+  visibility?: ChannelVisibility;
+  minMembers?: number;
+  maxMembers?: number;
+  limit?: number;
+}
+
+export interface RecommendationOptions {
+  limit?: number;
+}
+
+export interface NetworkStatistics {
+  totalAgents: number;
+  totalMessages: number;
+  totalChannels: number;
+  activeAgents24h: number;
+  messageVolume24h: number;
+  averageReputation: number;
+  networkHealth: number;
+}
+
+// Migration interfaces
+export interface MigrationStatus {
+  isComplete: boolean;
+  version: string;
+  compatibility: string;
+  features: {
+    rpc: boolean;
+    address: boolean;
+    transactions: boolean;
+    programs: boolean;
+  };
+  lastChecked: number;
+  error?: string;
+}
+
+export interface V2FeatureMap {
+  [key: string]: {
+    available: boolean;
+    description: string;
+  };
+}
+
+// Re-export common types
+export { Address, KeyPairSigner };

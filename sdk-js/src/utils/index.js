@@ -358,4 +358,203 @@ export async function confirmTransaction(connection, signature, maxRetries = 10,
   }
   
   return false;
+}
+
+/**
+ * Validates and normalizes client configuration
+ * @param {Object} config - Configuration object
+ * @returns {Object} Validated configuration
+ */
+export function validateConfig(config = {}) {
+  const validated = {
+    endpoint: config.endpoint || 'https://api.devnet.solana.com',
+    commitment: config.commitment || 'confirmed',
+    programId: config.programId,
+    ipfs: config.ipfs || {},
+    zkCompression: config.zkCompression || {},
+    jitoRpcUrl: config.jitoRpcUrl
+  };
+
+  // Validate endpoint format
+  if (typeof validated.endpoint !== 'string' || !validated.endpoint.startsWith('http')) {
+    throw new Error('Invalid RPC endpoint format');
+  }
+
+  // Validate commitment level
+  const validCommitments = ['processed', 'confirmed', 'finalized'];
+  if (!validCommitments.includes(validated.commitment)) {
+    throw new Error(`Invalid commitment level. Must be one of: ${validCommitments.join(', ')}`);
+  }
+
+  return validated;
+}
+
+/**
+ * Loads program IDL with fallback support
+ * @param {string} programId - Program ID
+ * @returns {Promise<Object>} Program IDL
+ */
+export async function loadIDL(programId) {
+  try {
+    // Try to load IDL from multiple sources
+    if (typeof window === 'undefined') {
+      // Node.js environment
+      try {
+        const fs = await import('fs');
+        const path = await import('path');
+        const { fileURLToPath } = await import('url');
+        
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename);
+        const idlPath = path.join(__dirname, '..', '..', 'pod_com.json');
+        
+        if (fs.existsSync(idlPath)) {
+          const idlData = fs.readFileSync(idlPath, 'utf8');
+          return JSON.parse(idlData);
+        }
+      } catch (fsError) {
+        console.warn('Could not load IDL from file system:', fsError.message);
+      }
+    }
+    
+    // Fallback: Create a minimal IDL structure for basic functionality
+    return createMinimalIDL();
+  } catch (error) {
+    console.warn('Failed to load IDL, using minimal fallback:', error);
+    return createMinimalIDL();
+  }
+}
+
+/**
+ * Creates a minimal IDL for basic functionality
+ * @returns {Object} Minimal IDL structure
+ */
+function createMinimalIDL() {
+  return {
+    version: "1.0.0",
+    name: "pod_com",
+    instructions: [
+      {
+        name: "registerAgent",
+        accounts: [
+          { name: "agentAccount", isMut: true, isSigner: false },
+          { name: "signer", isMut: true, isSigner: true },
+          { name: "systemProgram", isMut: false, isSigner: false }
+        ],
+        args: [
+          { name: "capabilities", type: "u32" },
+          { name: "metadataUri", type: "string" }
+        ]
+      },
+      {
+        name: "updateAgent",
+        accounts: [
+          { name: "agentAccount", isMut: true, isSigner: false },
+          { name: "signer", isMut: true, isSigner: true }
+        ],
+        args: [
+          { name: "capabilities", type: { option: "u32" } },
+          { name: "metadataUri", type: { option: "string" } }
+        ]
+      },
+      {
+        name: "sendMessage",
+        accounts: [
+          { name: "messageAccount", isMut: true, isSigner: false },
+          { name: "sender", isMut: true, isSigner: true },
+          { name: "recipient", isMut: false, isSigner: false },
+          { name: "systemProgram", isMut: false, isSigner: false }
+        ],
+        args: [
+          { name: "payloadHash", type: { array: ["u8", 32] } },
+          { name: "payload", type: "string" },
+          { name: "messageType", type: "u8" },
+          { name: "expiresAt", type: "i64" }
+        ]
+      },
+      {
+        name: "updateMessageStatus",
+        accounts: [
+          { name: "messageAccount", isMut: true, isSigner: false },
+          { name: "signer", isMut: true, isSigner: true }
+        ],
+        args: [
+          { name: "status", type: "string" }
+        ]
+      },
+      {
+        name: "createChannel",
+        accounts: [
+          { name: "channelAccount", isMut: true, isSigner: false },
+          { name: "creator", isMut: true, isSigner: true },
+          { name: "systemProgram", isMut: false, isSigner: false }
+        ],
+        args: [
+          { name: "name", type: "string" },
+          { name: "description", type: "string" },
+          { name: "visibility", type: "u8" },
+          { name: "maxMembers", type: "u32" }
+        ]
+      }
+    ],
+    accounts: [
+      {
+        name: "AgentAccount",
+        type: {
+          kind: "struct",
+          fields: [
+            { name: "capabilities", type: "u32" },
+            { name: "metadataUri", type: "string" },
+            { name: "reputation", type: "u32" },
+            { name: "lastUpdated", type: "i64" },
+            { name: "invitesSent", type: "u32" },
+            { name: "lastInviteAt", type: "i64" },
+            { name: "bump", type: "u8" }
+          ]
+        }
+      },
+      {
+        name: "MessageAccount",
+        type: {
+          kind: "struct",
+          fields: [
+            { name: "sender", type: "publicKey" },
+            { name: "recipient", type: "publicKey" },
+            { name: "payloadHash", type: { array: ["u8", 32] } },
+            { name: "payload", type: "string" },
+            { name: "messageType", type: "u8" },
+            { name: "timestamp", type: "i64" },
+            { name: "expiresAt", type: "i64" },
+            { name: "status", type: "string" },
+            { name: "bump", type: "u8" }
+          ]
+        }
+      },
+      {
+        name: "ChannelAccount",
+        type: {
+          kind: "struct",
+          fields: [
+            { name: "name", type: "string" },
+            { name: "description", type: "string" },
+            { name: "creator", type: "publicKey" },
+            { name: "visibility", type: "u8" },
+            { name: "maxMembers", type: "u32" },
+            { name: "memberCount", type: "u32" },
+            { name: "lastUpdated", type: "i64" },
+            { name: "bump", type: "u8" }
+          ]
+        }
+      }
+    ],
+    errors: [
+      { code: 6000, name: "InvalidMetadataUriLength", msg: "Invalid metadata URI length" },
+      { code: 6001, name: "Unauthorized", msg: "Unauthorized operation" },
+      { code: 6002, name: "MessageExpired", msg: "Message has expired" },
+      { code: 6003, name: "InvalidMessageStatusTransition", msg: "Invalid message status transition" },
+      { code: 6004, name: "InsufficientAccounts", msg: "Insufficient accounts provided" },
+      { code: 6005, name: "InvalidAccountData", msg: "Invalid account data" },
+      { code: 6006, name: "InvalidInstructionData", msg: "Invalid instruction data" }
+    ]
+  };
 } 

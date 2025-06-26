@@ -23,8 +23,8 @@ import {
 } from '@solana/wallet-adapter-react-ui';
 
 // Web3.js v2.0 modular imports
-import { createSolanaRpc, createSolanaRpcSubscriptions } from '@solana/web3.js';
-import { address } from '@solana/web3.js';
+import { createSolanaRpc, createSolanaRpcSubscriptions } from '@solana/rpc';
+import { address } from '@solana/addresses';
 import { SolanaAgentKit } from '@solana/agent-kit';
 import { TurnkeySigner } from '@turnkey/solana';
 

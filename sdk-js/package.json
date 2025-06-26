@@ -13,7 +13,10 @@
     "prepublishOnly": "bun run clean && bun run build"
   },
   "dependencies": {
-    "@solana/web3.js": "^2.0.0",
+    "@solana/kit": "^2.1.1",
+    "@solana/rpc": "^2.1.1",
+    "@solana/addresses": "^2.1.1",
+    "@solana/signers": "^2.1.1",
     "@solana-program/system": "^0.7.0",
     "@solana-program/token": "^0.5.1",
     "@solana-program/compute-budget": "^0.8.0",

@@ -1,12 +1,9 @@
-import {
-  // Web3.js v2 imports
-  address,
-  Address,
-  createSolanaRpc,
-  Rpc,
-  KeyPairSigner,
-  Commitment
-} from "@solana/web3.js";
+import { createSolanaRpc } from '@solana/rpc';
+import { address } from '@solana/addresses';
+import { generateKeyPairSigner } from '@solana/signers';
+import type { Address } from '@solana/addresses';
+import type { Rpc, Commitment } from '@solana/rpc';
+import type { KeyPairSigner } from '@solana/signers';
 import anchor from "@coral-xyz/anchor";
 const { Program, AnchorProvider } = anchor;
 import type { Program as ProgramType } from "@coral-xyz/anchor";

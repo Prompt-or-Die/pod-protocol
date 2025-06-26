@@ -1,8 +1,6 @@
-import {
-  Address,
-  KeyPairSigner,
-  address,
-} from '@solana/web3.js';
+import type { Address } from '@solana/addresses';
+import { address } from '@solana/addresses';
+import type { KeyPairSigner } from '@solana/signers';
 import anchor from "@coral-xyz/anchor";
 const { web3 } = anchor;
 // Removed unused anchor import
@@ -166,13 +164,13 @@ export class MessageService extends BaseService {
 
   private convertMessageStatus(status: MessageStatus): any {
     switch (status) {
-      case MessageStatus.Pending:
+      case MessageStatus.PENDING:
         return { pending: {} };
-      case MessageStatus.Delivered:
+      case MessageStatus.DELIVERED:
         return { delivered: {} };
-      case MessageStatus.Read:
+      case MessageStatus.READ:
         return { read: {} };
-      case MessageStatus.Failed:
+      case MessageStatus.FAILED:
         return { failed: {} };
       default:
         throw new Error(`Unknown message status: ${status}`);
@@ -180,11 +178,11 @@ export class MessageService extends BaseService {
   }
 
   private convertMessageStatusFromProgram(programStatus: any): MessageStatus {
-    if (programStatus.pending) return MessageStatus.Pending;
-    if (programStatus.delivered) return MessageStatus.Delivered;
-    if (programStatus.read) return MessageStatus.Read;
-    if (programStatus.failed) return MessageStatus.Failed;
-    throw new Error(`Unknown program status: ${JSON.stringify(programStatus)}`);
+    if (programStatus.pending) return MessageStatus.PENDING;
+    if (programStatus.delivered) return MessageStatus.DELIVERED;
+    if (programStatus.read) return MessageStatus.READ;
+    if (programStatus.failed) return MessageStatus.FAILED;
+    return MessageStatus.PENDING;
   }
 
   private convertMessageAccountFromProgram(
@@ -205,4 +203,26 @@ export class MessageService extends BaseService {
       bump: account.bump,
     };
   }
+
+  private messageStatusToString = (status: MessageStatus): string => {
+    switch (status) {
+      case MessageStatus.PENDING:
+        return "Pending";
+      case MessageStatus.DELIVERED:
+        return "Delivered";
+      case MessageStatus.READ:
+        return "Read";
+      case MessageStatus.FAILED:
+        return "Failed";
+      default:
+        return "Unknown";
+    }
+  };
+
+  private statusCounts = {
+    [MessageStatus.PENDING]: 0,
+    [MessageStatus.DELIVERED]: 0,
+    [MessageStatus.READ]: 0,
+    [MessageStatus.FAILED]: 0,
+  };
 }

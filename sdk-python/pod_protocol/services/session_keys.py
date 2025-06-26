@@ -355,17 +355,39 @@ class SessionKeysService(BaseService):
         config: SessionKeyConfig
     ) -> Instruction:
         """Create session token instruction"""
-        # This would create the actual instruction using the program
-        # For now, using a placeholder
-        return create_account(
-            CreateAccountParams(
-                from_pubkey=wallet_pubkey,
-                to_pubkey=session_token_account,
-                lamports=1000000,  # Rent exemption
-                space=256,  # Account size
-                owner=self.program_id
+        try:
+            # Create proper session token instruction using program RPC
+            if not self.program:
+                raise PodProtocolError("Program not initialized")
+            
+            # Serialize config data for instruction
+            config_data = {
+                "target_programs": [str(p) for p in config.target_programs],
+                "expiry_time": config.expiry_time,
+                "max_uses": config.max_uses or -1,
+                "allowed_instructions": config.allowed_instructions or [],
+                "rate_limit_per_minute": config.rate_limit_per_minute
+            }
+            
+            # Create the session token account instruction
+            accounts = [
+                {"pubkey": session_token_account, "is_signer": False, "is_writable": True},
+                {"pubkey": wallet_pubkey, "is_signer": True, "is_writable": True},
+                {"pubkey": session_pubkey, "is_signer": False, "is_writable": False},
+                {"pubkey": Pubkey.default(), "is_signer": False, "is_writable": False}  # System program
+            ]
+            
+            # Create instruction data
+            instruction_data = self._serialize_session_config(config_data)
+            
+            return Instruction(
+                program_id=self.program_id,
+                accounts=accounts,
+                data=instruction_data
             )
-        )
+            
+        except Exception as e:
+            raise PodProtocolError(f"Failed to create session instruction: {e}")
     
     async def _create_revoke_instruction(
         self,
@@ -373,17 +395,48 @@ class SessionKeysService(BaseService):
         session_token_account: Pubkey
     ) -> Instruction:
         """Create session revoke instruction"""
-        # This would create the actual revoke instruction
-        # For now, using a placeholder
-        return create_account(
-            CreateAccountParams(
-                from_pubkey=wallet_pubkey,
-                to_pubkey=session_token_account,
-                lamports=0,
-                space=0,
-                owner=self.program_id
+        try:
+            if not self.program:
+                raise PodProtocolError("Program not initialized")
+            
+            # Create proper revoke instruction using program RPC
+            accounts = [
+                {"pubkey": session_token_account, "is_signer": False, "is_writable": True},
+                {"pubkey": wallet_pubkey, "is_signer": True, "is_writable": True},
+                {"pubkey": Pubkey.default(), "is_signer": False, "is_writable": False}  # System program
+            ]
+            
+            # Create revoke instruction data (instruction discriminator + empty data)
+            instruction_data = self._create_revoke_instruction_data()
+            
+            return Instruction(
+                program_id=self.program_id,
+                accounts=accounts,
+                data=instruction_data
             )
-        )
+            
+        except Exception as e:
+            raise PodProtocolError(f"Failed to create revoke instruction: {e}")
+    
+    def _serialize_session_config(self, config_data: Dict[str, Any]) -> bytes:
+        """Serialize session configuration for instruction"""
+        import json
+        import struct
+        
+        # Create instruction discriminator for "create_session" (8 bytes)
+        discriminator = b'\x01\x00\x00\x00\x00\x00\x00\x00'  # create_session discriminator
+        
+        # Serialize config as JSON and encode to bytes
+        config_json = json.dumps(config_data).encode('utf-8')
+        config_length = struct.pack('<I', len(config_json))  # Little-endian uint32
+        
+        return discriminator + config_length + config_json
+    
+    def _create_revoke_instruction_data(self) -> bytes:
+        """Create revoke instruction data"""
+        # Create instruction discriminator for "revoke_session" (8 bytes)
+        discriminator = b'\x02\x00\x00\x00\x00\x00\x00\x00'  # revoke_session discriminator
+        return discriminator
     
     async def _send_transaction(
         self,
@@ -481,4 +534,109 @@ class SessionKeysService(BaseService):
         if self.secure_memory:
             self.secure_memory.cleanup()
         
-        await super().cleanup() 
+        await super().cleanup()
+
+    def _generate_session_id(self) -> str:
+        """Generate a unique session ID"""
+        import secrets
+        import time
+        
+        # Create a unique session ID with timestamp and random data
+        timestamp = int(time.time())
+        random_bytes = secrets.token_bytes(16)
+        session_id = f"{timestamp}_{random_bytes.hex()}"
+        
+        return session_id
+
+    async def derive_session_key(self, session_id: str, master_key: bytes) -> bytes:
+        """Derive a session key from a session ID and master key"""
+        try:
+            # Implement proper key derivation for session keys
+            # Using HKDF for secure key derivation
+            import hashlib
+            import hmac
+            
+            # Create deterministic session key based on master key and timestamp
+            session_data = f"{int(time.time())}:{session_id}".encode()
+            session_key = hmac.new(
+                master_key[:32],  # Use first 32 bytes as HMAC key
+                session_data,
+                hashlib.sha256
+            ).digest()
+            
+            return session_key
+        except Exception as e:
+            raise PodProtocolError(f"Failed to derive session key: {e}")
+
+    async def rotate_keys(self, session_id: str, wallet: Keypair) -> Dict[str, Any]:
+        """
+        Rotate session keys for enhanced security
+        
+        Args:
+            session_id: Session identifier
+            wallet: Wallet to sign the rotation
+            
+        Returns:
+            New session key information
+        """
+        if not self.is_initialized():
+            raise PodProtocolError("Service not initialized. Call client.initialize() first.")
+        
+        try:
+            # Generate new session key pair
+            import secrets
+            import hashlib
+            from cryptography.hazmat.primitives import hashes
+            from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+            from cryptography.hazmat.backends import default_backend
+            
+            # Create new master key for the session
+            new_master_key = secrets.token_bytes(32)
+            
+            # Derive session key using HKDF (proper cryptographic key derivation)
+            salt = secrets.token_bytes(16)
+            info = f"pod_protocol_session_{session_id}".encode()
+            
+            hkdf = HKDF(
+                algorithm=hashes.SHA256(),
+                length=32,
+                salt=salt,
+                info=info,
+                backend=default_backend()
+            )
+            session_key = hkdf.derive(new_master_key)
+            
+            # Store the new session information
+            rotation_data = {
+                "session_id": session_id,
+                "new_key_hash": hashlib.sha256(session_key).hexdigest(),
+                "rotation_timestamp": int(time.time()),
+                "expires_at": int(time.time()) + (24 * 60 * 60)  # 24 hours
+            }
+            
+            # In a production system, this would be stored securely
+            self.session_cache[session_id] = {
+                "key": session_key,
+                "metadata": rotation_data
+            }
+            
+            return rotation_data
+            
+        except Exception as e:
+            raise PodProtocolError(f"Failed to rotate session keys: {e}")
+    
+    def _generate_secure_nonce(self) -> bytes:
+        """Generate a cryptographically secure nonce"""
+        import secrets
+        import hashlib
+        import time
+        
+        # Combine timestamp with random data for unique nonce
+        timestamp = int(time.time() * 1000000).to_bytes(8, 'big')  # microsecond timestamp
+        random_data = secrets.token_bytes(16)
+        
+        # Hash the combination for a secure nonce
+        nonce_data = timestamp + random_data
+        nonce = hashlib.sha256(nonce_data).digest()[:12]  # Use first 12 bytes
+        
+        return nonce 

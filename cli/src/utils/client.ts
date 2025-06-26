@@ -1,8 +1,12 @@
 import { readFileSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
-import { generateKeyPairSigner, address, createSolanaRpc, createKeyPairSignerFromPrivateKeyBytes } from "@solana/web3.js";
-import type { KeyPairSigner, Address, Rpc } from "@solana/web3.js";
+import { createSolanaRpc } from '@solana/rpc';
+import { address } from '@solana/addresses';
+import { generateKeyPairSigner, createKeyPairSignerFromPrivateKeyBytes } from '@solana/signers';
+import type { Address } from '@solana/addresses';
+import type { Rpc } from '@solana/rpc';
+import type { KeyPairSigner } from '@solana/signers';
 // import { PodComClient } from "@pod-protocol/sdk"; // Disabled during Web3.js v2 migration
 import { safeParseKeypair } from "./safe-json.js";
 

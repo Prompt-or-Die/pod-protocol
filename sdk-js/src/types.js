@@ -1,71 +1,83 @@
 /**
- * PoD Protocol types and constants for JavaScript SDK
+ * Type definitions for PoD Protocol JavaScript SDK
+ * Compatible with Web3.js v2.0
  */
 
-import { Address, address } from '@solana/web3.js';
+// Note: In JavaScript, we use JSDoc comments for type annotations
+// These interfaces are for documentation and IDE support
 
 /**
- * PoD Protocol Program ID on Solana Devnet
+ * @typedef {string} Address - Solana address string (base58)
  */
-export const PROGRAM_ID = new Address('HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps');
 
 /**
  * Message types supported by PoD Protocol
- * @enum {string}
+ * @readonly
+ * @enum {number}
  */
 export const MessageType = {
-  TEXT: 'text',
-  DATA: 'data',
-  COMMAND: 'command',
-  RESPONSE: 'response',
-  CUSTOM: 'custom'
+  TEXT: 0,
+  IMAGE: 1,
+  CODE: 2,
+  FILE: 3,
 };
 
 /**
  * Message status in the delivery lifecycle
+ * @readonly
  * @enum {string}
  */
 export const MessageStatus = {
-  PENDING: 'pending',
-  DELIVERED: 'delivered',
-  READ: 'read',
-  FAILED: 'failed'
+  PENDING: "pending",
+  DELIVERED: "delivered", 
+  READ: "read",
+  FAILED: "failed",
 };
 
 /**
  * Channel visibility options
- * @enum {string}
+ * @readonly
+ * @enum {number}
  */
 export const ChannelVisibility = {
-  PUBLIC: 'public',
-  PRIVATE: 'private'
+  Public: 0,
+  Private: 1,
+  Restricted: 2,
 };
 
 /**
  * Agent capabilities as bitmask values
  * @readonly
  */
-export const AGENT_CAPABILITIES = Object.freeze({
-  TRADING: 1 << 0,           // 1
-  ANALYSIS: 1 << 1,          // 2
-  DATA_PROCESSING: 1 << 2,   // 4
-  CONTENT_GENERATION: 1 << 3, // 8
-  CUSTOM_1: 1 << 4,          // 16
-  CUSTOM_2: 1 << 5,          // 32
-  CUSTOM_3: 1 << 6,          // 64
-  CUSTOM_4: 1 << 7           // 128
-});
+export const AGENT_CAPABILITIES = {
+  TEXT: 1,
+  IMAGE: 2,
+  CODE: 4,
+  ANALYSIS: 8,
+  TRADING: 16,
+  CUSTOM1: 32,
+  CUSTOM2: 64,
+};
 
 /**
  * Error types returned by PoD Protocol program
+ * @readonly
  * @enum {number}
  */
 export const PodComError = {
-  INVALID_METADATA_URI_LENGTH: 6000,
-  UNAUTHORIZED: 6001,
-  MESSAGE_EXPIRED: 6002,
-  INVALID_MESSAGE_STATUS_TRANSITION: 6003
+  InvalidMetadataUriLength: 6000,
+  Unauthorized: 6001,
+  MessageExpired: 6002,
+  InvalidMessageStatusTransition: 6003,
+  InsufficientAccounts: 6004,
+  InvalidAccountData: 6005,
+  InvalidInstructionData: 6006,
 };
+
+/**
+ * PoD Protocol Program ID on Solana Devnet
+ */
+export const PROGRAM_ID = 'HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps';
 
 /**
  * Agent account data structure

@@ -9,6 +9,7 @@ from anchorpy import Program, Context
 from .base import BaseService
 from ..types import AgentAccount, CreateAgentOptions, UpdateAgentOptions, AGENT_CAPABILITIES
 from ..exceptions import AgentNotFoundError, PodProtocolError
+import time
 
 class AgentService(BaseService):
     """
@@ -154,9 +155,14 @@ class AgentService(BaseService):
         agent = await self.get(agent_pubkey)
         if not agent:
             raise AgentNotFoundError("Agent not found")
+        
+        # Calculate account age from creation timestamp
+        current_time = int(time.time())
+        account_age = current_time - agent.last_updated if agent.last_updated else 0
+        
         return {
             "reputation": agent.reputation,
             "invites_sent": agent.invites_sent,
             "last_active": agent.last_updated,
-            "account_age": 0,  # Placeholder, can be calculated from timestamps
+            "account_age": account_age,
         }

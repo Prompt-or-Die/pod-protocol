@@ -25,7 +25,8 @@ import { usePodClient } from "@/hooks/usePodClient";
 import { MessageStatus as SDKMessageStatus } from "@pod-protocol/sdk";
 
 // Web3.js v2.0 imports
-import { address, Address } from "@solana/web3.js";
+import { address } from '@solana/addresses';
+import type { Address } from '@solana/addresses';
 
 function mapStatus(status: SDKMessageStatus): MessageStatus {
   switch (status) {

@@ -102,5 +102,6 @@ export {
 } from "./utils";
 
 // Re-export commonly used Solana types for convenience from Web3.js v2.0
-export type { Address, RpcApi, RpcSubscriptionsApi } from '@solana/web3.js';
+export type { Address } from '@solana/addresses';
+export type { Rpc } from '@solana/kit';
 export type { KeyPairSigner } from "@solana/signers";

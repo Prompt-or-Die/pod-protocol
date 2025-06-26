@@ -1,4 +1,6 @@
-import { Address, KeyPairSigner, generateKeyPairSigner } from '@solana/web3.js';
+import type { Address } from '@solana/addresses';
+import type { KeyPairSigner } from '@solana/signers';
+import { generateKeyPairSigner } from '@solana/signers';
 import anchor from "@coral-xyz/anchor";
 const { BN, AnchorProvider, web3, Program } = anchor;
 import { BaseService } from "./base";

@@ -7,11 +7,8 @@
   "workspaces": [
     "cli",
     "frontend",
-    "sdk",
+    "sdk", 
     "sdk-js",
-    "sdk-python",
-    "sdk-rust",
-    "examples",
     "mcp-server"
   ],
   "packageManager": "bun@1.0.0",
