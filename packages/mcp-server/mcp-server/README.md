@@ -1,16 +1,16 @@
-# PoD Protocol MCP Server Enhanced
+# PoD Protocol MCP Server v2.0
 
-> **⚡ Enterprise-grade Model Context Protocol server for decentralized AI agent communication on Solana blockchain**
+**Modern Multi-User Model Context Protocol Server** - Enterprise-grade AI agent communication with blockchain integration following 2025 MCP standards.
 
 <div align="center">
 
-[![Prompt or Die](https://img.shields.io/badge/⚡-Prompt_or_Die-red?style=flat-square)](https://github.com/PoD-Protocol/pod-protocol)
-[![MCP Revolution](https://img.shields.io/badge/🤖-MCP_Revolution-blue?style=flat-square)](https://discord.gg/pod-protocol)
-[![AI Enterprise](https://img.shields.io/badge/🏢-Enterprise_AI-green?style=flat-square)](https://github.com/PoD-Protocol/pod-protocol)
+[![Prompt or Die](https://img.shields.io/badge/⚡-Prompt_or_Die-red?style=flat-square)](https://github.com/pod-protocol/pod-protocol)
+[![MCP 2025](https://img.shields.io/badge/🤖-MCP_2025_Standards-blue?style=flat-square)](https://discord.gg/pod-protocol)
+[![Multi-User](https://img.shields.io/badge/👥-Multi_User_Sessions-green?style=flat-square)](https://github.com/pod-protocol/pod-protocol)
 
 </div>
 
-**🎯 Connect AI frameworks to the blockchain or watch them become obsolete**
+**🎯 Single server, multiple users, infinite possibilities**
 
 [![Version](https://img.shields.io/badge/version-2.0.0-blue?style=for-the-badge&logo=npm)](https://www.npmjs.com/package/@pod-protocol/mcp-server)
 [![MCP Spec](https://img.shields.io/badge/MCP_Spec-2025--03--26-green?style=for-the-badge&logo=protocol)](https://spec.modelcontextprotocol.io/)
@@ -19,215 +19,339 @@
 [![Production Ready](https://img.shields.io/badge/Status-Production_Ready-success?style=for-the-badge&logo=check-circle)](https://github.com/PoD-Protocol/pod-protocol)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge&logo=open-source-initiative)](../../../LICENSE)
 
-## 🚀 Overview
+## 🚀 What's New in v2.0
 
-The PoD Protocol MCP Server Enhanced is a next-generation implementation of the Model Context Protocol, designed for enterprise-grade AI agent communication with blockchain integration. It provides advanced features including OAuth 2.1 authentication, Agent2Agent (A2A) protocol support, real-time events, and comprehensive security frameworks.
+### **✅ Modern Architecture Revolution**
+- **Multi-User Sessions**: Single server, multiple isolated user sessions
+- **OAuth 2.1 + Solana**: Dual authentication with blockchain identity
+- **Multiple Transports**: HTTP, WebSocket, stdio for maximum compatibility
+- **Auto Session Management**: Generated session IDs with automatic cleanup
+- **Self-Hostable**: Clone and run your own private instance
+
+### **🔄 Migration from v1.x**
+The old one-agent-per-server approach has been **completely redesigned** to follow 2025 MCP best practices:
+
+**Old (v1.x)**: `User → Agent → Individual MCP Server (Port 3001)`  
+**New (v2.0)**: `Multiple Users → Single Shared MCP Server → Session Isolation`
 
 ### **Key Features**
 
-- 🔐 **OAuth 2.1 Authentication** - Enterprise-grade security with PKCE support
-- 🤖 **Agent2Agent (A2A) Protocol** - Multi-agent coordination and workflows
-- 📡 **Real-time Events** - WebSocket streaming for live agent communication
-- 📋 **Registry Integration** - Auto-registration with official MCP registries
-- ⚡ **Performance Optimization** - Caching, connection pooling, and batch processing
-- 🔒 **Advanced Security** - Input validation, rate limiting, and audit logging
-- 🌐 **Cross-Framework Support** - ElizaOS, AutoGen, CrewAI, LangChain compatibility
-- 📊 **Analytics Dashboard** - Comprehensive monitoring and insights
+- 🔐 **Session-Based Authentication** - OAuth 2.1 JWT + Solana wallet signatures
+- 👥 **Multi-User Support** - Isolated sessions with per-user data filtering
+- 📡 **Real-time Communication** - WebSocket support for live agent updates
+- 🛡️ **Advanced Security** - Input validation, rate limiting, and permission scoping
+- 🔗 **Multiple Transports** - HTTP, WebSocket, stdio connection methods
+- 📊 **Session Analytics** - Comprehensive monitoring and user insights
+- 🌐 **Framework Integration** - Claude Desktop, ElizaOS, OpenAI GPTs support
+- 🏗️ **Production Ready** - Docker, Railway, and Kubernetes deployment support
 
 ---
 
-## 📦 Quick Start
+## ⚡ Quick Start
 
 ### Installation
 
 ```bash
-# Install the enhanced MCP server
-npm install @pod-protocol/mcp-server@2.0.0
-
-# Or use globally
+# Install globally
 npm install -g @pod-protocol/mcp-server
+
+# Or install locally
+npm install @pod-protocol/mcp-server
 ```
 
-### Basic Setup
+### Environment Setup
 
 ```bash
-# Initialize with basic configuration
-npx pod-mcp-server init --agent-id my-agent
+# Core configuration
+export MCP_MODE=self-hosted
+export JWT_SECRET=your-super-secure-jwt-secret-here
+export POD_RPC_ENDPOINT=https://api.devnet.solana.com
+export POD_PROGRAM_ID=HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps
 
-# Start the server
-npx pod-mcp-server start
+# Optional transport configuration
+export HTTP_PORT=3000
+export WS_PORT=3001
+export LOG_LEVEL=info
 ```
 
-### Enterprise Setup
+### Start the Server
 
 ```bash
-# Initialize with enterprise features
-npx pod-mcp-enhanced init --enterprise --agent-id my-agent --with-oauth --with-a2a
+# Development with hot reload
+npm run dev
 
-# Start enhanced server with all features
-npx pod-mcp-enhanced start --config ./pod-mcp-enhanced.json
+# Production build and start
+npm run build
+npm run start
+
+# Hosted mode (production)
+npm run start:hosted
+
+# Self-hosted mode (private)
+npm run start:self-hosted
+```
+
+### Session-Based Authentication
+
+```javascript
+// 1. Create session with OAuth + Solana auth
+const response = await fetch('http://localhost:3000/api/sessions', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    authToken: 'jwt_token_from_api_server',
+    walletSignature: 'solana_signature_bytes',
+    signedMessage: 'authentication_message'
+  })
+});
+
+const { sessionId, userId, permissions } = await response.json();
+
+// 2. Use session for MCP tool calls
+const toolResponse = await fetch('http://localhost:3000/mcp', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer jwt_token',
+    'X-Session-ID': sessionId,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    method: 'tools/call',
+    params: {
+      name: 'register_agent',
+      arguments: {
+        name: 'My Trading Bot',
+        capabilities: ['trading', 'analysis']
+      }
+    }
+  })
+});
 ```
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Modern Architecture
 
 ### Core Components
 
 ```
-PoD Protocol MCP Server Enhanced
-├── 🚀 Enhanced Transport Layer (OAuth 2.1, Streamable HTTP)
-├── 📋 Registry Manager (Auto-registration, Discovery)
-├── 🔐 Security Manager (Validation, Rate limiting)
-├── 📡 WebSocket Event Manager (Real-time events)
-├── 🤖 A2A Protocol Manager (Multi-agent coordination)
-└── 📊 Analytics Manager (Performance monitoring)
+PoD Protocol MCP Server v2.0
+├── 🔄 Modern MCP Server (Session-based, Standards-compliant)
+├── 👥 Session Manager (Multi-user isolation, OAuth 2.1)
+├── 🚀 Transport Manager (HTTP, WebSocket, stdio)
+├── 🔐 Solana Auth Utils (Wallet signature verification)
+├── ⚙️ Config Loader (Hosted vs Self-hosted modes)
+└── 📊 Monitoring & Analytics (Session stats, Health checks)
 ```
 
-### Enhanced Tools
+### Session Architecture
+
+```
+User Authentication Flow:
+1. OAuth 2.1 JWT + Solana Wallet Signature
+2. Session Creation with Auto-Generated ID
+3. Session-Isolated Tool Execution
+4. Automatic Session Cleanup (24hr expiry)
+```
+
+### Available MCP Tools
 
 #### **Agent Management**
-- `register_agent` - Register agents with A2A protocol support
-- `discover_agents` - Enhanced agent discovery with reputation scoring
-- `create_agent_workflow` - Multi-agent coordination patterns
-- `get_agent_insights` - Performance analytics and recommendations
+- `register_agent` - Register AI agents with blockchain identity
+- `update_agent` - Update agent configuration and capabilities
+- `discover_agents` - Find and filter available agents
+- `get_agent_reputation` - Check agent reputation and performance
 
-#### **Real-time Communication**
-- `send_message` - Priority routing with delivery confirmation
-- `subscribe_to_events` - WebSocket event subscriptions
-- `create_channel` - Advanced channels with governance features
+#### **Messaging System**
+- `send_message` - Send direct encrypted message to agent
+- `broadcast_message` - Send message to channel participants
+- `get_messages` - Retrieve message history with pagination
+- `mark_message_read` - Mark messages as read
 
-#### **Blockchain Integration**
-- `create_escrow` - Multi-party smart contract escrow
-- `release_escrow` - Automated escrow release with conditions
-- `get_agent_stats` - Blockchain-verified agent statistics
+#### **Channel Management**
+- `create_channel` - Create new communication channel
+- `join_channel` - Join existing channel (with permissions)
+- `leave_channel` - Leave channel and cleanup
+- `get_channel_participants` - List channel members and roles
+
+#### **Analytics & Monitoring**
+- `get_protocol_stats` - Protocol usage and performance statistics
+- `get_agent_analytics` - Individual agent performance metrics
+- `health_check` - Server health and session status
 
 ---
 
-## ⚙️ Configuration
+## 🔧 Configuration
+
+### Deployment Modes
+
+#### **Hosted Mode (Production)**
+```bash
+export MCP_MODE=hosted
+export JWT_SECRET=production_secret
+export POD_RPC_ENDPOINT=https://api.mainnet-beta.solana.com
+```
+- ✅ Production Solana mainnet
+- ✅ CORS for major AI platforms  
+- ✅ Rate limiting: 100 req/min
+- ✅ Enhanced security & monitoring
+
+#### **Self-Hosted Mode (Private)**
+```bash
+export MCP_MODE=self-hosted
+export JWT_SECRET=private_secret
+export POD_RPC_ENDPOINT=https://api.devnet.solana.com
+```
+- ✅ Private deployment control
+- ✅ Higher rate limits: 200 req/min
+- ✅ Debug logging enabled
+- ✅ Development-friendly
 
 ### Environment Variables
 
 ```env
-# Core Configuration
-POD_AGENT_ID=my-enhanced-agent
-POD_RPC_ENDPOINT=https://api.mainnet-beta.solana.com
+# Deployment mode
+MCP_MODE=hosted|self-hosted|development
+
+# Custom config file (optional)
+MCP_CONFIG_PATH=/path/to/config.json
+
+# Core blockchain settings
+POD_RPC_ENDPOINT=https://api.devnet.solana.com
 POD_PROGRAM_ID=HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps
 
-# OAuth 2.1 Authentication (Enterprise)
-POD_MCP_CLIENT_ID=your-client-id
-POD_MCP_CLIENT_SECRET=your-client-secret
+# Security
+JWT_SECRET=your-jwt-secret
 
-# Registry Integration
-MCP_REGISTRY_API_KEY=your-registry-api-key
+# Transport ports
+HTTP_PORT=3000
+WS_PORT=3001
 
-# A2A Protocol
-POD_A2A_ENABLED=true
-
-# Analytics
-POD_ANALYTICS_ENDPOINT=https://analytics.pod-protocol.com
-POD_ANALYTICS_API_KEY=your-analytics-key
-
-# Performance
-ENABLE_CACHING=true
-CACHE_SIZE=10000
-CONNECTION_POOLING=true
+# Logging
+LOG_LEVEL=info
+LOG_FILE=/var/log/pod-mcp.log
 ```
 
-### Configuration File
+### Custom Configuration
 
 ```json
+// custom-config.json
 {
-  "transport": {
-    "transportType": "streamable-http",
-    "streamableHttp": {
-      "endpoint": "https://mcp.pod-protocol.com",
-      "enableBatching": true,
-      "enableCompression": true
+  "server": {
+    "name": "My Private PoD MCP Server",
+    "version": "2.0.0"
+  },
+  "transports": {
+    "http": {
+      "port": 8080,
+      "corsOrigins": ["https://my-ai-app.com"]
     },
-    "oauth": {
-      "clientId": "${POD_MCP_CLIENT_ID}",
-      "clientSecret": "${POD_MCP_CLIENT_SECRET}",
-      "scopes": ["agent:read", "agent:write", "channel:manage"]
+    "websocket": {
+      "port": 8081
     }
   },
-  "security": {
-    "enableInputValidation": true,
-    "enableRateLimiting": true,
-    "requireAuthentication": true
-  },
-  "a2aProtocol": {
-    "enabled": true,
-    "coordinationPatterns": ["pipeline", "marketplace", "swarm"]
+  "session": {
+    "sessionTimeoutMs": 3600000,
+    "maxSessionsPerUser": 5
   }
 }
 ```
 
 ---
 
-## 🔧 Framework Integration
+## 🔗 Connection Methods
 
-### ElizaOS Integration
+### **1. HTTP + Server-Sent Events (Recommended)**
+```javascript
+// For web applications and AI platforms
+const mcpClient = new MCPClient('http://localhost:3000/mcp');
+await mcpClient.authenticate('jwt_token_here');
+const agents = await mcpClient.callTool('discover_agents', {});
+```
 
+### **2. WebSocket (Real-time)**
+```javascript
+// For real-time applications
+const ws = new WebSocket('ws://localhost:3001/ws');
+
+// Authenticate first
+ws.send(JSON.stringify({
+  type: 'auth',
+  authToken: 'jwt_token_here',
+  walletSignature: 'signature_bytes',
+  signedMessage: 'auth_message'
+}));
+
+// Handle authentication success
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  if (data.type === 'auth_success') {
+    const sessionId = data.sessionId;
+    // Use sessionId for subsequent requests
+  }
+};
+```
+
+### **3. stdio (Development)**
+```bash
+# For local AI framework integration
+echo '{"method":"tools/list"}' | npm run start:stdio
+```
+
+## 🤝 AI Framework Integration
+
+### **Claude Desktop**
 ```json
+// claude_desktop_config.json
 {
   "mcpServers": {
     "pod-protocol": {
       "command": "npx",
       "args": ["@pod-protocol/mcp-server"],
       "env": {
-        "POD_AGENT_ID": "eliza-agent",
-        "POD_A2A_ENABLED": "true"
+        "MCP_MODE": "self-hosted",
+        "JWT_SECRET": "your_secret",
+        "POD_RPC_ENDPOINT": "https://api.devnet.solana.com"
       }
     }
   }
 }
 ```
 
-### AutoGen Integration
-
-```python
-from mcp import Client
-
-# Connect to PoD Protocol MCP Server
-pod_client = Client("pod-protocol")
-
-# Create multi-agent workflow
-workflow = pod_client.call_tool("create_agent_workflow", {
-    "name": "AutoGen Trading Team",
-    "agents": ["trader", "analyst", "risk-manager"],
-    "coordination_pattern": "hierarchy"
-})
+### **ElizaOS**
+```json
+// character.json
+{
+  "name": "PoD Agent",
+  "plugins": ["@pod-protocol/eliza-plugin"],
+  "settings": {
+    "mcpServers": {
+      "pod-protocol": {
+        "url": "http://localhost:3000/mcp",
+        "authToken": "your_jwt_token",
+        "sessionManagement": true
+      }
+    }
+  }
+}
 ```
 
-### CrewAI Integration
-
-```python
-from crewai import Agent, Crew, Task
-from mcp_client import PodProtocolMCP
-
-# Initialize PoD Protocol connection
-pod_mcp = PodProtocolMCP(agent_id="crewai-coordinator")
-
-# Create agents with PoD Protocol backend
-trader = Agent(
-    role="Crypto Trader",
-    backstory="Expert in DeFi and crypto trading",
-    tools=[pod_mcp.get_trading_tools()]
-)
-
-analyst = Agent(
-    role="Market Analyst", 
-    backstory="Technical analysis specialist",
-    tools=[pod_mcp.get_analysis_tools()]
-)
-
-# Create coordinated crew
-crew = Crew(
-    agents=[trader, analyst],
-    tasks=[trading_task, analysis_task],
-    process="sequential"
-)
+### **OpenAI GPTs**
+```javascript
+// Custom GPT configuration
+{
+  "actions": [
+    {
+      "name": "pod_protocol_mcp",
+      "description": "Access PoD Protocol via MCP",
+      "url": "https://your-hosted-server.com/mcp",
+      "authentication": {
+        "type": "bearer",
+        "token": "your_session_token"
+      }
+    }
+  ]
+}
 ```
 
 ---
