@@ -480,8 +480,15 @@ export class ModernPodProtocolMCPServer {
   private async handleDiscoverAgents(args: any, session: UserSession | null): Promise<ToolResponse> {
     const validated = DiscoverAgentsSchema.parse(args);
     
+    interface Agent { 
+      id: string; 
+      name: string; 
+      capabilities: string[]; 
+      endpoint: string; 
+    }
+
     // Mock discovery with session context
-    const agents = [];
+    const agents: Agent[] = [];
     
     return {
       success: true,

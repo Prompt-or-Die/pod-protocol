@@ -7,14 +7,16 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 // Note: SSE transport may not be available in current SDK version
 // import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { WebSocketServer, WebSocket } from 'ws';
-import { createServer } from 'http';
+import { createServer, Server as HttpServer } from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { sessionManager, UserSession } from './session-manager.js';
-import { logger } from './logger.js';
+import { createLogger } from './logger.js';
+
+const logger = createLogger();
 
 export interface TransportConfig {
   http: {
@@ -41,7 +43,7 @@ export interface TransportConfig {
 export class TransportManager {
   private mcpServer: Server;
   private config: TransportConfig;
-  private httpServer?: any;
+  private httpServer?: HttpServer;
   private wsServer?: WebSocketServer;
   private app?: express.Application;
 
@@ -80,13 +82,13 @@ export class TransportManager {
 
     if (this.httpServer) {
       promises.push(new Promise(resolve => {
-        this.httpServer.close(() => resolve());
+        this.httpServer!.close(() => resolve());
       }));
     }
 
     if (this.wsServer) {
       promises.push(new Promise(resolve => {
-        this.wsServer.close(() => resolve());
+        this.wsServer!.close(() => resolve());
       }));
     }
 
@@ -139,7 +141,7 @@ export class TransportManager {
     this.app.use(express.json({ limit: '10mb' }));
 
     // Session authentication middleware
-    const authenticateSession = async (req: Request, res: Response, next: any) => {
+    const authenticateSession = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       if (!this.config.security.requireAuth) {
         return next();
       }
@@ -148,7 +150,8 @@ export class TransportManager {
       const authToken = req.headers.authorization?.replace('Bearer ', '');
 
       if (!sessionId && !authToken) {
-        return res.status(401).json({ error: 'Session ID or auth token required' });
+        res.status(401).json({ error: 'Session ID or auth token required' });
+        return;
       }
 
       try {
@@ -169,7 +172,8 @@ export class TransportManager {
         }
 
         if (!session) {
-          return res.status(401).json({ error: 'Invalid or expired session' });
+          res.status(401).json({ error: 'Invalid or expired session' });
+          return;
         }
 
         (req as any).session = session;
@@ -177,6 +181,7 @@ export class TransportManager {
       } catch (error) {
         logger.error('Authentication failed', { error });
         res.status(401).json({ error: 'Authentication failed' });
+        return;
       }
     };
 
@@ -201,7 +206,8 @@ export class TransportManager {
         const { authToken, walletSignature, signedMessage } = req.body;
         
         if (!authToken) {
-          return res.status(400).json({ error: 'Auth token required' });
+          res.status(400).json({ error: 'Auth token required' });
+          return;
         }
 
         const session = await sessionManager.createSession(authToken, {
@@ -230,7 +236,8 @@ export class TransportManager {
 
       // Users can only destroy their own sessions
       if (requestSession.sessionId !== sessionId && !requestSession.permissions.includes('admin')) {
-        return res.status(403).json({ error: 'Permission denied' });
+        res.status(403).json({ error: 'Permission denied' });
+        return;
       }
 
       const destroyed = await sessionManager.destroySession(sessionId);
@@ -246,7 +253,7 @@ export class TransportManager {
         'Content-Type': 'text/plain',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*'
+        'Access-Control': 'Allow-Origin'
       });
       
       res.write('MCP server connected\n');

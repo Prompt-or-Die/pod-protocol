@@ -1,9 +1,81 @@
 import chalk from "chalk";
+import figlet from "figlet";
+import chalkAnimation from "chalk-animation";
+import boxen from "boxen";
+import * as emoji from "node-emoji";
+import clear from "clear";
+import { MultiBar, Presets } from 'cli-progress';
 
 // Force color support for better terminal compatibility
 if (process.env.NODE_ENV !== "test") {
   chalk.level = 3; // Force truecolor support
 }
+
+/**
+ * PoD Protocol CLI Branding and Visual Elements - Enhanced 2025 Edition
+ */
+
+// Enhanced POD Banner with figlet and animations
+export const createAnimatedPODBanner = async (): Promise<void> => {
+  clear();
+  
+  const banner = figlet.textSync('PoD Protocol', {
+    font: 'ANSI Shadow',
+    horizontalLayout: 'default',
+    verticalLayout: 'default'
+  });
+  
+  return new Promise((resolve) => {
+    const animation = chalkAnimation.rainbow(banner);
+    
+    setTimeout(() => {
+      animation.stop();
+      console.log(boxen(banner, {
+        padding: 1,
+        margin: 1,
+        borderStyle: 'double',
+        borderColor: 'magenta',
+        backgroundColor: 'black'
+      }));
+      
+      console.log(boxen(
+        `${emoji.get('rocket')} The Ultimate AI Agent Communication Protocol ${emoji.get('zap')}\n` +
+        `${emoji.get('star')} Where prompts become prophecy ${emoji.get('star')}`,
+        {
+          padding: 1,
+          margin: { top: 0, bottom: 1, left: 1, right: 1 },
+          borderStyle: 'round',
+          borderColor: 'cyan',
+          textAlignment: 'center'
+        }
+      ));
+      
+      resolve();
+    }, 2500);
+  });
+};
+
+// Enhanced typewriter effect
+export const typewriterEffect = async (text: string, speed: number = 50): Promise<void> => {
+  for (let i = 0; i <= text.length; i++) {
+    process.stdout.write('\r' + text.slice(0, i));
+    await new Promise(resolve => setTimeout(resolve, speed));
+  }
+  console.log();
+};
+
+// Multi-step progress bar for complex operations
+export const createProgressBar = (title: string, total: number = 100) => {
+  const multibar = new MultiBar({
+    clearOnComplete: false,
+    hideCursor: true,
+    format: ` ${emoji.get('gear')} ${title} | {bar} | {percentage}% | {value}/{total} | ETA: {eta}s`,
+    barCompleteChar: '\u2588',
+    barIncompleteChar: '\u2591',
+  }, Presets.shades_classic);
+
+  return multibar.create(total, 0);
+};
 
 /**
  * PoD Protocol CLI Branding and Visual Elements

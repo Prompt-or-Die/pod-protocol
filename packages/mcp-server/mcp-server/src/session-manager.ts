@@ -7,7 +7,9 @@ import { EventEmitter } from 'events';
 import { randomUUID } from 'crypto';
 import jwt from 'jsonwebtoken';
 import { PodComClient } from '@pod-protocol/sdk';
-import { logger } from './logger.js';
+import { createLogger } from './logger.js';
+
+const logger = createLogger();
 import { SolanaAuthUtils } from './utils/solana-auth.js';
 
 export interface UserSession {

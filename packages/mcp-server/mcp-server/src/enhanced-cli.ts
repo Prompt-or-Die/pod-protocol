@@ -11,14 +11,9 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import dotenv from 'dotenv';
 
-// Import enhanced components
-import { EnhancedPodProtocolMCPServer, EnhancedMCPServerConfig } from './enhanced-server.js';
-import { ServerMetadata } from './registry-integration.js';
+import { ConfigLoader } from './config-loader.js';
 
-// Load environment variables
-dotenv.config();
-
-const program = new Command();
+// ... (rest of the imports)
 
 // CLI configuration
 program
@@ -28,148 +23,18 @@ program
 
 // Enhanced server configuration template
 const defaultEnhancedConfig: EnhancedMCPServerConfig = {
-  // Transport configuration (MCP 2025-03-26 spec)
-  transport: {
-    transportType: 'streamable-http',
-    streamableHttp: {
-      endpoint: process.env.POD_MCP_ENDPOINT || 'http://localhost:3000',
-      enableBatching: true,
-      batchSize: 10,
-      batchTimeout: 100,
-      enableCompression: true,
-      proxyCompatible: true
-    },
-    oauth: process.env.POD_MCP_CLIENT_ID ? {
-      clientId: process.env.POD_MCP_CLIENT_ID,
-      clientSecret: process.env.POD_MCP_CLIENT_SECRET!,
-      authEndpoint: process.env.POD_OAUTH_AUTH_ENDPOINT || 'https://auth.pod-protocol.com/oauth/authorize',
-      tokenEndpoint: process.env.POD_OAUTH_TOKEN_ENDPOINT || 'https://auth.pod-protocol.com/oauth/token',
-      scopes: ['agent:read', 'agent:write', 'channel:manage', 'escrow:execute'],
-      pkceEnabled: true
-    } : undefined,
-    enableLogging: true,
-    logLevel: 'info',
-    rateLimiting: {
-      enabled: true,
-      requestsPerMinute: 1000,
-      burstLimit: 100
-    }
-  },
-
-  // Registry integration
-  registry: {
-    registries: [
-      {
-        name: 'official',
-        url: 'https://registry.modelcontextprotocol.org',
-        apiKey: process.env.MCP_REGISTRY_API_KEY,
-        priority: 1,
-        categories: ['blockchain', 'agent-communication', 'real-time'],
-        enabled: true
-      },
-      {
-        name: 'community',
-        url: 'https://community.mcp-registry.dev',
-        priority: 2,
-        categories: ['solana', 'defi', 'multi-agent'],
-        enabled: true
-      }
-    ],
-    autoRegister: true,
-    updateInterval: 3600000, // 1 hour
-    enableMetrics: true,
-    healthCheckInterval: 300000 // 5 minutes
-  },
-
-  // Enhanced security (using base MCPServerConfig structure)
-  security: {
-    rate_limit_per_minute: 60,
-    max_message_size: 1000000, // 1MB
-    allowed_origins: [
-      'https://claude.ai',
-      'https://cursor.sh',
-      'https://codeium.com',
-      'https://github.com'
-    ],
-    require_signature_verification: !!process.env.POD_MCP_CLIENT_ID
-  },
-
-  // Enhanced security configuration (additional)
-  enhancedSecurity: {
-    enableInputValidation: true,
-    enableRateLimiting: true,
-    enableToolSigning: true,
-    maxRequestSize: 1000000, // 1MB
-    allowedOrigins: [
-      'https://claude.ai',
-      'https://cursor.sh',
-      'https://codeium.com',
-      'https://github.com'
-    ],
-    requireAuthentication: !!process.env.POD_MCP_CLIENT_ID
-  },
-
-  // A2A Protocol support
-  a2aProtocol: {
-    enabled: process.env.POD_A2A_ENABLED === 'true',
-    discoveryMode: 'hybrid',
-    coordinationPatterns: ['pipeline', 'marketplace', 'swarm'],
-    trustFramework: {
-      reputationScoring: true,
-      attestationRequired: false,
-      escrowIntegration: true
-    }
-  },
-
-  // Analytics
-  analytics: {
-    enabled: !!process.env.POD_ANALYTICS_ENDPOINT,
-    endpoint: process.env.POD_ANALYTICS_ENDPOINT || '',
-    apiKey: process.env.POD_ANALYTICS_API_KEY,
-    batchSize: 100,
-    flushInterval: 60000
-  },
-
-  // Performance optimization
-  performance: {
-    enableCaching: true,
-    cacheSize: 1000,
-    cacheTTL: 300000, // 5 minutes
-    enablePrefetching: true,
-    connectionPooling: true
-  },
-
-  // PoD Protocol configuration
-  pod_protocol: {
-    rpc_endpoint: process.env.POD_RPC_ENDPOINT || 'https://api.mainnet-beta.solana.com',
-    program_id: process.env.POD_PROGRAM_ID || 'HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps',
-    commitment: 'confirmed'
-  },
-
-  // Agent runtime settings
-  agent_runtime: {
-    runtime: 'custom',
-    agent_id: process.env.POD_AGENT_ID || 'pod-enhanced-server',
-    wallet_path: process.env.POD_WALLET_PATH,
-    auto_respond: false,
-    response_delay_ms: 1000
-  },
-
-  // Enhanced features
-  features: {
-    auto_message_processing: true,
-    real_time_notifications: true,
-    cross_runtime_discovery: true,
-    analytics_tracking: true
-  },
-
-  // Logging configuration
-  logging: {
-    level: 'info',
-    file_path: './logs/pod-mcp-enhanced.log',
-    console_output: true
-  }
+  // ... (rest of the default config)
 };
+
+// ... (rest of the file)
+
+  .action(async (options) => {
+    const spinner = ora('Initializing enhanced MCP server configuration').start();
+
+    try {
+      const mode = options.runtime === 'enhanced' ? 'development' : 'self-hosted';
+      const configPath = options.configPath;
+      const config: EnhancedMCPServerConfig = await ConfigLoader.load({ mode, configPath });
 
 // Server metadata for registry registration
 const serverMetadata: ServerMetadata = {
@@ -306,7 +171,9 @@ program
     const spinner = ora('Initializing enhanced MCP server configuration').start();
 
     try {
-      let config = { ...defaultEnhancedConfig };
+      const mode = options.runtime === 'enhanced' ? 'development' : 'self-hosted'; // Assuming 'enhanced' implies development mode for config loading
+      const configPath = options.configPath;
+      const config: EnhancedMCPServerConfig = await ConfigLoader.load({ mode, configPath });
 
       // Apply options
       if (options.agentId) {

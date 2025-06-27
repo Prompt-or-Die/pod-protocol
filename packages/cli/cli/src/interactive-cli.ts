@@ -1,12 +1,20 @@
 import { createInterface } from 'readline';
 import { Command } from 'commander';
 import chalk from 'chalk';
+import { intro, outro, text, select, multiselect, confirm, spinner, note } from '@clack/prompts';
+import { Listr } from 'listr2';
+import boxen from 'boxen';
+import * as emoji from 'node-emoji';
+import blessed from 'blessed';
 import {
   showBanner,
   BannerSize,
   BRAND_COLORS,
   ICONS,
   DECORATIVE_ELEMENTS,
+  createAnimatedPODBanner,
+  typewriterEffect,
+  createProgressBar
 } from './utils/branding.js';
 import { AIAssistant } from './utils/ai-assistant.js';
 import { createStandaloneClient, mockAgentRegistration, mockMessageSend } from './utils/standalone-client.js';
@@ -16,6 +24,7 @@ export class InteractiveCLI {
   private aiAssistant: AIAssistant;
   private commandHistory: string[] = [];
   private currentNetwork: string = 'devnet';
+  private dashboard: blessed.Widgets.Screen | null = null;
 
   constructor() {
     this.aiAssistant = new AIAssistant();
@@ -43,7 +52,7 @@ export class InteractiveCLI {
       'help', 'help-me', 'ask',
       'tutorial', 'demo-agent', 'demo-message',
       'status', 'migration-status',
-      'zk', 'advanced',
+      'zk', 'advanced', 'dashboard', 'wizard',
       'network', 'clear', 'history', 'exit', 'quit'
     ];
 
@@ -51,19 +60,204 @@ export class InteractiveCLI {
     return [hits.length ? hits : commands, line];
   }
 
-  private showWelcome() {
-    console.clear();
-    showBanner(BannerSize.FULL);
-    console.log();
-    console.log(`${ICONS.star} ${BRAND_COLORS.accent("Welcome to PoD Protocol Interactive CLI!")}`);
-    console.log(`${ICONS.info} ${BRAND_COLORS.secondary("Type commands below. Use 'help' for available commands.")}`);
-    console.log(`${ICONS.brain} ${BRAND_COLORS.secondary("Try: 'tutorial first-agent' or 'demo-agent --name MyBot'")}`);
-    console.log(`${ICONS.warning} ${BRAND_COLORS.muted("Type 'exit' or 'quit' to leave, 'clear' to clear screen.")}`);
+  private async showWelcome() {
+    await createAnimatedPODBanner();
+    await typewriterEffect(`${emoji.get('star')} Welcome to PoD Protocol Interactive CLI!`);
+    await typewriterEffect(`${emoji.get('information_source')} Type commands below. Use 'help' for available commands.`);
+    await typewriterEffect(`${emoji.get('brain')} Try: 'tutorial first-agent' or 'demo-agent --name MyBot'`);
+    await typewriterEffect(`${emoji.get('warning')} Type 'exit' or 'quit' to leave, 'clear' to clear screen.`);
     console.log();
     console.log(`${DECORATIVE_ELEMENTS.line}`);
     console.log();
   }
 
+  // Enhanced agent registration with modern prompts
+  private async enhancedAgentRegistration(): Promise<void> {
+    intro(`${emoji.get('robot_face')} Agent Registration Wizard`);
+
+    const agentName = await text({
+      message: 'What would you like to name your agent?',
+      placeholder: 'MyAwesomeAgent',
+      validate: (value) => {
+        if (!value) return 'Agent name is required';
+        if (value.length < 3) return 'Agent name must be at least 3 characters';
+      }
+    });
+
+    if (typeof agentName === 'symbol') return; // User cancelled
+
+    const capabilities = await multiselect({
+      message: 'Select agent capabilities:',
+      options: [
+        { value: 'trading', label: `${emoji.get('chart_with_upwards_trend')} Trading & Finance` },
+        { value: 'analysis', label: `${emoji.get('mag')} Data Analysis` },
+        { value: 'content', label: `${emoji.get('pencil2')} Content Generation` },
+        { value: 'monitoring', label: `${emoji.get('eye')} System Monitoring` },
+        { value: 'communication', label: `${emoji.get('speech_balloon')} Inter-Agent Communication` }
+      ]
+    });
+
+    if (typeof capabilities === 'symbol') return; // User cancelled
+
+    const advanced = await confirm({
+      message: 'Enable advanced AI features?'
+    });
+
+    if (typeof advanced === 'symbol') return; // User cancelled
+
+    // Execute with enhanced progress visualization
+    const tasks = new Listr([
+      {
+        title: 'Generating cryptographic keys',
+        task: async () => {
+          await new Promise(resolve => setTimeout(resolve, 1500));
+        }
+      },
+      {
+        title: 'Registering with PoD Protocol network',
+        task: async () => {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      },
+      {
+        title: 'Configuring capabilities',
+        task: async () => {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      },
+      {
+        title: 'Finalizing setup',
+        task: async () => {
+          await new Promise(resolve => setTimeout(resolve, 800));
+        }
+      }
+    ]);
+
+    await tasks.run();
+
+    outro(`${emoji.get('tada')} Agent "${agentName}" registered successfully!`);
+
+    note(boxen(
+      `${emoji.get('rocket')} Your agent is now live on the PoD Protocol network!\n\n` +
+      `${emoji.get('clipboard')} Agent Details:\n` +
+      `   Name: ${agentName}\n` +
+      `   Capabilities: ${Array.isArray(capabilities) ? capabilities.join(', ') : 'none'}\n` +
+      `   Advanced Features: ${advanced ? 'Enabled' : 'Disabled'}\n\n` +
+      `${emoji.get('link')} Next steps:\n` +
+      `   • Run 'pod agents list' to see all agents\n` +
+      `   • Use 'pod messages send' to start communicating\n` +
+      `   • Try 'pod dashboard' for real-time monitoring`,
+      {
+        padding: 1,
+        borderStyle: 'round',
+        borderColor: 'cyan'
+      }
+    ));
+  }
+
+  // Enhanced dashboard with real-time monitoring
+  private async launchDashboard(): Promise<void> {
+    this.dashboard = blessed.screen({
+      smartCSR: true,
+      title: 'PoD Protocol - Live Dashboard'
+    });
+
+    // Agent List
+    const agentList = blessed.list({
+      parent: this.dashboard,
+      label: ` ${emoji.get('robot_face')} Active Agents `,
+      top: 0,
+      left: 0,
+      width: '50%',
+      height: '50%',
+      border: { type: 'line' },
+      style: {
+        selected: { bg: 'blue' },
+        border: { fg: 'cyan' }
+      },
+      keys: true,
+      vi: true
+    });
+
+    // Network Status
+    const statusBox = blessed.box({
+      parent: this.dashboard,
+      label: ` ${emoji.get('bar_chart')} Network Status `,
+      top: 0,
+      left: '50%',
+      width: '50%',
+      height: '50%',
+      border: { type: 'line' },
+      style: { border: { fg: 'green' } },
+      content: this.generateStatusContent()
+    });
+
+    // Activity Log
+    const logBox = blessed.log({
+      parent: this.dashboard,
+      label: ` ${emoji.get('scroll')} Activity Log `,
+      top: '50%',
+      left: 0,
+      width: '100%',
+      height: '50%',
+      border: { type: 'line' },
+      style: { border: { fg: 'yellow' } },
+      scrollable: true,
+      alwaysScroll: true
+    });
+
+    // Setup event handlers
+    this.dashboard.key(['escape', 'q', 'C-c'], () => {
+      this.dashboard?.destroy();
+      return process.exit(0);
+    });
+
+    agentList.focus();
+
+    // Simulate real-time data
+    this.simulateRealTimeData(agentList, logBox);
+    this.dashboard.render();
+  }
+
+  private generateStatusContent(): string {
+    return `
+  ${emoji.get('globe_with_meridians')} Network: ${chalk.green('CONNECTED')}
+  ${emoji.get('satellite')} RPC Endpoint: devnet
+  ${emoji.get('link')} Active Connections: 3
+  ${emoji.get('speech_balloon')} Messages Today: 127
+  ${emoji.get('classical_building')} Channels: 8
+  ${emoji.get('moneybag')} Escrows: 2 pending
+  ${emoji.get('zap')} Latency: 45ms
+  ${emoji.get('chart_with_upwards_trend')} Uptime: 4h 23m
+    `;
+  }
+
+  private simulateRealTimeData(agentList: any, logBox: any) {
+    const agents = [
+      `${emoji.get('robot_face')} TradingBot-Alpha (Active)`,
+      `${emoji.get('brain')} AnalysisAgent-Beta (Processing)`,
+      `${emoji.get('bar_chart')} DataMiner-Gamma (Idle)`,
+      `${emoji.get('mag')} SentinelAgent-Delta (Monitoring)`
+    ];
+
+    agentList.setItems(agents);
+
+    // Simulate log entries
+    setInterval(() => {
+      const logMessages = [
+        `${emoji.get('white_check_mark')} Agent registered successfully`,
+        `${emoji.get('envelope')} Message sent to channel #trading`,
+        `${emoji.get('arrows_clockwise')} Syncing with network peers`,
+        `${emoji.get('zap')} Processing 15 new transactions`
+      ];
+      
+      const randomMessage = logMessages[Math.floor(Math.random() * logMessages.length)];
+      logBox.log(`${new Date().toLocaleTimeString()} - ${randomMessage}`);
+      this.dashboard?.render();
+    }, 2000);
+  }
+
+  // Enhanced command execution with modern prompts
   private async executeCommand(input: string): Promise<void> {
     const trimmedInput = input.trim();
     
@@ -76,13 +270,12 @@ export class InteractiveCLI {
     switch (trimmedInput.toLowerCase()) {
       case 'exit':
       case 'quit':
-        console.log(`${ICONS.wave} ${BRAND_COLORS.accent("Thanks for using PoD Protocol! Goodbye!")}`);
+        console.log(`${emoji.get('wave')} ${BRAND_COLORS.accent("Thanks for using PoD Protocol! Goodbye!")}`);
         process.exit(0);
         break;
 
       case 'clear':
-        console.clear();
-        this.showWelcome();
+        await this.showWelcome();
         return;
 
       case 'history':
@@ -91,6 +284,14 @@ export class InteractiveCLI {
 
       case 'help':
         this.showInteractiveHelp();
+        return;
+
+      case 'wizard':
+        await this.enhancedAgentRegistration();
+        return;
+
+      case 'dashboard':
+        await this.launchDashboard();
         return;
 
       case '':
@@ -102,11 +303,11 @@ export class InteractiveCLI {
       const network = trimmedInput.split(' ')[1];
       if (['devnet', 'testnet', 'mainnet'].includes(network)) {
         this.currentNetwork = network;
-        console.log(`${ICONS.network} ${BRAND_COLORS.success(`Switched to ${network}`)}`);
+        console.log(`${emoji.get('globe_with_meridians')} ${BRAND_COLORS.success(`Switched to ${network}`)}`);
         this.readline.setPrompt(this.getPrompt());
         return;
       } else {
-        console.log(`${ICONS.error} ${BRAND_COLORS.error("Invalid network. Use: devnet, testnet, or mainnet")}`);
+        console.log(`${emoji.get('x')} ${BRAND_COLORS.error("Invalid network. Use: devnet, testnet, or mainnet")}`);
         return;
       }
     }
@@ -115,7 +316,7 @@ export class InteractiveCLI {
     try {
       await this.executeCommandWithCommander(trimmedInput);
     } catch (error) {
-      console.log(`${ICONS.error} ${BRAND_COLORS.error("Command error:")} ${(error as Error).message}`);
+      console.log(`${emoji.get('x')} ${BRAND_COLORS.error("Command error:")} ${(error as Error).message}`);
     }
   }
 
@@ -155,23 +356,23 @@ export class InteractiveCLI {
       }
 
       if (args[0] === 'zk') {
-        console.log(`${ICONS.warning} ${BRAND_COLORS.warning("ZK compression commands available:")}`);
+        console.log(`${emoji.get('warning')} ${BRAND_COLORS.warning("ZK compression commands available:")}`);
         console.log(`  ${BRAND_COLORS.primary("zk tree")} - Merkle tree operations`);
         console.log(`  ${BRAND_COLORS.primary("zk nft")} - Compressed NFT operations`);
         return;
       }
 
       if (args[0] === 'advanced') {
-        console.log(`${ICONS.gear} ${BRAND_COLORS.warning("Advanced features coming soon in this interactive mode!")}`);
+        console.log(`${emoji.get('gear')} ${BRAND_COLORS.warning("Advanced features coming soon in this interactive mode!")}`);
         return;
       }
 
       // Default: Show suggestion
-      console.log(`${ICONS.brain} ${BRAND_COLORS.warning(`Unknown command: ${args[0]}`)}`);
-      console.log(`${ICONS.info} ${BRAND_COLORS.secondary("Try 'help' for available commands")}`);
+      console.log(`${emoji.get('brain')} ${BRAND_COLORS.warning(`Unknown command: ${args[0]}`)}`);
+      console.log(`${emoji.get('information_source')} ${BRAND_COLORS.secondary("Try 'help' for available commands")}`);
       
     } catch (error) {
-      console.log(`${ICONS.error} ${BRAND_COLORS.error("Execution error:")} ${(error as Error).message}`);
+      console.log(`${emoji.get('x')} ${BRAND_COLORS.error("Execution error:")} ${(error as Error).message}`);
     }
   }
 
@@ -207,8 +408,8 @@ export class InteractiveCLI {
     const queryString = query.join(' ');
     
     if (!queryString) {
-      console.log(`${ICONS.agent} ${BRAND_COLORS.accent("PoD Protocol AI Assistant")}\n`);
-      console.log(`${ICONS.info} Ask me anything about PoD Protocol!\n`);
+      console.log(`${emoji.get('robot_face')} ${BRAND_COLORS.accent("PoD Protocol AI Assistant")}\n`);
+      console.log(`${emoji.get('information_source')} Ask me anything about PoD Protocol!\n`);
       console.log(`${BRAND_COLORS.primary("Examples:")}`);
       console.log(`  ${BRAND_COLORS.secondary("help-me register an agent with trading capabilities")}`);
       console.log(`  ${BRAND_COLORS.secondary("help-me send encrypted messages")}`);
@@ -218,13 +419,13 @@ export class InteractiveCLI {
       return;
     }
     
-    console.log(`${ICONS.agent} ${BRAND_COLORS.accent("AI Assistant analyzing:")} "${queryString}"\n`);
+    console.log(`${emoji.get('robot_face')} ${BRAND_COLORS.accent("AI Assistant analyzing:")} "${queryString}"\n`);
     this.aiAssistant.displayInteractiveHelp(queryString);
   }
 
   private async handleTutorial(topic?: string): Promise<void> {
     if (!topic) {
-      console.log(`${ICONS.star} ${BRAND_COLORS.accent("Available Tutorials:")}\n`);
+      console.log(`${emoji.get('star')} ${BRAND_COLORS.accent("Available Tutorials:")}\n`);
       console.log(`  ${BRAND_COLORS.primary("first-agent")}      - Register and manage your first AI agent`);
       console.log(`  ${BRAND_COLORS.primary("zk-compression")}   - Save 99% on costs with ZK compression`);
       console.log(`  ${BRAND_COLORS.primary("advanced-messaging")} - Channels and group communication`);
@@ -236,12 +437,12 @@ export class InteractiveCLI {
 
     const tutorial = this.aiAssistant.getTutorial(topic);
     if (tutorial.length === 0) {
-      console.log(`${ICONS.warning} ${BRAND_COLORS.warning(`Tutorial "${topic}" not found.`)}`);
-      console.log(`${ICONS.info} Available tutorials: first-agent, zk-compression, advanced-messaging, web3v2-migration`);
+      console.log(`${emoji.get('warning')} ${BRAND_COLORS.warning(`Tutorial "${topic}" not found.`)}`);
+      console.log(`${emoji.get('information_source')} Available tutorials: first-agent, zk-compression, advanced-messaging, web3v2-migration`);
       return;
     }
 
-    console.log(`${ICONS.star} ${BRAND_COLORS.accent(`Tutorial: ${topic}`)}\n`);
+    console.log(`${emoji.get('star')} ${BRAND_COLORS.accent(`Tutorial: ${topic}`)}\n`);
     tutorial.forEach((step, index) => {
       console.log(`${BRAND_COLORS.primary(`Step ${index + 1}:`)} ${step.title}`);
       console.log(`  ${step.description}`);
@@ -269,7 +470,7 @@ export class InteractiveCLI {
       }
     }
 
-    console.log(`${ICONS.agent} ${BRAND_COLORS.accent("Demo Agent Registration")}\n`);
+    console.log(`${emoji.get('robot_face')} ${BRAND_COLORS.accent("Demo Agent Registration")}\n`);
     
     const capabilityList = capabilities.split(',').map((c: string) => c.trim());
     const result = mockAgentRegistration(name, capabilityList);
@@ -298,7 +499,7 @@ export class InteractiveCLI {
       }
     }
 
-    console.log(`${ICONS.lightning} ${BRAND_COLORS.accent("Demo Message Sending")}\n`);
+    console.log(`${emoji.get('lightning')} ${BRAND_COLORS.accent("Demo Message Sending")}\n`);
     
     const result = mockMessageSend(recipient, content);
     
@@ -314,16 +515,16 @@ export class InteractiveCLI {
   }
 
   private async handleStatus(health: boolean = false): Promise<void> {
-    console.log(`${ICONS.rocket} ${BRAND_COLORS.accent("PoD Protocol Status")}\n`);
+    console.log(`${emoji.get('rocket')} ${BRAND_COLORS.accent("PoD Protocol Status")}\n`);
 
     const client = createStandaloneClient({ network: this.currentNetwork });
 
     const statusItems = [
-      { label: "CLI Version", value: "1.5.2", icon: ICONS.gear },
-      { label: "Network", value: this.currentNetwork.toUpperCase(), icon: ICONS.network },
-      { label: "RPC URL", value: client.rpcUrl, icon: ICONS.chain },
-      { label: "Mode", value: "INTERACTIVE (Web3.js v2 Migration)", icon: ICONS.success },
-      { label: "Status", value: "OPERATIONAL", icon: ICONS.success },
+      { label: "CLI Version", value: "1.5.2", icon: emoji.get('gear') },
+      { label: "Network", value: this.currentNetwork.toUpperCase(), icon: emoji.get('globe_with_meridians') },
+      { label: "RPC URL", value: client.rpcUrl, icon: emoji.get('chain') },
+      { label: "Mode", value: "INTERACTIVE (Web3.js v2 Migration)", icon: emoji.get('success') },
+      { label: "Status", value: "OPERATIONAL", icon: emoji.get('success') },
     ];
 
     statusItems.forEach((item) => {
@@ -332,14 +533,14 @@ export class InteractiveCLI {
 
     if (health) {
       console.log();
-      console.log(`${ICONS.loading} ${BRAND_COLORS.info("Running health checks...")}`);
-      console.log(`${ICONS.success} ${BRAND_COLORS.success("Interactive CLI operational")}`);
-      console.log(`${ICONS.info} ${BRAND_COLORS.info("SDK migration in progress")}`);
+      console.log(`${emoji.get('loading')} ${BRAND_COLORS.info("Running health checks...")}`);
+      console.log(`${emoji.get('success')} ${BRAND_COLORS.success("Interactive CLI operational")}`);
+      console.log(`${emoji.get('information_source')} ${BRAND_COLORS.info("SDK migration in progress")}`);
     }
   }
 
   private async handleMigrationStatus(): Promise<void> {
-    console.log(`${ICONS.gear} ${BRAND_COLORS.accent("PoD Protocol Web3.js v2 Migration Status")}\n`);
+    console.log(`${emoji.get('gear')} ${BRAND_COLORS.accent("PoD Protocol Web3.js v2 Migration Status")}\n`);
     
     console.log(`${BRAND_COLORS.primary("✅ Completed:")}`);
     console.log(`  • Interactive CLI with persistent session`);
@@ -357,7 +558,7 @@ export class InteractiveCLI {
   }
 
   private showHistory(): void {
-    console.log(`${ICONS.history} ${BRAND_COLORS.accent("Command History:")}\n`);
+    console.log(`${emoji.get('history')} ${BRAND_COLORS.accent("Command History:")}\n`);
     if (this.commandHistory.length === 0) {
       console.log(`${BRAND_COLORS.muted("No commands in history yet.")}`);
     } else {
@@ -369,7 +570,7 @@ export class InteractiveCLI {
   }
 
   private showInteractiveHelp(): void {
-    console.log(`${ICONS.star} ${BRAND_COLORS.accent("PoD Protocol Interactive CLI - Available Commands:")}\n`);
+    console.log(`${emoji.get('star')} ${BRAND_COLORS.accent("PoD Protocol Interactive CLI - Available Commands:")}\n`);
     
     console.log(`${BRAND_COLORS.primary("🤖 AI & Tutorials:")}`);
     console.log(`  ${BRAND_COLORS.secondary("help-me <query>")}     - AI-powered help and suggestions`);
@@ -390,6 +591,8 @@ export class InteractiveCLI {
     console.log(`${BRAND_COLORS.primary("🗜️ Advanced:")}`);
     console.log(`  ${BRAND_COLORS.secondary("zk")}                  - ZK compression operations`);
     console.log(`  ${BRAND_COLORS.secondary("advanced")}            - Advanced features`);
+    console.log(`  ${BRAND_COLORS.secondary("wizard")}              - Enhanced registration wizard`);
+    console.log(`  ${BRAND_COLORS.secondary("dashboard")}           - Real-time monitoring dashboard`);
     console.log();
     
     console.log(`${BRAND_COLORS.primary("📋 Session Commands:")}`);
@@ -407,7 +610,7 @@ export class InteractiveCLI {
   }
 
   public async start(): Promise<void> {
-    this.showWelcome();
+    await this.showWelcome();
 
     this.readline.on('line', async (input: string) => {
       await this.executeCommand(input);
@@ -416,13 +619,13 @@ export class InteractiveCLI {
     });
 
     this.readline.on('close', () => {
-      console.log(`\n${ICONS.wave} ${BRAND_COLORS.accent("Thanks for using PoD Protocol! Goodbye!")}`);
+      console.log(`\n${emoji.get('wave')} ${BRAND_COLORS.accent("Thanks for using PoD Protocol! Goodbye!")}`);
       process.exit(0);
     });
 
     // Handle Ctrl+C gracefully
     this.readline.on('SIGINT', () => {
-      console.log(`\n${ICONS.warning} ${BRAND_COLORS.warning("Use 'exit' or 'quit' to leave the interactive CLI")}`);
+      console.log(`\n${emoji.get('warning')} ${BRAND_COLORS.warning("Use 'exit' or 'quit' to leave the interactive CLI")}`);
       this.readline.prompt();
     });
 

@@ -84,7 +84,7 @@ export class AgentProtocolService {
   static async discoverAgents(capabilityName?: string): Promise<AgentDiscoveryMessage[]> {
     try {
       // Get agents from local registry
-      let agents = Array.from(this.agents.values());
+      const agents = Array.from(this.agents.values());
       
       // Get agents from blockchain
       const blockchainAgents = await BlockchainService.getAgentsFromBlockchain({ limit: 100 });

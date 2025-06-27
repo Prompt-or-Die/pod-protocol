@@ -7,6 +7,7 @@ import { PublicKey } from '@solana/web3.js';
 import * as ed25519 from '@noble/ed25519';
 import bs58 from 'bs58';
 import { randomBytes } from 'crypto';
+import jwt from 'jsonwebtoken';
 
 export interface ParsedAuthMessage {
   domain: string;
@@ -268,7 +269,7 @@ export class SolanaAuthUtils {
       audience?: string;
     } = {}
   ): string {
-    const jwt = require('jsonwebtoken');
+    import jwt from 'jsonwebtoken';
     
     const payload = {
       userId,
@@ -292,7 +293,7 @@ export class SolanaAuthUtils {
    * Verify and decode JWT token
    */
   static verifyAuthToken(token: string, secret: string): any {
-    const jwt = require('jsonwebtoken');
+    import jwt from 'jsonwebtoken';
     
     try {
       return jwt.verify(token, secret);

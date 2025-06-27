@@ -4,12 +4,9 @@ import { Command } from "commander";
 import { readFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
-import { intro, outro, select, confirm, note } from '@clack/prompts';
+import { intro, outro, select } from '@clack/prompts';
 import { createAnimatedPODBanner } from "./utils/branding.js";
 import { errorHandler } from "./utils/enhanced-error-handler.js";
-import { ProductionCLI } from "./modes/production.js";
-import { DevelopmentCLI } from "./modes/development.js";
-import { GuidedCLI } from "./modes/guided.js";
 import boxen from 'boxen';
 import * as emoji from 'node-emoji';
 import chalk from 'chalk';
@@ -46,33 +43,6 @@ export class PodCLI {
         }
       });
 
-    // Direct mode commands
-    this.program
-      .command("production")
-      .description("Start in production mode")
-      .option("--auto", "skip confirmation prompts")
-      .action(async (options) => {
-        const productionCLI = new ProductionCLI();
-        await productionCLI.start(options);
-      });
-
-    this.program
-      .command("development")
-      .description("Start in development mode")
-      .option("--auto", "skip confirmation prompts")
-      .action(async (options) => {
-        const developmentCLI = new DevelopmentCLI();
-        await developmentCLI.start(options);
-      });
-
-    this.program
-      .command("guided")
-      .description("Start guided setup mode")
-      .action(async () => {
-        const guidedCLI = new GuidedCLI();
-        await guidedCLI.start();
-      });
-
     // Quick commands
     this.program
       .command("status")
@@ -88,6 +58,13 @@ export class PodCLI {
       .action(async (query) => {
         await this.showAIHelp(query.join(' '));
       });
+
+    this.program
+      .command("demo")
+      .description("Run interactive demo")
+      .action(async () => {
+        await this.runDemo();
+      });
   }
 
   async showMainMenu(): Promise<void> {
@@ -100,19 +77,14 @@ export class PodCLI {
         message: 'How would you like to use PoD Protocol today?',
         options: [
           {
-            value: 'guided',
-            label: `${emoji.get('star')} Guided Setup - I'm new to PoD Protocol`,
-            hint: 'Perfect for first-time users, includes tutorials and examples'
+            value: 'demo',
+            label: `${emoji.get('star')} Interactive Demo`,
+            hint: 'Try PoD Protocol features with guided examples'
           },
           {
-            value: 'development',
-            label: `${emoji.get('hammer_and_wrench')} Development Mode - I'm building with PoD`,
-            hint: 'Advanced tools, debugging, local networks, testing features'
-          },
-          {
-            value: 'production',
-            label: `${emoji.get('rocket')} Production Mode - I'm managing live agents`,
-            hint: 'Streamlined interface for managing production deployments'
+            value: 'status',
+            label: `${emoji.get('information_source')} System Status`,
+            hint: 'Check CLI and network status'
           },
           {
             value: 'help',
@@ -128,21 +100,12 @@ export class PodCLI {
       }
 
       switch (mode) {
-        case 'guided':
-          const guidedCLI = new GuidedCLI();
-          await guidedCLI.start();
+        case 'demo':
+          await this.runDemo();
           break;
-
-        case 'development':
-          const developmentCLI = new DevelopmentCLI();
-          await developmentCLI.start();
+        case 'status':
+          await this.showStatus();
           break;
-
-        case 'production':
-          const productionCLI = new ProductionCLI();
-          await productionCLI.start();
-          break;
-
         case 'help':
           await this.showAIHelp();
           break;
@@ -162,10 +125,7 @@ export class PodCLI {
       `${emoji.get('gear')} Node.js: ${process.version}\n` +
       `${emoji.get('globe_with_meridians')} Network: Ready for all environments\n` +
       `${emoji.get('white_check_mark')} Status: ${chalk.green('Operational')}\n\n` +
-      `${emoji.get('books')} Quick Start:\n` +
-      `  • Run ${chalk.cyan('pod guided')} for tutorials\n` +
-      `  • Run ${chalk.cyan('pod development')} for building\n` +
-      `  • Run ${chalk.cyan('pod production')} for deployment`,
+      `${emoji.get('rocket')} Ready to build AI agents!`,
       {
         padding: 1,
         borderStyle: 'round',
@@ -199,22 +159,11 @@ export class PodCLI {
     } else {
       console.log(`${emoji.get('thinking_face')} Analyzing: "${query}"\n`);
       
-      // AI response based on query
-      const responses: Record<string, string> = {
-        'register': 'To register an agent, use guided mode with `pod guided` and select "Create Your First Agent"',
-        'deploy': 'For deployment, use production mode with `pod production` and follow the deployment wizard',
-        'debug': 'Development mode has debugging tools - try `pod development` and select "Debug & Monitor"',
-        'mainnet': 'Production mode handles mainnet deployments safely - use `pod production`',
-        'agent': 'Agents are managed through all modes - guided for learning, development for building, production for managing'
-      };
-
-      const matchedKey = Object.keys(responses).find(key => query.toLowerCase().includes(key));
-      const response = matchedKey ? responses[matchedKey] : 
-        'I recommend starting with guided mode (`pod guided`) to explore your options step by step.';
-
       console.log(boxen(
-        `${emoji.get('robot_face')} AI Assistant Response:\n\n${response}\n\n` +
-        `${emoji.get('information_source')} For more detailed help, try the guided mode!`,
+        `${emoji.get('robot_face')} AI Assistant Response:\n\n` +
+        `For "${query}", I recommend starting with our interactive demo.\n` +
+        `Run: ${chalk.cyan('pod demo')} to explore PoD Protocol features.\n\n` +
+        `${emoji.get('information_source')} Full documentation coming soon!`,
         {
           padding: 1,
           borderStyle: 'round',
@@ -222,6 +171,39 @@ export class PodCLI {
         }
       ));
     }
+  }
+
+  async runDemo(): Promise<void> {
+    intro(`${emoji.get('star')} PoD Protocol Interactive Demo`);
+
+    console.log(boxen(
+      `${emoji.get('rocket')} Welcome to PoD Protocol!\n\n` +
+      `This demo showcases the power of decentralized AI agent communication.\n\n` +
+      `${emoji.get('gear')} Key Features:\n` +
+      `  • Decentralized agent messaging\n` +
+      `  • Solana blockchain integration\n` +
+      `  • ZK-compression for 99% cost savings\n` +
+      `  • Enterprise-grade security\n` +
+      `  • Real-time agent discovery\n\n` +
+      `${emoji.get('bulb')} Use Cases:\n` +
+      `  • Trading bots\n` +
+      `  • Customer service agents\n` +
+      `  • Data analysis agents\n` +
+      `  • Multi-agent systems\n\n` +
+      `${emoji.get('building_construction')} Coming Soon:\n` +
+      `  • Guided tutorials\n` +
+      `  • Development tools\n` +
+      `  • Production deployment\n` +
+      `  • Advanced monitoring`,
+      {
+        padding: 1,
+        borderStyle: 'double',
+        borderColor: 'magenta',
+        title: ' PoD Protocol Demo '
+      }
+    ));
+
+    outro(`${emoji.get('graduation_cap')} Demo complete! Run 'pod status' to see system information.`);
   }
 
   async run(): Promise<void> {
@@ -263,5 +245,4 @@ process.on('unhandledRejection', (reason) => {
 main().catch((error) => {
   errorHandler.handleError(error);
   process.exit(1);
-});
-
+}); 

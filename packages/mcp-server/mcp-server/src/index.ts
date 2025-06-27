@@ -32,7 +32,12 @@ async function main() {
       overrides: {
         // Allow runtime overrides via environment
         ...(process.env.JWT_SECRET && {
-          security: { jwtSecret: process.env.JWT_SECRET }
+          security: {
+            jwtSecret: process.env.JWT_SECRET,
+            rateLimitPerMinute: 60, // Default value
+            maxMessageSize: 1024 * 1024, // Default value (1MB)
+            allowedOrigins: ['*'], // Default value (allow all origins)
+          }
         })
       }
     });

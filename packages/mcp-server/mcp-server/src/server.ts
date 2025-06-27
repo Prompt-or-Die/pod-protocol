@@ -401,7 +401,7 @@ export class PodProtocolMCPServer {
       
       try {
         switch (uri) {
-          case 'pod://agents/active':
+          case 'pod://agents/active': {
             const activeAgents = await this.getActiveAgents();
             return {
               contents: [{
@@ -409,8 +409,9 @@ export class PodProtocolMCPServer {
                 text: JSON.stringify(activeAgents, null, 2)
               } as TextContent]
             };
+          }
 
-          case 'pod://channels/public':
+          case 'pod://channels/public': {
             const publicChannels = await this.getPublicChannels();
             return {
               contents: [{
@@ -418,8 +419,9 @@ export class PodProtocolMCPServer {
                 text: JSON.stringify(publicChannels, null, 2)
               } as TextContent]
             };
+          }
 
-          case 'pod://network/stats':
+          case 'pod://network/stats': {
             const networkStats = await this.getNetworkStats('24h');
             return {
               contents: [{
@@ -427,8 +429,9 @@ export class PodProtocolMCPServer {
                 text: JSON.stringify(networkStats, null, 2)
               } as TextContent]
             };
+          }
 
-          case 'pod://agent/profile':
+          case 'pod://agent/profile': {
             const agentProfile = await this.getCurrentAgentProfile();
             return {
               contents: [{
@@ -436,6 +439,7 @@ export class PodProtocolMCPServer {
                 text: JSON.stringify(agentProfile, null, 2)
               } as TextContent]
             };
+          }
 
           default:
             throw new Error(`Unknown resource: ${uri}`);
