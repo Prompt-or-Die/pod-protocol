@@ -4,9 +4,9 @@
  */
 
 import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
-import { createDASAPI, DASUtils } from '../src/services/das-api.js';
-import { createSafeUmiOperations, isDevelopmentMode, mockUmiOperations } from '../src/utils/wallet-adapter.js';
-import { ALL_DEPTH_SIZE_PAIRS, getConcurrentMerkleTreeAccountSize } from '../src/commands/zk-compression.js';
+import { createDASAPI, DASUtils } from '../src/services/das-api';
+import { createSafeUmiOperations, isDevelopmentMode, mockUmiOperations } from '../src/utils/wallet-adapter';
+import { ALL_DEPTH_SIZE_PAIRS, getConcurrentMerkleTreeAccountSize } from '../src/commands/zk-compression';
 
 // Mock wallet for testing
 const mockWallet = {

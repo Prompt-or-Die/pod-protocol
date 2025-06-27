@@ -126,9 +126,9 @@ describe('PoD Protocol CLI E2E Tests', () => {
     });
 
     test('ZK compression savings calculation works', async () => {
-      const { stdout } = await execAsync(`${NODE_CMD} zk savings --transactions 1000`);
-      expect(stdout).toContain('Cost Savings Analysis');
-      expect(stdout).toContain('Traditional Cost:');
+      const { stdout } = await execAsync(`${NODE_CMD} zk savings --count 1000`);
+      expect(stdout).toContain('ZK Compression Savings Analysis');
+      expect(stdout).toContain('Regular NFT Cost:');
       expect(stdout).toContain('Compressed Cost:');
       expect(stdout).toContain('Total Savings:');
     });

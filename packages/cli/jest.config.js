@@ -13,7 +13,7 @@ export default {
       isolatedModules: true
     }]
   },
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   testMatch: [
@@ -23,6 +23,9 @@ export default {
   testPathIgnorePatterns: [
     '/node_modules/',
     '/dist/'
+  ],
+  transformIgnorePatterns: [
+    'node_modules/(?!(chalk|ansi-styles|boxen|gradient-string|cli-progress|ora|@clack|node-emoji)/)'
   ],
   collectCoverageFrom: [
     'src/**/*.ts',

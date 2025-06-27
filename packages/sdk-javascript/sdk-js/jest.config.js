@@ -1,13 +1,20 @@
 /** @type {import('jest').Config} */
 export default {
-  testEnvironment: 'node',
+  preset: 'ts-jest/presets/default-esm',
   extensionsToTreatAsEsm: ['.js'],
+  testEnvironment: 'node',
+  transform: {
+    '^.+\\.js$': ['ts-jest', {
+      useESM: true,
+      isolatedModules: true
+    }]
+  },
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
-  transform: {
-    '^.+\\.js$': ['babel-jest', { presets: [['@babel/preset-env', { targets: { node: 'current' } }]] }],
-  },
+  transformIgnorePatterns: [
+    'node_modules/(?!(chalk|ansi-styles|boxen|gradient-string|cli-progress|ora|@clack|node-emoji)/)' 
+  ],
   testMatch: [
     '<rootDir>/tests/**/*.test.js',
     '<rootDir>/src/**/*.test.js',
@@ -23,4 +30,6 @@ export default {
   testTimeout: 30000,
   maxWorkers: 1, // Run tests sequentially to avoid conflicts
   verbose: true,
+  detectOpenHandles: true,
+  forceExit: true,
 };

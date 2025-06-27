@@ -236,12 +236,12 @@ export class JitoBundlesService extends BaseService {
   async getBundleStatus(bundleId: string): Promise<BundleResult> {
     try {
       const response = await fetch(`${this.jitoRpcUrl}/status?bundle=${bundleId}`);
-      const data = await response.json();
+      const data = await response.json() as { signatures?: string[]; status?: string; error?: string };
       
       return {
         bundleId,
         signatures: data.signatures || [],
-        status: data.status || 'pending',
+        status: (data.status as 'pending' | 'success' | 'failed') || 'pending',
         error: data.error
       };
     } catch (error) {
@@ -315,7 +315,7 @@ export class JitoBundlesService extends BaseService {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as { error?: { message?: string }; result?: string };
       
       if (data.error) {
         throw new Error(`Jito error: ${data.error.message || JSON.stringify(data.error)}`);
