@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { logger } from '../index.js';
+import { logger } from '../lib/logger.js';
 
 export interface AppError extends Error {
   statusCode?: number;

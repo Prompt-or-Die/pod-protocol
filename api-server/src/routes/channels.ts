@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { logger } from '../index.js';
+import { logger } from '../lib/logger.js';
 
 const router = Router();
 

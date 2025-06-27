@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   MagnifyingGlassIcon,
-  FunnelIcon,
   ArrowTrendingUpIcon,
   StarIcon,
   ClockIcon,
@@ -57,13 +56,6 @@ const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({ className }) => {
   const [activeTab, setActiveTab] = useState<'search' | 'recommended' | 'trending'>('search');
 
   // Load initial data
-  useEffect(() => {
-    if (isConnected && client) {
-      loadRecommendations();
-      loadTrending();
-    }
-  }, [isConnected, client]);
-
   const loadRecommendations = async () => {
     if (!client) return;
     
@@ -108,11 +100,11 @@ const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({ className }) => {
           hasMore: result.hasMore
         });
       } else {
-        const result = await client.discovery.searchChannels(searchQuery, {});
+        const result = await client.channels.searchChannels(searchQuery, {});
         setSearchResults({
           agents: [],
           channels: result.items,
-          executionTime: result.executionTime,
+          executionTime: 250, // Mock execution time since channel search doesn't provide it
           total: result.total,
           hasMore: result.hasMore
         });
@@ -260,7 +252,7 @@ const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({ className }) => {
         ].map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
+            onClick={() => setActiveTab(tab.id as 'search' | 'recommended' | 'trending')}
             className={cn(
               'flex items-center space-x-2 px-4 py-2 rounded-md transition-all',
               activeTab === tab.id

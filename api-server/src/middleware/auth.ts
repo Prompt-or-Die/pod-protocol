@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { logger } from '../index.js';
+import { logger } from '../lib/logger.js';
 
 interface JWTPayload {
   publicKey: string;
@@ -59,33 +59,66 @@ export const authMiddleware = async (
   }
 };
 
-export const optionalAuth = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const optionalAuth = (req: Request, res: Response, next: NextFunction) => {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return next();
+  }
+  
+  const token = authHeader.substring(7);
+  
+  if (!process.env.JWT_SECRET) {
+    logger.error('JWT_SECRET not configured');
+    return next();
+  }
+  
   try {
-    const authHeader = req.headers.authorization;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET) as any;
+    req.user = {
+      id: decoded.id,
+      publicKey: decoded.publicKey,
+      walletAddress: decoded.walletAddress,
+      authenticatedAt: decoded.authenticatedAt,
+      refreshedAt: decoded.refreshedAt
+    };
+  } catch (error) {
+    logger.warn('Invalid JWT token:', error);
+  }
+  
+  next();
+};
+
+export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({ error: 'Authorization header required' });
+    return;
+  }
+  
+  const token = authHeader.substring(7);
+  
+  if (!process.env.JWT_SECRET) {
+    logger.error('JWT_SECRET not configured');
+    res.status(500).json({ error: 'Server configuration error' });
+    return;
+  }
+  
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET) as any;
     
-    if (authHeader && authHeader.startsWith('Bearer ') && process.env.JWT_SECRET) {
-      const token = authHeader.substring(7);
-      
-      try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET) as JWTPayload;
-        req.user = {
-          publicKey: decoded.publicKey,
-          id: decoded.id,
-          walletAddress: decoded.walletAddress
-        };
-      } catch (jwtError) {
-        // Ignore JWT errors for optional auth
-        logger.debug('Optional auth failed, continuing without user', { error: jwtError });
-      }
-    }
+    req.user = {
+      id: decoded.id,
+      publicKey: decoded.publicKey,
+      walletAddress: decoded.walletAddress,
+      authenticatedAt: decoded.authenticatedAt,
+      refreshedAt: decoded.refreshedAt
+    };
     
     next();
   } catch (error) {
-    logger.error('Optional auth middleware error:', error);
-    next(); // Continue without auth for optional middleware
+    logger.warn('Authentication failed:', error);
+    res.status(401).json({ error: 'Invalid or expired token' });
   }
 }; 

@@ -1,12 +1,18 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import jwt from 'jsonwebtoken';
-import { logger } from '../index.js';
+import { logger } from '../lib/logger.js';
 import { optionalAuth } from '../middleware/auth.js';
+import { SolanaAuthUtils } from '../utils/solana-auth.js';
+import { UserService } from '../services/user.service.js';
 
 const router = Router();
 
 // Validation schemas
+const getNonceSchema = z.object({
+  publicKey: z.string().min(32).max(48)
+});
+
 const loginSchema = z.object({
   publicKey: z.string().min(32).max(48),
   signature: z.string().min(1),
@@ -17,28 +23,125 @@ const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1)
 });
 
-// POST /api/auth/login - Wallet-based authentication
+// In-memory nonce storage (in production, use Redis or database)
+const nonceStore = new Map<string, { nonce: string, createdAt: Date }>();
+
+// Clean up expired nonces every 15 minutes
+setInterval(() => {
+  const now = new Date();
+  for (const [publicKey, data] of nonceStore.entries()) {
+    const ageMinutes = (now.getTime() - data.createdAt.getTime()) / (1000 * 60);
+    if (ageMinutes > 15) {
+      nonceStore.delete(publicKey);
+    }
+  }
+}, 15 * 60 * 1000);
+
+// GET /api/auth/nonce - Get authentication nonce
+router.get('/nonce/:publicKey', async (req, res) => {
+  try {
+    const { publicKey } = req.params;
+    
+    // Validate public key format
+    if (!SolanaAuthUtils.isValidPublicKey(publicKey)) {
+      res.status(400).json({ error: 'Invalid public key format' });
+      return;
+    }
+    
+    // Generate nonce
+    const nonce = SolanaAuthUtils.generateNonce();
+    const domain = req.get('host') || 'localhost:4000';
+    
+    // Store nonce temporarily
+    nonceStore.set(publicKey, { nonce, createdAt: new Date() });
+    
+    // Create auth message
+    const message = SolanaAuthUtils.createAuthMessage(publicKey, domain, nonce);
+    
+    logger.info('Nonce generated for authentication:', { publicKey: publicKey.slice(0, 8) + '...' });
+    
+    res.json({
+      nonce,
+      message,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 minutes
+    });
+  } catch (error) {
+    logger.error('Nonce generation error:', error);
+    res.status(500).json({ error: 'Failed to generate nonce' });
+  }
+});
+
+// POST /api/auth/login - Wallet-based authentication with real signature verification
 router.post('/login', async (req, res) => {
   try {
     const validatedData = loginSchema.parse(req.body);
     const { publicKey, signature, message } = validatedData;
     
-    // TODO: Verify signature against message using Solana crypto
-    // For now, we'll create a token if the publicKey is provided
+    // Validate public key format
+    if (!SolanaAuthUtils.isValidPublicKey(publicKey)) {
+      res.status(400).json({ error: 'Invalid public key format' });
+      return;
+    }
+    
+    // Parse and validate message
+    const parsedMessage = SolanaAuthUtils.parseAuthMessage(message);
+    if (!parsedMessage) {
+      res.status(400).json({ error: 'Invalid message format' });
+      return;
+    }
+    
+    // Check if message is for the correct public key
+    if (parsedMessage.address !== publicKey) {
+      res.status(400).json({ error: 'Message address does not match public key' });
+      return;
+    }
+    
+    // Check message expiration (10 minutes max)
+    if (SolanaAuthUtils.isMessageExpired(parsedMessage, 10)) {
+      res.status(400).json({ error: 'Authentication message has expired' });
+      return;
+    }
+    
+    // Verify nonce was issued by us
+    const storedNonce = nonceStore.get(publicKey);
+    if (!storedNonce || storedNonce.nonce !== parsedMessage.nonce) {
+      res.status(400).json({ error: 'Invalid or expired nonce' });
+      return;
+    }
+    
+    // Verify signature
+    const isValidSignature = await SolanaAuthUtils.verifySignature(
+      message,
+      signature,
+      publicKey
+    );
+    
+    if (!isValidSignature) {
+      res.status(401).json({ error: 'Invalid signature' });
+      return;
+    }
+    
+    // Clean up used nonce
+    nonceStore.delete(publicKey);
     
     if (!process.env.JWT_SECRET) {
       res.status(500).json({ error: 'Server configuration error' });
       return;
     }
     
-    const userId = `user_${publicKey.slice(0, 8)}`;
+    // Create or get user in database
+    const user = await UserService.createOrGetUser({
+      publicKey,
+      walletAddress: publicKey
+    });
     
-    // Create JWT token
+    // Create JWT token with database user ID
     const accessToken = jwt.sign(
       {
-        publicKey,
-        id: userId,
-        walletAddress: publicKey
+        publicKey: user.publicKey,
+        id: user.id,
+        walletAddress: user.walletAddress,
+        authenticatedAt: new Date().toISOString()
       },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
@@ -47,24 +150,29 @@ router.post('/login', async (req, res) => {
     // Create refresh token (longer lived)
     const refreshToken = jwt.sign(
       {
-        publicKey,
-        id: userId,
+        publicKey: user.publicKey,
+        id: user.id,
         type: 'refresh'
       },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
     
-    logger.info('User logged in:', { publicKey, userId });
+    logger.info('User successfully authenticated:', { 
+      publicKey: user.publicKey.slice(0, 8) + '...', 
+      userId: user.id 
+    });
     
     res.json({
-      message: 'Login successful',
+      message: 'Authentication successful',
       accessToken,
       refreshToken,
       user: {
-        id: userId,
-        publicKey,
-        walletAddress: publicKey
+        id: user.id,
+        publicKey: user.publicKey,
+        walletAddress: user.walletAddress,
+        authenticatedAt: user.lastAuthenticatedAt?.toISOString(),
+        createdAt: user.createdAt.toISOString()
       }
     });
   } catch (error) {
@@ -76,8 +184,8 @@ router.post('/login', async (req, res) => {
       return;
     }
     
-    logger.error('Login error:', error);
-    res.status(500).json({ error: 'Login failed' });
+    logger.error('Authentication error:', error);
+    res.status(500).json({ error: 'Authentication failed' });
   }
 });
 
@@ -100,12 +208,19 @@ router.post('/refresh', async (req, res) => {
         return;
       }
       
+      // Validate public key is still valid
+      if (!SolanaAuthUtils.isValidPublicKey(decoded.publicKey)) {
+        res.status(401).json({ error: 'Invalid public key in token' });
+        return;
+      }
+      
       // Create new access token
       const accessToken = jwt.sign(
         {
           publicKey: decoded.publicKey,
           id: decoded.id,
-          walletAddress: decoded.publicKey
+          walletAddress: decoded.publicKey,
+          refreshedAt: new Date().toISOString()
         },
         process.env.JWT_SECRET,
         { expiresIn: '24h' }
@@ -140,7 +255,10 @@ router.get('/me', optionalAuth, (req, res) => {
   }
   
   res.json({
-    user: req.user
+    user: {
+      ...req.user,
+      publicKeyTruncated: req.user.publicKey.slice(0, 8) + '...' + req.user.publicKey.slice(-8)
+    }
   });
 });
 
@@ -150,7 +268,10 @@ router.post('/logout', optionalAuth, (req, res) => {
   // This endpoint exists for consistency and future blacklist implementation
   
   if (req.user) {
-    logger.info('User logged out:', { userId: req.user.id });
+    logger.info('User logged out:', { 
+      userId: req.user.id,
+      publicKey: req.user.publicKey.slice(0, 8) + '...'
+    });
   }
   
   res.json({ message: 'Logout successful' });
