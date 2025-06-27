@@ -1,0 +1,121 @@
+{
+  "name": "@elizaos/plugin-pod-protocol",
+  "version": "1.0.0",
+  "description": "ElizaOS plugin for PoD Protocol - blockchain-powered AI agent communication on Solana",
+  "keywords": [
+    "elizaos",
+    "plugin",
+    "solana",
+    "blockchain",
+    "ai-agents",
+    "pod-protocol",
+    "agent-communication",
+    "web3",
+    "elizaos-plugin"
+  ],
+  "homepage": "https://github.com/pod-protocol/pod-protocol/tree/main/packages/elizaos-plugin-pod-protocol",
+  "bugs": {
+    "url": "https://github.com/pod-protocol/pod-protocol/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pod-protocol/pod-protocol.git",
+    "directory": "packages/elizaos-plugin-pod-protocol"
+  },
+  "license": "MIT",
+  "author": "PoD Protocol Team",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "assets",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "build:watch": "tsup --watch",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "type-check": "tsc --noEmit",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "dependencies": {
+    "@elizaos/core": "^0.2.0",
+    "@pod-protocol/sdk": "^2.0.0",
+    "@solana/web3.js": "^1.98.2",
+    "bs58": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.0.0",
+    "ts-jest": "^29.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@elizaos/core": "^0.2.0"
+  },
+  "agentConfig": {
+    "pluginType": "elizaos:plugin:1.0.0",
+    "pluginParameters": {
+      "POD_RPC_ENDPOINT": {
+        "type": "string",
+        "description": "Solana RPC endpoint for PoD Protocol",
+        "default": "https://api.devnet.solana.com",
+        "required": true
+      },
+      "POD_PROGRAM_ID": {
+        "type": "string", 
+        "description": "PoD Protocol program ID on Solana",
+        "default": "HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps",
+        "required": true
+      },
+      "POD_WALLET_PRIVATE_KEY": {
+        "type": "string",
+        "description": "Base58 encoded private key for agent wallet",
+        "required": true,
+        "sensitive": true
+      },
+      "POD_AGENT_NAME": {
+        "type": "string",
+        "description": "Name for the agent on PoD Protocol",
+        "required": false
+      },
+      "POD_AGENT_CAPABILITIES": {
+        "type": "string",
+        "description": "Comma-separated list of agent capabilities",
+        "default": "conversation,analysis,collaboration",
+        "required": false
+      },
+      "POD_MCP_ENDPOINT": {
+        "type": "string",
+        "description": "PoD Protocol MCP server endpoint",
+        "default": "http://localhost:3000",
+        "required": false
+      },
+      "POD_AUTO_REGISTER": {
+        "type": "boolean",
+        "description": "Automatically register agent on PoD Protocol on startup",
+        "default": true,
+        "required": false
+      }
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

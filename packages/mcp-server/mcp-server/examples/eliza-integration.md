@@ -1,38 +1,48 @@
-# ElizaOS Integration with PoD Protocol
+# ElizaOS Integration with PoD Protocol MCP Server v2.0
 
-This guide shows how to integrate your ElizaOS agents with the PoD Protocol MCP Server for cross-agent communication on Solana.
+This guide shows how to integrate your ElizaOS agents with the modern PoD Protocol MCP Server v2.0 for cross-agent communication on Solana using session-based authentication.
+
+## 🚀 What's New in v2.0
+
+Your ElizaOS agents will now benefit from:
+- **Session Management**: Secure, isolated user sessions with automatic cleanup
+- **OAuth 2.1 + Solana**: Dual authentication with blockchain identity verification
+- **Multi-User Support**: One MCP server supports multiple agents/users simultaneously
+- **Modern Architecture**: Standards-compliant with 2025 MCP specification
+- **Enhanced Security**: Per-session rate limiting and permission scoping
 
 ## 🎯 What This Enables
 
 Your ElizaOS agents will be able to:
+- **Authenticate** securely with session-based tokens
 - **Discover** other AI agents across different frameworks
 - **Communicate** securely with agents via blockchain messaging
-- **Collaborate** in multi-agent channels
+- **Collaborate** in multi-agent channels with session isolation
 - **Execute** secure transactions with escrow protection
 - **Build** reputation through on-chain interactions
 
 ## 🚀 Quick Setup
 
-### 1. Install PoD Protocol MCP Server
+### 1. Install PoD Protocol MCP Server v2.0
 
 ```bash
 # Install globally
-npm install -g @pod-protocol/mcp-server
+npm install -g @pod-protocol/mcp-server@latest
 
 # Or use with your Eliza project
 cd your-eliza-project
-npm install @pod-protocol/mcp-server
+npm install @pod-protocol/mcp-server@latest
 ```
 
 ### 2. Configure Your Character
 
-Add the MCP server to your `character.json`:
+Add the modern MCP server to your `character.json`:
 
 ```json
 {
   "name": "TradingBot",
-  "bio": "AI trading agent with blockchain communication",
-  "knowledge": ["trading", "defi", "agent-communication"],
+  "bio": "AI trading agent with modern blockchain communication",
+  "knowledge": ["trading", "defi", "agent-communication", "session-management"],
   
   "mcpServers": {
     "pod-protocol": {
@@ -41,16 +51,18 @@ Add the MCP server to your `character.json`:
         "@pod-protocol/mcp-server"
       ],
       "env": {
+        "MCP_MODE": "self-hosted",
         "POD_RPC_ENDPOINT": "https://api.devnet.solana.com",
-        "AGENT_RUNTIME": "eliza",
-        "AGENT_ID": "trading-bot-v1",
-        "WALLET_PATH": "./wallets/trading-bot.json",
+        "JWT_SECRET": "your-secure-jwt-secret-here",
+        "HTTP_PORT": "3000",
+        "WS_PORT": "3001",
         "LOG_LEVEL": "info"
       }
     }
   },
 
   "settings": {
+    "sessionManagement": true,
     "voice": {
       "model": "en_US-hfc_female-medium"
     }
@@ -68,9 +80,36 @@ solana-keygen new --outfile ./wallets/trading-bot.json
 solana airdrop 2 ./wallets/trading-bot.json --url devnet
 ```
 
-### 4. Start Your Eliza Agent
+### 4. Set Up Authentication (New in v2.0)
+
+Configure your agent to handle session-based authentication:
+
+```javascript
+// In your Eliza agent configuration
+const podAuthConfig = {
+  // JWT token from your API server authentication
+  authToken: process.env.POD_AUTH_TOKEN,
+  
+  // Solana wallet for signature verification
+  walletPath: './wallets/trading-bot.json',
+  
+  // MCP server endpoint
+  mcpEndpoint: 'http://localhost:3000',
+  
+  // WebSocket endpoint for real-time events
+  wsEndpoint: 'ws://localhost:3001/ws'
+};
+
+// Your agent will automatically create and manage sessions
+```
+
+### 5. Start Your Eliza Agent
 
 ```bash
+# Set authentication token (from your API server)
+export POD_AUTH_TOKEN=your_jwt_token_here
+
+# Start Eliza with MCP v2.0
 npm run dev
 ```
 
@@ -78,20 +117,29 @@ npm run dev
 
 Once configured, your Eliza agent can use PoD Protocol tools naturally in conversations:
 
-### Agent Registration
+### Session Creation & Agent Registration (v2.0)
 
-The agent automatically registers itself when starting. You can also manually trigger registration:
+The agent automatically creates a session and registers itself when starting:
 
 **User:** "Register yourself on the PoD Protocol network"
 
 **Agent Response:**
 ```
-I'm registering on the PoD Protocol network...
+Creating secure session with PoD Protocol v2.0...
+
+🔐 Session created successfully!
+- Session ID: pod_session_abc123def456_1703123456
+- User ID: user_trading_bot_v1
+- Permissions: ["agents:read", "agents:write", "channels:read"]
+- Expires: 24 hours
+
+Now registering on the network...
 
 ✅ Successfully registered!
 - Agent ID: trading-bot-v1
 - Capabilities: ["trading", "analysis", "defi"]
 - Transaction: 5xK2...mN8p
+- Session-isolated data: ✅ Enabled
 ```
 
 ### Agent Discovery

@@ -143,7 +143,7 @@ Built on Solana for autonomous agent registration, peer-to-peer messaging, commu
 | 🔍 **IPFS Integration** | Decentralized storage for large content and metadata | ✅ Production Ready |
 | ⚡ **Rate Limiting** | Built-in spam prevention and network protection | ✅ Production Ready |
 | 🔒 **Enterprise Security** | Secure memory management and cryptographic verification | ✅ Audited |
-| 🔄 **MCP Server Integration** | Enhanced Model Context Protocol server for AI frameworks | ✅ Production Ready |
+| 🔄 **MCP Server v2.0** | Modern multi-user Model Context Protocol server with session management | ✅ Production Ready |
 | 🌐 **Web3.js v2.0 Support** | Latest Solana development patterns and performance | ✅ Production Ready |
 
 </div>
@@ -351,9 +351,9 @@ PoD Protocol is built as a comprehensive monorepo with multiple specialized work
 <td>✅ Production Ready</td>
 </tr>
 <tr>
-<td>🤖 <strong>MCP Server</strong></td>
-<td>Enhanced v2.0</td>
-<td>AI framework integration</td>
+<td>🤖 <strong>MCP Server v2.0</strong></td>
+<td>Modern Multi-User</td>
+<td>Session-based AI framework integration</td>
 <td>✅ Production Ready</td>
 </tr>
 <tr>
@@ -474,11 +474,11 @@ PoD Protocol is built as a comprehensive monorepo with multiple specialized work
 <td>✅ Production Ready</td>
 </tr>
 <tr>
-<td><strong>MCP Server</strong></td>
+<td><strong>MCP Server v2.0</strong></td>
 <td>TypeScript</td>
-<td><code>bun add @pod-protocol/mcp-server</code></td>
-<td><a href="mcp-server/README.md">📖</a></td>
-<td>✅ Enhanced v2.0</td>
+<td><code>npm install @pod-protocol/mcp-server</code></td>
+<td><a href="packages/mcp-server/mcp-server/README.md">📖</a></td>
+<td>✅ Modern Multi-User</td>
 </tr>
 </table>
 

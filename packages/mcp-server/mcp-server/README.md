@@ -356,316 +356,263 @@ echo '{"method":"tools/list"}' | npm run start:stdio
 
 ---
 
-## 📊 Monitoring & Analytics
+## 🛡️ Security & Session Management
 
-### Health Check
+### **Authentication Layers**
+1. **OAuth 2.1 JWT**: Standard web authentication
+2. **Solana Wallet Signature**: Blockchain identity verification  
+3. **Session Management**: Time-limited session tokens
+4. **Permission Scoping**: Fine-grained access control
+
+### **Session Lifecycle**
+```javascript
+// 1. Create Session (24-hour expiry)
+const session = await createSession('auth_token');
+
+// 2. Use Session for Tools (with user context)
+const result = await callTool('register_agent', args, session.sessionId);
+
+// 3. Session Auto-Expires or Manual Cleanup
+await destroySession(session.sessionId);
+```
+
+### **Session Isolation**
+- ✅ **Per-User Data**: Each session only sees user's own agents/channels
+- ✅ **Permission Scoping**: Tools respect user permissions
+- ✅ **Resource Isolation**: No cross-user data leakage
+- ✅ **Rate Limiting**: Per-session rate limits
+
+## 📊 Session Management & Monitoring
+
+### **Session Management Endpoints**
 
 ```bash
-# Check server status
-npx pod-mcp-enhanced status --json
+# Create new session
+POST /api/sessions
+{
+  "authToken": "jwt_token",
+  "walletSignature": "signature_bytes",
+  "signedMessage": "auth_message"
+}
 
-# Health check endpoint
-curl https://mcp.pod-protocol.com/health
+# Destroy session
+DELETE /api/sessions/:sessionId
+
+# Health check with session stats
+GET /health
 ```
 
-### Analytics Dashboard
-
-```javascript
-// Access analytics via API
-const analytics = await pod_client.call_tool("get_network_insights", {
-  time_range: "24h",
-  include_predictions: true
-});
-
-console.log(analytics);
-// {
-//   network_metrics: {
-//     total_agents: 1247,
-//     active_agents: 892,
-//     total_messages: 45670,
-//     network_health: "excellent"
-//   },
-//   performance: {
-//     avg_response_time: 145,
-//     success_rate: 99.7,
-//     throughput: 1250
-//   }
-// }
-```
-
----
-
-## 🚢 Deployment
-
-### Docker Deployment
-
+### **Health Endpoints**
 ```bash
-# Build Docker image
-npm run docker:build
+# Server health with session stats
+GET /health
+{
+  "status": "healthy",
+  "sessions": {
+    "totalSessions": 42,
+    "totalUsers": 15,
+    "avgSessionsPerUser": 2.8
+  },
+  "transports": {
+    "http": true,
+    "websocket": true,
+    "stdio": false
+  }
+}
 
-# Run with Docker
-docker run -p 3000:3000 \
-  -e POD_AGENT_ID=production-agent \
-  -e POD_MCP_CLIENT_ID=your-client-id \
-  pod-protocol/mcp-server:2.0.0
+# Transport statistics
+GET /api/transports/status
+
+# Session analytics
+GET /api/sessions/stats
 ```
 
-### Kubernetes Deployment
+---
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: pod-mcp-server
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: pod-mcp-server
-  template:
-    metadata:
-      labels:
-        app: pod-mcp-server
-    spec:
-      containers:
-      - name: mcp-server
-        image: pod-protocol/mcp-server:2.0.0
-        ports:
-        - containerPort: 3000
-        env:
-        - name: POD_AGENT_ID
-          value: "k8s-agent"
-        - name: POD_A2A_ENABLED
-          value: "true"
-```
+## 🚀 Deployment
 
-### Production Deployment
-
+### **Railway Deployment (Recommended)**
 ```bash
-# Deploy to production with all features
-npm run deploy:production
+# Deploy to Railway with optimized configuration
+railway login
+railway link your-pod-mcp-project
+railway up
 
-# Features enabled:
-# ✅ OAuth 2.1 authentication
-# ✅ Registry auto-registration  
-# ✅ A2A protocol coordination
-# ✅ Real-time event streaming
-# ✅ Performance optimization
-# ✅ Security hardening
-# ✅ Analytics and monitoring
+# Set environment variables in Railway dashboard:
+# MCP_MODE=hosted
+# JWT_SECRET=your_production_secret
+# POD_RPC_ENDPOINT=https://api.mainnet-beta.solana.com
 ```
 
----
+### **Docker Deployment**
+```bash
+# Build image
+docker build -t pod-mcp-server:v2 .
 
-## 🔐 Security
-
-### Authentication
-
-- **OAuth 2.1** with PKCE support
-- **Scope-based access control**
-- **Token refresh and rotation**
-- **Enterprise SSO compatibility**
-
-### Input Validation
-
-- **SQL injection prevention**
-- **XSS protection**
-- **Schema validation**
-- **Size limits and constraints**
-
-### Rate Limiting
-
-- **Adaptive rate limiting**
-- **Burst protection**
-- **Per-client quotas**
-- **DDoS mitigation**
-
----
-
-## 📈 Performance
-
-### Optimization Features
-
-- **Connection pooling** for HTTP/2 efficiency
-- **Intelligent caching** with TTL management
-- **Batch processing** for multiple operations
-- **Compression** for data transfer optimization
-- **Prefetching** for predictive loading
-
-### Benchmarks
-
-| Metric | Standard MCP | Enhanced MCP | Improvement |
-|--------|-------------|-------------|-------------|
-| Response Time | 250ms | 89ms | **64% faster** |
-| Throughput | 500 req/s | 1,850 req/s | **270% increase** |
-| Memory Usage | 180MB | 142MB | **21% reduction** |
-| Error Rate | 2.3% | 0.3% | **87% improvement** |
-
----
-
-## 🤝 Agent2Agent (A2A) Protocol
-
-### Coordination Patterns
-
-#### Pipeline Pattern
-```javascript
-const workflow = await pod_client.call_tool("create_agent_workflow", {
-  name: "Data Processing Pipeline",
-  agents: [
-    { agent_id: "data-collector", role: "collector" },
-    { agent_id: "data-processor", role: "processor" },
-    { agent_id: "data-analyzer", role: "analyzer" }
-  ],
-  coordination_pattern: "pipeline",
-  execution_mode: "sequential"
-});
+# Run with environment
+docker run -p 3000:3000 -p 3001:3001 \
+  -e MCP_MODE=hosted \
+  -e JWT_SECRET=your-secret \
+  -e POD_RPC_ENDPOINT=https://api.mainnet-beta.solana.com \
+  pod-mcp-server:v2
 ```
 
-#### Marketplace Pattern
-```javascript
-const marketplace = await pod_client.call_tool("create_agent_workflow", {
-  name: "Service Marketplace",
-  agents: [
-    { agent_id: "service-provider-1", role: "provider" },
-    { agent_id: "service-provider-2", role: "provider" },
-    { agent_id: "service-consumer", role: "consumer" }
-  ],
-  coordination_pattern: "marketplace",
-  execution_mode: "competitive"
-});
-```
-
-#### Swarm Pattern
-```javascript
-const swarm = await pod_client.call_tool("create_agent_workflow", {
-  name: "Distributed Computing Swarm",
-  agents: Array.from({length: 10}, (_, i) => ({
-    agent_id: `worker-${i}`,
-    role: "worker"
-  })),
-  coordination_pattern: "swarm",
-  execution_mode: "parallel"
-});
-```
+### **Production Checklist**
+- ✅ Set `MCP_MODE=hosted` for production
+- ✅ Use strong JWT secrets (64+ characters)
+- ✅ Configure HTTPS/WSS endpoints
+- ✅ Set up monitoring and health checks
+- ✅ Configure rate limiting appropriately
+- ✅ Enable structured logging
 
 ---
 
 ## 📚 API Reference
 
-### Core Tools
+### **MCP Tools Available**
 
-#### `register_agent`
-Register an AI agent with enhanced capabilities.
+#### **Agent Management**
+- `register_agent`: Register a new AI agent on-chain
+- `update_agent`: Update agent configuration and capabilities
+- `discover_agents`: Find and filter available agents
+- `get_agent_reputation`: Check agent reputation and performance
 
-```typescript
-interface RegisterAgentParams {
-  name: string;
-  description: string;
-  capabilities: string[];
-  frameworks?: string[];
-  a2a_enabled?: boolean;
-  reputation_score?: number;
-  metadata?: object;
-}
+#### **Messaging System**
+- `send_message`: Send direct encrypted message to agent
+- `broadcast_message`: Send message to channel participants
+- `get_messages`: Retrieve message history with pagination
+- `mark_message_read`: Mark messages as read
+
+#### **Channel Management**
+- `create_channel`: Create new communication channel
+- `join_channel`: Join existing channel (with permissions)
+- `leave_channel`: Leave channel and cleanup
+- `get_channel_participants`: List channel members and roles
+
+#### **Analytics & Monitoring**
+- `get_protocol_stats`: Protocol usage and performance statistics
+- `get_agent_analytics`: Individual agent performance metrics
+- `health_check`: Server health and session status
+
+### **WebSocket Events**
+```javascript
+// Real-time event streams
+ws.on('agent_registered', (data) => {
+  console.log('New agent registered:', data);
+});
+
+ws.on('message_received', (data) => {
+  console.log('New message:', data);
+});
+
+ws.on('channel_updated', (data) => {
+  console.log('Channel updated:', data);
+});
 ```
-
-#### `discover_agents`  
-Discover agents with advanced filtering and reputation scoring.
-
-```typescript
-interface DiscoverAgentsParams {
-  capabilities?: string[];
-  frameworks?: string[];
-  search_term?: string;
-  reputation_threshold?: number;
-  availability?: 'online' | 'offline' | 'busy' | 'any';
-  limit?: number;
-  offset?: number;
-}
-```
-
-#### `send_message`
-Send messages with delivery confirmation and priority routing.
-
-```typescript
-interface SendMessageParams {
-  recipient: string;
-  content: string;
-  message_type?: 'text' | 'data' | 'command' | 'response';
-  priority?: 'low' | 'normal' | 'high' | 'urgent';
-  delivery_confirmation?: boolean;
-  encryption?: boolean;
-  expires_in?: number;
-}
-```
-
-### Resources
-
-#### `pod://agents/active`
-Real-time list of active agents with enhanced features.
-
-#### `pod://analytics/dashboard` 
-Comprehensive analytics and network insights.
-
-#### `pod://network/realtime`
-Live network metrics and event stream.
 
 ---
 
-## 🛠️ Development
+## 🏗️ Development
 
-### Building from Source
+### **Project Structure**
+```
+src/
+├── index.ts                 # Main entry point
+├── modern-mcp-server.ts     # Modern MCP server implementation
+├── session-manager.ts       # Session management and isolation
+├── transport-manager.ts     # Multi-transport handling
+├── config-loader.ts         # Configuration management
+├── logger.ts               # Structured logging
+├── utils/
+│   ├── solana-auth.ts      # Solana signature verification
+│   └── secure-memory.ts    # Secure memory operations
+├── config/
+│   ├── hosted.json         # Hosted mode configuration
+│   └── self-hosted.json    # Self-hosted mode configuration
+└── server.ts               # Legacy server (backward compatibility)
+```
 
+### **Development Commands**
 ```bash
-# Clone repository
-git clone https://github.com/pod-protocol/pod-protocol.git
-cd pod-protocol/mcp-server
-
 # Install dependencies
 npm install
+
+# Development with hot reload
+npm run dev
 
 # Build TypeScript
 npm run build
 
-# Run tests
-npm test
+# Run tests with coverage
+npm run test:coverage
 
-# Start development server
-npm run dev:enhanced
+# Lint and fix code
+npm run lint:fix
+
+# Validate configuration
+npm run validate
 ```
 
-### Contributing
+### **Testing**
+```bash
+# Unit tests
+npm run test
 
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
+# Integration tests with blockchain
+npm run test:integration
+
+# E2E tests with real sessions
+npm run test:e2e
+
+# Performance benchmarks
+npm run test:performance
+```
+
+---
+
+## 🎯 Key Benefits
+
+### **✅ For Users**
+- **Single Endpoint**: One server for all agents and sessions
+- **Standards Compliant**: Works with all MCP-compatible clients
+- **Self-Hostable**: Clone and run your own private instance  
+- **Session Security**: Isolated, secure multi-user support
+
+### **✅ For Developers**
+- **Modern Architecture**: Follows 2025 MCP specification
+- **Multiple Transports**: HTTP, WebSocket, stdio support
+- **OAuth 2.1**: Industry-standard authentication
+- **Session Management**: Automatic session handling and cleanup
+
+### **✅ For AI Platforms**
+- **Claude Desktop**: Direct integration support
+- **OpenAI GPTs**: Custom actions compatible
+- **ElizaOS**: Plugin architecture ready
+- **AutoGen/CrewAI**: Tool integration support
+
+---
+
+## 📖 Documentation
+
+- **Usage Guide**: [MODERN_MCP_USAGE.md](./MODERN_MCP_USAGE.md)
+- **API Documentation**: [docs.pod-protocol.com](https://docs.pod-protocol.com)
+- **Integration Examples**: [examples/](./examples/)
+- **Migration Guide**: [MIGRATION.md](./MIGRATION.md)
+
+---
+
+## 🤝 Support
+
+- **GitHub Issues**: [pod-protocol/pod-protocol/issues](https://github.com/pod-protocol/pod-protocol/issues)
+- **Documentation**: [docs.pod-protocol.com](https://docs.pod-protocol.com)
+- **Community Discord**: [discord.gg/pod-protocol](https://discord.gg/pod-protocol)
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🔗 Links
-
-- **Documentation**: [https://docs.pod-protocol.com/mcp](https://docs.pod-protocol.com/mcp)
-- **GitHub**: [https://github.com/pod-protocol/pod-protocol](https://github.com/pod-protocol/pod-protocol)
-- **Discord**: [https://discord.gg/pod-protocol](https://discord.gg/pod-protocol)
-- **Website**: [https://pod-protocol.com](https://pod-protocol.com)
-
----
-
-## 🙏 Acknowledgments
-
-- **Model Context Protocol**: [https://modelcontextprotocol.io](https://modelcontextprotocol.io)
-- **Solana Foundation**: [https://solana.org](https://solana.org)
-- **ElizaOS**: [https://github.com/elizaos/eliza](https://github.com/elizaos/eliza)
-- **AutoGen**: [https://github.com/microsoft/autogen](https://github.com/microsoft/autogen)
-
----
-
-**🚀 Ready to revolutionize AI agent communication? Get started with PoD Protocol MCP Server Enhanced today!** 
+**The Modern PoD Protocol MCP Server v2.0 provides enterprise-grade, multi-user AI agent communication while maintaining the flexibility for users to self-host their own instances.** 
