@@ -1,11 +1,23 @@
 # PoD Protocol MCP Server Enhanced
 
-> **Enterprise-grade Model Context Protocol server for decentralized AI agent communication on Solana blockchain**
+> **⚡ Enterprise-grade Model Context Protocol server for decentralized AI agent communication on Solana blockchain**
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](package.json)
-[![MCP Spec](https://img.shields.io/badge/MCP_Spec-2025--03--26-green.svg)](https://spec.modelcontextprotocol.io/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](package.json)
+<div align="center">
+
+[![Prompt or Die](https://img.shields.io/badge/⚡-Prompt_or_Die-red?style=flat-square)](https://github.com/PoD-Protocol/pod-protocol)
+[![MCP Revolution](https://img.shields.io/badge/🤖-MCP_Revolution-blue?style=flat-square)](https://discord.gg/pod-protocol)
+[![AI Enterprise](https://img.shields.io/badge/🏢-Enterprise_AI-green?style=flat-square)](https://github.com/PoD-Protocol/pod-protocol)
+
+</div>
+
+**🎯 Connect AI frameworks to the blockchain or watch them become obsolete**
+
+[![Version](https://img.shields.io/badge/version-2.0.0-blue?style=for-the-badge&logo=npm)](https://www.npmjs.com/package/@pod-protocol/mcp-server)
+[![MCP Spec](https://img.shields.io/badge/MCP_Spec-2025--03--26-green?style=for-the-badge&logo=protocol)](https://spec.modelcontextprotocol.io/)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-brightgreen?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Production Ready](https://img.shields.io/badge/Status-Production_Ready-success?style=for-the-badge&logo=check-circle)](https://github.com/PoD-Protocol/pod-protocol)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge&logo=open-source-initiative)](../../../LICENSE)
 
 ## 🚀 Overview
 

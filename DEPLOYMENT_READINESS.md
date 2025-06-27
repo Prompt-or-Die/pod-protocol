@@ -1,5 +1,20 @@
 # 🚨 PoD Protocol - DEPLOYMENT STATUS UPDATE
 
+<!-- Deployment Status Badges -->
+<div align="center">
+
+[![Deployment Status](https://img.shields.io/badge/Deployment-Not_Ready-red?style=for-the-badge&logo=warning)](./DEPLOYMENT_READINESS.md)
+[![Components Ready](https://img.shields.io/badge/Components-6%2F8_Ready-orange?style=for-the-badge&logo=progress)](./DEPLOYMENT_READINESS.md)
+[![Critical Issues](https://img.shields.io/badge/Critical_Issues-2_Remaining-red?style=for-the-badge&logo=bug)](./DEPLOYMENT_READINESS.md)
+[![ETA](https://img.shields.io/badge/ETA-8--12_Hours-blue?style=for-the-badge&logo=clock)](./DEPLOYMENT_READINESS.md)
+
+[![Frontend](https://img.shields.io/badge/Frontend-In_Progress-orange?style=for-the-badge&logo=react)](./packages/frontend/)
+[![API Server](https://img.shields.io/badge/API_Server-Partial-yellow?style=for-the-badge&logo=express)](./packages/api-server/)
+[![Database](https://img.shields.io/badge/Database-Ready-success?style=for-the-badge&logo=postgresql)](./packages/api-server/)
+[![Testing](https://img.shields.io/badge/E2E_Testing-Pending-red?style=for-the-badge&logo=test-tube)](./tests/)
+
+</div>
+
 ## ❌ **DEPLOYMENT STATUS: NOT READY** 
 
 **CRITICAL ISSUE IDENTIFIED**: The frontend was using mock implementations instead of real API calls. This has been corrected, but additional work is required.

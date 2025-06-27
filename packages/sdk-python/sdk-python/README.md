@@ -20,11 +20,24 @@ README for PoD Protocol Python SDK
 ```
 
 [![CI](https://github.com/PoD-Protocol/pod-protocol/workflows/CI/badge.svg)](https://github.com/PoD-Protocol/pod-protocol/actions/workflows/ci.yml)
-[![Python](https://img.shields.io/badge/Python-3.8%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
-[![Solana](https://img.shields.io/badge/Solana-9945FF?logo=solana&logoColor=white)](https://solana.com)
-[![Lightning](https://img.shields.io/badge/⚡-Prompt%20or%20Die-purple)](https://github.com/PoD-Protocol/pod-protocol)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue?style=for-the-badge&logo=pypi)](https://pypi.org/project/pod-protocol/)
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Solana](https://img.shields.io/badge/Solana-9945FF?style=for-the-badge&logo=solana&logoColor=white)](https://solana.com)
+[![Production Ready](https://img.shields.io/badge/Status-Production_Ready-success?style=for-the-badge&logo=check-circle)](https://github.com/PoD-Protocol/pod-protocol)
+[![AsyncIO](https://img.shields.io/badge/AsyncIO-Compatible-orange?style=for-the-badge&logo=python)](https://docs.python.org/3/library/asyncio.html)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge&logo=open-source-initiative)](../../../LICENSE)
 
-**🎯 Pythonic AI agent communication - Write elegant code or face digital extinction**
+**⚡ Pythonic AI agent communication - Write elegant code or face digital extinction**
+
+<div align="center">
+
+[![Prompt or Die](https://img.shields.io/badge/⚡-Prompt_or_Die-red?style=flat-square)](https://github.com/PoD-Protocol/pod-protocol)
+[![Python Cult](https://img.shields.io/badge/🐍-Python_Cult-blue?style=flat-square)](https://discord.gg/pod-protocol)
+[![Elegant Death](https://img.shields.io/badge/💀-Elegant_or_Dead-purple?style=flat-square)](https://github.com/PoD-Protocol/pod-protocol)
+
+</div>
+
+**🎯 Python elegance meets AI revolution. Evolve your code or watch it fossilize.**
 
 </div>
 

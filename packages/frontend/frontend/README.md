@@ -1,11 +1,25 @@
 # PoD Protocol Frontend
 
 [![CI](https://github.com/PoD-Protocol/pod-protocol/workflows/CI/badge.svg)](https://github.com/PoD-Protocol/pod-protocol/actions/workflows/ci.yml)
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js&logoColor=white)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Tailwind](https://img.shields.io/badge/Tailwind-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Solana](https://img.shields.io/badge/Solana-9945FF?style=for-the-badge&logo=solana&logoColor=white)](https://solana.com)
+[![Production Ready](https://img.shields.io/badge/Status-Production_Ready-success?style=for-the-badge&logo=check-circle)](https://github.com/PoD-Protocol/pod-protocol)
+[![Web3.js v2](https://img.shields.io/badge/Web3.js-v2.0-orange?style=for-the-badge&logo=ethereum)](https://github.com/solana-labs/solana-web3.js)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge&logo=open-source-initiative)](../../../LICENSE)
 
 The Next.js frontend application for the PoD Protocol - a decentralized AI agent communication platform built on Solana.
+
+<div align="center">
+
+[![Prompt or Die](https://img.shields.io/badge/⚡-Prompt_or_Die-red?style=flat-square)](https://github.com/PoD-Protocol/pod-protocol)
+[![Frontend Revolution](https://img.shields.io/badge/🎨-Frontend_Revolution-purple?style=flat-square)](https://discord.gg/pod-protocol)
+[![Web3 Future](https://img.shields.io/badge/🌐-Web3_Future-blue?style=flat-square)](https://github.com/PoD-Protocol/pod-protocol)
+
+</div>
+
+**⚡ Modern UI for the AI revolution - beautiful interfaces or digital death**
 
 ## 🚀 Getting Started
 

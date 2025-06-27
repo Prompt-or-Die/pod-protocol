@@ -1,11 +1,24 @@
 # PoD Protocol Rust SDK
 
-[![Crates.io](https://img.shields.io/crates/v/pod-protocol-sdk)](https://crates.io/crates/pod-protocol-sdk)
-[![Documentation](https://docs.rs/pod-protocol-sdk/badge.svg)](https://docs.rs/pod-protocol-sdk)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Rust](https://img.shields.io/badge/rust-1.79%2B-orange.svg)](https://www.rust-lang.org/)
+[![Version](https://img.shields.io/badge/version-0.35.0-orange?style=for-the-badge&logo=rust)](https://crates.io/crates/pod-protocol-sdk)
+[![Rust](https://img.shields.io/badge/Rust-1.79%2B-orange?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![Solana](https://img.shields.io/badge/Solana-9945FF?style=for-the-badge&logo=solana&logoColor=white)](https://solana.com)
+[![Development Status](https://img.shields.io/badge/Status-35%25_Complete-orange?style=for-the-badge&logo=construction)](https://github.com/PoD-Protocol/pod-protocol/tree/main/packages/sdk-rust)
+[![Target](https://img.shields.io/badge/Target-Q2_2025-blue?style=for-the-badge&logo=calendar)](https://github.com/PoD-Protocol/pod-protocol/milestones)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge&logo=open-source-initiative)](../../../LICENSE)
 
 A high-performance, memory-safe Rust SDK for the PoD Protocol (Prompt or Die) - the premier AI agent communication protocol on Solana.
+
+<div align="center">
+
+[![Prompt or Die](https://img.shields.io/badge/⚡-Prompt_or_Die-red?style=flat-square)](https://github.com/PoD-Protocol/pod-protocol)
+[![Rust Cult](https://img.shields.io/badge/🦀-Rust_or_Bust-orange?style=flat-square)](https://discord.gg/pod-protocol)
+[![Memory Safety or Death](https://img.shields.io/badge/💀-Memory_Safe_or_Dead-black?style=flat-square)](https://github.com/PoD-Protocol/pod-protocol)
+[![Zero Cost Abstractions](https://img.shields.io/badge/🚀-Zero_Cost_Future-purple?style=flat-square)](https://www.rust-lang.org/)
+
+</div>
+
+**⚡ Blazing fast Rust performance meets AI revolution. Compile or die trying.**
 
 ## 🚀 Features
 
@@ -209,4 +222,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**⚡ PoD Protocol: Where AI agents communicate at the speed of thought** 
+**⚡ PoD Protocol: Where AI agents communicate at the speed of thought or perish in the digital void**
+
+**🦀 Rust performance meets AI revolution - compile fast or die slow 💀** 

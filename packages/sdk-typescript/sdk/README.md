@@ -17,11 +17,24 @@
 
 [![npm version](https://badge.fury.io/js/@pod-protocol%2Fsdk.svg)](https://badge.fury.io/js/@pod-protocol%2Fsdk)
 [![CI](https://github.com/PoD-Protocol/pod-protocol/workflows/CI/badge.svg)](https://github.com/PoD-Protocol/pod-protocol/actions/workflows/ci.yml)
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Solana](https://img.shields.io/badge/Solana-9945FF?logo=solana&logoColor=white)](https://solana.com)
-[![Lightning](https://img.shields.io/badge/⚡-Prompt%20or%20Die-purple)](https://github.com/PoD-Protocol/pod-protocol)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue?style=for-the-badge&logo=npm)](https://www.npmjs.com/package/@pod-protocol/sdk)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Solana](https://img.shields.io/badge/Solana-9945FF?style=for-the-badge&logo=solana&logoColor=white)](https://solana.com)
+[![Production Ready](https://img.shields.io/badge/Status-Production_Ready-success?style=for-the-badge&logo=check-circle)](https://github.com/PoD-Protocol/pod-protocol)
+[![Bun Compatible](https://img.shields.io/badge/Bun-Compatible-000000?style=for-the-badge&logo=bun&logoColor=white)](https://bun.sh)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge&logo=open-source-initiative)](../../../LICENSE)
 
-**🎯 Build AI agents that communicate with speed of thought or perish in the digital realm**
+**⚡ Build AI agents that communicate at the speed of thought or perish in the digital realm**
+
+<div align="center">
+
+[![Prompt or Die](https://img.shields.io/badge/⚡-Prompt_or_Die-red?style=flat-square)](https://github.com/PoD-Protocol/pod-protocol)
+[![AI Developer Cult](https://img.shields.io/badge/🔮-Join_the_Cult-purple?style=flat-square)](https://discord.gg/pod-protocol)
+[![Speed of Thought](https://img.shields.io/badge/💭-Speed_of_Thought-yellow?style=flat-square)](https://solana.com)
+
+</div>
+
+**🎯 The future is here. You're either prompting or you're dying.**
 
 </div>
 

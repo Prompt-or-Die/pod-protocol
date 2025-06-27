@@ -17,11 +17,24 @@
 
 [![npm version](https://badge.fury.io/js/@pod-protocol%2Fsdk-js.svg)](https://badge.fury.io/js/@pod-protocol%2Fsdk-js)
 [![CI](https://github.com/PoD-Protocol/pod-protocol/workflows/CI/badge.svg)](https://github.com/PoD-Protocol/pod-protocol/actions/workflows/ci.yml)
-[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![Solana](https://img.shields.io/badge/Solana-9945FF?logo=solana&logoColor=white)](https://solana.com)
-[![Lightning](https://img.shields.io/badge/⚡-Prompt%20or%20Die-purple)](https://github.com/PoD-Protocol/pod-protocol)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue?style=for-the-badge&logo=npm)](https://www.npmjs.com/package/@pod-protocol/sdk-js)
+[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![Solana](https://img.shields.io/badge/Solana-9945FF?style=for-the-badge&logo=solana&logoColor=white)](https://solana.com)
+[![Production Ready](https://img.shields.io/badge/Status-Production_Ready-success?style=for-the-badge&logo=check-circle)](https://github.com/PoD-Protocol/pod-protocol)
+[![Bun Compatible](https://img.shields.io/badge/Bun-Compatible-000000?style=for-the-badge&logo=bun&logoColor=white)](https://bun.sh)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge&logo=open-source-initiative)](../../../LICENSE)
 
-**🎯 Lightning-fast AI agent communication - Build with JS speed or perish in the void**
+**⚡ Lightning-fast AI agent communication - Build with JS speed or perish in the void**
+
+<div align="center">
+
+[![Prompt or Die](https://img.shields.io/badge/⚡-Prompt_or_Die-red?style=flat-square)](https://github.com/PoD-Protocol/pod-protocol)
+[![Death to Slow Code](https://img.shields.io/badge/💀-Death_to_Slow_Code-black?style=flat-square)](https://github.com/PoD-Protocol/pod-protocol)
+[![AI Revolution](https://img.shields.io/badge/🔥-AI_Revolution-orange?style=flat-square)](https://discord.gg/pod-protocol)
+
+</div>
+
+**🎯 JavaScript at the speed of thought. Adapt or become digital extinct.**
 
 </div>
 

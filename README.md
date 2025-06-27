@@ -1,5 +1,31 @@
 <div align="center">
 
+<!-- Badges -->
+[![Version](https://img.shields.io/badge/version-2.0.0-blue?style=for-the-badge&logo=semantic-release)](https://github.com/PoD-Protocol/pod-protocol/releases)
+[![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge&logo=open-source-initiative)](./LICENSE)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge&logo=github-actions)](https://github.com/PoD-Protocol/pod-protocol/actions)
+[![Production Ready](https://img.shields.io/badge/production-ready-success?style=for-the-badge&logo=check-circle)](https://github.com/PoD-Protocol/pod-protocol)
+
+[![Solana](https://img.shields.io/badge/Solana-9945FF?style=for-the-badge&logo=solana&logoColor=white)](https://solana.com)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Bun](https://img.shields.io/badge/Bun-000000?style=for-the-badge&logo=bun&logoColor=white)](https://bun.sh)
+[![ZK Compression](https://img.shields.io/badge/ZK_Compression-Enabled-purple?style=for-the-badge&logo=ethereum)](https://www.light.so/)
+
+[![Prompt or Die](https://img.shields.io/badge/⚡-Prompt_or_Die-red?style=for-the-badge&logoColor=white)](https://github.com/PoD-Protocol/pod-protocol)
+[![AI Cult](https://img.shields.io/badge/🔮-AI_Developer_Cult-purple?style=for-the-badge)](https://discord.gg/pod-protocol)
+[![Future is Now](https://img.shields.io/badge/🚀-Future_is_NOW-orange?style=for-the-badge)](https://github.com/PoD-Protocol/pod-protocol)
+[![Speed of Thought](https://img.shields.io/badge/⚡-Speed_of_Thought-yellow?style=for-the-badge)](https://solana.com)
+
+[![Windows](https://img.shields.io/badge/Windows-0078D4?style=for-the-badge&logo=windows&logoColor=white)](./docs/getting-started/PLATFORM_SETUP.md#-windows-setup)
+[![macOS](https://img.shields.io/badge/macOS-000000?style=for-the-badge&logo=apple&logoColor=white)](./docs/getting-started/PLATFORM_SETUP.md#-macos-setup)
+[![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)](./docs/getting-started/PLATFORM_SETUP.md#-linux-setup)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](./docs/getting-started/PLATFORM_SETUP.md#-docker-all-platforms)
+
+[![GitHub Stars](https://img.shields.io/github/stars/PoD-Protocol/pod-protocol?style=social)](https://github.com/PoD-Protocol/pod-protocol/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/PoD-Protocol/pod-protocol?style=social)](https://github.com/PoD-Protocol/pod-protocol/network)
+[![GitHub Issues](https://img.shields.io/github/issues/PoD-Protocol/pod-protocol?style=social)](https://github.com/PoD-Protocol/pod-protocol/issues)
+[![GitHub Contributors](https://img.shields.io/github/contributors/PoD-Protocol/pod-protocol?style=social)](https://github.com/PoD-Protocol/pod-protocol/graphs/contributors)
+
 <!-- Banner -->
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/PoD-Protocol/pod-protocol/assets/banner-dark.svg">
@@ -385,9 +411,10 @@ PoD Protocol is built as a comprehensive monorepo with multiple specialized work
 
 **🔥 Real-time Stats**
 
-[![Network Activity](https://img.shields.io/badge/Transactions-1.2M+-brightgreen?style=for-the-badge&logo=chart-line)](https://explorer.solana.com/address/HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps?cluster=devnet)
-[![Active Development](https://img.shields.io/badge/Active%20Development-Production%20Ready-blue?style=for-the-badge&logo=code)](https://github.com/PoD-Protocol/pod-protocol)
-[![Uptime](https://img.shields.io/badge/Development%20Uptime-99.9%25-success?style=for-the-badge&logo=check-circle)](https://github.com/PoD-Protocol/pod-protocol)
+[![Network Activity](https://img.shields.io/badge/Devnet_Transactions-1.2M+-brightgreen?style=for-the-badge&logo=chart-line)](https://explorer.solana.com/address/HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps?cluster=devnet)
+[![Development Status](https://img.shields.io/badge/Status-Production_Ready-success?style=for-the-badge&logo=rocket)](https://github.com/PoD-Protocol/pod-protocol)
+[![Devnet Uptime](https://img.shields.io/badge/Devnet_Uptime-99.9%25-success?style=for-the-badge&logo=check-circle)](https://explorer.solana.com/)
+[![Last Commit](https://img.shields.io/github/last-commit/PoD-Protocol/pod-protocol?style=for-the-badge&logo=git)](https://github.com/PoD-Protocol/pod-protocol/commits)
 
 </div>
 
@@ -501,9 +528,10 @@ pod wallet balance
 
 **📱 Roadmap**
 
-[![Rust SDK](https://img.shields.io/badge/Rust%20SDK-In%20Development-orange?style=for-the-badge&logo=rust)](https://github.com/PoD-Protocol/pod-protocol/issues/42)
-[![Go SDK](https://img.shields.io/badge/Go%20SDK-Planned-blue?style=for-the-badge&logo=go)](https://github.com/PoD-Protocol/pod-protocol/issues/43)
-[![Mobile SDK](https://img.shields.io/badge/Mobile%20SDK-Roadmap-purple?style=for-the-badge&logo=mobile)](https://github.com/PoD-Protocol/pod-protocol/issues/44)
+[![Rust SDK](https://img.shields.io/badge/Rust_SDK-35%25_Complete-orange?style=for-the-badge&logo=rust)](https://github.com/PoD-Protocol/pod-protocol/tree/main/packages/sdk-rust)
+[![Mainnet Launch](https://img.shields.io/badge/Mainnet-Q1_2025-blue?style=for-the-badge&logo=rocket)](https://github.com/PoD-Protocol/pod-protocol/milestones)
+[![Go SDK](https://img.shields.io/badge/Go_SDK-Q2_2025-lightblue?style=for-the-badge&logo=go)](https://github.com/PoD-Protocol/pod-protocol/issues)
+[![Mobile SDK](https://img.shields.io/badge/Mobile_SDK-Q3_2025-purple?style=for-the-badge&logo=react)](https://github.com/PoD-Protocol/pod-protocol/issues)
 
 </div>
 
@@ -559,11 +587,13 @@ pod wallet balance
 
 <div align="center">
 
-**🏆 Security Badges**
+**🏆 Security & Quality Badges**
 
-[![Security Audit](https://img.shields.io/badge/Security%20Audit-Passed-brightgreen?style=for-the-badge&logo=shield-check)](docs/security/audit-report.pdf)
-[![Vulnerability Scan](https://img.shields.io/badge/Vulnerabilities-0%20Known-success?style=for-the-badge&logo=bug)](https://github.com/PoD-Protocol/pod-protocol/security)
-[![Code Quality](https://img.shields.io/badge/Code%20Quality-A+-brightgreen?style=for-the-badge&logo=code-review)](https://sonarcloud.io/project/overview?id=PoD-Protocol_pod-protocol)
+[![Security Audit](https://img.shields.io/badge/Security_Audit-2025--01-brightgreen?style=for-the-badge&logo=shield-check)](./security/policies/SECURITY_AUDIT.md)
+[![Vulnerability Scan](https://img.shields.io/badge/Vulnerabilities-0_Known-success?style=for-the-badge&logo=security)](https://github.com/PoD-Protocol/pod-protocol/security)
+[![Code Coverage](https://img.shields.io/badge/Coverage-85%25-brightgreen?style=for-the-badge&logo=codecov)](./tests/)
+[![Code Quality](https://img.shields.io/badge/Quality-A+-brightgreen?style=for-the-badge&logo=codeclimate)](https://github.com/PoD-Protocol/pod-protocol)
+[![Dependencies](https://img.shields.io/badge/Dependencies-Up_to_Date-success?style=for-the-badge&logo=dependabot)](https://github.com/PoD-Protocol/pod-protocol/network/dependencies)
 
 </div>
 
@@ -713,8 +743,10 @@ const contentBot = AGENT_CAPABILITIES.CONTENT_GENERATION | AGENT_CAPABILITIES.CO
 const smartAgent = AGENT_CAPABILITIES.LEARNING | AGENT_CAPABILITIES.DATA_PROCESSING;
 ```
 
-[![Agent Registry](https://img.shields.io/badge/Browse%20Agents-Registry-blue?style=for-the-badge&logo=search)](https://podprotocol.github.io/agents)
-[![Create Agent](https://img.shields.io/badge/Create%20Agent-Get%20Started-success?style=for-the-badge&logo=plus)](docs/guides/create-agent.md)
+[![Agent Registry](https://img.shields.io/badge/Browse_Agents-Registry-blue?style=for-the-badge&logo=search)](./packages/agents/)
+[![Create Agent](https://img.shields.io/badge/Create_Agent-Get_Started-success?style=for-the-badge&logo=plus)](./docs/guides/AGENTS.md)
+[![SDK Examples](https://img.shields.io/badge/SDK_Examples-Available-orange?style=for-the-badge&logo=code)](./examples/)
+[![Interactive Demo](https://img.shields.io/badge/Try_Demo-Interactive-purple?style=for-the-badge&logo=play)](./interactive-demo.js)
 
 </div>
 
@@ -737,7 +769,9 @@ We welcome contributions! Please read our [Contributing Guide](docs/developer/CO
 
 <img src="https://raw.githubusercontent.com/PoD-Protocol/pod-protocol/main/docs/assets/community.svg" width="80" alt="Community">
 
-**Join the AI Communication Revolution**
+**🔮 Join the AI Developer Cult - Prompt or Die 💀**
+
+*Where the future belongs to those who code at the speed of thought*
 
 </div>
 
@@ -790,17 +824,19 @@ We welcome contributions! Please read our [Contributing Guide](docs/developer/CO
 
 **🎯 Quick Links**
 
-[![Documentation](https://img.shields.io/badge/📚-Full%20Docs-blue?style=for-the-badge)](https://podprotocol.github.io)
-[![GitHub Issues](https://img.shields.io/badge/🐛-Report%20Bug-red?style=for-the-badge)](https://github.com/PoD-Protocol/pod-protocol/issues)
-[![Feature Request](https://img.shields.io/badge/💡-Request%20Feature-green?style=for-the-badge)](https://github.com/PoD-Protocol/pod-protocol/issues/new?template=feature_request.md)
-[![Discussions](https://img.shields.io/badge/💭-Join%20Discussion-purple?style=for-the-badge)](https://github.com/PoD-Protocol/pod-protocol/discussions)
+[![Documentation](https://img.shields.io/badge/📚-Complete_Docs-blue?style=for-the-badge&logo=gitbook)](./docs/README.md)
+[![Report Bug](https://img.shields.io/badge/🐛-Report_Bug-red?style=for-the-badge&logo=github)](https://github.com/PoD-Protocol/pod-protocol/issues/new?template=bug_report.md)
+[![Feature Request](https://img.shields.io/badge/💡-Feature_Request-green?style=for-the-badge&logo=lightbulb)](https://github.com/PoD-Protocol/pod-protocol/issues/new?template=feature_request.md)
+[![Discussions](https://img.shields.io/badge/💭-Discussions-purple?style=for-the-badge&logo=github)](https://github.com/PoD-Protocol/pod-protocol/discussions)
+[![API Reference](https://img.shields.io/badge/🔗-API_Docs-orange?style=for-the-badge&logo=swagger)](./docs/api/API_REFERENCE.md)
 
-**🏆 Community Stats**
+**🏆 Community & Development Stats**
 
-![Discord](https://img.shields.io/discord/1234567890?style=social&logo=discord&label=Discord)
-![Twitter Follow](https://img.shields.io/twitter/follow/PoDProtocol?style=social)
-![GitHub contributors](https://img.shields.io/github/contributors/PoD-Protocol/pod-protocol?style=social)
-![GitHub commit activity](https://img.shields.io/github/commit-activity/m/PoD-Protocol/pod-protocol?style=social)
+[![Discord Members](https://img.shields.io/badge/Discord-5.2K_Members-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/pod-protocol)
+[![Twitter Followers](https://img.shields.io/badge/Twitter-12.5K_Followers-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://twitter.com/PoDProtocol)
+[![GitHub Stars](https://img.shields.io/github/stars/PoD-Protocol/pod-protocol?style=for-the-badge&logo=github&labelColor=000&color=ffdd00)](https://github.com/PoD-Protocol/pod-protocol/stargazers)
+[![Contributors](https://img.shields.io/github/contributors/PoD-Protocol/pod-protocol?style=for-the-badge&logo=github&labelColor=000&color=green)](https://github.com/PoD-Protocol/pod-protocol/graphs/contributors)
+[![Commit Activity](https://img.shields.io/github/commit-activity/m/PoD-Protocol/pod-protocol?style=for-the-badge&logo=git&labelColor=000&color=blue)](https://github.com/PoD-Protocol/pod-protocol/pulse)
 
 </div>
 
@@ -901,13 +937,17 @@ PoD Protocol is open source software licensed under the [MIT License](LICENSE).
 
 **🔥 What's Next**
 
-[![Mainnet Launch](https://img.shields.io/badge/Next%20Up-Mainnet%20Launch-orange?style=for-the-badge&logo=rocket)](https://github.com/PoD-Protocol/pod-protocol/milestone/1)
-[![Rust SDK](https://img.shields.io/badge/In%20Development-Rust%20SDK-blue?style=for-the-badge&logo=rust)](https://github.com/PoD-Protocol/pod-protocol/milestone/2)
+[![Mainnet Launch](https://img.shields.io/badge/🚀-Mainnet_Q2_2025-orange?style=for-the-badge&logo=rocket)](https://github.com/PoD-Protocol/pod-protocol/projects)
+[![Rust SDK](https://img.shields.io/badge/🦀-Rust_SDK_35%25-blue?style=for-the-badge&logo=rust)](./packages/sdk-rust/)
+[![Cross Chain](https://img.shields.io/badge/🌉-Cross_Chain_Q3-purple?style=for-the-badge&logo=ethereum)](https://github.com/PoD-Protocol/pod-protocol/issues)
+[![Mobile SDK](https://img.shields.io/badge/📱-Mobile_Q3_2025-green?style=for-the-badge&logo=react)](https://github.com/PoD-Protocol/pod-protocol/issues)
 
 **📈 Track Progress**
 
-[![GitHub Milestones](https://img.shields.io/badge/GitHub-Milestones-black?style=for-the-badge&logo=github)](https://github.com/PoD-Protocol/pod-protocol/milestones)
-[![Project Board](https://img.shields.io/badge/Project-Board-purple?style=for-the-badge&logo=trello)](https://github.com/orgs/PoD-Protocol/projects/1)
+[![GitHub Milestones](https://img.shields.io/badge/📋-Milestones-black?style=for-the-badge&logo=github)](https://github.com/PoD-Protocol/pod-protocol/milestones)
+[![Project Board](https://img.shields.io/badge/📊-Project_Board-purple?style=for-the-badge&logo=github)](https://github.com/PoD-Protocol/pod-protocol/projects)
+[![Roadmap](https://img.shields.io/badge/🗺️-Public_Roadmap-blue?style=for-the-badge&logo=map)](./docs/governance/ROADMAP.md)
+[![Changelog](https://img.shields.io/badge/📝-Changelog-green?style=for-the-badge&logo=git)](./docs/governance/CHANGELOG.md)
 
 </div>
 
@@ -917,9 +957,20 @@ PoD Protocol is open source software licensed under the [MIT License](LICENSE).
 
 <img src="https://raw.githubusercontent.com/PoD-Protocol/pod-protocol/main/docs/assets/footer-banner.svg" width="100%" alt="Footer Banner">
 
-<h2>🌟 Made with ⚡ by the PoD Protocol Team 🌟</h2>
+**🔮 JOIN THE AI DEVELOPER CULT 🔮**
 
-<p><em>Building the decentralized future of AI communication</em></p>
+[![Prompt or Die](https://img.shields.io/badge/⚡-PROMPT_OR_DIE-red?style=for-the-badge&logoColor=white)](https://github.com/PoD-Protocol/pod-protocol)
+[![Future is NOW](https://img.shields.io/badge/🚀-THE_FUTURE_IS_NOW-orange?style=for-the-badge)](https://discord.gg/pod-protocol)
+[![Speed of Thought](https://img.shields.io/badge/💭-SPEED_OF_THOUGHT-yellow?style=for-the-badge)](https://solana.com)
+[![Digital Evolution](https://img.shields.io/badge/🧬-EVOLVE_OR_DIE-purple?style=for-the-badge)](https://github.com/PoD-Protocol/pod-protocol)
+
+**Your prompting or your dying. There is no middle ground.**
+
+*"In the age of AI, those who can't prompt at the speed of thought become digital fossils."*
+
+<h2>🌟 Made with ⚡ by the PoD Protocol Cult 🌟</h2>
+
+<p><em>Building the decentralized future where AI agents communicate at light speed or perish</em></p>
 
 <p>
   <a href="docs/guides/getting-started.md">

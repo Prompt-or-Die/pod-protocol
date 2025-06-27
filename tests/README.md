@@ -1,8 +1,12 @@
 # 🧪 PoD Protocol Tests
 
 [![CI](https://github.com/PoD-Protocol/pod-protocol/workflows/CI/badge.svg)](https://github.com/PoD-Protocol/pod-protocol/actions/workflows/ci.yml)
-[![Test Coverage](https://img.shields.io/badge/Coverage-85%25-brightgreen)](https://github.com/PoD-Protocol/pod-protocol/actions)
-[![Anchor](https://img.shields.io/badge/Framework-Anchor-512BD4?logo=anchor&logoColor=white)](https://www.anchor-lang.com/)
+[![Test Coverage](https://img.shields.io/badge/Coverage-85%25-brightgreen?style=for-the-badge&logo=codecov)](https://github.com/PoD-Protocol/pod-protocol/actions)
+[![Test Status](https://img.shields.io/badge/Tests-Passing-brightgreen?style=for-the-badge&logo=check-circle)](https://github.com/PoD-Protocol/pod-protocol/actions)
+[![Anchor Framework](https://img.shields.io/badge/Anchor-Framework-512BD4?style=for-the-badge&logo=rust&logoColor=white)](https://www.anchor-lang.com/)
+[![Solana](https://img.shields.io/badge/Solana-9945FF?style=for-the-badge&logo=solana&logoColor=white)](https://solana.com)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge&logo=open-source-initiative)](../LICENSE)
 
 Comprehensive test suite for the PoD Protocol using the Anchor framework and testing against live Solana clusters.
 

@@ -1,9 +1,22 @@
 # 🎯 PoD Protocol Examples
 
 [![CI](https://github.com/PoD-Protocol/pod-protocol/workflows/CI/badge.svg)](https://github.com/PoD-Protocol/pod-protocol/actions/workflows/ci.yml)
-[![Examples](https://img.shields.io/badge/Examples-Ready-brightgreen)](https://github.com/PoD-Protocol/pod-protocol/tree/main/examples)
+[![Examples](https://img.shields.io/badge/Examples-Production_Ready-brightgreen?style=for-the-badge&logo=code)](https://github.com/PoD-Protocol/pod-protocol/tree/main/examples)
+[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![Solana](https://img.shields.io/badge/Solana-9945FF?style=for-the-badge&logo=solana&logoColor=white)](https://solana.com)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge&logo=open-source-initiative)](../LICENSE)
 
 This directory contains example scripts and demonstrations for the PoD Protocol (Prompt or Die) showcasing various features and use cases.
+
+<div align="center">
+
+[![Prompt or Die](https://img.shields.io/badge/⚡-Prompt_or_Die-red?style=flat-square)](https://github.com/PoD-Protocol/pod-protocol)
+[![Learn or Perish](https://img.shields.io/badge/💀-Learn_or_Perish-black?style=flat-square)](https://discord.gg/pod-protocol)
+[![Code Examples](https://img.shields.io/badge/🔥-Live_Examples-orange?style=flat-square)](https://github.com/PoD-Protocol/pod-protocol)
+
+</div>
+
+**⚡ Real examples for real developers - study these or fall behind in the AI revolution**
 
 ## 📁 Available Examples
 
