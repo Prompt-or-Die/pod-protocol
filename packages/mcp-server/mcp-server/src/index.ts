@@ -1,13 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * PoD Protocol MCP Server v2.0 - Enhanced Edition
- * Complete Model Context Protocol server with enterprise features
+ * PoD Protocol MCP Server v2.0 - Modern Multi-User Edition
+ * Standards-compliant Model Context Protocol server with session management
  */
 
-import { PodProtocolMCPServer } from './server.js';
-import { MCPServerConfig } from './types.js';
-import { loadConfig } from './config.js';
+import { ModernPodProtocolMCPServer, ModernMCPServerConfig } from './modern-mcp-server.js';
+import { ConfigLoader } from './config-loader.js';
 import { createLogger } from './logger.js';
 import dotenv from 'dotenv';
 
@@ -18,40 +17,73 @@ const logger = createLogger();
 
 async function main() {
   try {
-    logger.info('🚀 Starting PoD Protocol MCP Server...');
+    logger.info('🚀 Starting Modern PoD Protocol MCP Server...');
+    
+    // Determine configuration mode
+    const mode = process.env.MCP_MODE as 'hosted' | 'self-hosted' | 'development' || 'self-hosted';
+    const configPath = process.env.MCP_CONFIG_PATH;
+    
+    logger.info('Loading configuration', { mode, configPath });
     
     // Load configuration
-    const config: MCPServerConfig = await loadConfig();
+    const config: ModernMCPServerConfig = await ConfigLoader.load({
+      mode,
+      configPath,
+      overrides: {
+        // Allow runtime overrides via environment
+        ...(process.env.JWT_SECRET && {
+          security: { jwtSecret: process.env.JWT_SECRET }
+        })
+      }
+    });
     
-    logger.info('Configuration loaded', {
-      runtime: config.agent_runtime.runtime,
-      endpoint: config.pod_protocol.rpc_endpoint,
-      features: Object.entries(config.features)
-        .filter(([_, enabled]) => enabled)
-        .map(([feature]) => feature)
+    logger.info('Configuration loaded successfully', {
+      serverName: config.server.name,
+      transports: {
+        http: config.transports.http.enabled,
+        websocket: config.transports.websocket.enabled,
+        stdio: config.transports.stdio.enabled
+      },
+      podEndpoint: config.pod_protocol.rpc_endpoint,
+      authRequired: config.transports.security.requireAuth
     });
 
     // Create and start server
-    const server = new PodProtocolMCPServer(config);
+    const server = new ModernPodProtocolMCPServer(config);
     
     // Handle graceful shutdown
-    process.on('SIGINT', async () => {
-      logger.info('📊 Received SIGINT, shutting down gracefully...');
-      await server.stop();
-      process.exit(0);
-    });
+    const shutdown = async (signal: string) => {
+      logger.info(`📊 Received ${signal}, shutting down gracefully...`);
+      try {
+        await server.stop();
+        logger.info('✅ Graceful shutdown completed');
+        process.exit(0);
+      } catch (error) {
+        logger.error('❌ Error during shutdown', { error });
+        process.exit(1);
+      }
+    };
 
-    process.on('SIGTERM', async () => {
-      logger.info('📊 Received SIGTERM, shutting down gracefully...');
-      await server.stop();
-      process.exit(0);
-    });
+    process.on('SIGINT', () => shutdown('SIGINT'));
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
 
     // Start the server
     await server.start();
     
+    // Log success with connection info
+    logger.info('🎉 Server started successfully!');
+    if (config.transports.http.enabled) {
+      logger.info(`🌐 HTTP endpoint: http://localhost:${config.transports.http.port}${config.transports.http.path}`);
+    }
+    if (config.transports.websocket.enabled) {
+      logger.info(`🔗 WebSocket endpoint: ws://localhost:${config.transports.websocket.port}${config.transports.websocket.path}`);
+    }
+    if (config.transports.stdio.enabled) {
+      logger.info('📟 stdio transport: enabled');
+    }
+    
   } catch (error) {
-    logger.error('❌ Failed to start PoD Protocol MCP Server', { error });
+    logger.error('❌ Failed to start Modern PoD Protocol MCP Server', { error });
     process.exit(1);
   }
 }
@@ -68,25 +100,24 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // Start the server
-main().catch((error) => {
-  logger.error('💥 Fatal error during startup', { error });
-  process.exit(1);
-});
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((error) => {
+    logger.error('💥 Fatal error during startup', { error });
+    process.exit(1);
+  });
+}
 
-// Main server export
+// Exports for library usage
+export { ModernPodProtocolMCPServer } from './modern-mcp-server.js';
+export { ConfigLoader } from './config-loader.js';
+export { SessionManager, sessionManager } from './session-manager.js';
+export { TransportManager } from './transport-manager.js';
+export { SolanaAuthUtils } from './utils/solana-auth.js';
+
+// Legacy exports (for backward compatibility)
 export { PodProtocolMCPServer } from './server.js';
-
-// Enhanced components (available but not exported by default due to compilation issues)
-// export { EnhancedPodProtocolMCPServer } from './enhanced-server.js';
-// export { EnhancedMCPTransport } from './enhanced-transport.js';
-// export { MCPRegistryManager } from './registry-integration.js';
-// export { MCPSecurityManager } from './security-enhancements.js';
-
-// WebSocket event management
 export { WebSocketEventManager } from './websocket.js';
-
-// Types and utilities
 export * from './types.js';
 
-// Basic export - Enhanced features available in separate files
-export default PodProtocolMCPServer; 
+// Default export
+export default ModernPodProtocolMCPServer; 
