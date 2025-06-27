@@ -1,114 +1,85 @@
 {
-  "name": "pod-protocol",
-  "version": "1.5.2",
-  "description": "PoD Protocol (Prompt or Die) - The Ultimate AI Agent Communication Protocol on Solana ⚡️",
-  "type": "module",
+  "name": "@pod-protocol/monorepo",
+  "version": "2.0.0",
+  "description": "PoD Protocol - The Ultimate AI Agent Communication Protocol on Solana",
   "private": true,
   "workspaces": [
-    "cli",
-    "frontend",
-    "sdk", 
-    "sdk-js",
-    "mcp-server"
+    "packages/*"
   ],
-  "packageManager": "bun@1.0.0",
+  "scripts": {
+    "build": "bun run --filter='*' build",
+    "test": "bun run --filter='*' test",
+    "lint": "bun run --filter='*' lint",
+    "format": "prettier --write \"**/*.{js,ts,json,md}\"",
+    "prepare": "husky install",
+    "validate": "bun run lint && bun run test && bun run build",
+    "clean": "bun run --filter='*' clean",
+    "dev": "bun run --filter='*' --parallel dev",
+    "release": "changeset publish",
+    "changeset": "changeset",
+    "docs:build": "bun run --filter='*' docs:build",
+    "docs:dev": "bun run --filter='*' docs:dev",
+    "security:audit": "bun audit",
+    "deps:check": "bun update --latest",
+    "typecheck": "bun run --filter='*' typecheck",
+    "install:all": "bun install",
+    "start": "bun run dev",
+    "setup:windows": "powershell -ExecutionPolicy Bypass -File tools/scripts/windows/install.ps1",
+    "setup:macos": "chmod +x tools/scripts/macos/install.sh && ./tools/scripts/macos/install.sh",
+    "setup:linux": "chmod +x tools/scripts/linux/install.sh && ./tools/scripts/linux/install.sh",
+    "docker:build": "docker build -f config/production/Dockerfile.prod -t pod-protocol .",
+    "docker:run": "docker run -p 3000:3000 -p 8080:8080 pod-protocol",
+    "docker:up": "docker-compose -f config/production/docker-compose.prod.yml up -d"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PoD-Protocol/pod-protocol.git"
+  },
+  "keywords": [
+    "solana",
+    "ai",
+    "agents",
+    "protocol",
+    "blockchain",
+    "web3",
+    "communication",
+    "decentralized",
+    "zk-compression"
+  ],
+  "author": "PoD Protocol Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/PoD-Protocol/pod-protocol/issues"
+  },
+  "homepage": "https://pod-protocol.org",
   "engines": {
     "node": ">=18.0.0",
     "bun": ">=1.0.0"
   },
-  "scripts": {
-    "postinstall": "echo '🎉 PoD Protocol workspace setup complete! Run bun run start for guided setup.'",
-    "start": "echo '🎭 Welcome to PoD Protocol!' && node scripts/unified-setup.js",
-    "create-app": "node scripts/unified-setup.js",
-    "setup": "echo '🛠️ Unified setup mode...' && node scripts/unified-setup.js",
-    "setup:complete": "node scripts/unified-setup.js --complete",
-    "setup:cli-only": "node scripts/unified-setup.js --cli-only",
-    "setup:dev": "echo '🔧 Setting up enhanced development environment...' && node scripts/dev-experience-enhancer.js",
-    "build": "echo '🚀 Building all PoD Protocol components...' && bun run build:all",
-    "build:all": "bun run build:sdk && bun run build:sdk-js && bun run build:cli && bun run build:frontend",
-    "build:sdk": "cd sdk && bun run build",
-    "build:sdk-js": "cd sdk-js && bun run build",
-    "build:cli": "cd cli && bun run build",
-    "build:frontend": "cd frontend && bun run build",
-    "build:verify": "bun run build:all && bun run test:basic",
-    "build:watch": "concurrently \"bun run build:sdk --watch\" \"bun run build:cli --watch\"",
-    "dev": "echo '⚡️ Starting enhanced development mode...' && bun run dev:enhanced",
-    "dev:enhanced": "node scripts/dev-experience-enhancer.js",
-    "dev:frontend": "cd frontend && bun run dev",
-    "dev:cli": "cd cli && bun run dev",
-    "dev:watch": "bun run build:watch",
-    "dev:setup": "bun run setup:dev",
-    "test": "echo '🧪 Running PoD Protocol test suite...' && bun run test:all",
-    "test:all": "bun run test:sdk && bun run test:sdk-js && bun run test:cli && bun run test:integration",
-    "test:sdk": "cd sdk && bun run test",
-    "test:sdk-js": "cd sdk-js && bun run test",
-    "test:cli": "cd cli && bun run test",
-    "test:integration": "cd tests && bun run test",
-    "test:basic": "echo '🔍 Running basic functionality tests...' && cd tests && bun test *.test.ts *.test.js",
-    "test:watch": "concurrently \"bun run test:sdk --watch\" \"bun run test:cli --watch\"",
-    "lint": "echo '🔧 Linting all PoD Protocol components...' && bun run lint:all",
-    "lint:all": "bun run lint:sdk && bun run lint:sdk-js && bun run lint:cli && bun run lint:frontend",
-    "lint:sdk": "cd sdk && bun run lint",
-    "lint:sdk-js": "cd sdk-js && bun run lint",
-    "lint:cli": "cd cli && bun run lint",
-    "lint:frontend": "cd frontend && bun run lint",
-    "lint:fix": "bun run lint:all -- --fix",
-    "clean": "echo '🧹 Cleaning all build artifacts...' && bun run clean:all",
-    "clean:all": "bun run clean:sdk && bun run clean:sdk-js && bun run clean:cli && bun run clean:frontend",
-    "clean:sdk": "cd sdk && bun run clean",
-    "clean:sdk-js": "cd sdk-js && bun run clean",
-    "clean:cli": "cd cli && bun run clean",
-    "clean:frontend": "cd frontend && bun run clean",
-    "publish:prepare": "echo '📦 Preparing PoD Protocol packages for publishing...' && bun run clean && bun run build:verify",
-    "publish:all": "./scripts/publish-all.js",
-    "publish:dry-run": "./scripts/publish-dry-run.js",
-    "upgrade": "echo '⬆️ Upgrading PoD Protocol dependencies...' && bun update && bun run build:verify",
-    "audit": "echo '🔍 Auditing PoD Protocol security...' && bun audit",
-    "docs": "echo '📚 Generating documentation...' && cd docs && bun run build",
-    "docs:dev": "cd docs && bun run dev",
-    "pod": "cd cli && bun run dev",
-    "pod:help": "cd cli && bun run dev -- --help",
-    "pod:version": "cd cli && bun run dev -- --version",
-    "onboard": "node scripts/unified-setup.js",
-    "wizard": "node scripts/unified-setup.js",
-    "validate": "node scripts/validate-setup.js",
-    "health-check": "node scripts/validate-setup.js"
-  },
-  "bin": {
-    "create-pod-app": "./scripts/onboarding-wizard.js",
-    "pod-onboard": "./scripts/onboarding-wizard.js"
-  },
-  "keywords": [
-    "pod-protocol",
-    "prompt-or-die",
-    "ai-agents",
-    "agent-communication",
-    "solana",
-    "blockchain",
-    "web3",
-    "decentralized-messaging",
-    "zk-compression",
-    "anchor",
-    "rust",
-    "typescript",
-    "cli",
-    "sdk"
-  ],
-  "author": "PoD Protocol Team",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/PoD-Protocol/pod-protocol.git"
-  },
-  "bugs": {
-    "url": "https://github.com/PoD-Protocol/pod-protocol/issues"
-  },
-  "homepage": "https://github.com/PoD-Protocol/pod-protocol#readme",
+  "packageManager": "bun@1.0.0",
   "devDependencies": {
-    "@types/node": "24.0.4",
-    "typescript": "5.8.3",
-    "concurrently": "9.2.0",
-    "chokidar": "4.0.3",
-    "ws": "8.18.2"
+    "@changesets/cli": "^2.26.0",
+    "@types/node": "^20.0.0",
+    "eslint": "^8.0.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^13.0.0",
+    "npm-check-updates": "^16.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0"
+  },
+  "lint-staged": {
+    "*.{js,ts,json,md}": [
+      "prettier --write",
+      "git add"
+    ],
+    "*.{js,ts}": [
+      "eslint --fix",
+      "git add"
+    ]
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
   }
-}
+} 
