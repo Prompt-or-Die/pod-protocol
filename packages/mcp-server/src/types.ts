@@ -321,4 +321,7 @@ export type PodEventHandler = (event: PodEvent) => Promise<void>;
 
 // =====================================================
 // Type Exports (schemas are already exported above)
-// ===================================================== 
+// =====================================================
+
+// Re-export ModernMCPServerConfig for test compatibility
+export type { ModernMCPServerConfig } from './modern-mcp-server.js';

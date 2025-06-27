@@ -288,4 +288,15 @@ export class ConfigLoader {
       }
     };
   }
+
+  /**
+   * Instance method for loading configuration (for compatibility with tests)
+   */
+  async loadConfig(
+    mode: 'hosted' | 'self-hosted' | 'development',
+    configPath?: string,
+    overrides?: Partial<ModernMCPServerConfig>
+  ): Promise<ModernMCPServerConfig> {
+    return ConfigLoader.load({ mode, configPath, overrides });
+  }
 }

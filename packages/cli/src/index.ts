@@ -24,6 +24,7 @@ import { createConfigCommands } from "./commands/config/index.js";
 import { createNetworkCommands } from "./commands/network/index.js";
 import { createPluginCommands } from "./commands/plugin/index.js";
 import { createAutomationCommands } from "./commands/automation/index.js";
+import { createZKCompressionCommands } from "./commands/zk-compression.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -75,6 +76,7 @@ export class PodCLI {
     this.program.addCommand(createNetworkCommands());
     this.program.addCommand(createPluginCommands());
     this.program.addCommand(createAutomationCommands());
+    this.program.addCommand(createZKCompressionCommands());
 
     // Quick access commands
     this.program

@@ -308,3 +308,270 @@ export class SolanaAuthUtils {
     return `${prefix}_${timestamp}_${random}`;
   }
 }
+
+/**
+ * OAuth token validation interface
+ */
+export interface OAuthUserInfo {
+  id: string;
+  email: string;
+  name: string;
+  permissions: string[];
+}
+
+/**
+ * Validates an OAuth token by calling the OAuth provider's userinfo endpoint
+ * @param token - The OAuth access token to validate
+ * @param oauthEndpoint - The OAuth provider endpoint (optional)
+ * @returns Promise resolving to user information
+ */
+export async function validateOAuthToken(
+  token: string,
+  oauthEndpoint: string = process.env.OAUTH_ENDPOINT || 'https://oauth.podprotocol.com'
+): Promise<OAuthUserInfo> {
+  if (!token || typeof token !== 'string') {
+    throw new Error('Invalid token provided');
+  }
+
+  try {
+    const response = await fetch(`${oauthEndpoint}/oauth/userinfo`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'User-Agent': 'PoD-Protocol-MCP-Server/1.0.0'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`OAuth token validation failed: ${response.status} ${response.statusText}`);
+    }
+
+    const userInfo = await response.json();
+    
+    // Validate the response structure
+    if (!userInfo.id || !userInfo.email) {
+      throw new Error('Invalid user info response from OAuth provider');
+    }
+
+    return {
+      id: userInfo.id,
+      email: userInfo.email,
+      name: userInfo.name || userInfo.email,
+      permissions: userInfo.permissions || userInfo.scope?.split(' ') || []
+    };
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error(`OAuth token validation failed: ${error}`);
+  }
+}
+
+/**
+ * Verifies a Solana signature using the wallet's public key
+ * @param publicKey - The wallet's public key as a string
+ * @param signature - The signature to verify (base58 or hex encoded)
+ * @param message - The original message that was signed
+ * @returns Promise resolving to true if signature is valid, false otherwise
+ */
+export async function verifySolanaSignature(
+  publicKey: string,
+  signature: string,
+  message: string
+): Promise<boolean> {
+  try {
+    // Validate inputs
+    if (!publicKey || !signature || message === undefined) {
+      throw new Error('Missing required parameters for signature verification');
+    }
+
+    // Use the class method for verification
+    return await SolanaAuthUtils.verifySignature(message, signature, publicKey);
+  } catch (error) {
+    console.error('Solana signature verification error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Generates a challenge for wallet authentication
+ * @param domain - The domain requesting authentication
+ * @param walletAddress - The wallet address to authenticate
+ * @param options - Additional options for the challenge
+ * @returns Object containing the challenge message and nonce
+ */
+export function generateAuthChallenge(
+  domain: string,
+  walletAddress: string,
+  options: {
+    statement?: string;
+    uri?: string;
+    expirationMinutes?: number;
+    requestId?: string;
+  } = {}
+): { message: string; nonce: string; expiresAt: string } {
+  const nonce = SolanaAuthUtils.generateNonce();
+  const expirationTime = new Date(
+    Date.now() + (options.expirationMinutes || 10) * 60 * 1000
+  ).toISOString();
+
+  const message = SolanaAuthUtils.createAuthMessage(
+    walletAddress,
+    domain,
+    nonce,
+    {
+      ...options,
+      expirationTime
+    }
+  );
+
+  return {
+    message,
+    nonce,
+    expiresAt: expirationTime
+  };
+}
+
+/**
+ * Validates an authentication challenge response
+ * @param message - The original challenge message
+ * @param signature - The wallet's signature of the message
+ * @param publicKey - The wallet's public key
+ * @param expectedNonce - The expected nonce from the challenge
+ * @returns Promise resolving to validation result
+ */
+export async function validateAuthChallenge(
+  message: string,
+  signature: string,
+  publicKey: string,
+  expectedNonce?: string
+): Promise<{
+  isValid: boolean;
+  parsedMessage?: ParsedAuthMessage;
+  error?: string;
+}> {
+  try {
+    // Parse the message
+    const parsedMessage = SolanaAuthUtils.parseAuthMessage(message);
+    if (!parsedMessage) {
+      return {
+        isValid: false,
+        error: 'Invalid message format'
+      };
+    }
+
+    // Check nonce if provided
+    if (expectedNonce && parsedMessage.nonce !== expectedNonce) {
+      return {
+        isValid: false,
+        error: 'Invalid nonce'
+      };
+    }
+
+    // Check if message has expired
+    if (SolanaAuthUtils.isMessageExpired(parsedMessage)) {
+      return {
+        isValid: false,
+        error: 'Message has expired'
+      };
+    }
+
+    // Verify the signature
+    const isSignatureValid = await verifySolanaSignature(publicKey, signature, message);
+    if (!isSignatureValid) {
+      return {
+        isValid: false,
+        error: 'Invalid signature'
+      };
+    }
+
+    return {
+      isValid: true,
+      parsedMessage
+    };
+  } catch (error) {
+    return {
+      isValid: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
+ * Checks if a user has the required permissions
+ * @param userPermissions - Array of user's permissions
+ * @param requiredPermissions - Array of required permissions
+ * @param requireAll - Whether all permissions are required (default: false)
+ * @returns True if user has required permissions
+ */
+export function hasPermission(
+  userPermissions: string[],
+  requiredPermissions: string[],
+  requireAll: boolean = false
+): boolean {
+  if (!Array.isArray(userPermissions) || !Array.isArray(requiredPermissions)) {
+    return false;
+  }
+
+  if (requiredPermissions.length === 0) {
+    return true;
+  }
+
+  if (requireAll) {
+    return requiredPermissions.every(permission => 
+      userPermissions.includes(permission)
+    );
+  } else {
+    return requiredPermissions.some(permission => 
+      userPermissions.includes(permission)
+    );
+  }
+}
+
+/**
+ * Creates a session token for authenticated users
+ * @param userInfo - User information from OAuth or wallet auth
+ * @param walletAddress - Optional wallet address for wallet-based auth
+ * @param sessionDurationHours - Session duration in hours (default: 24)
+ * @returns Session token
+ */
+export function createSessionToken(
+  userInfo: OAuthUserInfo | { id: string; permissions: string[] },
+  walletAddress?: string,
+  sessionDurationHours: number = 24
+): string {
+  const secret = process.env.JWT_SECRET || 'default-secret-change-in-production';
+  
+  if ('email' in userInfo) {
+    // OAuth user
+    return SolanaAuthUtils.createAuthToken(
+      userInfo.id,
+      walletAddress || '',
+      '',
+      userInfo.permissions,
+      secret,
+      { expiresIn: `${sessionDurationHours}h` }
+    );
+  } else {
+    // Wallet user
+    return SolanaAuthUtils.createAuthToken(
+      userInfo.id,
+      walletAddress || '',
+      walletAddress || '',
+      userInfo.permissions,
+      secret,
+      { expiresIn: `${sessionDurationHours}h` }
+    );
+  }
+}
+
+/**
+ * Verifies a session token
+ * @param token - The session token to verify
+ * @returns Decoded token payload
+ */
+export function verifySessionToken(token: string): any {
+  const secret = process.env.JWT_SECRET || 'default-secret-change-in-production';
+  return SolanaAuthUtils.verifyAuthToken(token, secret);
+}

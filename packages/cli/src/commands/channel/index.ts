@@ -2,6 +2,7 @@ import { Command } from "commander";
 import chalk from 'chalk';
 import boxen from 'boxen';
 import * as emoji from 'node-emoji';
+import { intro, outro, text, select, confirm } from '@clack/prompts';
 
 export function createChannelCommands(): Command {
   const channel = new Command('channel')

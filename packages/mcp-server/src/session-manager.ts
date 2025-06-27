@@ -23,6 +23,10 @@ export interface UserSession {
   lastActivity: Date;
   metadata: Record<string, any>;
   podClient?: PodComClient;
+  isAuthenticated: boolean;
+  userInfo: any;
+  walletPublicKey: string;
+  hasPermission(permission: string): boolean;
 }
 
 export interface SessionConfig {
@@ -91,7 +95,11 @@ export class SessionManager extends EventEmitter {
         permissions: tokenPayload.scope?.split(' ') || ['basic'],
         createdAt: new Date(),
         lastActivity: new Date(),
-        metadata: additionalData || {}
+        metadata: additionalData || {},
+        isAuthenticated: true,
+        userInfo: tokenPayload,
+        walletPublicKey: tokenPayload.publicKey,
+        hasPermission: (permission: string) => session.permissions.includes(permission)
       };
 
       // 5. Initialize PoD client for this user
@@ -339,6 +347,61 @@ export class SessionManager extends EventEmitter {
         this.destroySession(sessionId);
       });
     }
+  }
+
+  /**
+   * Delete a session by ID
+   */
+  async deleteSession(sessionId: string): Promise<boolean> {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      return false;
+    }
+    
+    await this.destroySession(sessionId);
+    return true;
+  }
+
+  /**
+   * Get total session count
+   */
+  getSessionCount(): number {
+    return this.sessions.size;
+  }
+
+  /**
+   * Get session statistics
+   */
+  getSessionStats(): { totalSessions: number; activeUsers: number; averageSessionAge: number; uniqueUsers: number; authenticatedSessions: number } {
+    const now = Date.now();
+    let totalAge = 0;
+    let authenticatedCount = 0;
+    const uniqueUserIds = new Set<string>();
+    
+    for (const session of this.sessions.values()) {
+      totalAge += now - session.createdAt.getTime();
+      if (session.isAuthenticated) {
+        authenticatedCount++;
+      }
+      if (session.userId) {
+        uniqueUserIds.add(session.userId);
+      }
+    }
+    
+    return {
+      totalSessions: this.sessions.size,
+      activeUsers: this.userSessions.size,
+      averageSessionAge: this.sessions.size > 0 ? totalAge / this.sessions.size : 0,
+      uniqueUsers: uniqueUserIds.size,
+      authenticatedSessions: authenticatedCount
+    };
+  }
+
+  /**
+   * Manual cleanup trigger
+   */
+  cleanup(): void {
+    this.cleanupExpiredSessions();
   }
 
   /**

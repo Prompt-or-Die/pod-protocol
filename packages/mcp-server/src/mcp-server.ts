@@ -85,6 +85,7 @@ export class PodProtocolMCPServer {
   private registryManager!: MCPRegistryManager;
   private securityManager!: MCPSecurityManager;
   private wsEventManager!: WebSocketEventManager;
+  private running: boolean = false;
 
   // Metrics
   private metrics = {
@@ -759,6 +760,7 @@ export class PodProtocolMCPServer {
       this.logger.info('🚀 Starting Modern PoD Protocol MCP Server');
       
       await this.transportManager.start();
+      this.running = true;
       
       this.logger.info('✅ Modern PoD Protocol MCP Server started successfully');
       this.logger.info('📊 Features: Multi-user sessions, Multiple transports, OAuth 2.1, Session isolation');
@@ -775,12 +777,17 @@ export class PodProtocolMCPServer {
       
       await this.transportManager.stop();
       await this.sessionManager.shutdown();
+      this.running = false;
       
       this.logger.info('Modern PoD Protocol MCP Server stopped');
       
     } catch (error) {
       this.logger.error('Error during shutdown', { error });
     }
+  }
+
+  isRunning(): boolean {
+    return this.running;
   }
 
   getStats(): any {
