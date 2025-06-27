@@ -61,7 +61,7 @@
     "@changesets/cli": "^2.26.0",
     "@types/node": "^20.0.0",
     "eslint": "^8.0.0",
-    "husky": "^8.0.0",
+    "husky": "^9.1.7",
     "lint-staged": "^13.0.0",
     "npm-check-updates": "^16.0.0",
     "prettier": "^3.0.0",
