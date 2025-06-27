@@ -3,7 +3,7 @@
  * This file provides type-safe wrappers to handle Anchor IDL compatibility issues
  */
 
-import { Idl, IdlAccounts } from "@coral-xyz/anchor";
+import type { Idl, IdlAccounts } from "@coral-xyz/anchor";
 
 // Create a more compatible IDL type
 export interface CompatibleIdl extends Idl {

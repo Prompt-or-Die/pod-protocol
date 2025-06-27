@@ -1,7 +1,8 @@
 import { address } from "@solana/addresses";
 import type { Address } from "@solana/addresses";
 import type { KeyPairSigner } from "@solana/signers";
-import { BN, utils, web3 } from "@coral-xyz/anchor";
+import * as anchor from "@coral-xyz/anchor";
+const { BN, utils, web3 } = anchor;
 import { BaseService } from "./base.js";
 import { IPFSService, IPFSStorageResult } from "./ipfs.js";
 import { createHash } from 'crypto';

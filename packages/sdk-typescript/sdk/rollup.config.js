@@ -21,6 +21,28 @@ export default {
     "services/jito-bundles": "src/services/jito-bundles.ts",
     "services/session-keys": "src/services/session-keys.ts",
   },
+  external: [
+    '@coral-xyz/anchor',
+    '@solana/web3.js',
+    '@solana/rpc',
+    '@solana/addresses', 
+    '@solana/signers',
+    '@solana/transactions',
+    '@solana/accounts',
+    '@solana/codecs',
+    '@solana-program/compute-budget',
+    '@solana-program/system',
+    '@lightprotocol/stateless.js',
+    'keccak',
+    'helia',
+    '@helia/unixfs',
+    '@helia/json',
+    'node:events',
+    'node:crypto',
+    'node:fs',
+    'node:path',
+    'node:os'
+  ],
   output: [
     {
       dir: "dist",

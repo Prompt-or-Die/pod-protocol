@@ -4,7 +4,8 @@ import { generateKeyPairSigner } from '@solana/signers';
 import type { Address } from '@solana/addresses';
 import type { Rpc } from '@solana/rpc';
 import type { KeyPairSigner } from '@solana/signers';
-import { Program, AnchorProvider } from "@coral-xyz/anchor";
+import * as anchor from "@coral-xyz/anchor";
+const { Program, AnchorProvider } = anchor;
 import type { Program as ProgramType, Wallet } from "@coral-xyz/anchor";
 import {
   PROGRAM_ID,

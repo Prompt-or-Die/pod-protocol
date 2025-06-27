@@ -118,7 +118,7 @@ export class DASAPI {
         })
       });
 
-      const data = await response.json();
+      const data = await response.json() as { result: DASAsset };
       return data.result;
     } catch (error) {
       throw new Error(`Failed to fetch asset ${assetId}: ${error}`);
@@ -160,7 +160,7 @@ export class DASAPI {
         })
       });
 
-      const data = await response.json();
+      const data = await response.json() as { result: DASResponse<DASAsset> };
       return data.result;
     } catch (error) {
       throw new Error(`Failed to fetch assets for owner ${owner}: ${error}`);
@@ -190,7 +190,7 @@ export class DASAPI {
         })
       });
 
-      const data = await response.json();
+      const data = await response.json() as { result: AssetProof };
       return data.result;
     } catch (error) {
       throw new Error(`Failed to fetch proof for asset ${assetId}: ${error}`);
@@ -225,7 +225,7 @@ export class DASAPI {
         })
       });
 
-      const data = await response.json();
+      const data = await response.json() as { result: DASResponse<DASAsset> };
       return data.result;
     } catch (error) {
       throw new Error(`Failed to search assets: ${error}`);
@@ -249,7 +249,7 @@ export class DASAPI {
         })
       });
 
-      const data = await response.json();
+      const data = await response.json() as { result: DASAsset[] };
       return data.result;
     } catch (error) {
       throw new Error(`Failed to fetch asset batch: ${error}`);

@@ -1,7 +1,8 @@
 import type { Address } from '@solana/addresses';
 import type { KeyPairSigner } from '@solana/signers';
 import { generateKeyPairSigner } from '@solana/signers';
-import { BN, AnchorProvider, web3, Program } from "@coral-xyz/anchor";
+import * as anchor from "@coral-xyz/anchor";
+const { BN, AnchorProvider, web3, Program } = anchor;
 import { BaseService } from "./base";
 import { AgentAccount, CreateAgentOptions, UpdateAgentOptions } from "../types";
 import { findAgentPDA, retry, getAccountLastUpdated } from "../utils";

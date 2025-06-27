@@ -1,7 +1,8 @@
 import type { Address } from '@solana/addresses';
 import { address } from '@solana/addresses';
 import type { KeyPairSigner } from '@solana/signers';
-import { BN, web3 } from "@coral-xyz/anchor";
+import * as anchor from "@coral-xyz/anchor";
+const { BN, web3 } = anchor;
 // Removed unused anchor import
 import { BaseService } from "./base";
 import {

@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ES2022",
-    "lib": ["ES2022", "dom"],
+    "lib": ["ES2022"],
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": false,
@@ -23,8 +23,7 @@
     "sourceMap": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "types": ["node"],
-    "typeRoots": ["./src/types", "./node_modules/@types"]
+    "types": ["node"]
   },
   "include": [
     "src/**/*"

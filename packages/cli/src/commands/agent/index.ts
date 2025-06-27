@@ -3,6 +3,9 @@ import chalk from 'chalk';
 import boxen from 'boxen';
 import * as emoji from 'node-emoji';
 import { intro, outro, text, confirm } from '@clack/prompts';
+import { PodComClient, CreateAgentOptions, AgentAccount } from '@pod-protocol/sdk';
+import { loadWalletFromFile } from '../../utils/wallet-adapter.js';
+import { address } from '@solana/addresses';
 
 export function createAgentCommands(): Command {
   const agent = new Command('agent')
@@ -21,46 +24,96 @@ export function createAgentCommands(): Command {
     .option('--personality <style>', 'agent personality (professional, friendly, analytical)', 'professional')
     .option('--risk-level <level>', 'risk tolerance (low, medium, high)', 'medium')
     .option('--auto-start', 'automatically start agent after creation')
-    .action(async (options) => {
+    .action(async (options, command) => {
       intro(`${emoji.get('robot_face')} Creating New AI Agent`);
       
-      let name = options.name;
-      if (!name) {
-        name = await text({
-          message: 'What should we name your agent?',
-          placeholder: 'my-trading-bot'
+      try {
+        // Get network and keypair from global options
+        const globalOpts = command.parent?.opts() || {};
+        const network = globalOpts.network || 'devnet';
+        const keypairPath = globalOpts.keypair || '~/.config/solana/id.json';
+        
+        // Load wallet
+        const wallet = loadWalletFromFile(keypairPath);
+        
+        // Initialize client with proper endpoint
+        const endpoint = network === 'mainnet' 
+          ? 'https://api.mainnet-beta.solana.com'
+          : network === 'testnet'
+          ? 'https://api.testnet.solana.com'
+          : 'https://api.devnet.solana.com';
+          
+        const client = new PodComClient({
+          endpoint,
+          commitment: 'confirmed'
         });
-      }
-
-      const agentConfig = {
-        name,
-        type: options.type,
-        model: options.model,
-        personality: options.personality,
-        capabilities: options.capabilities?.split(',') || [],
-        riskLevel: options.riskLevel,
-        autoStart: options.autoStart
-      };
-
-      console.log(boxen(
-        `${emoji.get('gear')} Agent Configuration:\n\n` +
-        `${emoji.get('label')} Name: ${chalk.cyan(agentConfig.name)}\n` +
-        `${emoji.get('robot_face')} Type: ${chalk.cyan(agentConfig.type)}\n` +
-        `${emoji.get('brain')} Model: ${chalk.cyan(agentConfig.model)}\n` +
-        `${emoji.get('art')} Personality: ${chalk.cyan(agentConfig.personality)}\n` +
-        `${emoji.get('shield')} Risk Level: ${chalk.cyan(agentConfig.riskLevel)}\n` +
-        `${emoji.get('gear')} Capabilities: ${agentConfig.capabilities.join(', ') || 'Basic agent functions'}\n\n` +
-        `${emoji.get('white_check_mark')} Agent created successfully!\n` +
-        `${emoji.get('rocket')} Ready for deployment`,
-        {
-          padding: 1,
-          borderStyle: 'round',
-          borderColor: 'green',
-          title: ' Agent Created '
+        
+        let name = options.name;
+        if (!name) {
+          name = await text({
+            message: 'What should we name your agent?',
+            placeholder: 'my-trading-bot'
+          });
         }
-      ));
 
-      outro(`${emoji.get('white_check_mark')} Agent "${name}" is ready! Use 'pod agent start ${name}' to activate.`);
+        // Real SDK implementation  
+        const capabilities = 1; // Basic agent capability
+        const metadataUri = `https://pod-protocol.example/metadata/${name}`;
+        
+        const agentOptions: CreateAgentOptions = {
+          capabilities,
+          metadataUri
+        };
+
+        console.log(boxen(
+          `${emoji.get('gear')} Agent Configuration:\n\n` +
+          `${emoji.get('label')} Name: ${chalk.cyan(name)}\n` +
+          `${emoji.get('robot_face')} Type: ${chalk.cyan(options.type)}\n` +
+          `${emoji.get('brain')} Model: ${chalk.cyan(options.model)}\n` +
+          `${emoji.get('art')} Personality: ${chalk.cyan(options.personality)}\n` +
+          `${emoji.get('shield')} Risk Level: ${chalk.cyan(options.riskLevel)}\n` +
+          `${emoji.get('gear')} Capabilities: ${capabilities}\n` +
+          `${emoji.get('link')} Metadata URI: ${chalk.gray(metadataUri)}\n` +
+          `${emoji.get('globe_with_meridians')} Network: ${chalk.cyan(network)}`,
+          {
+            padding: 1,
+            borderStyle: 'round',
+            borderColor: 'blue',
+            title: ' Creating Agent '
+          }
+        ));
+
+        // Create the agent on-chain using real SDK
+        console.log(`${emoji.get('rocket')} Registering agent on Solana...`);
+        const result = await client.agents.registerAgent(wallet as any, agentOptions);
+        
+        console.log(boxen(
+          `${emoji.get('white_check_mark')} Agent created successfully!\n\n` +
+          `${emoji.get('id')} Transaction: ${chalk.green(result)}\n` +
+          `${emoji.get('package')} Name: ${chalk.cyan(name)}\n\n` +
+          `${emoji.get('rocket')} Ready for deployment and messaging!`,
+          {
+            padding: 1,
+            borderStyle: 'round',
+            borderColor: 'green',
+            title: ' Agent Created '
+          }
+        ));
+
+        outro(`${emoji.get('white_check_mark')} Agent "${name}" is ready! Use 'pod agent start ${name}' to activate.`);
+        
+      } catch (error: any) {
+        console.error(boxen(
+          `${emoji.get('x')} Error creating agent:\n\n${error.message}`,
+          {
+            padding: 1,
+            borderStyle: 'round',
+            borderColor: 'red',
+            title: ' Error '
+          }
+        ));
+        process.exit(1);
+      }
     });
 
   // List agents
@@ -71,34 +124,85 @@ export function createAgentCommands(): Command {
     .option('--status <status>', 'filter by status (active, inactive, error)')
     .option('--type <type>', 'filter by agent type')
     .option('--json', 'output in JSON format')
-    .action(async (options) => {
-      const agents = [
-        { name: 'trading-bot-1', type: 'trading', status: 'active', uptime: '2d 3h', messages: 1247 },
-        { name: 'customer-agent', type: 'customer-service', status: 'active', uptime: '1d 12h', messages: 856 },
-        { name: 'analyzer-beta', type: 'analytics', status: 'inactive', uptime: '0h', messages: 0 }
-      ];
+    .action(async (options, command) => {
+      try {
+        // Get network and keypair from global options
+        const globalOpts = command.parent?.opts() || {};
+        const network = globalOpts.network || 'devnet';
+        const keypairPath = globalOpts.keypair || '~/.config/solana/id.json';
+        
+        // Load wallet
+        const wallet = loadWalletFromFile(keypairPath);
+        
+        // Initialize client 
+        const endpoint = network === 'mainnet' 
+          ? 'https://api.mainnet-beta.solana.com'
+          : network === 'testnet'
+          ? 'https://api.testnet.solana.com'
+          : 'https://api.devnet.solana.com';
+          
+        const client = new PodComClient({
+          endpoint,
+          commitment: 'confirmed'
+        });
 
-      if (options.json) {
-        console.log(JSON.stringify(agents, null, 2));
-        return;
-      }
+        console.log(`${emoji.get('mag')} Fetching agents from ${network}...`);
+        
+        // Get user's agent from the blockchain
+        const agentAddress = address(wallet.address.toString());
+        const agent = await client.agents.getAgent(agentAddress);
+        const agents = agent ? [agent] : [];
 
-      console.log(boxen(
-        `${emoji.get('robot_face')} Active Agents:\n\n` +
-        agents.map(agent => 
-          `${agent.status === 'active' ? emoji.get('green_circle') : emoji.get('red_circle')} ` +
-          `${chalk.cyan(agent.name)} (${agent.type})\n` +
-          `   ${emoji.get('clock1')} Uptime: ${agent.uptime} | ` +
-          `${emoji.get('speech_balloon')} Messages: ${agent.messages}`
-        ).join('\n\n') + '\n\n' +
-        `${emoji.get('information_source')} Total: ${agents.length} agents`,
-        {
-          padding: 1,
-          borderStyle: 'round',
-          borderColor: 'blue',
-          title: ' Agent Registry '
+        if (options.json) {
+          console.log(JSON.stringify(agents, null, 2));
+          return;
         }
-      ));
+
+        if (agents.length === 0) {
+          console.log(boxen(
+            `${emoji.get('robot_face')} No agents found\n\n` +
+            `${emoji.get('bulb')} Create your first agent with:\n` +
+            `${chalk.cyan('pod agent create --name my-first-agent')}`,
+            {
+              padding: 1,
+              borderStyle: 'round',
+              borderColor: 'yellow',
+              title: ' Agent List '
+            }
+          ));
+          return;
+        }
+
+        console.log(boxen(
+          `${emoji.get('robot_face')} Your Agents on ${chalk.cyan(network)}:\n\n` +
+          agents.map((agent, index) => 
+            `${emoji.get('green_circle')} Agent #${index + 1}\n` +
+            `   ${emoji.get('id')} Address: ${chalk.gray(agent.pubkey.slice(0, 8) + '...' + agent.pubkey.slice(-8))}\n` +
+            `   ${emoji.get('gear')} Capabilities: ${agent.capabilities}\n` +
+            `   ${emoji.get('package')} Metadata: ${agent.metadataUri ? 'Available' : 'None'}\n` +
+            `   ${emoji.get('star')} Reputation: ${agent.reputation}`
+          ).join('\n\n') + '\n\n' +
+          `${emoji.get('information_source')} Total: ${agents.length} agent${agents.length === 1 ? '' : 's'}`,
+          {
+            padding: 1,
+            borderStyle: 'round',
+            borderColor: 'blue',
+            title: ' Agent Registry '
+          }
+        ));
+        
+      } catch (error: any) {
+        console.error(boxen(
+          `${emoji.get('x')} Error fetching agents:\n\n${error.message}`,
+          {
+            padding: 1,
+            borderStyle: 'round',
+            borderColor: 'red',
+            title: ' Error '
+          }
+        ));
+        process.exit(1);
+      }
     });
 
   // Start agent
