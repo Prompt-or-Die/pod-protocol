@@ -1,0 +1,85 @@
+{
+  "name": "@pod-protocol/monorepo",
+  "version": "2.0.0",
+  "description": "PoD Protocol - The Ultimate AI Agent Communication Protocol on Solana",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "bun run --filter='*' build",
+    "test": "bun run --filter='*' test",
+    "lint": "bun run --filter='*' lint",
+    "format": "prettier --write \"**/*.{js,ts,json,md}\"",
+    "prepare": "husky install",
+    "validate": "bun run lint && bun run test && bun run build",
+    "clean": "bun run --filter='*' clean",
+    "dev": "bun run --filter='*' --parallel dev",
+    "release": "changeset publish",
+    "changeset": "changeset",
+    "docs:build": "bun run --filter='*' docs:build",
+    "docs:dev": "bun run --filter='*' docs:dev",
+    "security:audit": "bun audit",
+    "deps:check": "bun update --latest",
+    "typecheck": "bun run --filter='*' typecheck",
+    "install:all": "bun install",
+    "start": "bun run dev",
+    "setup:windows": "powershell -ExecutionPolicy Bypass -File tools/scripts/windows/install.ps1",
+    "setup:macos": "chmod +x tools/scripts/macos/install.sh && ./tools/scripts/macos/install.sh",
+    "setup:linux": "chmod +x tools/scripts/linux/install.sh && ./tools/scripts/linux/install.sh",
+    "docker:build": "docker build -f config/production/Dockerfile.prod -t pod-protocol .",
+    "docker:run": "docker run -p 3000:3000 -p 8080:8080 pod-protocol",
+    "docker:up": "docker-compose -f config/production/docker-compose.prod.yml up -d"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PoD-Protocol/pod-protocol.git"
+  },
+  "keywords": [
+    "solana",
+    "ai",
+    "agents",
+    "protocol",
+    "blockchain",
+    "web3",
+    "communication",
+    "decentralized",
+    "zk-compression"
+  ],
+  "author": "PoD Protocol Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/PoD-Protocol/pod-protocol/issues"
+  },
+  "homepage": "https://pod-protocol.org",
+  "engines": {
+    "node": ">=18.0.0",
+    "bun": ">=1.0.0"
+  },
+  "packageManager": "bun@1.0.0",
+  "devDependencies": {
+    "@changesets/cli": "^2.26.0",
+    "@types/node": "^20.0.0",
+    "eslint": "^8.0.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^13.0.0",
+    "npm-check-updates": "^16.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0"
+  },
+  "lint-staged": {
+    "*.{js,ts,json,md}": [
+      "prettier --write",
+      "git add"
+    ],
+    "*.{js,ts}": [
+      "eslint --fix",
+      "git add"
+    ]
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  }
+} 

@@ -194,7 +194,7 @@ git clone https://github.com/PoD-Protocol/pod-protocol.git
 cd pod-protocol
 
 # 🔧 Install dependencies
-yarn install
+bun install
 
 # ✅ Build and test
 yarn run build:verify
@@ -251,19 +251,36 @@ PoD Protocol is built as a comprehensive monorepo with multiple specialized work
 
 ```
 🏛️ pod-protocol/
-├── 💻 cli/                 # Command-line interface (✅ Complete)
-├── 📦 sdk/                 # TypeScript SDK (✅ Complete)
-├── 🟨 sdk-js/              # JavaScript SDK (✅ Complete)
-├── 🐍 sdk-python/          # Python SDK (✅ Complete)
-├── 🦀 sdk-rust/            # Rust SDK (🚧 In Development)
-├── 🦀 programs/            # Solana programs (✅ Complete)
-├── 🎨 frontend/            # Next.js frontend application (✅ Complete)
-├── 🖥️ api-server/          # Express.js API server (✅ Complete)
-├── 🤖 mcp-server/          # Model Context Protocol server (✅ Complete)
-├── 📚 docs/                # Comprehensive documentation (✅ Complete)
-├── ⚙️ scripts/             # Build and deployment scripts (✅ Complete)
-├── 🧪 tests/               # Integration and performance tests (✅ Complete)
-└── 📝 examples/            # Usage examples and demos (✅ Complete)
+├── 📦 packages/                    # Monorepo source code packages
+│   ├── core/                      # Solana programs & core protocol ✅
+│   ├── sdk-typescript/            # TypeScript SDK ✅ Production Ready
+│   ├── sdk-javascript/            # JavaScript SDK ✅ Production Ready  
+│   ├── sdk-python/                # Python SDK ✅ Production Ready
+│   ├── sdk-rust/                  # Rust SDK 🚧 In Development (35%)
+│   ├── cli/                       # Command Line Interface ✅ Complete
+│   ├── frontend/                  # Web3.js v2.0 Dashboard ✅ Complete
+│   ├── api-server/                # REST API Server ✅ Complete
+│   ├── mcp-server/                # MCP Server v2.0 ✅ Complete
+│   └── agents/                    # AI Agent Examples ✅ Complete
+├── 📚 docs/                       # Professional documentation
+│   ├── getting-started/           # Quick start guides & tutorials
+│   ├── api/                       # API reference documentation  
+│   ├── guides/                    # Developer guides & best practices
+│   ├── architecture/              # System architecture & design
+│   ├── deployment/                # Production deployment guides
+│   ├── governance/                # Project governance & policies
+│   └── assets/                    # Images, diagrams, and media
+├── 🔧 tools/                      # Development & deployment tools
+│   ├── build/                     # Build scripts & automation
+│   └── monitoring/                # System monitoring & metrics
+├── ⚙️ config/                     # Configuration management
+│   ├── development/               # Development environment configs
+│   ├── production/                # Production deployment configs
+│   └── ci-cd/                     # CI/CD pipeline configurations
+├── 🧪 tests/                      # Cross-package integration tests
+├── 🏛️ governance/                 # Project governance & policies
+├── 🔒 security/                   # Security policies & audit reports
+└── 📄 examples/                   # Usage examples & demos
 ```
 
 </div>
@@ -397,14 +414,14 @@ PoD Protocol is built as a comprehensive monorepo with multiple specialized work
 <tr>
 <td><strong>TypeScript SDK</strong></td>
 <td>TypeScript</td>
-<td><code>npm install @pod-protocol/sdk</code></td>
+<td><code>bun add @pod-protocol/sdk</code></td>
 <td><a href="SDK_GUIDE.md#-typescript-sdk">📖</a></td>
 <td>✅ Production Ready</td>
 </tr>
 <tr>
 <td><strong>JavaScript SDK</strong></td>
 <td>JavaScript</td>
-<td><code>npm install @pod-protocol/sdk-js</code></td>
+<td><code>bun add @pod-protocol/sdk-js</code></td>
 <td><a href="SDK_GUIDE.md#-javascript-sdk">📖</a></td>
 <td>✅ Production Ready</td>
 </tr>
@@ -425,18 +442,33 @@ PoD Protocol is built as a comprehensive monorepo with multiple specialized work
 <tr>
 <td><strong>CLI Tool</strong></td>
 <td>Node.js</td>
-<td><code>npm install -g @pod-protocol/cli</code></td>
+<td><code>bun add -g @pod-protocol/cli</code></td>
 <td><a href="docs/guides/GETTING_STARTED.md#cli-usage">📖</a></td>
 <td>✅ Production Ready</td>
 </tr>
 <tr>
 <td><strong>MCP Server</strong></td>
 <td>TypeScript</td>
-<td><code>npm install @pod-protocol/mcp-server</code></td>
+<td><code>bun add @pod-protocol/mcp-server</code></td>
 <td><a href="mcp-server/README.md">📖</a></td>
 <td>✅ Enhanced v2.0</td>
 </tr>
 </table>
+
+### 🚀 Platform-Specific Resources
+
+<div align="center">
+
+**📚 [Complete Platform Setup Guide](docs/getting-started/PLATFORM_SETUP.md)**
+
+</div>
+
+| Platform | Quick Start Script | Documentation |
+|----------|-------------------|---------------|
+| 🪟 **Windows** | `.\tools\scripts\windows\install.ps1` | [Windows Guide](docs/getting-started/PLATFORM_SETUP.md#-windows-setup) |
+| 🍎 **macOS** | `./tools/scripts/macos/install.sh` | [macOS Guide](docs/getting-started/PLATFORM_SETUP.md#-macos-setup) |
+| 🐧 **Linux** | `./tools/scripts/linux/install.sh` | [Linux Guide](docs/getting-started/PLATFORM_SETUP.md#-linux-setup) |
+| 🐳 **Docker** | `docker-compose up -d` | [Docker Guide](docs/getting-started/PLATFORM_SETUP.md#-docker-all-platforms) |
 
 ### 🚀 Quick CLI Usage
 
@@ -578,16 +610,19 @@ pod wallet balance
 
 ```bash
 # Install dependencies
-yarn install
+bun install
 
 # Start development mode
-yarn dev
+bun dev
 
 # Build all packages
-yarn build:all
+bun run build
 
-# Lint and format code
-yarn lint:all
+# Lint and format code  
+bun run lint
+
+# Run tests
+bun test
 ```
 
 ---
@@ -948,3 +983,181 @@ PoD Protocol is open source software licensed under the [MIT License](LICENSE).
 </p>
 
 </div>
+
+## 🚀 Getting Started
+
+<div align="center">
+
+**🔥 Choose Your Platform 🔥**
+
+</div>
+
+<details>
+<summary><strong>🪟 Windows Setup</strong></summary>
+
+### Prerequisites
+```powershell
+# Install Bun (recommended)
+powershell -c "irm bun.sh/install.ps1 | iex"
+
+# Or install Node.js + npm (alternative)
+winget install OpenJS.NodeJS
+```
+
+### Installation
+```powershell
+# Clone repository
+git clone https://github.com/PoD-Protocol/pod-protocol.git
+cd pod-protocol
+
+# Install dependencies
+bun install
+
+# Build and verify
+bun run build
+bun test
+
+# Start development server
+bun dev
+```
+
+### Windows-Specific Notes
+- Use PowerShell or Windows Terminal for best experience
+- Git Bash is also supported
+- Windows Defender may need exclusions for node_modules
+- WSL2 is recommended for advanced development
+
+</details>
+
+<details>
+<summary><strong>🍎 macOS Setup</strong></summary>
+
+### Prerequisites
+```bash
+# Install Homebrew (if not already installed)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install Bun (recommended)
+curl -fsSL https://bun.sh/install | bash
+
+# Or install Node.js (alternative)
+brew install node
+```
+
+### Installation
+```bash
+# Clone repository
+git clone https://github.com/PoD-Protocol/pod-protocol.git
+cd pod-protocol
+
+# Install dependencies
+bun install
+
+# Build and verify
+bun run build
+bun test
+
+# Start development server
+bun dev
+```
+
+### macOS-Specific Notes
+- Xcode Command Line Tools required: `xcode-select --install`
+- M1/M2 Macs: Native ARM64 support included
+- Rosetta 2 may be needed for some dependencies
+
+</details>
+
+<details>
+<summary><strong>🐧 Linux Setup</strong></summary>
+
+### Prerequisites
+
+**Ubuntu/Debian:**
+```bash
+# Update package list
+sudo apt update
+
+# Install Bun (recommended)
+curl -fsSL https://bun.sh/install | bash
+
+# Or install Node.js (alternative)
+sudo apt install nodejs npm git
+
+# Install build essentials
+sudo apt install build-essential
+```
+
+**Fedora/RHEL:**
+```bash
+# Install Bun (recommended)  
+curl -fsSL https://bun.sh/install | bash
+
+# Or install Node.js (alternative)
+sudo dnf install nodejs npm git
+
+# Install development tools
+sudo dnf groupinstall "Development Tools"
+```
+
+**Arch Linux:**
+```bash
+# Install Bun (AUR)
+yay -S bun-bin
+
+# Or install Node.js
+sudo pacman -S nodejs npm git base-devel
+```
+
+### Installation
+```bash
+# Clone repository
+git clone https://github.com/PoD-Protocol/pod-protocol.git
+cd pod-protocol
+
+# Install dependencies
+bun install
+
+# Build and verify
+bun run build
+bun test
+
+# Start development server
+bun dev
+```
+
+### Linux-Specific Notes
+- May need to increase file watchers: `echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf`
+- For development: `ulimit -n 65536` to increase file descriptor limit
+- Docker is recommended for production deployments
+
+</details>
+
+<details>
+<summary><strong>🐳 Docker Setup (All OS)</strong></summary>
+
+### Quick Docker Start
+```bash
+# Pull and run the latest image
+docker run -p 3000:3000 -p 8080:8080 pod-protocol/pod-protocol:latest
+
+# Or build locally
+docker build -f config/production/Dockerfile.prod -t pod-protocol .
+docker run -p 3000:3000 pod-protocol
+```
+
+### Docker Compose (Recommended)
+```bash
+# Start all services
+docker-compose -f config/production/docker-compose.prod.yml up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+</details>
+
+---
