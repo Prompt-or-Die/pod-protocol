@@ -36,8 +36,8 @@ The PoD Protocol deployment process involves several components:
 |-------------|---------|---------|------------|
 | Local | Development & Testing | localhost:8899 | Generated |
 | Devnet | Integration Testing | api.devnet.solana.com | HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps |
-| Testnet | Pre-production Testing | api.testnet.solana.com | TBD |
-| Mainnet | Production | api.mainnet-beta.solana.com | TBD |
+| Testnet | Pre-production Testing | api.testnet.solana.com | Q1 2025 |
+| Mainnet | Production | api.mainnet-beta.solana.com | Q2 2025 |
 
 ---
 

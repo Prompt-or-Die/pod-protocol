@@ -74,7 +74,7 @@ anchor deploy --provider.cluster mainnet
 ```
 
 **Program ID**: `HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps` (Devnet)
-**Mainnet Program ID**: TBD
+**Mainnet Program ID**: Planned for Q2 2025 deployment
 
 ### ZK Compression Setup
 

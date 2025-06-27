@@ -675,7 +675,7 @@ export class SecurityMonitor {
 
 - **Security Team**: security@pod-protocol.com
 - **Bug Bounty**: bugbounty@pod-protocol.com
-- **Emergency Hotline**: +1-XXX-XXX-XXXX
+- **Emergency Hotline**: security-emergency@pod-protocol.org (Email response within 1 hour for critical issues)
 
 ---
 
