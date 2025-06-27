@@ -23,7 +23,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@clack/prompts": "^0.7.0",
+    "@clack/prompts": "^0.11.0",
     "@coral-xyz/anchor": "0.31.1",
     "@inquirer/prompts": "7.5.3",
     "@metaplex-foundation/digital-asset-standard-api": "2.0.0",
@@ -59,10 +59,10 @@
     "multiformats": "13.3.7",
     "node-emoji": "^2.1.3",
     "ora": "8.2.0",
-    "pretty-bytes": "^6.1.1",
+    "pretty-bytes": "^7.0.0",
     "qrcode-terminal": "0.12.0",
     "table": "6.9.0",
-    "term-size": "^4.0.0"
+    "term-size": "^3.0.2"
   },
   "devDependencies": {
     "@types/jest": "30.0.0",
