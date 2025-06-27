@@ -24,7 +24,7 @@ import {
   getMessageTypeEncoder,
   type MessageType,
   type MessageTypeArgs,
-} from '.';
+} from './messageType';
 
 export type MessageSent = {
   sender: Address;

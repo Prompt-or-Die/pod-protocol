@@ -33,9 +33,6 @@ export type {
 export type {
   SearchFilters,
   SearchResult,
-  AgentSearchFilters,
-  MessageSearchFilters,
-  ChannelSearchFilters,
   RecommendationOptions,
   Recommendation,
 } from "./services/discovery";
@@ -76,6 +73,10 @@ export type {
   CreateChannelOptions,
   DepositEscrowOptions,
   WithdrawEscrowOptions,
+  AgentSearchFilters,
+  MessageSearchFilters,
+  ChannelSearchFilters,
+  NetworkStatistics,
 } from "./types";
 
 // Utility functions

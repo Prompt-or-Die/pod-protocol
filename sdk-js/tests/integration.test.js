@@ -11,11 +11,11 @@ describe('Analytics and Discovery Integration Tests', () => {
 
   beforeEach(() => {
     connection = new Connection('http://localhost:8899');
-    programId = new PublicKey('11111111111111111111111111111111');
+    programId = '11111111111111111111111111111111';
     const config = { connection, programId, commitment: 'confirmed' };
     
     analyticsService = new AnalyticsService(config);
-    discoveryService = new DiscoveryService(config, analyticsService);
+    discoveryService = new DiscoveryService(config);
   });
 
   describe('Analytics Service', () => {

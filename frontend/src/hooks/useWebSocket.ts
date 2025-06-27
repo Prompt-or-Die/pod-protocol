@@ -8,7 +8,7 @@ import {
   TypingIndicator,
   ServerToClientEvents,
   ClientToServerEvents 
-} from '../lib/websocket-server';
+} from '../lib/websocket-types';
 import toast from 'react-hot-toast';
 
 export interface UseWebSocketOptions {

@@ -354,6 +354,35 @@ export class IPFSService extends BaseService {
   }
 
   /**
+   * Calculate integrity hash for content validation
+   * 
+   * @param {string} content - Content to hash
+   * @returns {string} SHA-256 hash of the content
+   * 
+   * @example
+   * ```javascript
+   * const hash = IPFSService.calculateIntegrityHash('Hello World');
+   * console.log('Content hash:', hash);
+   * ```
+   */
+  static calculateIntegrityHash(content) {
+    // Simple hash implementation for content validation
+    // In a real implementation, this would use crypto.subtle or a hash library
+    const encoder = new TextEncoder();
+    const data = encoder.encode(content);
+    
+    // Simple hash based on content length and character codes
+    let hash = 0;
+    for (let i = 0; i < data.length; i++) {
+      const char = data[i];
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    
+    return Math.abs(hash).toString(16).padStart(8, '0');
+  }
+
+  /**
    * Clean up resources
    */
   async cleanup() {

@@ -5,7 +5,8 @@
 
 import { Command } from 'commander';
 import { PodComClient } from '@pod-protocol/sdk';
-import { address as createAddress, type Address } from '@solana/web3.js';
+import { address as createAddress } from '@solana/addresses';
+import type { Address } from '@solana/addresses';
 // Note: Using placeholder values for v2 compatibility
 const LAMPORTS_PER_SOL = 1000000000;
 import { createClient, getWallet, createWalletAdapter } from '../utils/client.js';

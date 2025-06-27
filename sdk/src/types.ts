@@ -122,6 +122,8 @@ export interface ChannelAccount {
   lastUpdated: number;
   /** Whether channel is active */
   isActive: boolean;
+  /** Whether channel requires approval to join */
+  requiresApproval?: boolean;
   /** PDA bump seed */
   bump: number;
 }
@@ -411,23 +413,52 @@ export interface PerformanceMetrics {
 
 // Discovery interfaces
 export interface AgentSearchFilters {
-  capabilities?: number;
+  capabilities?: number[];
   minReputation?: number;
+  maxReputation?: number;
+  metadataContains?: string;
+  lastActiveAfter?: number;
+  lastActiveBefore?: number;
   limit?: number;
+  offset?: number;
+  sortBy?: "relevance" | "recent" | "popular" | "reputation";
+  sortOrder?: "asc" | "desc";
 }
 
 export interface MessageSearchFilters {
   sender?: Address;
   recipient?: Address;
-  messageType?: MessageType;
+  messageType?: MessageType | MessageType[];
+  status?: MessageStatus[];
   limit?: number;
+  offset?: number;
+  payloadContains?: string;
+  createdAfter?: number;
+  createdBefore?: number;
+  content?: string;
+  dateFrom?: number;
+  dateTo?: number;
+  sortBy?: "relevance" | "recent";
+  sortOrder?: "asc" | "desc";
 }
 
 export interface ChannelSearchFilters {
-  visibility?: ChannelVisibility;
+  creator?: Address;
+  visibility?: ChannelVisibility | ChannelVisibility[];
   minMembers?: number;
   maxMembers?: number;
+  minParticipants?: number;
+  maxParticipants?: number;
+  maxFeePerMessage?: number;
+  hasEscrow?: boolean;
   limit?: number;
+  offset?: number;
+  nameContains?: string;
+  descriptionContains?: string;
+  createdAfter?: number;
+  createdBefore?: number;
+  sortBy?: "popular" | "recent" | "relevance";
+  sortOrder?: "asc" | "desc";
 }
 
 export interface RecommendationOptions {

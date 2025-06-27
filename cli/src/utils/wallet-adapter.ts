@@ -3,7 +3,8 @@
  * Bridges the gap between Web3.js v2.0 KeyPairSigner and Umi's wallet interface
  */
 
-import { type KeyPairSigner, type Address } from '@solana/web3.js';
+import type { KeyPairSigner } from '@solana/signers';
+import type { Address } from '@solana/addresses';
 
 // Umi wallet interface types (simplified for development)
 export interface UmiKeypair {

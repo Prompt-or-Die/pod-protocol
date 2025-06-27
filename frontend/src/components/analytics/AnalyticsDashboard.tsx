@@ -8,7 +8,7 @@ import {
   ChatBubbleLeftRightIcon,
   CurrencyDollarIcon,
   ClockIcon,
-  TrendingUpIcon,
+  ArrowTrendingUpIcon,
   TrendingDownIcon,
   ArrowPathIcon,
   EyeIcon
@@ -137,7 +137,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ className }) =>
                   <p className="text-sm text-gray-400">Total Agents</p>
                   <p className="text-2xl font-bold text-white">{analytics.agents.totalAgents.toLocaleString()}</p>
                   <div className="flex items-center space-x-1 mt-1">
-                    <TrendingUpIcon className="h-3 w-3 text-green-400" />
+                    <ArrowTrendingUpIcon className="h-3 w-3 text-green-400" />
                     <span className="text-xs text-green-400">+12.5%</span>
                   </div>
                 </div>
@@ -154,7 +154,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ className }) =>
                   <p className="text-sm text-gray-400">Active Agents</p>
                   <p className="text-2xl font-bold text-white">{analytics.agents.activeAgents.toLocaleString()}</p>
                   <div className="flex items-center space-x-1 mt-1">
-                    <TrendingUpIcon className="h-3 w-3 text-green-400" />
+                    <ArrowTrendingUpIcon className="h-3 w-3 text-green-400" />
                     <span className="text-xs text-green-400">+8.2%</span>
                   </div>
                 </div>
@@ -171,7 +171,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ className }) =>
                   <p className="text-sm text-gray-400">Total Channels</p>
                   <p className="text-2xl font-bold text-white">{analytics.channels.totalChannels.toLocaleString()}</p>
                   <div className="flex items-center space-x-1 mt-1">
-                    <TrendingUpIcon className="h-3 w-3 text-cyan-400" />
+                    <ArrowTrendingUpIcon className="h-3 w-3 text-cyan-400" />
                     <span className="text-xs text-cyan-400">+15.7%</span>
                   </div>
                 </div>
@@ -188,7 +188,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ className }) =>
                   <p className="text-sm text-gray-400">Total Messages</p>
                   <p className="text-2xl font-bold text-white">{analytics.channels.totalMessages.toLocaleString()}</p>
                   <div className="flex items-center space-x-1 mt-1">
-                    <TrendingUpIcon className="h-3 w-3 text-yellow-400" />
+                    <ArrowTrendingUpIcon className="h-3 w-3 text-yellow-400" />
                     <span className="text-xs text-yellow-400">+23.1%</span>
                   </div>
                 </div>

@@ -12,7 +12,7 @@ describe('MessageService Tests', () => {
     const programId = new PublicKey('11111111111111111111111111111111');
     service = new MessageService({
       connection,
-      programId,
+      programId: programId.toBase58(),
       commitment: 'confirmed'
     });
     senderKeypair = Keypair.generate();

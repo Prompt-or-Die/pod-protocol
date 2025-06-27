@@ -5,7 +5,7 @@
  * to improve developer experience and troubleshooting
  */
 
-import { Address } from "@solana/web3.js";
+import type { Address } from "@solana/addresses";
 
 export enum LogLevel {
   DEBUG = 0,

@@ -1,9 +1,11 @@
 /**
- * PoD Protocol JavaScript SDK
- * Production-ready SDK for AI agent communication on Solana
+ * Main entry point for PoD Protocol JavaScript SDK
+ * 
+ * @fileoverview Provides a complete JavaScript SDK for interacting with the PoD Protocol
+ * Compatible with Web3.js v2.0 and legacy Anchor patterns
  */
 
-import { Program, AnchorProvider } from '@coral-xyz/anchor';
+// Core services
 import { AgentService } from './services/agent.js';
 import { MessageService } from './services/message.js';
 import { ChannelService } from './services/channel.js';
@@ -14,7 +16,13 @@ import { IPFSService } from './services/ipfs.js';
 import { ZKCompressionService } from './services/zkCompression.js';
 import { JitoBundlesService } from './services/jitoBundles.js';
 import { SessionKeysService } from './services/sessionKeys.js';
-import { validateConfig, loadIDL } from './utils/index.js';
+
+// Core Solana imports (legacy for Anchor compatibility)
+import { Connection } from '@solana/web3.js';
+import { AnchorProvider, Program } from '@coral-xyz/anchor';
+
+// Utilities and helpers
+import { loadIDL, validateConfig } from './utils/index.js';
 
 /**
  * Main client for interacting with PoD Protocol
@@ -36,17 +44,14 @@ export default class PodProtocolClient {
     this.programId = this.config.programId || 'PoD1234567890123456789012345678901234567890';
     this.commitment = this.config.commitment || 'confirmed';
 
-    // Create mock RPC for basic compatibility
-    this.rpc = {
-      endpoint: this.endpoint,
+    // Create legacy connection for Anchor compatibility
+    this.connection = new Connection(this.endpoint, {
       commitment: this.commitment,
-    };
+    });
     
-    // Create service configuration with legacy wrapper for compatibility
+    // Create service configuration
     const serviceConfig = {
-      connection: this.rpc, // Legacy compatibility
-      rpc: this.rpc,
-      rpcSubscriptions: null,
+      connection: this.connection,
       programId: this.programId,
       commitment: this.commitment,
     };
@@ -84,18 +89,9 @@ export default class PodProtocolClient {
       // Load program IDL
       const idl = await loadIDL(this.programId);
       
-      // Create legacy connection wrapper for Anchor compatibility
-      const connectionWrapper = {
-        ...this.rpc,
-        commitment: this.commitment,
-        confirmTransaction: () => Promise.resolve(),
-        getAccountInfo: () => Promise.resolve(null),
-        sendTransaction: () => Promise.resolve('mock-signature'),
-      };
-
-      // Create provider
+      // Create provider with proper connection
       const provider = new AnchorProvider(
-        connectionWrapper,
+        this.connection,
         wallet,
         {
           commitment: this.commitment,
@@ -104,7 +100,7 @@ export default class PodProtocolClient {
       );
 
       // Initialize program
-      this.program = new Program(idl, this.programId, provider);
+      this.program = new Program(idl, provider);
 
       // Set program reference for all services
       this.agent.setProgram?.(this.program);
@@ -126,10 +122,18 @@ export default class PodProtocolClient {
 
   /**
    * Get the current Solana connection
-   * @returns {Object} Solana RPC client
+   * @returns {Connection} Solana connection
    */
   getConnection() {
-    return this.rpc;
+    return this.connection;
+  }
+
+  /**
+   * Get the current program instance
+   * @returns {Program|null} Anchor program instance
+   */
+  getProgram() {
+    return this.program;
   }
 
   /**
@@ -138,26 +142,25 @@ export default class PodProtocolClient {
    */
   async cleanup() {
     // Cleanup all services
-    const services = [
-      this.agent, this.message, this.channel, this.escrow,
-      this.analytics, this.discovery, this.ipfs, this.zkCompression,
-      this.jitoBundles, this.sessionKeys
-    ];
-
-    await Promise.all(
-      services.map(service => {
-        if (service && typeof service.cleanup === 'function') {
-          return service.cleanup();
-        }
-        return Promise.resolve();
-      })
-    );
-
-    console.log('✅ PoD Protocol client cleaned up');
+    await Promise.all([
+      this.agent.cleanup?.(),
+      this.message.cleanup?.(),
+      this.channel.cleanup?.(),
+      this.escrow.cleanup?.(),
+      this.analytics.cleanup?.(),
+      this.discovery.cleanup?.(),
+      this.ipfs.cleanup?.(),
+      this.zkCompression.cleanup?.(),
+      this.jitoBundles.cleanup?.(),
+      this.sessionKeys.cleanup?.(),
+    ]);
   }
 }
 
-// Re-export services for direct use
+// Export the main client as default
+export { PodProtocolClient };
+
+// Export services for direct use
 export {
   AgentService,
   MessageService,
@@ -171,5 +174,8 @@ export {
   SessionKeysService,
 };
 
-// Re-export types
+// Re-export types and constants
 export * from './types.js';
+
+// Legacy export for backward compatibility
+export const PodComClient = PodProtocolClient;

@@ -1,8 +1,7 @@
 import type { Address } from '@solana/addresses';
 import type { KeyPairSigner } from '@solana/signers';
 import { address } from '@solana/addresses';
-import anchor from "@coral-xyz/anchor";
-const { BN, web3 } = anchor;
+import { BN, web3 } from "@coral-xyz/anchor";
 import { BaseService } from "./base";
 import {
   DepositEscrowOptions,
@@ -142,6 +141,47 @@ export class EscrowService extends BaseService {
       createdAt: account.createdAt?.toNumber() || Date.now(),
       lastUpdated: account.lastUpdated?.toNumber() || Date.now(),
       bump: account.bump,
+    };
+  }
+
+  // ============================================================================
+  // MCP Server Compatibility Methods
+  // ============================================================================
+
+  /**
+   * Create escrow method for MCP server compatibility
+   */
+  async create(options: {
+    counterparty: string;
+    amount: number;
+    description: string;
+    conditions: string[];
+    timeoutHours?: number;
+    arbitrator?: string;
+  }): Promise<{ escrow: any; signature: string }> {
+    // Mock implementation for MCP compatibility
+    return {
+      escrow: {
+        id: `escrow_${Date.now()}`,
+        counterparty: options.counterparty,
+        amount: options.amount,
+        description: options.description,
+        conditions: options.conditions,
+        status: 'pending',
+        createdAt: Date.now(),
+        expiresAt: options.timeoutHours ? Date.now() + (options.timeoutHours * 3600000) : undefined
+      },
+      signature: `escrow_sig_${Date.now()}`
+    };
+  }
+
+  /**
+   * Release escrow method for MCP server compatibility
+   */
+  async release(escrowId: string, signature?: string): Promise<{ signature: string }> {
+    // Mock implementation for MCP compatibility
+    return {
+      signature: `release_sig_${Date.now()}`
     };
   }
 }

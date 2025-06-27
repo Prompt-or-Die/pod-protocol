@@ -1,4 +1,4 @@
-import { address as createAddress } from "@solana/web3.js";
+import { address as createAddress } from "@solana/addresses";
 import { AGENT_CAPABILITIES, getCapabilityNames } from "@pod-protocol/sdk";
 import { input, select, checkbox, confirm } from '@inquirer/prompts';
 import { AgentDisplayer } from "./displayer.js";

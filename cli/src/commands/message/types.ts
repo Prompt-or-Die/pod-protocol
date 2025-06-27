@@ -1,5 +1,5 @@
 import { PodComClient, MessageType, MessageStatus } from "@pod-protocol/sdk";
-import type { KeyPairSigner } from "@solana/web3.js";
+import type { KeyPairSigner } from "@solana/signers";
 import { GlobalOptions } from "../../utils/shared.js";
 
 export interface CommandContext {

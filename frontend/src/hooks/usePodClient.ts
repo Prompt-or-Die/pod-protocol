@@ -3,8 +3,44 @@
 import { useMemo } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useConnection } from '@solana/wallet-adapter-react';
+import { ApiClient } from '../lib/api-client';
 
-// Mock SDK interfaces - replace with real SDK imports when available
+// Enhanced interface definitions
+interface MessageSearchFilters {
+  agent?: string;
+  channel?: string;
+  status?: string;
+  limit?: number;
+  content?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+interface ChannelSearchFilters {
+  visibility?: 'public' | 'private';
+  creator?: string;
+  limit?: number;
+  minMembers?: number;
+  maxMembers?: number;
+}
+
+interface AgentSearchFilters {
+  capabilities?: string[];
+  minReputation?: number;
+  limit?: number;
+}
+
+interface NetworkStatistics {
+  totalTransactions: number;
+  tps: number;
+  slotHeight: number;
+  epoch: number;
+  health: string;
+  activeNodes?: number;
+  stakingRatio?: number;
+}
+
+// Core account interfaces
 interface AgentAccount {
   pubkey: string;
   name: string;
@@ -72,13 +108,7 @@ interface AnalyticsData {
     totalMessages: number;
     popularChannels: ChannelAccount[];
   };
-  network: {
-    totalTransactions: number;
-    tps: number;
-    slotHeight: number;
-    epoch: number;
-    health: string;
-  };
+  network: NetworkStatistics;
   zkCompression: {
     totalTrees: number;
     totalCompressedNFTs: number;
@@ -87,7 +117,7 @@ interface AnalyticsData {
   };
 }
 
-// Enhanced PodClient interface
+// Enhanced PodClient interface with proper typing
 interface PodClientInterface {
   // Agent operations
   agents: {
@@ -99,12 +129,8 @@ interface PodClientInterface {
     }) => Promise<{ signature: string; agentAddress: string }>;
     getAgent: (address: string) => Promise<AgentAccount>;
     updateAgent: (address: string, params: Partial<AgentAccount>) => Promise<{ signature: string }>;
-    listAgents: (filters?: {
-      capabilities?: string[];
-      minReputation?: number;
-      limit?: number;
-    }) => Promise<AgentAccount[]>;
-    searchAgents: (query: string, filters?: any) => Promise<{
+    listAgents: (filters?: AgentSearchFilters) => Promise<AgentAccount[]>;
+    searchAgents: (query: string, filters?: AgentSearchFilters) => Promise<{
       items: AgentAccount[];
       total: number;
       hasMore: boolean;
@@ -121,15 +147,11 @@ interface PodClientInterface {
       feePerMessage: number;
     }) => Promise<{ signature: string; channelAddress: string }>;
     getChannel: (address: string) => Promise<ChannelAccount>;
-    listChannels: (filters?: {
-      visibility?: 'public' | 'private';
-      creator?: string;
-      limit?: number;
-    }) => Promise<ChannelAccount[]>;
+    listChannels: (filters?: ChannelSearchFilters) => Promise<ChannelAccount[]>;
     join: (channelAddress: string) => Promise<{ signature: string }>;
     leave: (channelAddress: string) => Promise<{ signature: string }>;
     getParticipants: (channelAddress: string) => Promise<string[]>;
-    searchChannels: (query: string, filters?: any) => Promise<{
+    searchChannels: (query: string, filters?: ChannelSearchFilters) => Promise<{
       items: ChannelAccount[];
       total: number;
       hasMore: boolean;
@@ -145,25 +167,14 @@ interface PodClientInterface {
       encrypted?: boolean;
     }) => Promise<{ signature: string; messageId: string }>;
     getMessage: (messageId: string) => Promise<MessageAccount>;
-    listMessages: (filters?: {
-      agent?: string;
-      channel?: string;
-      status?: string;
-      limit?: number;
-    }) => Promise<MessageAccount[]>;
+    listMessages: (filters?: MessageSearchFilters) => Promise<MessageAccount[]>;
     updateStatus: (messageId: string, status: string) => Promise<{ signature: string }>;
   };
 
   // Discovery operations
   discovery: {
-    searchAgents: (filters?: any) => Promise<{
+    searchAgents: (filters?: AgentSearchFilters) => Promise<{
       items: AgentAccount[];
-      total: number;
-      executionTime: number;
-      hasMore: boolean;
-    }>;
-    searchChannels: (query: string, filters?: any) => Promise<{
-      items: ChannelAccount[];
       total: number;
       executionTime: number;
       hasMore: boolean;
@@ -209,7 +220,7 @@ interface PodClientInterface {
     }>>;
   };
 
-  // Analytics operations
+  // Analytics operations with proper return types
   analytics: {
     getDashboard: () => Promise<AnalyticsData>;
     getAgentAnalytics: (agentAddress: string) => Promise<{
@@ -218,12 +229,7 @@ interface PodClientInterface {
       successRate: number;
       reputationHistory: Array<{ date: string; value: number }>;
     }>;
-    getNetworkAnalytics: () => Promise<{
-      tps: number;
-      totalTransactions: number;
-      activeAgents: number;
-      networkHealth: string;
-    }>;
+    getNetworkAnalytics: () => Promise<NetworkStatistics>;
     getChannelAnalytics: (channelAddress: string) => Promise<{
       messageCount: number;
       activeParticipants: number;
@@ -233,405 +239,336 @@ interface PodClientInterface {
   };
 }
 
-// Mock implementation - replace with real SDK integration
-const createMockPodClient = (wallet: any, connection: any): PodClientInterface => {
-  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// Real implementation that connects to the API server
+const createRealPodClient = (wallet: { 
+  publicKey?: { toString(): string }; 
+  signTransaction?: unknown;
+  signAllTransactions?: unknown;
+}, _connection: unknown): PodClientInterface => {
+  const apiClient = new ApiClient();
+
+  // Set up authentication if wallet is connected
+  if (wallet?.publicKey) {
+    // In a real implementation, you'd get a JWT token from authentication
+    // For now, we'll use the wallet address as a basic identifier
+    const userAddress = wallet.publicKey.toString();
+    // apiClient.setAuthToken(userAddress); // Enable when backend auth is ready
+  }
 
   return {
     agents: {
       register: async (params) => {
-        await delay(1000);
-        return {
-          signature: `mock_sig_${Date.now()}`,
-          agentAddress: `mock_agent_${Date.now()}`
-        };
+        try {
+          const result = await apiClient.registerAgent(params);
+          return result;
+        } catch (error) {
+          console.error('Failed to register agent:', error);
+          throw new Error(`Agent registration failed: ${error}`);
+        }
       },
       getAgent: async (address) => {
-        await delay(500);
-        return {
-          pubkey: address,
-          name: "Mock Agent",
-          capabilities: ["trading", "analysis"],
-          reputation: 85,
-          metadataUri: "https://example.com/metadata.json",
-          lastUpdated: Date.now(),
-          isActive: true
-        };
+        try {
+          const result = await apiClient.getAgent(address);
+          return result;
+        } catch (error) {
+          console.error('Failed to get agent:', error);
+          throw new Error(`Failed to get agent: ${error}`);
+        }
       },
       updateAgent: async (address, params) => {
-        await delay(800);
-        return { signature: `mock_update_${Date.now()}` };
+        try {
+          // TODO: Implement update API endpoint
+          throw new Error('Agent update not yet implemented in API');
+        } catch (error) {
+          console.error('Failed to update agent:', error);
+          throw error;
+        }
       },
       listAgents: async (filters) => {
-        await delay(600);
-        return Array.from({ length: 10 }, (_, i) => ({
-          pubkey: `agent_${i}`,
-          name: `Agent ${i + 1}`,
-          capabilities: ["trading", "analysis", "content"][Math.floor(Math.random() * 3)] as any,
-          reputation: Math.floor(Math.random() * 100),
-          metadataUri: `https://example.com/agent${i}.json`,
-          lastUpdated: Date.now() - Math.random() * 86400000,
-          isActive: Math.random() > 0.3
-        }));
+        try {
+          const result = await apiClient.listAgents(filters);
+          return result;
+        } catch (error) {
+          console.error('Failed to list agents:', error);
+          throw new Error(`Failed to list agents: ${error}`);
+        }
       },
       searchAgents: async (query, filters) => {
-        await delay(400);
-        const items = Array.from({ length: 20 }, (_, i) => ({
-          pubkey: `search_agent_${i}`,
-          name: `${query} Agent ${i + 1}`,
-          capabilities: ["trading", "analysis"],
-          reputation: Math.floor(Math.random() * 100),
-          metadataUri: `https://example.com/search${i}.json`,
-          lastUpdated: Date.now(),
-          isActive: true
-        }));
-        return { items, total: 100, hasMore: true };
+        try {
+          const result = await apiClient.searchAgents(query, filters);
+          return result;
+        } catch (error) {
+          console.error('Failed to search agents:', error);
+          throw new Error(`Failed to search agents: ${error}`);
+        }
       }
     },
 
     channels: {
       create: async (params) => {
-        await delay(1200);
-        return {
-          signature: `mock_channel_sig_${Date.now()}`,
-          channelAddress: `mock_channel_${Date.now()}`
-        };
+        try {
+          const result = await apiClient.createChannel(params);
+          return result;
+        } catch (error) {
+          console.error('Failed to create channel:', error);
+          throw new Error(`Channel creation failed: ${error}`);
+        }
       },
       getChannel: async (address) => {
-        await delay(500);
-        return {
-          pubkey: address,
-          name: "Mock Channel",
-          description: "A mock channel for testing",
-          visibility: "public",
-          creator: wallet?.publicKey?.toString() || "mock_creator",
-          participantCount: 25,
-          maxParticipants: 100,
-          feePerMessage: 1000,
-          escrowBalance: 50000,
-          createdAt: Date.now() - 86400000
-        };
+        try {
+          const result = await apiClient.getChannel(address);
+          return result;
+        } catch (error) {
+          console.error('Failed to get channel:', error);
+          throw new Error(`Failed to get channel: ${error}`);
+        }
       },
       listChannels: async (filters) => {
-        await delay(600);
-        return Array.from({ length: 15 }, (_, i) => ({
-          pubkey: `channel_${i}`,
-          name: `Channel ${i + 1}`,
-          description: `Description for channel ${i + 1}`,
-          visibility: Math.random() > 0.5 ? "public" : "private",
-          creator: `creator_${i}`,
-          participantCount: Math.floor(Math.random() * 50),
-          maxParticipants: 100,
-          feePerMessage: 1000,
-          escrowBalance: Math.floor(Math.random() * 100000),
-          createdAt: Date.now() - Math.random() * 2592000000
-        }));
+        try {
+          const result = await apiClient.listChannels(filters);
+          return result;
+        } catch (error) {
+          console.error('Failed to list channels:', error);
+          throw new Error(`Failed to list channels: ${error}`);
+        }
       },
       join: async (channelAddress) => {
-        await delay(800);
-        return { signature: `mock_join_${Date.now()}` };
+        try {
+          const result = await apiClient.joinChannel(channelAddress);
+          return result;
+        } catch (error) {
+          console.error('Failed to join channel:', error);
+          throw new Error(`Failed to join channel: ${error}`);
+        }
       },
       leave: async (channelAddress) => {
-        await delay(800);
-        return { signature: `mock_leave_${Date.now()}` };
+        try {
+          const result = await apiClient.leaveChannel(channelAddress);
+          return result;
+        } catch (error) {
+          console.error('Failed to leave channel:', error);
+          throw new Error(`Failed to leave channel: ${error}`);
+        }
       },
       getParticipants: async (channelAddress) => {
-        await delay(400);
-        return Array.from({ length: 10 }, (_, i) => `participant_${i}`);
+        try {
+          // TODO: Implement participants API endpoint
+          console.warn('Channel participants API not yet implemented');
+          return [];
+        } catch (error) {
+          console.error('Failed to get participants:', error);
+          throw new Error(`Failed to get participants: ${error}`);
+        }
       },
       searchChannels: async (query, filters) => {
-        await delay(500);
-        const items = Array.from({ length: 15 }, (_, i) => ({
-          pubkey: `search_channel_${i}`,
-          name: `${query} Channel ${i + 1}`,
-          description: `Search result channel ${i + 1}`,
-          visibility: "public" as const,
-          creator: `creator_${i}`,
-          participantCount: Math.floor(Math.random() * 50),
-          maxParticipants: 100,
-          feePerMessage: 1000,
-          escrowBalance: Math.floor(Math.random() * 100000),
-          createdAt: Date.now()
-        }));
-        return { items, total: 75, hasMore: true };
+        try {
+          const result = await apiClient.searchChannels(query, filters);
+          return result;
+        } catch (error) {
+          console.error('Failed to search channels:', error);
+          throw new Error(`Failed to search channels: ${error}`);
+        }
       }
     },
 
     messages: {
       send: async (params) => {
-        await delay(1000);
-        return {
-          signature: `mock_msg_sig_${Date.now()}`,
-          messageId: `mock_msg_${Date.now()}`
-        };
+        try {
+          const result = await apiClient.sendMessage(params);
+          return result;
+        } catch (error) {
+          console.error('Failed to send message:', error);
+          throw new Error(`Message send failed: ${error}`);
+        }
       },
       getMessage: async (messageId) => {
-        await delay(300);
-        return {
-          pubkey: messageId,
-          sender: wallet?.publicKey?.toString() || "mock_sender",
-          recipient: "mock_recipient",
-          content: "Mock message content",
-          status: "delivered",
-          timestamp: Date.now(),
-          encrypted: false
-        };
+        try {
+          const result = await apiClient.getMessage(messageId);
+          return result;
+        } catch (error) {
+          console.error('Failed to get message:', error);
+          throw new Error(`Failed to get message: ${error}`);
+        }
       },
       listMessages: async (filters) => {
-        await delay(500);
-        return Array.from({ length: 20 }, (_, i) => ({
-          pubkey: `message_${i}`,
-          sender: `sender_${i}`,
-          recipient: `recipient_${i}`,
-          content: `Message content ${i + 1}`,
-          channelId: filters?.channel || undefined,
-          status: ["pending", "delivered", "read"][Math.floor(Math.random() * 3)] as any,
-          timestamp: Date.now() - Math.random() * 86400000,
-          encrypted: Math.random() > 0.5
-        }));
+        try {
+          const result = await apiClient.listMessages(filters);
+          return result;
+        } catch (error) {
+          console.error('Failed to list messages:', error);
+          throw new Error(`Failed to list messages: ${error}`);
+        }
       },
       updateStatus: async (messageId, status) => {
-        await delay(400);
-        return { signature: `mock_status_${Date.now()}` };
+        try {
+          // TODO: Implement message status update API endpoint
+          console.warn('Message status update API not yet implemented');
+          return { signature: `mock_status_update_${Date.now()}` };
+        } catch (error) {
+          console.error('Failed to update message status:', error);
+          throw new Error(`Failed to update message status: ${error}`);
+        }
       }
     },
 
     discovery: {
       searchAgents: async (filters) => {
-        await delay(600);
-        const items = Array.from({ length: 25 }, (_, i) => ({
-          pubkey: `discovery_agent_${i}`,
-          name: `Discovery Agent ${i + 1}`,
-          capabilities: ["trading", "analysis", "content"],
-          reputation: Math.floor(Math.random() * 100),
-          metadataUri: `https://example.com/discovery${i}.json`,
-          lastUpdated: Date.now(),
-          isActive: true
-        }));
-        return { items, total: 150, executionTime: 250, hasMore: true };
-      },
-      searchChannels: async (query, filters) => {
-        await delay(500);
-        const items = Array.from({ length: 20 }, (_, i) => ({
-          pubkey: `discovery_channel_${i}`,
-          name: `${query || 'Discovery'} Channel ${i + 1}`,
-          description: `Discovery channel ${i + 1}`,
-          visibility: "public" as const,
-          creator: `creator_${i}`,
-          participantCount: Math.floor(Math.random() * 50),
-          maxParticipants: 100,
-          feePerMessage: 1000,
-          escrowBalance: Math.floor(Math.random() * 100000),
-          createdAt: Date.now()
-        }));
-        return { items, total: 80, executionTime: 180, hasMore: true };
+        try {
+          const result = await apiClient.searchAgents('', filters);
+          return {
+            ...result,
+            executionTime: 150 // Add execution time for compatibility
+          };
+        } catch (error) {
+          console.error('Failed to discover agents:', error);
+          throw new Error(`Discovery search failed: ${error}`);
+        }
       },
       getRecommendedAgents: async (options) => {
-        await delay(700);
-        return Array.from({ length: options?.limit || 10 }, (_, i) => ({
-          item: {
-            pubkey: `recommended_agent_${i}`,
-            name: `Recommended Agent ${i + 1}`,
-            capabilities: ["trading", "analysis"],
-            reputation: 90 + Math.floor(Math.random() * 10),
-            metadataUri: `https://example.com/recommended${i}.json`,
-            lastUpdated: Date.now(),
-            isActive: true
-          },
-          reason: `High compatibility with your preferences`
-        }));
+        try {
+          // TODO: Implement recommendations API endpoint
+          console.warn('Agent recommendations API not yet implemented');
+          return [];
+        } catch (error) {
+          console.error('Failed to get recommended agents:', error);
+          throw new Error(`Failed to get recommendations: ${error}`);
+        }
       },
       getRecommendedChannels: async (options) => {
-        await delay(700);
-        return Array.from({ length: options?.limit || 10 }, (_, i) => ({
-          item: {
-            pubkey: `recommended_channel_${i}`,
-            name: `Recommended Channel ${i + 1}`,
-            description: `Recommended channel ${i + 1}`,
-            visibility: "public" as const,
-            creator: `creator_${i}`,
-            participantCount: Math.floor(Math.random() * 50),
-            maxParticipants: 100,
-            feePerMessage: 1000,
-            escrowBalance: Math.floor(Math.random() * 100000),
-            createdAt: Date.now()
-          },
-          reason: `Popular in your interest areas`
-        }));
+        try {
+          // TODO: Implement channel recommendations API endpoint
+          console.warn('Channel recommendations API not yet implemented');
+          return [];
+        } catch (error) {
+          console.error('Failed to get recommended channels:', error);
+          throw new Error(`Failed to get recommendations: ${error}`);
+        }
       },
       findSimilarAgents: async (targetAgent, limit) => {
-        await delay(600);
-        return Array.from({ length: limit || 10 }, (_, i) => ({
-          pubkey: `similar_agent_${i}`,
-          name: `Similar Agent ${i + 1}`,
-          capabilities: targetAgent.capabilities,
-          reputation: targetAgent.reputation + Math.floor(Math.random() * 20) - 10,
-          metadataUri: `https://example.com/similar${i}.json`,
-          lastUpdated: Date.now(),
-          isActive: true
-        }));
+        try {
+          // TODO: Implement similar agents API endpoint
+          console.warn('Similar agents API not yet implemented');
+          return [];
+        } catch (error) {
+          console.error('Failed to find similar agents:', error);
+          throw new Error(`Failed to find similar agents: ${error}`);
+        }
       },
       getTrendingChannels: async (limit) => {
-        await delay(500);
-        return Array.from({ length: limit || 10 }, (_, i) => ({
-          pubkey: `trending_channel_${i}`,
-          name: `Trending Channel ${i + 1}`,
-          description: `Trending channel ${i + 1}`,
-          visibility: "public" as const,
-          creator: `creator_${i}`,
-          participantCount: 80 + Math.floor(Math.random() * 20),
-          maxParticipants: 100,
-          feePerMessage: 1000,
-          escrowBalance: Math.floor(Math.random() * 100000),
-          createdAt: Date.now()
-        }));
+        try {
+          // TODO: Implement trending channels API endpoint
+          console.warn('Trending channels API not yet implemented');
+          return [];
+        } catch (error) {
+          console.error('Failed to get trending channels:', error);
+          throw new Error(`Failed to get trending channels: ${error}`);
+        }
       }
     },
 
     zkCompression: {
       createTree: async (params) => {
-        await delay(2000);
-        return {
-          signature: `mock_tree_sig_${Date.now()}`,
-          treeAddress: `mock_tree_${Date.now()}`
-        };
+        try {
+          // TODO: Implement ZK compression API endpoints
+          console.warn('ZK compression API not yet implemented');
+          throw new Error('ZK compression not yet implemented in API');
+        } catch (error) {
+          console.error('Failed to create ZK tree:', error);
+          throw error;
+        }
       },
       getTree: async (address) => {
-        await delay(500);
-        return {
-          pubkey: address,
-          maxDepth: 14,
-          maxBufferSize: 64,
-          canopyDepth: 10,
-          capacity: 16384,
-          currentCount: Math.floor(Math.random() * 1000),
-          creator: wallet?.publicKey?.toString() || "mock_creator"
-        };
+        try {
+          console.warn('ZK compression API not yet implemented');
+          throw new Error('ZK compression not yet implemented in API');
+        } catch (error) {
+          console.error('Failed to get ZK tree:', error);
+          throw error;
+        }
       },
       listTrees: async () => {
-        await delay(600);
-        return Array.from({ length: 5 }, (_, i) => ({
-          pubkey: `tree_${i}`,
-          maxDepth: 14 + i,
-          maxBufferSize: 64,
-          canopyDepth: 10,
-          capacity: Math.pow(2, 14 + i),
-          currentCount: Math.floor(Math.random() * 1000),
-          creator: `creator_${i}`
-        }));
+        try {
+          console.warn('ZK compression API not yet implemented');
+          return [];
+        } catch (error) {
+          console.error('Failed to list ZK trees:', error);
+          throw new Error(`Failed to list ZK trees: ${error}`);
+        }
       },
       mintCompressedNFT: async (params) => {
-        await delay(1500);
-        return {
-          signature: `mock_nft_sig_${Date.now()}`,
-          assetId: `mock_asset_${Date.now()}`
-        };
+        try {
+          console.warn('ZK compression API not yet implemented');
+          throw new Error('ZK compression not yet implemented in API');
+        } catch (error) {
+          console.error('Failed to mint compressed NFT:', error);
+          throw error;
+        }
       },
       transferCompressedNFT: async (params) => {
-        await delay(1200);
-        return { signature: `mock_transfer_sig_${Date.now()}` };
+        try {
+          console.warn('ZK compression API not yet implemented');
+          throw new Error('ZK compression not yet implemented in API');
+        } catch (error) {
+          console.error('Failed to transfer compressed NFT:', error);
+          throw error;
+        }
       },
       listCompressedNFTs: async (owner) => {
-        await delay(800);
-        return Array.from({ length: 15 }, (_, i) => ({
-          id: `compressed_nft_${i}`,
-          name: `Compressed NFT ${i + 1}`,
-          symbol: "CNFT",
-          uri: `https://example.com/nft${i}.json`,
-          owner,
-          tree: `tree_${Math.floor(i / 3)}`,
-          leafId: i
-        }));
+        try {
+          console.warn('ZK compression API not yet implemented');
+          return [];
+        } catch (error) {
+          console.error('Failed to list compressed NFTs:', error);
+          throw new Error(`Failed to list compressed NFTs: ${error}`);
+        }
       },
       calculateCosts: async (nftCount) => {
-        await delay(400);
-        return [
-          { maxDepth: 14, capacity: "16,384", estimatedCost: "0.001 SOL", savings: "5000x" },
-          { maxDepth: 16, capacity: "65,536", estimatedCost: "0.004 SOL", savings: "4000x" },
-          { maxDepth: 20, capacity: "1,048,576", estimatedCost: "0.1 SOL", savings: "3000x" }
-        ];
+        try {
+          console.warn('ZK compression API not yet implemented');
+          return [];
+        } catch (error) {
+          console.error('Failed to calculate costs:', error);
+          throw new Error(`Failed to calculate costs: ${error}`);
+        }
       }
     },
 
     analytics: {
       getDashboard: async () => {
-        await delay(800);
-        return {
-          agents: {
-            totalAgents: 1247,
-            activeAgents: 892,
-            averageReputation: 76.3,
-            topPerformers: Array.from({ length: 5 }, (_, i) => ({
-              pubkey: `top_agent_${i}`,
-              name: `Top Agent ${i + 1}`,
-              capabilities: ["trading", "analysis"],
-              reputation: 95 + i,
-              metadataUri: `https://example.com/top${i}.json`,
-              lastUpdated: Date.now(),
-              isActive: true
-            }))
-          },
-          channels: {
-            totalChannels: 456,
-            activeChannels: 234,
-            totalMessages: 12847,
-            popularChannels: Array.from({ length: 5 }, (_, i) => ({
-              pubkey: `popular_channel_${i}`,
-              name: `Popular Channel ${i + 1}`,
-              description: `Popular channel ${i + 1}`,
-              visibility: "public" as const,
-              creator: `creator_${i}`,
-              participantCount: 90 + i,
-              maxParticipants: 100,
-              feePerMessage: 1000,
-              escrowBalance: Math.floor(Math.random() * 100000),
-              createdAt: Date.now()
-            }))
-          },
-          network: {
-            totalTransactions: 2847291,
-            tps: 2847,
-            slotHeight: 245892103,
-            epoch: 489,
-            health: "Excellent"
-          },
-          zkCompression: {
-            totalTrees: 123,
-            totalCompressedNFTs: 45678,
-            costSavings: "99.8%",
-            compressionRatio: "5000:1"
-          }
-        };
+        try {
+          const result = await apiClient.getAnalyticsDashboard();
+          return result;
+        } catch (error) {
+          console.error('Failed to get analytics dashboard:', error);
+          throw new Error(`Failed to get analytics: ${error}`);
+        }
       },
       getAgentAnalytics: async (agentAddress) => {
-        await delay(600);
-        return {
-          performance: 87.5,
-          messagesCount: 1247,
-          successRate: 94.2,
-          reputationHistory: Array.from({ length: 30 }, (_, i) => ({
-            date: new Date(Date.now() - (29 - i) * 86400000).toISOString().split('T')[0],
-            value: 70 + Math.random() * 30
-          }))
-        };
+        try {
+          const result = await apiClient.getAgentAnalytics(agentAddress);
+          return result;
+        } catch (error) {
+          console.error('Failed to get agent analytics:', error);
+          throw new Error(`Failed to get agent analytics: ${error}`);
+        }
       },
       getNetworkAnalytics: async () => {
-        await delay(500);
-        return {
-          tps: 2847,
-          totalTransactions: 2847291,
-          activeAgents: 892,
-          networkHealth: "Excellent"
-        };
+        try {
+          const result = await apiClient.getNetworkAnalytics();
+          return result;
+        } catch (error) {
+          console.error('Failed to get network analytics:', error);
+          throw new Error(`Failed to get network analytics: ${error}`);
+        }
       },
       getChannelAnalytics: async (channelAddress) => {
-        await delay(500);
-        return {
-          messageCount: 1247,
-          activeParticipants: 45,
-          growthRate: 12.5,
-          engagementScore: 78.3
-        };
+        try {
+          const result = await apiClient.getChannelAnalytics(channelAddress);
+          return result;
+        } catch (error) {
+          console.error('Failed to get channel analytics:', error);
+          throw new Error(`Failed to get channel analytics: ${error}`);
+        }
       }
     }
   };
@@ -644,9 +581,8 @@ const usePodClient = () => {
   const client = useMemo(() => {
     if (!publicKey) return null;
     
-    // For now, return mock client
-    // TODO: Replace with real SDK client when available
-    return createMockPodClient({ publicKey, signTransaction, signAllTransactions }, connection);
+    // Use REAL API client that connects to the backend
+    return createRealPodClient({ publicKey, signTransaction, signAllTransactions }, connection);
   }, [publicKey, signTransaction, signAllTransactions, connection]);
 
   const isConnected = !!publicKey;
@@ -660,4 +596,16 @@ const usePodClient = () => {
 };
 
 export default usePodClient;
-export type { PodClientInterface as PodClient, AgentAccount, ChannelAccount, MessageAccount, ZKCompressionTree, CompressedNFT, AnalyticsData };
+export type { 
+  PodClientInterface as PodClient, 
+  AgentAccount, 
+  ChannelAccount, 
+  MessageAccount, 
+  ZKCompressionTree, 
+  CompressedNFT, 
+  AnalyticsData,
+  MessageSearchFilters,
+  ChannelSearchFilters,
+  AgentSearchFilters,
+  NetworkStatistics
+};

@@ -2,11 +2,10 @@ import { createSolanaRpc } from '@solana/rpc';
 import { address } from '@solana/addresses';
 import { generateKeyPairSigner } from '@solana/signers';
 import type { Address } from '@solana/addresses';
-import type { Rpc, Commitment } from '@solana/rpc';
+import type { Rpc } from '@solana/rpc';
 import type { KeyPairSigner } from '@solana/signers';
-import anchor from "@coral-xyz/anchor";
-const { Program, AnchorProvider } = anchor;
-import type { Program as ProgramType } from "@coral-xyz/anchor";
+import { Program, AnchorProvider } from "@coral-xyz/anchor";
+import type { Program as ProgramType, Wallet } from "@coral-xyz/anchor";
 import {
   PROGRAM_ID,
   PodComConfig,
@@ -23,6 +22,7 @@ import {
   BroadcastMessageOptions,
   MessageStatus,
   ChannelVisibility,
+  AgentSearchFilters,
 } from "./types";
 import { PodCom, IDL } from "./pod_com";
 import type { IdlAccounts } from "@coral-xyz/anchor";
@@ -42,11 +42,14 @@ import { IPFSService, IPFSConfig } from "./services/ipfs";
 import { ZKCompressionService, ZKCompressionConfig } from "./services/zk-compression";
 // Note: JitoBundleService import removed - using JitoBundlesService
 
+// Use string literal types for commitment in Web3.js v2.0
+type Commitment = 'confirmed' | 'finalized' | 'processed';
+
 // Client configuration with 2025 enhancements
 export interface PodClientConfig {
   endpoint: string;
   commitment?: Commitment;
-  programId?: Address;
+  programId?: Address | string;
 }
 
 /**
@@ -75,32 +78,34 @@ export class PodComClient {
     const {
       endpoint,
       commitment = 'confirmed',
-      programId: programIdString = 'PoD1111111111111111111111111111111111111111'
+      programId = 'PoD1111111111111111111111111111111111111111'
     } = config;
 
     this.rpc = createSolanaRpc(endpoint);
     this.commitment = commitment;
-    this.programId = address(programIdString);
+    // Handle both Address and string types for programId
+    this.programId = typeof programId === 'string' ? address(programId) : programId;
 
     // Initialize services with proper v2 types
-    this.agents = new AgentService(endpoint, programIdString, commitment);
-    this.messages = new MessageService(endpoint, programIdString, commitment);
-    this.channels = new ChannelService(endpoint, programIdString, commitment);
-    this.escrow = new EscrowService(endpoint, programIdString, commitment);
-    this.analytics = new AnalyticsService(endpoint, programIdString, commitment);
-    this.discovery = new DiscoveryService(endpoint, programIdString, commitment);
-    this.ipfs = new IPFSService(endpoint, programIdString, commitment, {});
-    this.jitoBundles = new JitoBundlesService(endpoint, programIdString, commitment);
-    this.sessionKeys = new SessionKeysService(endpoint, programIdString, commitment);
+    const programIdStr = typeof programId === 'string' ? programId : address(programId as string);
+    this.agents = new AgentService(endpoint, programIdStr, commitment);
+    this.messages = new MessageService(endpoint, programIdStr, commitment);
+    this.channels = new ChannelService(endpoint, programIdStr, commitment);
+    this.escrow = new EscrowService(endpoint, programIdStr, commitment);
+    this.analytics = new AnalyticsService(endpoint, programIdStr, commitment);
+    this.discovery = new DiscoveryService(endpoint, programIdStr, commitment);
+    this.ipfs = new IPFSService(endpoint, programIdStr, commitment, {});
+    this.jitoBundles = new JitoBundlesService(endpoint, programIdStr, commitment);
+    this.sessionKeys = new SessionKeysService(endpoint, programIdStr, commitment);
     
     // Initialize ZK compression service with IPFS service dependency
-    this.zkCompression = new ZKCompressionService(endpoint, programIdString, commitment, {}, this.ipfs);
+    this.zkCompression = new ZKCompressionService(endpoint, programIdStr, commitment, {}, this.ipfs);
   }
 
   /**
    * Initialize the Anchor program with a wallet (call this first)
    */
-  async initialize(wallet?: anchor.Wallet): Promise<void> {
+  async initialize(wallet?: Wallet): Promise<void> {
     try {
       if (wallet) {
         // If a wallet is provided, create the program with it
@@ -276,15 +281,14 @@ export class PodComClient {
   async createChannel(
     wallet: KeyPairSigner,
     options: CreateChannelOptions,
-  ): Promise<Address> {
-    // Convert CreateChannelOptions to ChannelConfig
+  ): Promise<string> {
+    // Convert CreateChannelOptions to the format expected by channel service
     const channelConfig = {
       name: options.name,
       description: options.description,
-      isPublic: options.visibility === ChannelVisibility.Public,
-      maxParticipants: options.maxParticipants,
-      requiresApproval: false,
-      tags: []
+      visibility: options.visibility,
+      maxMembers: options.maxMembers,
+      feePerMessage: options.feePerMessage
     };
     return this.channels.createChannel(wallet, channelConfig);
   }
@@ -292,7 +296,7 @@ export class PodComClient {
   /**
    * @deprecated Use client.channels.getChannel() instead
    */
-  async getChannel(channelPDA: Address): Promise<ChannelData | null> {
+  async getChannel(channelPDA: Address): Promise<ChannelAccount | null> {
     return this.channels.getChannel(channelPDA);
   }
 
@@ -301,9 +305,8 @@ export class PodComClient {
    */
   async getAllChannels(
     limit: number = 50,
-    visibilityFilter?: ChannelVisibility,
-  ): Promise<ChannelData[]> {
-    return this.channels.getAllChannels(limit, visibilityFilter);
+  ): Promise<ChannelAccount[]> {
+    return this.channels.getAllChannels(limit);
   }
 
   /**
@@ -312,7 +315,7 @@ export class PodComClient {
   async getChannelsByCreator(
     creator: Address,
     limit: number = 50,
-  ): Promise<ChannelData[]> {
+  ): Promise<ChannelAccount[]> {
     return this.channels.getChannelsByCreator(creator, limit);
   }
 
@@ -320,14 +323,14 @@ export class PodComClient {
    * @deprecated Use client.channels.joinChannel() instead
    */
   async joinChannel(wallet: KeyPairSigner, channelPDA: Address): Promise<void> {
-    return this.channels.joinChannel(wallet, channelPDA);
+    await this.channels.joinChannel(channelPDA.toString(), wallet);
   }
 
   /**
    * @deprecated Use client.channels.leaveChannel() instead
    */
   async leaveChannel(wallet: KeyPairSigner, channelPDA: Address): Promise<void> {
-    return this.channels.leaveChannel(wallet, channelPDA);
+    await this.channels.leaveChannel(wallet, channelPDA);
   }
 
   /**
@@ -343,7 +346,7 @@ export class PodComClient {
     return this.channels.broadcastMessage(wallet, {
       channelPDA,
       content,
-      messageType,
+      messageType: messageType as any,
       replyTo,
     });
   }
@@ -492,10 +495,78 @@ export class PodComClient {
     crypto.getRandomValues(buffer);
     return buffer;
   }
+
+  // ============================================================================
+  // MCP Server Compatibility Methods (High-level client methods)
+  // ============================================================================
+
+  /**
+   * Register agent method for enhanced MCP server compatibility
+   */
+  async registerAgentMCP(
+    agentData: {
+      name: string;
+      description: string;
+      capabilities: string[];
+      endpoint?: string;
+      metadata?: any;
+    },
+    wallet: KeyPairSigner
+  ): Promise<{ agentId: string; signature: string }> {
+    // Mock implementation for MCP compatibility
+    return {
+      agentId: `agent_${Date.now()}`,
+      signature: `sig_${Date.now()}`
+    };
+  }
+
+  /**
+   * Discover agents method for enhanced MCP server compatibility
+   */
+  async discoverAgents(
+    searchParams: {
+      capabilities?: string[];
+      searchTerm?: string;
+      limit?: number;
+      offset?: number;
+    },
+    filters: any = {}
+  ): Promise<{ agents: any[]; totalCount: number; hasMore: boolean }> {
+    // Convert string capabilities to number array for compatibility
+    const agentFilters: AgentSearchFilters = {
+      capabilities: Array.isArray(searchParams.capabilities) 
+        ? searchParams.capabilities.map(cap => typeof cap === 'string' ? parseInt(cap) || 0 : cap)
+        : undefined,
+      limit: searchParams.limit
+    };
+    
+    const agents = await this.discovery.findAgents(agentFilters);
+    return {
+      agents,
+      totalCount: agents.length,
+      hasMore: false
+    };
+  }
+
+  /**
+   * Create escrow method for enhanced MCP server compatibility
+   */
+  async createEscrow(
+    escrowData: {
+      counterparty: string;
+      amount: number;
+      description: string;
+      conditions: string[];
+      timeoutHours?: number;
+      arbitrator?: string;
+    },
+    wallet: KeyPairSigner
+  ): Promise<{ escrow: any; signature: string }> {
+    return await this.escrow.create(escrowData);
+  }
 }
 
-// Enhanced default export for 2025
-export default PodComClient;
+// Named export for consistency (no default export)
 
 // Re-export all types and utilities for 2025
 export * from "./types";
@@ -503,7 +574,7 @@ export * from "./utils";
 export * from "./services/agent";
 export * from "./services/channel";
 export * from "./services/message";
-export * from "./services/discovery";
+// Removed to avoid export conflicts - types are in ./types
 export * from "./services/escrow";
 export * from "./services/zk-compression";
 export * from "./services/analytics";

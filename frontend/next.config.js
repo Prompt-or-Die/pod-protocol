@@ -1,13 +1,39 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Performance optimizations
+  // Enable experimental features for performance
   experimental: {
-    // Optimize CSS imports
-    optimizeCss: true,
-    // Enable webpack build worker
-    webpackBuildWorker: true,
-    // Optimize server-side includes
-    optimizeServerReact: true,
+    // Optimize images
+    optimizePackageImports: ['framer-motion', '@headlessui/react'],
+  },
+
+  // Transpile packages that need special handling
+  transpilePackages: [
+    '@pod-protocol/sdk',
+    '@coral-xyz/anchor',
+    '@lightprotocol/stateless.js',
+    '@lightprotocol/compressed-token',
+    '@solana/wallet-adapter-base',
+    '@solana/wallet-adapter-react',
+    '@solana/wallet-adapter-react-ui',
+    '@solana/wallet-adapter-wallets',
+    '@solana/rpc',
+    '@solana/addresses',
+    '@solana/signers',
+    '@solana-program/system',
+    '@solana-program/compute-budget',
+    '@reown/appkit',
+    '@reown/appkit-adapter-solana',
+  ],
+
+  // Turbopack configuration (moved from experimental)
+  turbopack: {
+    rules: {
+      // Optimize for faster builds
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    },
   },
 
   // Compiler optimizations
@@ -16,196 +42,17 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production' ? {
       exclude: ['error', 'warn'],
     } : false,
-    
-    // Enable React compiler optimizations
-    reactRemoveProperties: process.env.NODE_ENV === 'production' ? {
-      properties: ['^data-testid$'],
-    } : false,
+    // Enable SWC minification
+    styledComponents: true,
   },
 
-  // Bundle analyzer and optimization
-  webpack: (config, { dev, isServer }) => {
-    // Production optimizations
-    if (!dev && !isServer) {
-      // Enable tree shaking for unused exports
-      config.optimization.usedExports = true;
-      
-      // Split vendor chunks more granularly
-      config.optimization.splitChunks = {
-        ...config.optimization.splitChunks,
-        cacheGroups: {
-          default: false,
-          vendors: false,
-          // Framework chunk (React, Next.js)
-          framework: {
-            chunks: 'all',
-            name: 'framework',
-            test: /(?<!node_modules.*)[\\/]node_modules[\\/](react|react-dom|scheduler|prop-types|use-subscription)[\\/]/,
-            priority: 40,
-            enforce: true,
-          },
-          // Vendor libraries
-          lib: {
-            test(module) {
-              return (
-                module.size() > 160000 &&
-                /node_modules[/\\]/.test(module.identifier())
-              );
-            },
-            name(module) {
-              const hash = require('crypto')
-                .createHash('sha1')
-                .update(module.identifier())
-                .digest('hex')
-                .substring(0, 8);
-              return `lib-${hash}`;
-            },
-            priority: 30,
-            minChunks: 1,
-            reuseExistingChunk: true,
-            chunks: 'all',
-          },
-          // Common chunks
-          commons: {
-            name: 'commons',
-            minChunks: 2,
-            priority: 20,
-            chunks: 'all',
-            reuseExistingChunk: true,
-          },
-          // Solana/Web3 specific chunks
-          web3: {
-            test: /[\\/]node_modules[\\/](@solana|@coral-xyz|@metaplex|web3)[\\/]/,
-            name: 'web3',
-            priority: 35,
-            chunks: 'all',
-            reuseExistingChunk: true,
-          },
-          // UI libraries chunk
-          ui: {
-            test: /[\\/]node_modules[\\/](@headlessui|@heroicons|framer-motion|tailwind)[\\/]/,
-            name: 'ui',
-            priority: 35,
-            chunks: 'all',
-            reuseExistingChunk: true,
-          },
-        },
-      };
-
-      // Bundle analyzer (enable with ANALYZE=true)
-      if (process.env.ANALYZE) {
-        const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-        config.plugins.push(
-          new BundleAnalyzerPlugin({
-            analyzerMode: 'static',
-            openAnalyzer: false,
-            reportFilename: './analyze/client.html',
-          })
-        );
-      }
-    }
-
-    // Optimize module resolution
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      // Optimize React imports
-      'react/jsx-runtime': require.resolve('react/jsx-runtime'),
-    };
-
-    return config;
-  },
-
-  // Image optimization
-  images: {
-    // Enable modern formats with fallbacks
-    formats: ['image/avif', 'image/webp'],
-    // Responsive image sizes for different devices
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    // Quality settings - remove deprecated option
-    // External image domains (add your CDN domains here)
-    domains: [
-      'images.unsplash.com',
-      'via.placeholder.com',
-      'avatars.githubusercontent.com',
-      'cdn.jsdelivr.net',
-    ],
-    // Remote patterns for more flexible image sources
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**.googleapis.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: '**.gstatic.com',
-        port: '',
-        pathname: '/**',
-      },
-    ],
-    // Enable SVG support with security
-    dangerouslyAllowSVG: true,
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    // Minimize layout shift
-    minimumCacheTTL: 60,
-    // Loader for custom image optimization
-    loader: 'default',
-  },
-
-  // Static optimization
-  trailingSlash: false,
-  
-  // Compression
-  compress: true,
-  
-  // PoweredBy header removal for security
-  poweredByHeader: false,
-
-  // Static generation optimization
-  output: 'standalone',
-
-  // Environment variables optimization
-  env: {
-    CUSTOM_KEY: process.env.CUSTOM_KEY,
-  },
-
-  // Headers for performance and security
+  // Security headers for enterprise deployment
   async headers() {
-    const cspDirectives = [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com https://accounts.google.com",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
-      "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net data:",
-      "img-src 'self' data: blob: https: https://images.unsplash.com https://avatars.githubusercontent.com https://via.placeholder.com",
-      "media-src 'self' blob: data:",
-      "object-src 'none'",
-      "connect-src 'self' https://api.devnet.solana.com https://api.mainnet-beta.solana.com https://api.testnet.solana.com wss://api.devnet.solana.com wss://api.mainnet-beta.solana.com ws://localhost:* wss://localhost:*",
-      "frame-src 'self' https://accounts.google.com",
-      "frame-ancestors 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-      "upgrade-insecure-requests"
-    ].join('; ');
-
     return [
       {
         source: '/(.*)',
         headers: [
           // Security headers
-          {
-            key: 'Content-Security-Policy',
-            value: cspDirectives,
-          },
-          {
-            key: 'X-DNS-Prefetch-Control',
-            value: 'on',
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
-          },
           {
             key: 'X-Frame-Options',
             value: 'DENY',
@@ -215,48 +62,41 @@ const nextConfig = {
             value: 'nosniff',
           },
           {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+          {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin',
           },
           {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload',
-          },
-          {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+            value: 'camera=(), microphone=(), geolocation=(), payment=()',
           },
-          // Performance headers
+          // Content Security Policy
           {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' *.solana.com *.phantom.app",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: https: blob:",
+              "font-src 'self' data:",
+              "connect-src 'self' wss: https: *.solana.com *.helius.com *.quicknode.pro",
+              "worker-src 'self' blob:",
+            ].join('; '),
           },
-        ],
-      },
-      // Static assets caching
-      {
-        source: '/static/(.*)',
-        headers: [
+          // HSTS (Strict Transport Security)
           {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      // API routes caching
-      {
-        source: '/api/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=60, s-maxage=60',
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains; preload',
           },
         ],
       },
     ];
   },
 
-  // Redirects for SEO
+  // Redirects for SEO and user experience
   async redirects() {
     return [
       {
@@ -264,18 +104,213 @@ const nextConfig = {
         destination: '/',
         permanent: true,
       },
-    ];
-  },
-
-  // Rewrites for API routing
-  async rewrites() {
-    return [
       {
-        source: '/api/socket.io/:path*',
-        destination: '/api/socket/:path*',
+        source: '/wallet',
+        destination: '/',
+        permanent: false,
       },
     ];
   },
+
+  // Bundle optimization
+  webpack: (config, { dev, isServer, webpack }) => {
+    // Basic Node.js polyfills for client-side
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+        stream: false,
+        http: false,
+        https: false,
+        zlib: false,
+        path: false,
+        os: false,
+        events: false,
+        buffer: false,
+      };
+    }
+
+    // Handle Node.js URI scheme by stripping the node: prefix
+    const originalResolveLoader = config.resolveLoader;
+    config.resolveLoader = {
+      ...originalResolveLoader,
+      alias: {
+        ...originalResolveLoader?.alias,
+        'node:events': 'events',
+        'node:fs': 'fs',
+        'node:path': 'path',
+        'node:crypto': 'crypto',
+        'node:stream': 'stream',
+        'node:util': 'util',
+        'node:url': 'url',
+        'node:assert': 'assert',
+        'node:buffer': 'buffer',
+        'node:process': 'process',
+      },
+    };
+
+    // Handle external dependencies that should not be bundled
+    if (!isServer) {
+      config.externals = config.externals || [];
+      config.externals.push({
+        'utf-8-validate': 'commonjs utf-8-validate',
+        'bufferutil': 'commonjs bufferutil',
+        'encoding': 'commonjs encoding',
+      });
+    }
+
+    // Fix for @coral-xyz/anchor default import issue
+    config.module.rules.push({
+      test: /\.js$/,
+      include: /node_modules\/@coral-xyz\/anchor/,
+      use: {
+        loader: 'babel-loader',
+        options: {
+          presets: ['@babel/preset-env'],
+          plugins: [
+            ['@babel/plugin-transform-modules-commonjs', { allowTopLevelThis: true }]
+          ]
+        }
+      }
+    });
+
+    // Add module resolution for packages that might have import issues
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'node:events': 'events',
+      'node:fs': 'fs',
+      'node:path': 'path',
+      'node:crypto': 'crypto',
+      'node:stream': 'stream',
+      'node:util': 'util',
+      'node:url': 'url',
+      'node:assert': 'assert',
+      'node:buffer': 'buffer',
+      'node:process': 'process',
+      // Handle anchor import issues
+      '@coral-xyz/anchor$': '@coral-xyz/anchor/dist/cjs/index.js',
+    };
+
+    // Only apply optimizations in production
+    if (!dev && !isServer) {
+      // Enable tree shaking
+      config.optimization.usedExports = true;
+      
+      // Split chunks for better caching
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            priority: 10,
+            chunks: 'all',
+          },
+          solana: {
+            test: /[\\/]node_modules[\\/]@solana[\\/]/,
+            name: 'solana',
+            priority: 20,
+            chunks: 'all',
+          },
+          anchor: {
+            test: /[\\/]node_modules[\\/]@coral-xyz[\\/]/,
+            name: 'anchor',
+            priority: 25,
+            chunks: 'all',
+          },
+          framer: {
+            test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
+            name: 'framer',
+            priority: 15,
+            chunks: 'all',
+          },
+        },
+      };
+
+      // Optimize bundle size
+      config.optimization.minimize = true;
+    }
+
+    // Handle SVG files
+    config.module.rules.push({
+      test: /\.svg$/,
+      use: ['@svgr/webpack'],
+    });
+
+    // Ignore node modules warnings
+    config.ignoreWarnings = [
+      /Module not found: Can't resolve 'encoding'/,
+      /Module not found: Can't resolve 'node:*/,
+      /Critical dependency: the request of a dependency is an expression/,
+      /Module not found: Can't resolve 'utf-8-validate'/,
+      /Module not found: Can't resolve 'bufferutil'/,
+      /Attempted import error:/,
+    ];
+
+    // Performance monitoring in production
+    if (!dev) {
+      config.plugins.push(
+        new webpack.DefinePlugin({
+          'process.env.BUNDLE_ANALYZE': JSON.stringify(process.env.ANALYZE || false),
+          'process.env.BUILD_TIME': JSON.stringify(new Date().toISOString()),
+        })
+      );
+    }
+
+    return config;
+  },
+
+  // Image optimization
+  images: {
+    domains: ['localhost'],
+    formats: ['image/webp', 'image/avif'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 60,
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+  },
+
+  // Performance and caching
+  compress: true,
+  generateEtags: true,
+  poweredByHeader: false,
+
+  // Environment variables validation (removed NODE_ENV as it's not allowed)
+  env: {
+    CUSTOM_KEY: process.env.CUSTOM_KEY,
+    BUILD_TIME: new Date().toISOString(),
+  },
+
+  // Output configuration
+  output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
+  
+  // Logging configuration
+  logging: {
+    fetches: {
+      fullUrl: process.env.NODE_ENV === 'development',
+    },
+  },
+
+  // Development configuration
+  ...(process.env.NODE_ENV === 'development' && {
+    devIndicators: {
+      buildActivity: true,
+      buildActivityPosition: 'bottom-right',
+    },
+  }),
+
+  // Static export configuration (if needed)
+  ...(process.env.EXPORT === 'true' && {
+    output: 'export',
+    trailingSlash: true,
+    images: {
+      unoptimized: true,
+    },
+  }),
 };
 
 module.exports = nextConfig;

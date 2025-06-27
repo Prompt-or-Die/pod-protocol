@@ -13,7 +13,7 @@ const { combine, timestamp, errors, printf, colorize, json } = winston.format;
 const consoleFormat = printf(({ level, message, timestamp, ...metadata }) => {
   const emoji = getEmojiForLevel(level);
   const coloredLevel = getColorForLevel(level);
-  const time = chalk.gray(new Date(timestamp).toLocaleTimeString());
+  const time = chalk.gray(new Date(timestamp as string).toLocaleTimeString());
   
   let logMessage = `${emoji} ${time} ${coloredLevel} ${message}`;
   

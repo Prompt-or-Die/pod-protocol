@@ -5,8 +5,8 @@
 export class BaseService {
   /**
    * @param {Object} config - Service configuration
-   * @param {Rpc<any>} config.connection - Solana connection
-   * @param {Address} config.programId - Program ID
+   * @param {Object} config.connection - Solana connection
+   * @param {string} config.programId - Program ID
    * @param {string} config.commitment - Commitment level
    */
   constructor(config) {
@@ -18,7 +18,7 @@ export class BaseService {
 
   /**
    * Set the Anchor program instance
-   * @param {Program} program - Anchor program
+   * @param {Object} program - Anchor program
    */
   setProgram(program) {
     this.program = program;

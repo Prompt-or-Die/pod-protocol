@@ -1,5 +1,5 @@
-import { address } from "@solana/web3.js";
-import type { Address } from "@solana/web3.js";
+import { address } from "@solana/addresses";
+import type { Address } from "@solana/addresses";
 // Local constants to avoid import issues during Web3.js v2 migration
 enum MessageType {
   TEXT = 0,

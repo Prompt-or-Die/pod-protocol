@@ -20,6 +20,11 @@ export const MessageType = {
   IMAGE: 1,
   CODE: 2,
   FILE: 3,
+  // Additional types from TypeScript SDK
+  DATA: 4,
+  COMMAND: 5,
+  RESPONSE: 6,
+  CUSTOM: 7,
 };
 
 /**
@@ -28,10 +33,10 @@ export const MessageType = {
  * @enum {string}
  */
 export const MessageStatus = {
-  PENDING: "pending",
-  DELIVERED: "delivered", 
-  READ: "read",
-  FAILED: "failed",
+  PENDING: 'pending',
+  DELIVERED: 'delivered',
+  READ: 'read',
+  FAILED: 'failed',
 };
 
 /**
@@ -40,6 +45,10 @@ export const MessageStatus = {
  * @enum {number}
  */
 export const ChannelVisibility = {
+  PUBLIC: 0,
+  PRIVATE: 1,
+  RESTRICTED: 2,
+  // Legacy naming for compatibility
   Public: 0,
   Private: 1,
   Restricted: 2,

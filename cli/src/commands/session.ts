@@ -5,7 +5,8 @@
 
 import { Command } from 'commander';
 import { PodComClient } from '@pod-protocol/sdk';
-import { address as createAddress, type Address } from '@solana/web3.js';
+import { address as createAddress } from '@solana/addresses';
+import type { Address } from '@solana/addresses';
 import { createClient, getWallet, createWalletAdapter } from '../utils/client.js';
 import { getCliConfig } from '../utils/config.js';
 import { createSpinner, showSuccess, formatValue } from '../utils/shared.js';

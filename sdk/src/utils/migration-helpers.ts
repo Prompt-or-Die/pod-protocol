@@ -5,7 +5,8 @@
  * from Solana Web3.js v1.x to v2.0 for the PoD Protocol SDK.
  */
 
-import { Address, address } from '@solana/web3.js';
+import { address } from '@solana/addresses';
+import type { Address } from '@solana/addresses';
 import type { MigrationStatus } from "../types";
 
 /**
@@ -75,7 +76,8 @@ export function wrapRpcResponse<T>(value: T, slot?: number): LegacyRpcResponse<T
 export async function checkMigrationStatus(): Promise<MigrationStatus> {
   try {
     // Check actual migration status by testing Web3.js v2.0 functionality
-    const { address, createSolanaRpc } = await import('@solana/web3.js');
+    const { address } = await import('@solana/addresses');
+    const { createSolanaRpc } = await import('@solana/rpc');
     
     // Test basic Web3.js v2.0 functionality
     const testRpc = createSolanaRpc('https://api.devnet.solana.com');

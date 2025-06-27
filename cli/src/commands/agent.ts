@@ -2,7 +2,8 @@ import { Command } from "commander";
 import chalk from "chalk";
 import inquirer from "inquirer";
 import { table } from "table";
-import { address, type Address } from "@solana/web3.js";
+import { address } from "@solana/addresses";
+import type { Address } from "@solana/addresses";
 import {
   createCommandHandler,
   handleDryRun,

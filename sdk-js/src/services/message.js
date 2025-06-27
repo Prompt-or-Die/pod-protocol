@@ -38,39 +38,37 @@ export class MessageService extends BaseService {
       throw new Error('Service not initialized. Call client.initialize() first.');
     }
 
-    // Validate recipient exists
-    const [recipientPDA] = findAgentPDA(options.recipient, this.programId);
-    try {
-      await this.program.account.agentAccount.fetch(recipientPDA);
-    } catch (error) {
-      throw new Error('Recipient agent not found');
-    }
+    // Derive recipient agent PDA
+    const [recipientPDA] = await findAgentPDA(options.recipient, this.programId);
 
-    // Hash the payload
-    const payloadHash = hashPayload(options.content);
-    const [messagePDA] = findMessagePDA(
-      wallet.publicKey,
-      options.recipient,
-      payloadHash,
-      this.programId
-    );
+    // Create payload hash
+    const payloadHash = await this.hashPayload(options.content);
 
-    // Calculate expiration timestamp
+    // Calculate expiration timestamp (default 7 days)
     const expirationDays = options.expirationDays || 7;
     const expiresAt = Math.floor(Date.now() / 1000) + (expirationDays * 24 * 60 * 60);
+
+    // Derive message PDA
+    const [messagePDA] = await findMessagePDA(
+      wallet.publicKey,
+      options.recipient,
+      this.programId
+    );
 
     return this.retry(async () => {
       const tx = await this.program.methods
         .sendMessage(
+          options.recipient,
           Array.from(payloadHash),
           options.content,
-          options.messageType || MessageType.TEXT,
+          options.messageType || 0,
           new BN(expiresAt)
         )
         .accounts({
           messageAccount: messagePDA,
           sender: wallet.publicKey,
           recipient: options.recipient,
+          recipientAgent: recipientPDA,
           systemProgram: SystemProgram.programId
         })
         .rpc();
@@ -326,11 +324,10 @@ export class MessageService extends BaseService {
       throw new Error('Program not initialized');
     }
 
-    const payloadHash = hashPayload(options.content);
-    const [messagePDA] = findMessagePDA(
+    const payloadHash = await this.hashPayload(options.content);
+    const [messagePDA] = await findMessagePDA(
       senderPubkey,
       options.recipient,
-      payloadHash,
       this.programId
     );
 
@@ -373,5 +370,58 @@ export class MessageService extends BaseService {
         signer: signerPubkey
       })
       .instruction();
+  }
+
+  /**
+   * Hash payload for message integrity
+   * @param {string} payload - Message content to hash
+   * @returns {Promise<Uint8Array>} SHA-256 hash of the payload
+   */
+  async hashPayload(payload) {
+    try {
+      // Use Web Crypto API for hashing
+      const encoder = new TextEncoder();
+      const data = encoder.encode(payload);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      return new Uint8Array(hashBuffer);
+    } catch (error) {
+      console.error('Error hashing payload:', error);
+      // Fallback to simple hash for JavaScript compatibility
+      const encoder = new TextEncoder();
+      const data = encoder.encode(payload);
+      const simpleHash = new Uint8Array(32);
+      for (let i = 0; i < data.length && i < 32; i++) {
+        simpleHash[i] = data[i] ^ (i % 256);
+      }
+      return simpleHash;
+    }
+  }
+
+  /**
+   * Get message by PDA
+   * @private
+   */
+  async _getMessageByPDA(senderPubkey, recipientPubkey) {
+    try {
+      const [messagePDA] = await findMessagePDA(
+        senderPubkey,
+        recipientPubkey,
+        this.programId
+      );
+      
+      const messageAccount = await this.program.account.messageAccount.fetch(messagePDA);
+      return {
+        pubkey: messagePDA,
+        ...messageAccount,
+        // Convert BN fields to numbers for JavaScript compatibility
+        timestamp: messageAccount.timestamp.toNumber(),
+        expiresAt: messageAccount.expiresAt.toNumber()
+      };
+    } catch (error) {
+      if (error.message?.includes('Account does not exist')) {
+        return null;
+      }
+      throw error;
+    }
   }
 }

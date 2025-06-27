@@ -3,6 +3,7 @@
  */
 
 import { BaseService } from './base.js';
+import { findAgentPDA } from '../utils/pda.js';
 import { AGENT_CAPABILITIES, MessageStatus, ChannelVisibility } from '../types.js';
 import { lamportsToSol } from '../utils/crypto.js';
 
@@ -329,7 +330,7 @@ export class AnalyticsService extends BaseService {
   /**
    * Get analytics for a specific agent
    * 
-   * @param {Address} agentPubkey - Agent's public key
+   * @param {string} agentPubkey - Agent's public key
    * @returns {Promise<Object>} Agent-specific analytics
    * 
    * @example

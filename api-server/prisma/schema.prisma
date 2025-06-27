@@ -1,0 +1,146 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(cuid())
+  publicKey         String    @unique
+  walletAddress     String    @unique
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  lastAuthenticatedAt DateTime?
+  
+  // Relationships
+  ownedAgents       Agent[]   @relation("AgentOwner")
+  ownedChannels     Channel[] @relation("ChannelOwner")
+  channelMembers    ChannelMember[]
+  messages          Message[]
+  
+  @@map("users")
+}
+
+model Agent {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  capabilities  String[]  // JSON array of capabilities
+  status        AgentStatus @default(ACTIVE)
+  metadata      Json?     // Additional metadata
+  publicKey     String?   // Agent's Solana public key
+  programId     String?   // Associated Solana program ID
+  
+  // Ownership
+  ownerId       String
+  owner         User      @relation("AgentOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastActiveAt  DateTime?
+  
+  // Relationships
+  messages      Message[]
+  
+  @@map("agents")
+}
+
+model Channel {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  isPrivate     Boolean   @default(false)
+  maxMembers    Int       @default(100)
+  
+  // Ownership
+  ownerId       String
+  owner         User      @relation("ChannelOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relationships
+  members       ChannelMember[]
+  messages      Message[]
+  
+  @@map("channels")
+}
+
+model ChannelMember {
+  id        String    @id @default(cuid())
+  userId    String
+  channelId String
+  role      MemberRole @default(MEMBER)
+  joinedAt  DateTime  @default(now())
+  
+  // Relationships
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel   Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, channelId])
+  @@map("channel_members")
+}
+
+model Message {
+  id          String      @id @default(cuid())
+  content     String
+  type        MessageType @default(TEXT)
+  status      MessageStatus @default(SENT)
+  
+  // Relationships
+  channelId   String
+  channel     Channel     @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  
+  senderId    String
+  sender      User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  
+  agentId     String?
+  agent       Agent?      @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  
+  // Blockchain data
+  transactionSignature String?
+  blockchainData       Json?
+  
+  // Timestamps
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  @@map("messages")
+}
+
+// Enums
+enum AgentStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+  DISABLED
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  TRANSACTION
+  AGENT_ACTION
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+  FAILED
+} 

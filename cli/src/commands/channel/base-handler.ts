@@ -1,5 +1,6 @@
 import chalk from "chalk";
-import { address as createAddress, type Address } from "@solana/web3.js";
+import { address as createAddress } from "@solana/addresses";
+import type { Address } from "@solana/addresses";
 import {
   handleDryRun,
   createSpinner,

@@ -30,7 +30,7 @@ describe('IPFSService Tests', () => {
     };
 
     for (const [input, expected] of Object.entries(testCases)) {
-      const result = IPFSService.createContentHash(input);
+      const result = IPFSService.calculateIntegrityHash(input);
       expect(result).toBe(expected);
     }
   });

@@ -5,8 +5,9 @@
  * Based on Gum session keys protocol
  */
 
-import { Address, address } from '@solana/web3.js';
 import { BaseService } from './base.js';
+import { SystemProgram, Transaction, Keypair, PublicKey } from '@solana/web3.js';
+import { BN } from '@coral-xyz/anchor';
 
 /**
  * Service for managing session keys for AI agent interactions
@@ -24,7 +25,7 @@ export class SessionKeysService extends BaseService {
   /**
    * Set the wallet for this service
    * 
-   * @param {KeyPairSigner|Wallet} wallet - Wallet to use for signing
+   * @param {Object} wallet - Wallet to use for signing
    */
   setWallet(wallet) {
     this.wallet = wallet;
@@ -71,21 +72,21 @@ export class SessionKeysService extends BaseService {
   }
 
   /**
-   * Create a new session key for AI agent interactions
+   * Create a session key for temporary AI agent operations
    * 
    * @param {Object} config - Session configuration
-   * @param {Address[]} config.targetPrograms - Programs this session can interact with
-   * @param {number} config.expiryTime - Session expiry timestamp
-   * @param {number} [config.maxUses] - Maximum number of uses
-   * @param {string[]} [config.allowedInstructions] - Allowed instruction types
-   * @returns {Promise<Object>} Session token object
+   * @param {Object[]} config.targetPrograms - Programs this session can interact with
+   * @param {number} [config.durationHours=24] - Session duration in hours
+   * @param {Object[]} config.allowedInstructions - Allowed instruction types
+   * @param {Object} [config.restrictions] - Additional restrictions
+   * @returns {Promise<Object>} Session key data with pubkey and token
    * 
    * @example
    * ```javascript
-   * const session = await client.sessionKeys.createSessionKey({
-   *   targetPrograms: [PROGRAM_ID],
-   *   expiryTime: Date.now() + (24 * 60 * 60 * 1000), // 24 hours
-   *   maxUses: 100
+   * const sessionKey = await client.sessionKeys.createSessionKey({
+   *   targetPrograms: [programId],
+   *   durationHours: 12,
+   *   allowedInstructions: ['sendMessage', 'updateStatus']
    * });
    * ```
    */
@@ -96,45 +97,65 @@ export class SessionKeysService extends BaseService {
 
     try {
       // Generate ephemeral keypair
-      const sessionKeyPairSigner = KeyPairSigner.generate();
+      const sessionKeyPairSigner = Keypair.generate(); // Use Keypair from @solana/web3.js
       
       // Create session token account (PDA)
       const wallet = this.ensureWallet();
-      const [sessionTokenAccount] = Address.findProgramAddressSync(
+      const programIdPubkey = new PublicKey(this.programId); // Convert string to PublicKey
+      const [sessionTokenAccount] = PublicKey.findProgramAddressSync(
         [
           Buffer.from('session_token'),
           wallet.publicKey.toBuffer(),
-          sessionKeyPairSigner.publicKey.toBuffer(),
+          sessionKeyPairSigner.publicKey.toBuffer()
         ],
-        this.programId
+        programIdPubkey
       );
 
-      // Create session token instruction
-      const instruction = await this.createSessionTokenInstruction(
-        sessionKeyPairSigner.publicKey,
-        sessionTokenAccount,
-        config
-      );
+      // Calculate expiration timestamp
+      const durationMs = (config.durationHours || 24) * 60 * 60 * 1000;
+      const expiresAt = Math.floor((Date.now() + durationMs) / 1000);
 
-      // Create and send transaction
-      const transaction = new Transaction().add(instruction);
-      const signature = await this.sendTransaction(transaction, [sessionKeyPairSigner]);
+      // Create session token
+      const createSessionInstruction = await this.program.methods
+        .createSessionToken(
+          new BN(expiresAt),
+          config.targetPrograms.map(p => new PublicKey(p)),
+          config.allowedInstructions
+        )
+        .accounts({
+          sessionToken: sessionTokenAccount,
+          sessionKey: sessionKeyPairSigner.publicKey,
+          authority: wallet.publicKey,
+          systemProgram: SystemProgram.programId
+        })
+        .instruction();
 
-      const sessionToken = {
-        sessionKeyPairSigner,
-        config,
-        sessionTokenAccount,
-        usesRemaining: config.maxUses,
+      // Sign and send transaction
+      const transaction = new Transaction().add(createSessionInstruction);
+      const { blockhash } = await this.connection.getLatestBlockhash().send();
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = wallet.publicKey;
+
+      // Sign with both wallet and session key
+      transaction.partialSign(sessionKeyPairSigner);
+      
+      if (wallet.signTransaction) {
+        const signedTx = await wallet.signTransaction(transaction);
+        const signature = await this.connection.sendRawTransaction(signedTx.serialize()).send();
+        await this.connection.confirmTransaction(signature).send();
+      } else {
+        transaction.partialSign(wallet);
+        const signature = await this.connection.sendRawTransaction(transaction.serialize()).send();
+        await this.connection.confirmTransaction(signature).send();
+      }
+
+      return {
+        sessionKey: sessionKeyPairSigner.publicKey.toBase58(),
+        sessionToken: sessionTokenAccount.toBase58(),
+        expiresAt,
+        restrictions: config.restrictions || {},
+        keypair: sessionKeyPairSigner // For internal use
       };
-
-      // Store session locally
-      const sessionId = sessionKeyPairSigner.publicKey;
-      this.sessions.set(sessionId, sessionToken);
-
-      console.log(`Session key created: ${sessionId}`);
-      console.log(`Transaction: ${signature}`);
-
-      return sessionToken;
     } catch (error) {
       console.error('Failed to create session key:', error);
       throw error;
@@ -142,24 +163,24 @@ export class SessionKeysService extends BaseService {
   }
 
   /**
-   * Use a session key to sign a transaction
+   * Execute instructions using a session key
    * 
-   * @param {string} sessionId - Session key ID
-   * @param {TransactionInstruction[]} instructions - Instructions to execute
+   * @param {Object[]} instructions - Instructions to execute
+   * @param {string} sessionKey - Session key public key
+   * @param {Object} [options] - Execution options
    * @returns {Promise<string>} Transaction signature
    * 
    * @example
    * ```javascript
-   * const signature = await client.sessionKeys.useSessionKey(
-   *   sessionId, 
-   *   [sendMessageInstruction]
-   * );
+   * const signature = await client.sessionKeys.useSessionKey([
+   *   sendMessageInstruction
+   * ], sessionKey.sessionKey);
    * ```
    */
-  async useSessionKey(sessionId, instructions) {
-    const session = this.sessions.get(sessionId);
+  async useSessionKey(instructions, sessionKey, options = {}) {
+    const session = this.sessions.get(sessionKey);
     if (!session) {
-      throw new Error(`Session key not found: ${sessionId}`);
+      throw new Error(`Session key not found: ${sessionKey}`);
     }
 
     // Validate session is still valid
@@ -279,31 +300,6 @@ export class SessionKeysService extends BaseService {
   }
 
   /**
-   * Create session token instruction
-   * @private
-   */
-  async createSessionTokenInstruction(sessionAddress, sessionTokenAccount, config) {
-    if (!this.program) {
-      throw new Error('Program not initialized');
-    }
-
-    return this.program.methods
-      .createSessionToken(
-        config.targetPrograms,
-        config.expiryTime,
-        config.maxUses || null,
-        config.allowedInstructions || null
-      )
-      .accounts({
-        sessionTokenAccount,
-        sessionKey: sessionAddress,
-        authority: this.wallet.publicKey,
-        systemProgram: SystemProgram.programId
-      })
-      .instruction();
-  }
-
-  /**
    * Create revoke session instruction
    * @private
    */
@@ -346,15 +342,10 @@ export class SessionKeysService extends BaseService {
   }
 
   /**
-   * Clean up expired sessions
+   * Cleanup resources
    */
-  cleanup() {
-    const now = Date.now();
-    for (const [sessionId, session] of this.sessions.entries()) {
-      if (session.config.expiryTime <= now || 
-          (session.usesRemaining !== undefined && session.usesRemaining <= 0)) {
-        this.sessions.delete(sessionId);
-      }
-    }
+  async cleanup() {
+    // Clear stored session keys
+    this.wallet = null;
   }
 } 
