@@ -142,7 +142,7 @@ jobs:
           echo "❌ Failed to configure GitHub Packages authentication"
           exit 1
         }
-        echo "@pod-protocol:registry=https://npm.pkg.github.com" >> .npmrc || {
+        echo "@prompt-or-die:registry=https://npm.pkg.github.com" >> .npmrc || {
           echo "❌ Failed to configure GitHub Packages registry"
           exit 1
         }
@@ -163,7 +163,7 @@ jobs:
           echo "❌ Failed to configure GitHub Packages authentication"
           exit 1
         }
-        echo "@pod-protocol:registry=https://npm.pkg.github.com" >> .npmrc || {
+        echo "@prompt-or-die:registry=https://npm.pkg.github.com" >> .npmrc || {
           echo "❌ Failed to configure GitHub Packages registry"
           exit 1
         }
@@ -180,8 +180,8 @@ jobs:
         echo "## 📦 Package Publishing Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### ✅ Published Packages" >> $GITHUB_STEP_SUMMARY
-        echo "- **SDK**: @pod-protocol/sdk" >> $GITHUB_STEP_SUMMARY
-        echo "- **CLI**: @pod-protocol/cli" >> $GITHUB_STEP_SUMMARY
+        echo "- **SDK**: @prompt-or-die/sdk" >> $GITHUB_STEP_SUMMARY
+        echo "- **CLI**: @prompt-or-die/cli" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 📍 Registries" >> $GITHUB_STEP_SUMMARY
         echo "- NPM Registry" >> $GITHUB_STEP_SUMMARY

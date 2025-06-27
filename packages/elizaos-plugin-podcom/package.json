@@ -1,26 +1,26 @@
 {
-  "name": "@elizaos/plugin-pod-protocol",
+  "name": "@elizaos/plugin-podcom",
   "version": "1.0.0",
-  "description": "ElizaOS plugin for PoD Protocol - blockchain-powered AI agent communication on Solana",
+  "description": "ElizaOS plugin for PodCom - blockchain-powered AI agent communication on Solana",
   "keywords": [
     "elizaos",
     "plugin",
     "solana",
     "blockchain",
     "ai-agents",
-    "pod-protocol",
+    "podcom",
     "agent-communication",
     "web3",
     "elizaos-plugin"
   ],
-  "homepage": "https://github.com/pod-protocol/pod-protocol/tree/main/packages/elizaos-plugin-pod-protocol",
+  "homepage": "https://github.com/pod-protocol/pod-protocol/tree/main/packages/elizaos-plugin-podcom",
   "bugs": {
     "url": "https://github.com/pod-protocol/pod-protocol/issues"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/pod-protocol/pod-protocol.git",
-    "directory": "packages/elizaos-plugin-pod-protocol"
+    "directory": "packages/elizaos-plugin-podcom"
   },
   "license": "MIT",
   "author": "PoD Protocol Team",
@@ -46,8 +46,6 @@
     "prepublishOnly": "npm run clean && npm run build"
   },
   "dependencies": {
-    "@elizaos/core": "^0.2.0",
-    "@pod-protocol/sdk": "^2.0.0",
     "@solana/web3.js": "^1.98.2",
     "bs58": "^6.0.0"
   },
@@ -63,7 +61,7 @@
     "typescript": "^5.0.0"
   },
   "peerDependencies": {
-    "@elizaos/core": "^0.2.0"
+    "@elizaos/core": "*"
   },
   "agentConfig": {
     "pluginType": "elizaos:plugin:1.0.0",

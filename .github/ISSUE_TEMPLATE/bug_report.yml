@@ -8,7 +8,7 @@ body:
       value: |
         Thanks for reporting a bug! This helps us improve PoD Protocol for everyone.
         
-        **For security vulnerabilities:** Please email security@pod-protocol.com instead of creating a public issue.
+        **For security vulnerabilities:** Please email security@prompt-or-die.com instead of creating a public issue.
 
   - type: checkboxes
     id: terms

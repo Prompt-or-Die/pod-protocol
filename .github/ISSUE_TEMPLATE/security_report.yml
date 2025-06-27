@@ -10,7 +10,7 @@ body:
         
         **For CRITICAL security vulnerabilities that could impact user funds or protocol integrity:**
         - **DO NOT** create a public issue
-        - **Email**: security@pod-protocol.com
+        - **Email**: security@prompt-or-die.com
         - **Subject**: [CRITICAL] Security Vulnerability Report
         
         **This template is for NON-CRITICAL security issues only** (documentation, best practices, hardening suggestions).
@@ -23,7 +23,7 @@ body:
       options:
         - label: "This is NOT a critical vulnerability that could compromise user funds or protocol security"
           required: true
-        - label: "I understand that critical vulnerabilities should be reported privately to security@pod-protocol.com"
+        - label: "I understand that critical vulnerabilities should be reported privately to security@prompt-or-die.com"
           required: true
 
   - type: dropdown

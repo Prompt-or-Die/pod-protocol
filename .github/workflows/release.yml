@@ -18,7 +18,7 @@ env:
 jobs:
   release:
     runs-on: ubuntu-latest
-    name: "🚀 Release POD-COM Platform"
+    name: "🚀 Release Prompt or Die Platform"
     
     steps:
       - name: Checkout code
@@ -204,25 +204,25 @@ jobs:
         run: |
           echo "📝 Generating release notes..."
           cat > release_notes.md << EOF
-          # POD-COM Platform Release ${{ steps.version.outputs.version }}
+          # Prompt or Die Platform Release ${{ steps.version.outputs.version }}
           
           ## 🚀 What's New
           
-          This release includes updates to the POD-COM AI Agent Communication Protocol.
+          This release includes updates to the Prompt or Die AI Development Platform.
           
           ## 📦 Packages
           
-          - **SDK**: \`@pod-com/sdk@${{ steps.version.outputs.version }}\`
-          - **CLI**: \`@pod-com/cli@${{ steps.version.outputs.version }}\`
+          - **SDK**: \`@prompt-or-die/sdk@${{ steps.version.outputs.version }}\`
+          - **CLI**: \`@prompt-or-die/cli@${{ steps.version.outputs.version }}\`
           
           ## 🛠️ Installation
           
           \`\`\`bash
           # Install SDK
-          bun add @pod-com/sdk
+          bun add @prompt-or-die/sdk
           
           # Install CLI globally
-          bun add -g @pod-com/cli
+          bun add -g @prompt-or-die/cli
           \`\`\`
           
           ## 🔧 Solana Program
@@ -231,7 +231,7 @@ jobs:
           
           ## 📚 Documentation
           
-          Visit our [documentation](https://github.com/Dexploarer/POD-COM) for usage examples.
+          Visit our [documentation](https://github.com/Prompt-or-Die) for usage examples.
           EOF
 
       - name: Create GitHub Release
@@ -252,6 +252,6 @@ jobs:
         if: env.DISCORD_WEBHOOK != ''
         run: |
           curl -H "Content-Type: application/json" \
-               -d "{\"content\":\"🚀 POD-COM Platform v${{ steps.version.outputs.version }} has been released! Check it out: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}\"}" \
+               -d "{\"content\":\"🚀 Prompt or Die Platform v${{ steps.version.outputs.version }} has been released! Check it out: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}\"}" \
                "$DISCORD_WEBHOOK"
         continue-on-error: true
