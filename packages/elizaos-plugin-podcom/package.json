@@ -50,18 +50,18 @@
     "bs58": "^6.0.0"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.0",
-    "@types/node": "^20.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0",
-    "eslint": "^8.0.0",
-    "jest": "^29.0.0",
-    "ts-jest": "^29.0.0",
-    "tsup": "^8.0.0",
-    "typescript": "^5.0.0"
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.19.1",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.57.1",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3"
   },
   "peerDependencies": {
-    "@elizaos/core": "*"
+    "@elizaos/core": "^1.0.14"
   },
   "agentConfig": {
     "pluginType": "elizaos:plugin:1.0.0",
@@ -73,7 +73,7 @@
         "required": true
       },
       "POD_PROGRAM_ID": {
-        "type": "string", 
+        "type": "string",
         "description": "PoD Protocol program ID on Solana",
         "default": "HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps",
         "required": true

@@ -9,8 +9,9 @@ import enquirer from 'enquirer';
 import { execa } from 'execa';
 import { platform } from 'os';
 import { readFileSync, existsSync, readdirSync } from 'fs';
-import { join } from 'path';
+import { join, dirname, resolve } from 'path';
 import { createSpinner } from 'nanospinner';
+import { fileURLToPath } from 'url';
 
 // Cult color schemes
 const cultGradient = gradient(['#000000', '#ff0000', '#800080']);
@@ -21,7 +22,8 @@ const successGradient = gradient(['#00ff00', '#00aa00', '#008800']);
 class CultPackageInstaller {
   constructor() {
     this.platform = platform();
-    this.packagesPath = '../packages';
+    this.projectRoot = this.findProjectRoot();
+    this.packagesPath = join(this.projectRoot, 'packages');
     this.availablePackages = {};
     this.selectedPackages = [];
     this.packageManager = null;
@@ -34,9 +36,52 @@ class CultPackageInstaller {
     this.init();
   }
 
+  findProjectRoot() {
+    // Get the directory where this script is located
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    
+    // Start from script directory and work up
+    let currentDir = __dirname;
+    
+    // Look for indicators of project root
+    while (currentDir !== dirname(currentDir)) {
+      const packagesDir = join(currentDir, 'packages');
+      const scriptsDir = join(currentDir, 'scripts');
+      
+      if (existsSync(packagesDir) && existsSync(scriptsDir)) {
+        console.log(chalk.green(`✅ Found project root: ${currentDir}`));
+        return currentDir;
+      }
+      currentDir = dirname(currentDir);
+    }
+    
+    // Fallback: assume we're in project root
+    const fallbackRoot = resolve(process.cwd());
+    console.log(chalk.yellow(`⚠️  Using fallback project root: ${fallbackRoot}`));
+    return fallbackRoot;
+  }
+
+  validateProjectStructure() {
+    if (!existsSync(this.packagesPath)) {
+      console.log(chalk.red(`❌ Packages directory not found: ${this.packagesPath}`));
+      console.log(chalk.yellow(`💡 Make sure you're running this from the correct project directory`));
+      return false;
+    }
+    
+    console.log(chalk.green(`✅ Packages directory found: ${this.packagesPath}`));
+    return true;
+  }
+
   async init() {
     console.clear();
     await this.showWelcomeBanner();
+    
+    if (!this.validateProjectStructure()) {
+      console.log(deathGradient('\n💀 Project structure validation failed. Exiting...\n'));
+      process.exit(1);
+    }
+    
     await this.scanAvailablePackages();
     await this.detectPackageManagers();
     await this.showPackageSelection();
@@ -66,7 +111,7 @@ class CultPackageInstaller {
         name: 'TypeScript SDK',
         emoji: '📘',
         description: 'Type-safe SDK for TypeScript/JavaScript applications',
-        path: 'packages/sdk-typescript',
+        path: 'sdk-typescript',
         dependencies: [],
         devDependencies: ['@types/node', 'typescript', 'tsup'],
         estimatedSize: '15MB',
@@ -78,7 +123,7 @@ class CultPackageInstaller {
         name: 'JavaScript SDK',
         emoji: '📙',
         description: 'Pure JavaScript SDK for Node.js and browsers',
-        path: 'packages/sdk-javascript',
+        path: 'sdk-javascript',
         dependencies: [],
         devDependencies: ['webpack', 'babel'],
         estimatedSize: '12MB',
@@ -90,7 +135,7 @@ class CultPackageInstaller {
         name: 'Python SDK',
         emoji: '🐍',
         description: 'Pythonic SDK for data science and AI applications',
-        path: 'packages/sdk-python',
+        path: 'sdk-python',
         dependencies: ['requests', 'pydantic'],
         devDependencies: ['pytest', 'black', 'mypy'],
         estimatedSize: '8MB',
@@ -102,7 +147,7 @@ class CultPackageInstaller {
         name: 'Rust SDK',
         emoji: '🦀',
         description: 'High-performance SDK for systems programming',
-        path: 'packages/sdk-rust',
+        path: 'sdk-rust',
         dependencies: ['tokio', 'serde', 'reqwest'],
         devDependencies: [],
         estimatedSize: '25MB',
@@ -114,7 +159,7 @@ class CultPackageInstaller {
         name: 'Command Line Interface',
         emoji: '💻',
         description: 'Powerful CLI tool for developers and power users',
-        path: 'packages/cli',
+        path: 'cli',
         dependencies: ['commander', 'inquirer', 'chalk'],
         devDependencies: ['jest', '@types/node'],
         estimatedSize: '20MB',
@@ -126,7 +171,7 @@ class CultPackageInstaller {
         name: 'Web Frontend',
         emoji: '🎨',
         description: 'Modern React/Next.js web application',
-        path: 'packages/frontend',
+        path: 'frontend',
         dependencies: ['react', 'next', '@solana/web3.js'],
         devDependencies: ['typescript', 'tailwindcss', 'eslint'],
         estimatedSize: '150MB',
@@ -134,23 +179,11 @@ class CultPackageInstaller {
         features: ['Server-side rendering', 'Responsive design', 'Web3 integration'],
         category: 'Applications'
       },
-      'api-server': {
-        name: 'API Server',
-        emoji: '🖥️',
-        description: 'Enterprise-grade REST API server',
-        path: 'packages/api-server',
-        dependencies: ['express', 'prisma', 'passport'],
-        devDependencies: ['nodemon', 'supertest'],
-        estimatedSize: '35MB',
-        buildTime: '1m',
-        features: ['Authentication', 'Rate limiting', 'Database ORM'],
-        category: 'Backend'
-      },
       'mcp-server': {
         name: 'MCP Server',
         emoji: '🤖',
         description: 'Model Context Protocol server for AI integration',
-        path: 'packages/mcp-server',
+        path: 'mcp-server',
         dependencies: ['ws', 'zod', 'typescript'],
         devDependencies: ['vitest', 'tsx'],
         estimatedSize: '18MB',
@@ -160,31 +193,74 @@ class CultPackageInstaller {
       }
     };
 
-    // Check which packages actually exist
+    // Check which packages actually exist using absolute paths
+    console.log(chalk.cyan(`Scanning packages in: ${this.packagesPath}\n`));
+    
     for (const [key, pkg] of Object.entries(this.availablePackages)) {
-      // Fix path resolution from scripts directory
-      const fullPath = join(process.cwd(), '..', pkg.path);
+      // Use absolute path from project root
+      const fullPath = join(this.packagesPath, pkg.path);
       const exists = existsSync(fullPath);
+      
       pkg.available = exists;
       pkg.fullPath = fullPath;
       
       if (exists) {
+        console.log(chalk.green(`✅ ${pkg.emoji} ${pkg.name}`));
+        
         try {
           const packageJsonPath = join(fullPath, 'package.json');
           if (existsSync(packageJsonPath)) {
             const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
             pkg.version = packageJson.version || '1.0.0';
             pkg.actualName = packageJson.name || key;
+          } else {
+            // Check for nested package structure (e.g., packages/sdk-typescript/sdk/)
+            const nestedDirs = readdirSync(fullPath, { withFileTypes: true })
+              .filter(dirent => dirent.isDirectory())
+              .map(dirent => dirent.name);
+            
+            for (const nestedDir of nestedDirs) {
+              const nestedPackageJsonPath = join(fullPath, nestedDir, 'package.json');
+              if (existsSync(nestedPackageJsonPath)) {
+                const packageJson = JSON.parse(readFileSync(nestedPackageJsonPath, 'utf8'));
+                pkg.version = packageJson.version || '1.0.0';
+                pkg.actualName = packageJson.name || key;
+                pkg.fullPath = join(fullPath, nestedDir); // Update to nested path
+                break;
+              }
+            }
           }
         } catch (error) {
           pkg.version = '1.0.0';
           pkg.actualName = key;
         }
+      } else {
+        console.log(chalk.red(`❌ ${pkg.emoji} ${pkg.name} (not found at ${fullPath})`));
       }
     }
 
     const availableCount = Object.values(this.availablePackages).filter(p => p.available).length;
-    console.log(successGradient(`✅ Found ${availableCount} available packages\n`));
+    
+    if (availableCount === 0) {
+      console.log(deathGradient('\n💀 No packages found! Cannot proceed with installation.\n'));
+      console.log(chalk.yellow('💡 Available directories in packages:'));
+      
+      try {
+        const packageDirs = readdirSync(this.packagesPath, { withFileTypes: true })
+          .filter(dirent => dirent.isDirectory())
+          .map(dirent => dirent.name);
+        
+        packageDirs.forEach(dir => {
+          console.log(`   📁 ${dir}`);
+        });
+      } catch (error) {
+        console.log(chalk.red(`   Error reading packages directory: ${error.message}`));
+      }
+      
+      process.exit(1);
+    }
+    
+    console.log(successGradient(`\n✅ Found ${availableCount} available packages\n`));
     await this.sleep(1000);
   }
 
@@ -330,12 +406,12 @@ class CultPackageInstaller {
       },
       'fullstack': {
         name: '🌐 Full-Stack Setup',
-        packages: ['frontend', 'api-server', 'sdk-typescript'],
+        packages: ['frontend', 'sdk-typescript'],
         description: 'Complete web application stack'
       },
       'backend': {
         name: '🖥️  Backend Focus',
-        packages: ['api-server', 'mcp-server', 'cli'],
+        packages: ['mcp-server', 'cli'],
         description: 'Server-side applications and tools'
       },
       'sdk-all': {
