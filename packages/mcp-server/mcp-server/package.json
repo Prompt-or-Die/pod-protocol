@@ -62,7 +62,7 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.13.1",
-    "@pod-protocol/sdk": "^1.5.2",
+    "@pod-protocol/sdk": "^2.0.0",
     "@solana/web3.js": "^1.98.2",
     "@solana/rpc": "^2.1.1",
     "@solana/addresses": "^2.1.1",

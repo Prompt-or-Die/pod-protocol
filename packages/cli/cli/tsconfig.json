@@ -13,7 +13,8 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "@pod-protocol/sdk": ["../sdk/dist/index.d.ts"]
+      "@pod-protocol/sdk": ["./node_modules/@pod-protocol/sdk"],
+      "@pod-protocol/sdk/*": ["./node_modules/@pod-protocol/sdk/*"]
     },
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
@@ -23,7 +24,7 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "types": ["node"],
-    "typeRoots": ["./src/types", "./node_modules/@types", "../node_modules/@types"]
+    "typeRoots": ["./src/types", "./node_modules/@types"]
   },
   "include": [
     "src/**/*"

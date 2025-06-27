@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { logger } from '../lib/logger.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -11,8 +12,8 @@ const sendMessageSchema = z.object({
   type: z.enum(['text', 'image', 'file']).default('text')
 });
 
-// GET /api/messages - List messages for a channel
-router.get('/', async (req, res) => {
+// GET /api/messages - List messages for a channel (requires authentication)
+router.get('/', requireAuth, async (req, res) => {
   try {
     const { channelId, page = 1, limit = 50 } = req.query;
     
@@ -21,6 +22,11 @@ router.get('/', async (req, res) => {
       return;
     }
     
+    // In a real implementation, this would:
+    // 1. Verify user has access to the channel
+    // 2. Query messages from database for that channel
+    // 3. Filter by user permissions
+    
     const messages = [
       {
         id: '1',
@@ -28,14 +34,20 @@ router.get('/', async (req, res) => {
         content: 'Hello everyone! Welcome to the channel.',
         type: 'text',
         sender: {
-          id: req.user?.id,
-          publicKey: req.user?.publicKey,
+          id: req.user!.id,
+          publicKey: req.user!.publicKey,
           name: 'User'
         },
         timestamp: new Date().toISOString(),
         status: 'delivered'
       }
-    ];
+    ].filter(message => message.sender.id === req.user!.id); // Only show user's messages for now
+
+    logger.info('Messages retrieved:', { 
+      userId: req.user!.id,
+      channelId: channelId as string,
+      messageCount: messages.length 
+    });
 
     res.json({
       messages,
@@ -51,17 +63,22 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/messages - Send a new message
-router.post('/', async (req, res) => {
+// POST /api/messages - Send a new message (requires authentication)
+router.post('/', requireAuth, async (req, res) => {
   try {
     const validatedData = sendMessageSchema.parse(req.body);
+    
+    // In a real implementation, this would:
+    // 1. Verify user has permission to send messages to this channel
+    // 2. Save message to database with proper user association
+    // 3. Broadcast to channel members via WebSocket
     
     const newMessage = {
       id: Date.now().toString(),
       ...validatedData,
       sender: {
-        id: req.user?.id,
-        publicKey: req.user?.publicKey,
+        id: req.user!.id,
+        publicKey: req.user!.publicKey,
         name: 'User'
       },
       timestamp: new Date().toISOString(),
@@ -71,7 +88,8 @@ router.post('/', async (req, res) => {
     logger.info('Message sent:', { 
       messageId: newMessage.id, 
       channelId: validatedData.channelId,
-      sender: req.user?.id
+      senderId: req.user!.id,
+      senderPublicKey: req.user!.publicKey 
     });
 
     res.status(201).json({ 

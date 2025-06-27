@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { logger } from '../lib/logger.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -12,9 +13,11 @@ const createChannelSchema = z.object({
   maxMembers: z.number().min(2).max(1000).default(100)
 });
 
-// GET /api/channels - List user's channels
-router.get('/', async (req, res) => {
+// GET /api/channels - List user's channels (requires authentication)
+router.get('/', requireAuth, async (req, res) => {
   try {
+    // In a real implementation, this would query the database for channels
+    // where the user is a member or owner
     const channels = [
       {
         id: '1',
@@ -23,19 +26,28 @@ router.get('/', async (req, res) => {
         isPrivate: false,
         memberCount: 45,
         createdAt: new Date().toISOString(),
-        owner: req.user?.publicKey
+        owner: req.user!.publicKey, // Only show user's channels
+        ownerId: req.user!.id
       }
-    ];
+    ].filter(channel => channel.ownerId === req.user!.id);
 
-    res.json({ channels });
+    logger.info('User channels retrieved:', { 
+      userId: req.user!.id,
+      channelCount: channels.length 
+    });
+
+    res.json({ 
+      channels,
+      count: channels.length 
+    });
   } catch (error) {
     logger.error('Error fetching channels:', error);
     res.status(500).json({ error: 'Failed to fetch channels' });
   }
 });
 
-// POST /api/channels - Create new channel  
-router.post('/', async (req, res) => {
+// POST /api/channels - Create new channel (requires authentication)
+router.post('/', requireAuth, async (req, res) => {
   try {
     const validatedData = createChannelSchema.parse(req.body);
     
@@ -44,8 +56,17 @@ router.post('/', async (req, res) => {
       ...validatedData,
       memberCount: 1,
       createdAt: new Date().toISOString(),
-      owner: req.user?.publicKey
+      owner: req.user!.publicKey,
+      ownerId: req.user!.id // Associate with authenticated user
     };
+
+    // In a real implementation, this would save to database with proper user association
+    logger.info('Channel created:', { 
+      channelId: newChannel.id,
+      channelName: newChannel.name,
+      ownerId: req.user!.id,
+      ownerPublicKey: req.user!.publicKey 
+    });
 
     res.status(201).json({ 
       message: 'Channel created successfully',

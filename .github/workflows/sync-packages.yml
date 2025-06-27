@@ -1,0 +1,198 @@
+name: Sync Packages to Individual Repositories
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/**'
+  workflow_dispatch:
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      typescript: ${{ steps.changes.outputs.typescript }}
+      javascript: ${{ steps.changes.outputs.javascript }}
+      python: ${{ steps.changes.outputs.python }}
+      rust: ${{ steps.changes.outputs.rust }}
+      mcp-server: ${{ steps.changes.outputs.mcp-server }}
+      frontend: ${{ steps.changes.outputs.frontend }}
+      api-server: ${{ steps.changes.outputs.api-server }}
+      cli: ${{ steps.changes.outputs.cli }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            typescript:
+              - 'packages/sdk-typescript/**'
+            javascript:
+              - 'packages/sdk-javascript/**'
+            python:
+              - 'packages/sdk-python/**'
+            rust:
+              - 'packages/sdk-rust/**'
+            mcp-server:
+              - 'packages/mcp-server/**'
+            frontend:
+              - 'packages/frontend/**'
+            api-server:
+              - 'packages/api-server/**'
+            cli:
+              - 'packages/cli/**'
+
+  sync-typescript:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.typescript == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.SYNC_TOKEN }}
+          
+      - name: Configure Git
+        run: |
+          git config user.name "PoD Protocol Bot"
+          git config user.email "bot@pod-protocol.org"
+          
+      - name: Add TypeScript SDK remote
+        run: |
+          git remote add typescript-sdk https://x-access-token:${{ secrets.SYNC_TOKEN }}@github.com/PoD-Protocol/pod-typescript-sdk.git || true
+          
+      - name: Sync TypeScript SDK
+        run: |
+          git subtree push --prefix=packages/sdk-typescript typescript-sdk main
+          
+      - name: Update package.json version
+        run: |
+          echo "⚡ TypeScript SDK synced to individual repository"
+
+  sync-python:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.SYNC_TOKEN }}
+          
+      - name: Configure Git
+        run: |
+          git config user.name "PoD Protocol Bot"
+          git config user.email "bot@pod-protocol.org"
+          
+      - name: Add Python SDK remote
+        run: |
+          git remote add python-sdk https://x-access-token:${{ secrets.SYNC_TOKEN }}@github.com/PoD-Protocol/pod-python-sdk.git || true
+          
+      - name: Sync Python SDK
+        run: |
+          git subtree push --prefix=packages/sdk-python python-sdk main
+
+  sync-rust:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.SYNC_TOKEN }}
+          
+      - name: Configure Git
+        run: |
+          git config user.name "PoD Protocol Bot"
+          git config user.email "bot@pod-protocol.org"
+          
+      - name: Add Rust SDK remote
+        run: |
+          git remote add rust-sdk https://x-access-token:${{ secrets.SYNC_TOKEN }}@github.com/PoD-Protocol/pod-rust-sdk.git || true
+          
+      - name: Sync Rust SDK
+        run: |
+          git subtree push --prefix=packages/sdk-rust rust-sdk main
+
+  sync-mcp-server:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.mcp-server == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.SYNC_TOKEN }}
+          
+      - name: Configure Git
+        run: |
+          git config user.name "PoD Protocol Bot"
+          git config user.email "bot@pod-protocol.org"
+          
+      - name: Add MCP Server remote
+        run: |
+          git remote add mcp-server https://x-access-token:${{ secrets.SYNC_TOKEN }}@github.com/PoD-Protocol/pod-mcp-server.git || true
+          
+      - name: Sync MCP Server
+        run: |
+          git subtree push --prefix=packages/mcp-server mcp-server main
+
+  sync-frontend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.SYNC_TOKEN }}
+          
+      - name: Configure Git
+        run: |
+          git config user.name "PoD Protocol Bot"
+          git config user.email "bot@pod-protocol.org"
+          
+      - name: Add Frontend remote
+        run: |
+          git remote add frontend https://x-access-token:${{ secrets.SYNC_TOKEN }}@github.com/PoD-Protocol/pod-frontend.git || true
+          
+      - name: Sync Frontend
+        run: |
+          git subtree push --prefix=packages/frontend frontend main
+
+  sync-cli:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.cli == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.SYNC_TOKEN }}
+          
+      - name: Configure Git
+        run: |
+          git config user.name "PoD Protocol Bot"
+          git config user.email "bot@pod-protocol.org"
+          
+      - name: Add CLI remote
+        run: |
+          git remote add cli https://x-access-token:${{ secrets.SYNC_TOKEN }}@github.com/PoD-Protocol/pod-cli.git || true
+          
+      - name: Sync CLI
+        run: |
+          git subtree push --prefix=packages/cli cli main
+
+  notify-success:
+    needs: [sync-typescript, sync-python, sync-rust, sync-mcp-server, sync-frontend, sync-cli]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notification
+        run: |
+          echo "⚡ PoD Protocol packages synced to individual repositories"
+          echo "🔮 The cult distribution network is operational" 

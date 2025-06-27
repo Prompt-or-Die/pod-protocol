@@ -15,12 +15,13 @@ import {
   ListOptions,
   ParticipantsOptions,
   MessagesOptions,
+  CommandContext,
 } from "./types.js";
 
 export class ChannelHandlers extends BaseChannelHandler {
   private displayer: ChannelDisplayer;
 
-  constructor(context: any) {
+  constructor(context: CommandContext) {
     super(context);
     this.displayer = new ChannelDisplayer();
   }
@@ -101,10 +102,14 @@ export class ChannelHandlers extends BaseChannelHandler {
           ? (ChannelVisibility[options.visibility as keyof typeof ChannelVisibility] ?? 
              parseInt(options.visibility) as ChannelVisibility)
           : undefined;
-        channels = await this.context.client.getAllChannels(
-          limit,
-          visibilityFilter,
-        );
+        
+        // Get all channels and apply client-side filtering
+        const allChannels = await this.context.client.getAllChannels(limit * 2); // Get more to account for filtering
+        
+        // Apply visibility filter if specified
+        channels = visibilityFilter !== undefined 
+          ? allChannels.filter(channel => channel.visibility === visibilityFilter).slice(0, limit)
+          : allChannels.slice(0, limit);
       }
 
       if (channels.length === 0) {
