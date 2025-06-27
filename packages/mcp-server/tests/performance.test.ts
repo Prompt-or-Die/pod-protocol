@@ -58,7 +58,7 @@ describe('Performance Tests', () => {
     };
 
     // Mock OAuth verification
-    global.fetch = jest.fn().mockResolvedValue({
+    (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
       ok: true,
       json: jest.fn().mockResolvedValue({
         id: 'test-user-123',
@@ -66,7 +66,7 @@ describe('Performance Tests', () => {
         name: 'Test User',
         permissions: ['read', 'write']
       })
-    }) as jest.MockedFunction<typeof fetch>;
+    } as Response);
 
     server = new PodProtocolMCPServer(testConfig, testServerMetadata);
     await server.start();

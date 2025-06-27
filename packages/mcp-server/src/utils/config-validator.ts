@@ -408,10 +408,9 @@ export function getDefaultConfig(environment: 'development' | 'production' | 'te
     case 'development':
       return {
         ...baseConfig,
-        development: {
-          logLevel: 'debug',
-          enableDebugMode: true,
-          mockExternalServices: true
+        logging: {
+          ...baseConfig.logging,
+          level: 'debug'
         }
       };
       
@@ -419,17 +418,13 @@ export function getDefaultConfig(environment: 'development' | 'production' | 'te
       return {
         ...baseConfig,
         security: { 
-          enabled: true,
           jwtSecret: process.env.JWT_SECRET || 'production-jwt-secret',
           rateLimitPerMinute: 30,
           maxMessageSize: 1048576,
           allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || ['https://yourdomain.com']
         },
-        analytics: { enabled: true },
-        production: {
-          logLevel: 'info',
-          enableMetrics: true,
-          healthCheckInterval: 30000
+        logging: {
+          level: 'info'
         }
       };
       
@@ -437,11 +432,12 @@ export function getDefaultConfig(environment: 'development' | 'production' | 'te
       return {
         ...baseConfig,
         transports: {
+          ...baseConfig.transports,
           http: { 
             enabled: true, 
             port: 0, // Random port
             path: '/mcp',
-            corsOrigins: ['*']
+            corsOrigins: ['http://localhost:*']
           },
           websocket: { 
             enabled: true, 

@@ -1,9 +1,9 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { PodProtocolMCPServer } from '../src/mcp-server';
-import { SessionManager } from '../src/session-manager';
 import { ServerMetadata } from '../src/registry-integration';
 import supertest from 'supertest';
 import WebSocket from 'ws';
+import type { Express } from 'express';
 import type { ModernMCPServerConfig } from '../src/types';
 
 // Mock external dependencies
@@ -12,8 +12,8 @@ jest.mock('../src/utils/solana-auth');
 
 describe('Integration Tests', () => {
   let server: PodProtocolMCPServer;
-  let httpServer: any;
-  let wsServer: any;
+  let httpServer: Express.Application;
+  let wsServer: WebSocket.Server;
   let testConfig: ModernMCPServerConfig;
   let testServerMetadata: ServerMetadata;
 
@@ -108,15 +108,28 @@ describe('Integration Tests', () => {
     };
 
     // Mock OAuth verification
-    global.fetch = jest.fn().mockResolvedValue({
+    (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
       ok: true,
+      status: 200,
+      statusText: 'OK',
+      headers: new Headers(),
+      redirected: false,
+      type: 'basic',
+      url: '',
+      clone: jest.fn(),
+      body: null,
+      bodyUsed: false,
+      arrayBuffer: jest.fn(),
+      blob: jest.fn(),
+      formData: jest.fn(),
+      text: jest.fn(),
       json: jest.fn().mockResolvedValue({
         id: 'test-user-123',
         email: 'test@example.com',
         name: 'Test User',
         permissions: ['read', 'write']
       })
-    }) as jest.MockedFunction<typeof fetch>;
+    } as Response);
   });
 
   afterEach(async () => {
@@ -434,10 +447,23 @@ describe('Integration Tests', () => {
 
     it('should handle OAuth token validation failures', async () => {
       // Mock OAuth failure
-      global.fetch = jest.fn().mockResolvedValue({
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
         ok: false,
-        status: 401
-      } as any);
+        status: 401,
+        statusText: 'Unauthorized',
+        headers: new Headers(),
+        redirected: false,
+        type: 'basic',
+        url: '',
+        clone: jest.fn(),
+        body: null,
+        bodyUsed: false,
+        arrayBuffer: jest.fn(),
+        blob: jest.fn(),
+        formData: jest.fn(),
+        text: jest.fn(),
+        json: jest.fn()
+      } as Response);
 
       await supertest(httpServer)
         .post('/session')

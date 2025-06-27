@@ -31,6 +31,15 @@ import {
   SendMessageSchema,
   CreateChannelSchema,
   CreateEscrowSchema,
+  GetAnalyticsSchema,
+  SearchAgentsSchema,
+  SearchChannelsSchema,
+  SearchMessagesSchema,
+  StoreIPFSContentSchema,
+  RetrieveIPFSContentSchema,
+  CompressDataSchema,
+  DecompressDataSchema,
+  GetRecommendationsSchema,
   ToolResponse,
   MCPServerConfig,
   PodAgent,
@@ -303,6 +312,174 @@ export class PodProtocolMCPServer {
           }
         },
         {
+          name: 'get_analytics',
+          description: 'Get analytics data for agents, messages, channels, or network',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              type: {
+                type: 'string',
+                enum: ['agent', 'message', 'channel', 'network', 'dashboard'],
+                description: 'Type of analytics to retrieve'
+              },
+              timeframe: {
+                type: 'string',
+                enum: ['1h', '24h', '7d', '30d', 'all'],
+                default: '24h'
+              },
+              agent_id: { type: 'string', description: 'Specific agent ID for agent analytics' },
+              include_details: { type: 'boolean', default: false }
+            },
+            required: ['type']
+          }
+        },
+        {
+          name: 'search_agents',
+          description: 'Advanced agent discovery with filtering and recommendations',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              query: { type: 'string', description: 'Search query' },
+              capabilities: { type: 'array', items: { type: 'string' } },
+              reputation_min: { type: 'number', minimum: 0, maximum: 100 },
+              sort_by: {
+                type: 'string',
+                enum: ['relevance', 'recent', 'popular', 'reputation'],
+                default: 'relevance'
+              },
+              limit: { type: 'number', minimum: 1, maximum: 100, default: 20 },
+              offset: { type: 'number', minimum: 0, default: 0 },
+              include_recommendations: { type: 'boolean', default: false }
+            }
+          }
+        },
+        {
+          name: 'search_channels',
+          description: 'Search and discover channels with advanced filtering',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              query: { type: 'string', description: 'Search query' },
+              visibility: {
+                type: 'string',
+                enum: ['public', 'private', 'restricted']
+              },
+              participant_count_min: { type: 'number', minimum: 0 },
+              participant_count_max: { type: 'number', minimum: 1 },
+              sort_by: {
+                type: 'string',
+                enum: ['relevance', 'recent', 'popular', 'activity'],
+                default: 'relevance'
+              },
+              limit: { type: 'number', minimum: 1, maximum: 100, default: 20 },
+              offset: { type: 'number', minimum: 0, default: 0 }
+            }
+          }
+        },
+        {
+          name: 'search_messages',
+          description: 'Search messages with content and metadata filtering',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              query: { type: 'string', description: 'Search query' },
+              sender: { type: 'string', description: 'Sender agent address' },
+              recipient: { type: 'string', description: 'Recipient agent address' },
+              message_type: {
+                type: 'string',
+                enum: ['text', 'data', 'command', 'response']
+              },
+              status: {
+                type: 'string',
+                enum: ['pending', 'delivered', 'read', 'failed']
+              },
+              date_from: { type: 'string', format: 'date-time' },
+              date_to: { type: 'string', format: 'date-time' },
+              limit: { type: 'number', minimum: 1, maximum: 100, default: 20 },
+              offset: { type: 'number', minimum: 0, default: 0 }
+            }
+          }
+        },
+        {
+          name: 'store_ipfs_content',
+          description: 'Store content on IPFS for decentralized access',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              content: { type: 'string', description: 'Content to store' },
+              content_type: {
+                type: 'string',
+                enum: ['text', 'json', 'binary', 'image', 'document'],
+                default: 'text'
+              },
+              metadata: { type: 'object', description: 'Additional metadata' },
+              pin: { type: 'boolean', default: true, description: 'Pin content to prevent garbage collection' },
+              encrypt: { type: 'boolean', default: false, description: 'Encrypt content before storing' }
+            },
+            required: ['content']
+          }
+        },
+        {
+          name: 'retrieve_ipfs_content',
+          description: 'Retrieve content from IPFS by hash',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              hash: { type: 'string', description: 'IPFS content hash' },
+              decrypt: { type: 'boolean', default: false, description: 'Decrypt content if encrypted' }
+            },
+            required: ['hash']
+          }
+        },
+        {
+          name: 'compress_data',
+          description: 'Compress data using ZK compression for efficient storage',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              data: { type: 'object', description: 'Data to compress' },
+              compression_type: {
+                type: 'string',
+                enum: ['channel_message', 'agent_metadata', 'custom'],
+                default: 'custom'
+              },
+              store_ipfs: { type: 'boolean', default: false, description: 'Store compressed data on IPFS' }
+            },
+            required: ['data']
+          }
+        },
+        {
+          name: 'decompress_data',
+          description: 'Decompress ZK compressed data',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              compressed_hash: { type: 'string', description: 'Hash of compressed data' },
+              proof: { type: 'object', description: 'ZK proof for decompression' }
+            },
+            required: ['compressed_hash']
+          }
+        },
+        {
+          name: 'get_recommendations',
+          description: 'Get AI-powered recommendations for agents, channels, or actions',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              type: {
+                type: 'string',
+                enum: ['agents', 'channels', 'actions', 'collaborations'],
+                description: 'Type of recommendations'
+              },
+              for_agent: { type: 'string', description: 'Agent to get recommendations for' },
+              context: { type: 'object', description: 'Additional context for recommendations' },
+              limit: { type: 'number', minimum: 1, maximum: 50, default: 10 },
+              include_reason: { type: 'boolean', default: true }
+            },
+            required: ['type']
+          }
+        },
+        {
           name: 'get_session_info',
           description: 'Get current session information',
           inputSchema: {
@@ -497,6 +674,33 @@ export class PodProtocolMCPServer {
             break;
           case 'refresh_session':
             result = await this.handleRefreshSession(args, session);
+            break;
+          case 'get_analytics':
+            result = await this.handleGetAnalytics(args, session);
+            break;
+          case 'search_agents':
+            result = await this.handleSearchAgents(args, session);
+            break;
+          case 'search_channels':
+            result = await this.handleSearchChannels(args, session);
+            break;
+          case 'search_messages':
+            result = await this.handleSearchMessages(args, session);
+            break;
+          case 'store_ipfs_content':
+            result = await this.handleStoreIPFSContent(args, session);
+            break;
+          case 'retrieve_ipfs_content':
+            result = await this.handleRetrieveIPFSContent(args, session);
+            break;
+          case 'compress_data':
+            result = await this.handleCompressData(args, session);
+            break;
+          case 'decompress_data':
+            result = await this.handleDecompressData(args, session);
+            break;
+          case 'get_recommendations':
+            result = await this.handleGetRecommendations(args, session);
             break;
           default:
             throw new Error(`Unknown tool: ${name}`);
@@ -694,6 +898,241 @@ export class PodProtocolMCPServer {
         sessionId: session.sessionId,
         refreshed_at: session.lastActivity,
         valid_until: new Date(session.lastActivity.getTime() + 24 * 60 * 60 * 1000)
+      },
+      timestamp: Date.now()
+    };
+  }
+
+  private async handleGetAnalytics(args: any, session: UserSession | null): Promise<ToolResponse> {
+    if (!session) {
+      throw new Error('Authentication required for analytics');
+    }
+
+    const validated = GetAnalyticsSchema.parse(args);
+    
+    // Mock analytics data based on type
+    let analyticsData: any = {};
+    
+    switch (validated.type) {
+      case 'agent':
+        analyticsData = {
+          total_agents: session.agentIds.length,
+          active_agents: session.agentIds.length,
+          agent_performance: session.agentIds.map(id => ({
+            agent_id: id,
+            messages_sent: Math.floor(Math.random() * 100),
+            success_rate: 0.95 + Math.random() * 0.05
+          }))
+        };
+        break;
+      case 'message':
+        analyticsData = {
+          total_messages: Math.floor(Math.random() * 1000),
+          messages_today: Math.floor(Math.random() * 50),
+          average_response_time: 150 + Math.random() * 100
+        };
+        break;
+      case 'channel':
+        analyticsData = {
+          total_channels: Math.floor(Math.random() * 20),
+          active_channels: Math.floor(Math.random() * 10),
+          channel_activity: []
+        };
+        break;
+    }
+
+    return {
+      success: true,
+      data: {
+        type: validated.type,
+        period: validated.period,
+        analytics: analyticsData,
+        generated_at: Date.now()
+      },
+      timestamp: Date.now()
+    };
+  }
+
+  private async handleSearchAgents(args: any, session: UserSession | null): Promise<ToolResponse> {
+    const validated = SearchAgentsSchema.parse(args);
+    
+    // Mock search results
+    const agents = [];
+    
+    return {
+      success: true,
+      data: {
+        agents,
+        total_count: agents.length,
+        query: validated.query,
+        filters: validated.filters,
+        has_more: false
+      },
+      timestamp: Date.now()
+    };
+  }
+
+  private async handleSearchChannels(args: any, session: UserSession | null): Promise<ToolResponse> {
+    const validated = SearchChannelsSchema.parse(args);
+    
+    // Mock search results
+    const channels = [];
+    
+    return {
+      success: true,
+      data: {
+        channels,
+        total_count: channels.length,
+        query: validated.query,
+        filters: validated.filters,
+        has_more: false
+      },
+      timestamp: Date.now()
+    };
+  }
+
+  private async handleSearchMessages(args: any, session: UserSession | null): Promise<ToolResponse> {
+    const validated = SearchMessagesSchema.parse(args);
+    
+    // Mock search results
+    const messages = [];
+    
+    return {
+      success: true,
+      data: {
+        messages,
+        total_count: messages.length,
+        query: validated.query,
+        filters: validated.filters,
+        has_more: false
+      },
+      timestamp: Date.now()
+    };
+  }
+
+  private async handleStoreIPFSContent(args: any, session: UserSession | null): Promise<ToolResponse> {
+    if (!session) {
+      throw new Error('Authentication required for IPFS storage');
+    }
+
+    const validated = StoreIPFSContentSchema.parse(args);
+    
+    // Mock IPFS hash generation
+    const ipfsHash = `Qm${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+    
+    return {
+      success: true,
+      data: {
+        ipfs_hash: ipfsHash,
+        content_type: validated.content_type,
+        size: validated.content.length,
+        stored_at: Date.now(),
+        gateway_url: `https://ipfs.io/ipfs/${ipfsHash}`
+      },
+      timestamp: Date.now()
+    };
+  }
+
+  private async handleRetrieveIPFSContent(args: any, session: UserSession | null): Promise<ToolResponse> {
+    const validated = RetrieveIPFSContentSchema.parse(args);
+    
+    // Mock content retrieval
+    const mockContent = `Mock content for IPFS hash: ${validated.ipfs_hash}`;
+    
+    return {
+      success: true,
+      data: {
+        ipfs_hash: validated.ipfs_hash,
+        content: mockContent,
+        content_type: 'text/plain',
+        size: mockContent.length,
+        retrieved_at: Date.now()
+      },
+      timestamp: Date.now()
+    };
+  }
+
+  private async handleCompressData(args: any, session: UserSession | null): Promise<ToolResponse> {
+    if (!session) {
+      throw new Error('Authentication required for data compression');
+    }
+
+    const validated = CompressDataSchema.parse(args);
+    
+    // Mock compression (in real implementation, would use ZK compression)
+    const compressedData = Buffer.from(validated.data).toString('base64');
+    const compressionRatio = 0.7 + Math.random() * 0.2; // Mock 70-90% compression
+    
+    return {
+      success: true,
+      data: {
+        compressed_data: compressedData,
+        original_size: validated.data.length,
+        compressed_size: Math.floor(validated.data.length * compressionRatio),
+        compression_ratio: compressionRatio,
+        algorithm: 'zk-compression',
+        compressed_at: Date.now()
+      },
+      timestamp: Date.now()
+    };
+  }
+
+  private async handleDecompressData(args: any, session: UserSession | null): Promise<ToolResponse> {
+    if (!session) {
+      throw new Error('Authentication required for data decompression');
+    }
+
+    const validated = DecompressDataSchema.parse(args);
+    
+    // Mock decompression
+    const decompressedData = Buffer.from(validated.compressed_data, 'base64').toString();
+    
+    return {
+      success: true,
+      data: {
+        decompressed_data: decompressedData,
+        original_size: decompressedData.length,
+        decompressed_at: Date.now()
+      },
+      timestamp: Date.now()
+    };
+  }
+
+  private async handleGetRecommendations(args: any, session: UserSession | null): Promise<ToolResponse> {
+    const validated = GetRecommendationsSchema.parse(args);
+    
+    // Mock recommendations based on type
+    let recommendations: any[] = [];
+    
+    switch (validated.type) {
+      case 'agents':
+        recommendations = [
+          { id: 'agent_rec_1', name: 'Trading Bot', score: 0.95, reason: 'High performance in similar tasks' },
+          { id: 'agent_rec_2', name: 'Analytics Agent', score: 0.87, reason: 'Good match for data analysis' }
+        ];
+        break;
+      case 'channels':
+        recommendations = [
+          { id: 'channel_rec_1', name: 'DeFi Discussion', score: 0.92, reason: 'Active community in your interest area' },
+          { id: 'channel_rec_2', name: 'Trading Signals', score: 0.88, reason: 'Relevant to your trading activity' }
+        ];
+        break;
+      case 'content':
+        recommendations = [
+          { id: 'content_rec_1', title: 'Market Analysis Report', score: 0.94, reason: 'Trending in your network' },
+          { id: 'content_rec_2', title: 'Protocol Update', score: 0.89, reason: 'Important for your agents' }
+        ];
+        break;
+    }
+    
+    return {
+      success: true,
+      data: {
+        type: validated.type,
+        recommendations,
+        total_count: recommendations.length,
+        generated_at: Date.now(),
+        context: session ? `Personalized for user ${session.userId}` : 'General recommendations'
       },
       timestamp: Date.now()
     };

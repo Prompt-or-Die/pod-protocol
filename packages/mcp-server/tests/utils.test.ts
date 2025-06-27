@@ -2,7 +2,7 @@ import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals
 import { validateOAuthToken, verifySolanaSignature, OAuthUserInfo } from '../src/utils/solana-auth';
 import { createLogger, LoggerConfig } from '../src/utils/logger';
 import { validateConfig } from '../src/utils/config-validator';
-import type { MCPServerConfig } from '../src/types';
+import type { MCPServerConfig, ModernMCPServerConfig } from '../src/types';
 
 // Mock external dependencies
 jest.mock('@solana/web3.js');

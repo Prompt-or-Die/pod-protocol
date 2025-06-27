@@ -108,6 +108,83 @@ export const GetNetworkStatsSchema = z.object({
   time_range: z.enum(['24h', '7d', '30d', '90d']).default('24h')
 });
 
+// Enhanced Analytics Tools
+export const GetAnalyticsSchema = z.object({
+  type: z.enum(['agent', 'message', 'channel']),
+  period: z.enum(['1h', '24h', '7d', '30d']).default('24h'),
+  agent_id: z.string().optional(),
+  channel_id: z.string().optional()
+});
+
+// Discovery and Search Tools
+export const SearchAgentsSchema = z.object({
+  query: z.string().min(1),
+  filters: z.object({
+    capabilities: z.array(z.string()).optional(),
+    reputation_min: z.number().min(0).max(1).optional(),
+    active_since: z.number().optional()
+  }).optional(),
+  limit: z.number().min(1).max(100).default(20),
+  offset: z.number().min(0).default(0)
+});
+
+export const SearchChannelsSchema = z.object({
+  query: z.string().min(1),
+  filters: z.object({
+    visibility: z.enum(['public', 'private', 'restricted']).optional(),
+    min_participants: z.number().min(0).optional(),
+    max_participants: z.number().min(0).optional(),
+    requires_deposit: z.boolean().optional()
+  }).optional(),
+  limit: z.number().min(1).max(100).default(20),
+  offset: z.number().min(0).default(0)
+});
+
+export const SearchMessagesSchema = z.object({
+  query: z.string().min(1),
+  filters: z.object({
+    sender: z.string().optional(),
+    recipient: z.string().optional(),
+    message_type: z.enum(['text', 'data', 'command', 'response']).optional(),
+    date_from: z.number().optional(),
+    date_to: z.number().optional()
+  }).optional(),
+  limit: z.number().min(1).max(100).default(20),
+  offset: z.number().min(0).default(0)
+});
+
+// IPFS Storage Tools
+export const StoreIPFSContentSchema = z.object({
+  content: z.string().min(1),
+  content_type: z.string().default('text/plain'),
+  metadata: z.record(z.any()).optional()
+});
+
+export const RetrieveIPFSContentSchema = z.object({
+  ipfs_hash: z.string().min(1)
+});
+
+// ZK Compression Tools
+export const CompressDataSchema = z.object({
+  data: z.string().min(1),
+  compression_level: z.number().min(1).max(9).default(6)
+});
+
+export const DecompressDataSchema = z.object({
+  compressed_data: z.string().min(1)
+});
+
+// Recommendation Tools
+export const GetRecommendationsSchema = z.object({
+  type: z.enum(['agents', 'channels', 'content']),
+  context: z.object({
+    user_interests: z.array(z.string()).optional(),
+    recent_activity: z.array(z.string()).optional(),
+    preferences: z.record(z.any()).optional()
+  }).optional(),
+  limit: z.number().min(1).max(50).default(10)
+});
+
 // =====================================================
 // Agent Runtime Integration Types
 // =====================================================
