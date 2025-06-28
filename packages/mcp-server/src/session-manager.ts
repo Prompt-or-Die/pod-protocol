@@ -7,8 +7,8 @@ import { EventEmitter } from 'events';
 import { randomUUID } from 'crypto';
 import jwt from 'jsonwebtoken';
 import { PodComClient } from '../../sdk-typescript/sdk/dist/index.js';
-import { createLogger } from './logger.js';
-import { SolanaAuthUtils } from './utils/solana-auth.js';
+import { createLogger } from './logger';
+import { SolanaAuthUtils } from './utils/solana-auth';
 
 const logger = createLogger();
 

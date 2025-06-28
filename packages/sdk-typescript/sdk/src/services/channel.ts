@@ -319,11 +319,26 @@ export class ChannelService extends BaseService {
     try {
       const [invitationPDA] = await findInvitationPDA(channelAddress, inviteeAddress, this.programId);
 
-      // TODO: Implement actual transaction building with Web3.js v2
-      // Development logging for invitation process
+      // Create invitation account with real transaction building
+      if (!this.program) {
+        throw new Error("Program not initialized");
+      }
+
+      // Build the invitation transaction
+      const tx = await (this.program.methods as any)
+        .createInvitation()
+        .accounts({
+          channelAccount: channelAddress,
+          invitationAccount: invitationPDA,
+          inviter: signer.address,
+          invitee: inviteeAddress,
+          systemProgram: address("11111111111111111111111111111112"), // System program
+        })
+        .signers([signer])
+        .rpc({ commitment: this.commitment });
+
       if (process.env.NODE_ENV === 'development') {
-        // eslint-disable-next-line no-console
-        console.log("Inviting to channel:", channelAddress, "Invitee:", inviteeAddress, "Invitation PDA:", invitationPDA);
+        console.log("Created invitation transaction:", tx);
       }
 
     } catch (error) {
@@ -336,19 +351,22 @@ export class ChannelService extends BaseService {
    */
   async getChannelParticipants(channelAddress: Address): Promise<Address[]> {
     try {
-      // TODO: Implement actual account fetching with Web3.js v2 RPC
-      if (process.env.NODE_ENV === 'development') {
-        // eslint-disable-next-line no-console
-        console.log("Getting participants for channel:", channelAddress);
-      }
-
-      // Return mock data for now
-      return [
-        address("11111111111111111111111111111114"),
-      ];
+      // Get participant accounts for this channel using real Web3.js v2 RPC
+      const participantFilter = {
+        memcmp: {
+          offset: 8, // After discriminator  
+          bytes: channelAddress.toString()
+        }
+      };
+      
+      const participantAccounts = await this.getProgramAccounts('participantAccount', [participantFilter]);
+      
+      // Process accounts to extract participant addresses
+      const participants = await this.processAccounts(participantAccounts, "participantAccount");
+      
+      return participants.map((participant: any) => participant.agent || participant.member).filter(Boolean);
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
-        // eslint-disable-next-line no-console
         console.error("Error getting channel participants:", error);
       }
       return [];
@@ -567,15 +585,19 @@ export class ChannelService extends BaseService {
         throw new Error("Program not initialized");
       }
 
-      // Get all participant accounts for this channel using Web3.js v2.0 (mock implementation during migration)
-      const participantAccounts: Array<{ account: { data: unknown } }> = []; // TODO: Implement proper v2.0 getProgramAccounts call
+      // Get all participant accounts for this channel using Web3.js v2.0 with real implementation
+      const participantAccounts = await this.getProgramAccounts('participantAccount');
 
       // Extract member addresses from participant accounts
       const members: Address[] = [];
-      for (const acc of participantAccounts) {
+      const participantData = await this.processAccounts(participantAccounts, "participantAccount");
+      
+      for (const participant of participantData) {
         try {
-          const participantData = this.program.coder.accounts.decode("participantAccount", acc.account.data as Buffer);
-          members.push(participantData.member);
+          const memberAddress = (participant as any).member || (participant as any).agent;
+          if (memberAddress) {
+            members.push(memberAddress);
+          }
         } catch {
           // Skip invalid accounts
         }

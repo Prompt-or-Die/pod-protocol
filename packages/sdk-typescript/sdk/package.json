@@ -71,20 +71,25 @@
   ],
   "dependencies": {
     "@coral-xyz/anchor": "0.31.1",
-    "@solana/web3.js": "1.98.2",
     "@solana/rpc": "2.1.1",
+    "@solana/rpc-subscriptions": "2.1.1",
     "@solana/addresses": "2.1.1",
     "@solana/signers": "2.1.1",
     "@solana/transactions": "2.1.1",
     "@solana/accounts": "2.1.1",
-    "@solana/codecs": "2.1.1"
+    "@solana/codecs": "2.1.1",
+    "@solana/transaction-messages": "2.1.1",
+    "@solana/sysvars": "2.1.1",
+    "@solana/errors": "2.1.1"
   },
   "peerDependencies": {
     "@solana-program/compute-budget": ">=0.7.0",
-    "@solana-program/system": ">=0.7.0"
+    "@solana-program/system": ">=0.7.0",
+    "@solana-program/token": ">=0.7.0"
   },
   "optionalDependencies": {
     "@lightprotocol/stateless.js": "^0.22.0",
+    "@lightprotocol/compressed-token": "^0.22.0",
     "keccak": "^3.0.4",
     "helia": "^5.4.2",
     "@helia/unixfs": "^5.0.3",
