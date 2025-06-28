@@ -509,10 +509,6 @@ export class AnalyticsService extends BaseService {
       // Analyze message activity
       let messagesSent = 0;
       const messagesReceived = 0;
-<<<<<<< Updated upstream
-      const averageResponseTime = 0;
-=======
->>>>>>> Stashed changes
       let totalInteractions = 0;
 
       // Get messages sent by this agent using Web3.js v2.0 RPC (mock implementation during migration)
@@ -562,10 +558,6 @@ export class AnalyticsService extends BaseService {
       const totalMessages = messageAccounts.length;
       let deliveredMessages = 0;
       let failedMessages = 0;
-<<<<<<< Updated upstream
-      const averageDeliveryTime = 0;
-=======
->>>>>>> Stashed changes
       let messageVolume = 0;
 
       // Analyze message data from actual accounts

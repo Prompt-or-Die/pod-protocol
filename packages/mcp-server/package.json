@@ -13,16 +13,17 @@
     "pod-mcp-server": "dist/mcp-server.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "bun run build:tsc",
+    "build:tsc": "tsc",
     "build:watch": "tsc --watch",
-    "dev": "tsx watch src/index.ts",
-    "dev:hosted": "MCP_MODE=hosted tsx watch src/index.ts",
-    "dev:self-hosted": "MCP_MODE=self-hosted tsx watch src/index.ts",
-    "start": "node dist/index.js",
-    "start:hosted": "MCP_MODE=hosted node dist/index.js",
-    "start:self-hosted": "MCP_MODE=self-hosted node dist/index.js",
-    "start:stdio": "MCP_MODE=self-hosted node dist/index.js",
-    "start:legacy": "node dist/server.js",
+    "dev": "bun --watch src/index.ts",
+    "dev:hosted": "MCP_MODE=hosted bun --watch src/index.ts",
+    "dev:self-hosted": "MCP_MODE=self-hosted bun --watch src/index.ts",
+    "start": "bun dist/index.js",
+    "start:hosted": "MCP_MODE=hosted bun dist/index.js",
+    "start:self-hosted": "MCP_MODE=self-hosted bun dist/index.js",
+    "start:stdio": "MCP_MODE=self-hosted bun dist/index.js",
+    "start:legacy": "bun dist/server.js",
     "test": "bun test",
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",
@@ -30,10 +31,10 @@
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "clean": "rm -rf dist",
-    "setup": "npm install && npm run build",
-    "prepublishOnly": "npm run clean && npm run build",
-    "prepack": "npm run build",
-    "validate": "npm run build && node dist/config-loader.js",
+    "setup": "bun install && bun run build",
+    "prepublishOnly": "bun run clean && bun run build",
+    "prepack": "bun run build",
+    "validate": "bun run build && bun dist/config-loader.js",
     "docker:build": "docker build -t pod-protocol/mcp-server:latest .",
     "docker:run": "docker run -p 3000:3000 -p 3001:3001 pod-protocol/mcp-server:latest",
     "health-check": "curl -f http://localhost:3000/health || exit 1"
@@ -135,8 +136,10 @@
     "directory": "mcp-server"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.0.0",
+    "bun": ">=1.0.0"
   },
+  "preferredPackageManager": "bun",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"

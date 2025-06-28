@@ -1,0 +1,32 @@
+# Bun configuration for PoD Protocol monorepo
+[install]
+# Prefer Bun for all package installations
+cache = true
+registry = "https://registry.npmjs.org/"
+exact = false
+production = false
+optional = true
+dev = true
+peer = true
+
+[install.scopes]
+# Scope-specific registry configurations if needed
+
+[run]
+# Prefer bun for script execution
+shell = "bun"
+
+[test]
+# Test configuration
+timeout = 30000
+coverage = true
+
+[bundle]
+# Bundling preferences for packages that use Bun bundler
+target = "node"
+format = "esm"
+
+[lockfile]
+# Lockfile preferences
+save = true
+print = "bun"

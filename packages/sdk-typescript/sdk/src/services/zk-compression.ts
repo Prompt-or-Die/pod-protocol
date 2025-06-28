@@ -1,8 +1,6 @@
 import { address } from "@solana/addresses";
 import type { Address } from "@solana/addresses";
-import type { KeyPairSigner } from "@solana/signers";
-import * as anchor from "@coral-xyz/anchor";
-const { BN, web3 } = anchor;
+// Remove unused anchor import
 import { BaseService } from "./base.js";
 import { IPFSService, IPFSStorageResult } from "./ipfs.js";
 import { SecureHasher } from '../utils/secure-memory.js';
@@ -24,35 +22,35 @@ type AnchorProviderType = {
 };
 
 // Optional ZK compression dependencies - only import if available
-let createRpc: unknown, LightSystemProgram: unknown, LightRpc: unknown;
-let createMint: unknown, mintTo: unknown, transfer: unknown, CompressedTokenProgram: unknown;
+let createRpc: unknown, LightSystemProgram: unknown;
+let _createMint: unknown, _mintTo: unknown, _transfer: unknown, CompressedTokenProgram: unknown;
 
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const statelessJs = require('@lightprotocol/stateless.js');
   createRpc = statelessJs.createRpc;
   LightSystemProgram = statelessJs.LightSystemProgram;
-  LightRpc = statelessJs.Rpc;
 } catch {
   // ZK compression dependencies not available - use mock implementations
-  createRpc = (_url1: string, _url2: string, _url3: string) => ({ 
+  createRpc = () => ({ 
     getTransaction: () => Promise.resolve(null),
     getValidityProof: () => Promise.resolve({ root: Buffer.alloc(32) })
   });
   LightSystemProgram = {};
-  LightRpc = {};
 }
 
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const compressedToken = require('@lightprotocol/compressed-token');
-  createMint = compressedToken.createMint;
-  mintTo = compressedToken.mintTo; 
-  transfer = compressedToken.transfer;
+  _createMint = compressedToken.createMint;
+  _mintTo = compressedToken.mintTo; 
+  _transfer = compressedToken.transfer;
   CompressedTokenProgram = compressedToken.CompressedTokenProgram;
 } catch {
   // Compressed token dependencies not available - use mock implementations
-  createMint = () => Promise.resolve('mock_mint');
-  mintTo = () => Promise.resolve('mock_mint_to');
-  transfer = () => Promise.resolve('mock_transfer');
+  _createMint = () => Promise.resolve('mock_mint');
+  _mintTo = () => Promise.resolve('mock_mint_to');
+  _transfer = () => Promise.resolve('mock_transfer');
   CompressedTokenProgram = {};
 }
 
@@ -335,7 +333,7 @@ export class ZKCompressionService extends BaseService {
       } else {
         // Execute compression via Light Protocol transaction (mock implementation for v2 migration)
         const walletWithPublicKey = wallet as { publicKey: string };
-        const instruction = await this.createCompressionInstruction(channelId, compressedMessage, walletWithPublicKey.publicKey);
+        await this.createCompressionInstruction(channelId, compressedMessage, walletWithPublicKey.publicKey);
         
         // Mock transaction processing for Web3.js v2 compatibility
         let signature: string;
@@ -405,7 +403,7 @@ export class ZKCompressionService extends BaseService {
       
       // Create Light Protocol compressed account transaction
       const walletWithPublicKey = wallet as { publicKey: string };
-      const tx = await (program as unknown as { methods: unknown }).methods
+      const tx = await (program as unknown as { methods: { joinChannelCompressed: (_data: unknown[]) => { accounts: (_config: unknown) => { transaction: () => Promise<unknown> } } } }).methods
         .joinChannelCompressed(Array.from(Buffer.from(metadataHash, 'hex')))
         .accounts({
           channelAccount: channelId,
@@ -427,7 +425,7 @@ export class ZKCompressionService extends BaseService {
       const provider = program.provider as AnchorProviderType;
       let signature: string;
       try {
-        signature = await provider.sendAndConfirm(tx);
+        signature = await provider.sendAndConfirm(tx as unknown);
       } catch (err) {
         throw new Error(`Light Protocol RPC error: ${err}`);
       }
@@ -493,7 +491,7 @@ export class ZKCompressionService extends BaseService {
 
       // Implement Light Protocol integration
       const walletWithPublicKey = wallet as { publicKey: string };
-      const tx = await (program as unknown as { methods: unknown }).methods
+      const tx = await (program as unknown as { methods: { batchSyncCompressedMessages: (_hashBytes: number[][], _timestamp: number) => { accounts: (_config: unknown) => { transaction: () => Promise<unknown> } } } }).methods
         .batchSyncCompressedMessages(hashBytes, timestamp)
         .accounts({
           channelAccount: channelId,
@@ -514,15 +512,15 @@ export class ZKCompressionService extends BaseService {
       const provider = program.provider as AnchorProviderType;
       let signature: string;
       try {
-        signature = await provider.sendAndConfirm(tx);
+        signature = await provider.sendAndConfirm(tx as unknown);
       } catch (err) {
         throw new Error(`Light Protocol RPC error: ${err}`);
       }
 
-      const rpcWithMethods = this.rpc as { getTransaction: (sig: string, options?: unknown) => Promise<unknown> };
+      const rpcWithMethods = this.rpc as { getTransaction: (_sig: string, _options?: unknown) => Promise<unknown> };
       const txInfo = await rpcWithMethods.getTransaction(signature, { commitment: 'confirmed' }) as {
         compressionInfo?: {
-          openedAccounts?: Array<{ account: { hash: { toString: (radix: number) => string } } }>
+          openedAccounts?: Array<{ account: { hash: { toString: (_radix: number) => string } } }>
         }
       } | null;
       const compressedAccounts =
@@ -535,7 +533,7 @@ export class ZKCompressionService extends BaseService {
       let merkleRoot = '';
       if (compressedAccounts.length > 0 && txInfo?.compressionInfo?.openedAccounts?.[0]) {
         try {
-          const rpcWithProof = this.rpc as { getValidityProof: (hash: unknown) => Promise<{ root: { toString: (radix: number) => string } }> };
+          const rpcWithProof = this.rpc as { getValidityProof: (_hash: unknown) => Promise<{ root: { toString: (_radix: number) => string } }> };
           const proof = await rpcWithProof.getValidityProof(
             txInfo.compressionInfo.openedAccounts[0].account.hash
           );
@@ -718,7 +716,7 @@ export class ZKCompressionService extends BaseService {
       
       // Implement Light Protocol integration
       const walletWithPublicKey = wallet as { publicKey: string };
-      const tx = await (program as unknown as { methods: unknown }).methods
+      const tx = await (program as unknown as { methods: { broadcastMessageCompressed: (_hash: string, _type: string, _replyTo: string | null, _ipfs: string) => { accounts: (_config: unknown) => { transaction: () => Promise<unknown> } } } }).methods
         .broadcastMessageCompressed(
           message.contentHash, // Use content hash instead of full content
           message.messageType,
@@ -745,7 +743,7 @@ export class ZKCompressionService extends BaseService {
       const provider = program.provider as AnchorProviderType;
       let signature: string;
       try {
-        signature = await provider.sendAndConfirm(tx);
+        signature = await provider.sendAndConfirm(tx as unknown);
       } catch (err) {
         throw new Error(`Light Protocol RPC error: ${err}`);
       }
@@ -772,14 +770,14 @@ export class ZKCompressionService extends BaseService {
     this.batchQueue = [];
 
     try {
-      const rpcWithProof = this.rpc as { getValidityProof: (param: null) => Promise<[unknown]> };
+      const rpcWithProof = this.rpc as { getValidityProof: (_param: null) => Promise<[unknown]> };
       const [treeInfo] = await rpcWithProof.getValidityProof(null);
       const toAddresses = batch.map((m) => m.channel);
       const amounts = batch.map(() => 0);
       const walletWithPublicKey = wallet as { publicKey: string };
 
       const compressedTokenProgram = CompressedTokenProgram as {
-        compress: (params: {
+        compress: (_params: {
           payer: string;
           owner: string;
           source: string;
@@ -791,7 +789,7 @@ export class ZKCompressionService extends BaseService {
         }) => Promise<unknown>;
       };
 
-      const instruction = await compressedTokenProgram.compress({
+      await compressedTokenProgram.compress({
         payer: walletWithPublicKey.publicKey,
         owner: walletWithPublicKey.publicKey,
         source: walletWithPublicKey.publicKey,
@@ -865,11 +863,11 @@ export class ZKCompressionService extends BaseService {
     authority: string
   ): Promise<TransactionInstruction> {
     // Fetch available state tree info and construct a compression instruction
-    const rpcWithProof = this.rpc as { getValidityProof: (param: null) => Promise<[unknown]> };
+    const rpcWithProof = this.rpc as { getValidityProof: (_param: null) => Promise<[unknown]> };
     const [treeInfo] = await rpcWithProof.getValidityProof(null);
 
     const lightSystemProgram = LightSystemProgram as {
-      compress: (params: {
+      compress: (_params: {
         payer: string;
         toAddress: string;
         lamports: number;
@@ -952,7 +950,7 @@ export class ZKCompressionService extends BaseService {
     options: {
       messageType?: string;
       attachments?: string[];
-      metadata?: Record<string, any>;
+      metadata?: Record<string, unknown>;
       replyTo?: string;
     } = {}
   ): Promise<{
@@ -1006,7 +1004,7 @@ export class ZKCompressionService extends BaseService {
     return {
       messages,
       totalCount: messages.length,
-      hasMore: messages.length === (options.limit || 10)
+      hasMore: messages.length === (options.limit || 50)
     };
   }
 

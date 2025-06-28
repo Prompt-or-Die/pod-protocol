@@ -4,15 +4,15 @@
   "description": "PoD Protocol Frontend - Modern AI Agent Communication dApp",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbo",
-    "build": "next build",
-    "start": "next start",
+    "dev": "bun --bun next dev --turbo",
+    "build": "bun --bun next build",
+    "start": "bun --bun next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "test": "bun test",
     "test:watch": "bun test --watch",
     "test:e2e": "bun test tests/e2e/",
-    "analyze": "ANALYZE=true next build",
+    "analyze": "ANALYZE=true bun --bun next build",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
@@ -88,5 +88,6 @@
   "engines": {
     "node": ">=18.17.0",
     "bun": ">=1.0.0"
-  }
+  },
+  "preferredPackageManager": "bun"
 }

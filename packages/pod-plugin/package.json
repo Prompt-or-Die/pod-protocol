@@ -68,9 +68,10 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "bun run build:tsup",
+    "build:tsup": "tsup",
     "build:watch": "tsup --watch",
-    "dev": "tsup --watch",
+    "dev": "bun --watch src/index.ts",
     "clean": "rm -rf dist",
     "test": "bun test",
     "test:watch": "bun test --watch",
@@ -90,9 +91,9 @@
     "release:prerelease": "commit-and-tag-version --prerelease",
     "release:dry": "commit-and-tag-version --dry-run",
     "release:first": "commit-and-tag-version --first-release",
-    "postrelease": "git push --follow-tags origin main && npm publish",
-    "prepublishOnly": "npm run clean && npm run build",
-    "prepack": "npm run build"
+    "postrelease": "git push --follow-tags origin main && bun publish",
+    "prepublishOnly": "bun run clean && bun run build",
+    "prepack": "bun run build"
   },
   "dependencies": {
     "@solana/web3.js": "^1.98.2",
@@ -253,8 +254,9 @@
   },
   "engines": {
     "node": ">=18.0.0",
-    "npm": ">=8.0.0"
+    "bun": ">=1.0.0"
   },
+  "preferredPackageManager": "bun",
   "os": [
     "darwin",
     "linux",

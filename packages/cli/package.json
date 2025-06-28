@@ -11,10 +11,11 @@
     ".": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "bun run build:tsc",
+    "build:tsc": "tsc",
     "build:watch": "tsc --watch",
-    "dev": "bun run build && node dist/index.js",
-    "start": "node dist/index.js",
+    "dev": "bun run build && bun dist/index.js",
+    "start": "bun dist/index.js",
     "clean": "rimraf dist",
     "test": "bun test",
     "test:watch": "bun test --watch",
@@ -91,5 +92,10 @@
     "type": "git",
     "url": "https://github.com/pod-protocol/pod-protocol.git",
     "directory": "cli"
-  }
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "bun": ">=1.0.0"
+  },
+  "preferredPackageManager": "bun"
 }

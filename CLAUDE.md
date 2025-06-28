@@ -26,44 +26,48 @@ yarn run build:idl     # Generate IDL files
 ### Test Commands
 ```bash
 # Run all tests across workspaces
-yarn run test:all
+bun run test:all
 
 # Run tests with coverage
-yarn run test:coverage
+bun run test:coverage
 
 # Individual workspace tests
-cd sdk && bun run test
-cd cli && bun run test
-cd frontend && yarn run test
+cd packages/sdk-typescript/sdk && bun test
+cd packages/cli && bun test  
+cd packages/frontend && bun test
+cd packages/api-server/api-server && bun test
+cd packages/mcp-server && bun test
 ```
 
 ### Lint Commands
 ```bash
 # Lint all workspaces
-yarn run lint:all
+bun run lint
 
 # Fix linting issues
-yarn run lint:fix
+bun run lint:fix
 
 # Individual workspace linting
-cd sdk && bun run lint
-cd cli && bun run lint
-cd frontend && yarn run lint
+cd packages/sdk-typescript/sdk && bun run lint
+cd packages/cli && bun run lint
+cd packages/frontend && bun run lint
+cd packages/api-server/api-server && bun run lint
+cd packages/mcp-server && bun run lint
 ```
 
 ### Development Workflow
 ```bash
 # Setup project dependencies
-yarn run setup
+bun install
 
 # Run development environment
-yarn run dev
+bun run dev
 
 # Verify build integrity
-yarn run verify:build
+bun run build
 
-# Production readiness test
-yarn run production:test
+# Run all tests and validation
+bun run validate
 ```
 
 ## Architecture Overview
@@ -97,12 +101,13 @@ yarn run production:test
 
 ## Package Managers and Runtime
 
-This project uses multiple package managers strategically:
-- **Yarn**: Root workspace and Anchor compatibility
-- **Bun**: SDK and CLI for performance (preferred runtime)
-- **npm**: Frontend dependencies
+This project uses Bun as the preferred package manager and runtime across all packages:
+- **Bun**: Preferred for all packages - SDK, CLI, frontend, API server, MCP server (performance optimized)
+- **Yarn**: Root workspace management and Anchor compatibility
+- **Node.js**: Fallback runtime support (>=18.0.0)
 
-Runtime preference order: Bun > Node.js >=18
+Runtime preference order: Bun (preferred) > Node.js >=18
+Package manager preference: Bun > Yarn > npm
 
 ## Key Development Patterns
 
