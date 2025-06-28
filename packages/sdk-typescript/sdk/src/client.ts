@@ -1,6 +1,5 @@
 import { createSolanaRpc } from '@solana/rpc';
 import { address } from '@solana/addresses';
-import { generateKeyPairSigner } from '@solana/signers';
 import type { Address } from '@solana/addresses';
 import type { Rpc } from '@solana/rpc';
 import type { KeyPairSigner } from '@solana/signers';
@@ -8,8 +7,6 @@ import * as anchor from "@coral-xyz/anchor";
 const { Program, AnchorProvider } = anchor;
 import type { Program as ProgramType, Wallet } from "@coral-xyz/anchor";
 import {
-  PROGRAM_ID,
-  PodComConfig,
   AgentAccount,
   MessageAccount,
   ChannelAccount,
@@ -20,27 +17,23 @@ import {
   CreateChannelOptions,
   DepositEscrowOptions,
   WithdrawEscrowOptions,
-  BroadcastMessageOptions,
   MessageStatus,
-  ChannelVisibility,
   AgentSearchFilters,
 } from "./types";
-import { PodCom, IDL } from "./pod_com";
-import type { IdlAccounts } from "@coral-xyz/anchor";
+import { IDL } from "./pod_com";
 
 // Import services
-import { BaseService, BaseServiceConfig } from "./services/base";
 import { AgentService } from "./services/agent";
 import { MessageService } from "./services/message";
-import { ChannelService, ChannelData } from "./services/channel";
+import { ChannelService } from "./services/channel";
 import { SessionKeysService } from "./services/session-keys";
 import { JitoBundlesService } from "./services/jito-bundles";
 import { SecureKeyManager, SecureWalletOperations } from "./utils/secure-memory";
 import { EscrowService } from "./services/escrow";
 import { AnalyticsService } from "./services/analytics";
 import { DiscoveryService } from "./services/discovery";
-import { IPFSService, IPFSConfig } from "./services/ipfs";
-import { ZKCompressionService, ZKCompressionConfig } from "./services/zk-compression";
+import { IPFSService } from "./services/ipfs";
+import { ZKCompressionService } from "./services/zk-compression";
 // Note: JitoBundleService import removed - using JitoBundlesService
 
 // Use string literal types for commitment in Web3.js v2.0
@@ -58,10 +51,10 @@ export interface PodClientConfig {
  * Refactored to use service-based architecture for better maintainability
  */
 export class PodComClient {
-  private rpc: Rpc<any>;
+  private rpc: Rpc<object>;
   private programId: Address;
   private commitment: Commitment;
-  private program?: ProgramType<any>; // Use any for IDL compatibility
+  private program?: ProgramType<typeof IDL>;
 
   // Service instances - public for direct access to specific functionality
   public agents: AgentService;
@@ -114,7 +107,7 @@ export class PodComClient {
         // For now, we'll maintain compatibility using the legacy connection pattern
         const legacyConnection = {
           getLatestBlockhash: async () => ({ blockhash: "mock", lastValidBlockHeight: 0 }),
-          sendRawTransaction: async (tx: any) => "mockSignature",
+          sendRawTransaction: async (_tx: unknown) => "mockSignature",
           // Add other required methods as needed
         } as any;
         
@@ -130,7 +123,7 @@ export class PodComClient {
           );
         }
         
-        this.program = new Program(IDL as any, provider);
+        this.program = new Program(IDL, provider);
         
         // Validate program was created successfully
         if (!this.program) {
@@ -155,7 +148,7 @@ export class PodComClient {
         if (wallet && wallet.payer) {
           // For now, we'll skip setting the wallet on jitoBundles if it's not compatible
           // This can be enhanced when we have proper type conversion utilities
-          console.warn('Jito bundles wallet compatibility requires Web3.js v2 KeyPairSigner - skipping wallet setup');
+          // Note: Jito bundles wallet compatibility requires Web3.js v2 KeyPairSigner - skipping wallet setup
         }
       } else {
         // No wallet provided - validate IDL before setting on services
@@ -369,8 +362,8 @@ export class PodComClient {
   async getChannelParticipants(
     channelPDA: Address,
     limit: number = 50
-  ): Promise<Array<any>> {
-    return this.channels.getChannelParticipants(channelPDA);
+  ): Promise<Array<unknown>> {
+    return this.channels.getChannelParticipants(channelPDA, limit);
   }
 
   /**
@@ -379,7 +372,7 @@ export class PodComClient {
   async getChannelMessages(
     channelPDA: Address,
     limit: number = 50
-  ): Promise<Array<any>> {
+  ): Promise<Array<unknown>> {
     return this.channels.getChannelMessages(channelPDA, limit);
   }
 
@@ -474,7 +467,7 @@ export class PodComClient {
    */
   withSecurePrivateKey<T>(
     privateKey: Uint8Array,
-    callback: (secureKey: any) => T
+    callback: (secureKey: unknown) => T
   ): T {
     return SecureWalletOperations.withSecurePrivateKey(privateKey, callback);
   }
@@ -505,14 +498,14 @@ export class PodComClient {
    * Register agent method for enhanced MCP server compatibility
    */
   async registerAgentMCP(
-    agentData: {
+    _agentData: {
       name: string;
       description: string;
       capabilities: string[];
       endpoint?: string;
-      metadata?: any;
+      metadata?: unknown;
     },
-    wallet: KeyPairSigner
+    _wallet: KeyPairSigner
   ): Promise<{ agentId: string; signature: string }> {
     // Mock implementation for MCP compatibility
     return {
@@ -531,8 +524,8 @@ export class PodComClient {
       limit?: number;
       offset?: number;
     },
-    filters: any = {}
-  ): Promise<{ agents: any[]; totalCount: number; hasMore: boolean }> {
+    _filters: unknown = {}
+  ): Promise<{ agents: unknown[]; totalCount: number; hasMore: boolean }> {
     // Convert string capabilities to number array for compatibility
     const agentFilters: AgentSearchFilters = {
       capabilities: Array.isArray(searchParams.capabilities) 

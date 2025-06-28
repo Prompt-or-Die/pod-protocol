@@ -2,10 +2,20 @@ import { createSolanaRpc } from '@solana/rpc';
 import { address } from '@solana/addresses';
 import type { Address } from '@solana/addresses';
 import type { Rpc } from '@solana/rpc';
-import * as anchor from "@coral-xyz/anchor";
-const { Program, BorshCoder } = anchor;
-import type { Program as ProgramType } from "@coral-xyz/anchor";
-type AnchorProgram = ProgramType<any>;
+import type { Program as ProgramType, BorshCoder, Idl } from "@coral-xyz/anchor";
+import type { PodCom } from '../pod_com';
+
+// Type for the specific Pod Communication program
+type AnchorProgram = ProgramType<PodCom>;
+
+// Define the RPC type more specifically for Web3.js v2 compatibility
+type SolanaRpc = Rpc<{
+  getAccountInfo: unknown;
+  getMultipleAccounts: unknown;
+  sendTransaction: unknown;
+  simulateTransaction: unknown;
+  getLatestBlockhash: unknown;
+}>;
 
 // Use string literal types for commitment in Web3.js v2.0
 type Commitment = 'confirmed' | 'finalized' | 'processed';
@@ -14,7 +24,7 @@ type Commitment = 'confirmed' | 'finalized' | 'processed';
  * Configuration object for BaseService constructor
  */
 export interface BaseServiceConfig {
-  rpc: Rpc<any>;
+  rpc: SolanaRpc;
   programId: Address;
   commitment: Commitment;
   program?: AnchorProgram;
@@ -26,10 +36,10 @@ export interface BaseServiceConfig {
 export abstract class BaseService {
   protected programId: Address;
   protected commitment: Commitment;
-  protected rpc: Rpc<any>;
-  protected coder: any;
+  protected rpc: SolanaRpc;
+  protected coder?: BorshCoder;
   protected program?: AnchorProgram;
-  protected idl?: any;
+  protected idl?: Idl;
 
   constructor(
     rpcUrl: string,
@@ -44,7 +54,7 @@ export abstract class BaseService {
   /**
    * Get the RPC client
    */
-  public getRpc(): Rpc<any> {
+  public getRpc(): SolanaRpc {
     return this.rpc;
   }
 
@@ -90,9 +100,9 @@ export abstract class BaseService {
     return this.program;
   }
 
-  protected getAccount(accountName: string) {
+  protected getAccount(accountName: string): unknown {
     const program = this.ensureInitialized();
-    const accounts = program.account as any;
+    const accounts = program.account as Record<string, unknown>;
     if (!accounts || !accounts[accountName]) {
       throw new Error(
         `Account type '${accountName}' not found in program. Verify IDL is correct.`,
@@ -101,14 +111,14 @@ export abstract class BaseService {
     return accounts[accountName];
   }
 
-  protected getProgramMethods() {
+  protected getProgramMethods(): Record<string, unknown> {
     const program = this.ensureInitialized();
     if (!program.methods) {
       throw new Error(
         "Program methods not available. Verify IDL is correct and program is initialized.",
       );
     }
-    return program.methods as any;
+    return program.methods as Record<string, unknown>;
   }
 
   setProgram(program: AnchorProgram) {
@@ -125,7 +135,7 @@ export abstract class BaseService {
   /**
    * Set the IDL for read-only operations
    */
-  setIDL(idl: any): void {
+  setIDL(idl: Idl): void {
     if (!idl) {
       throw new Error("Cannot set null or undefined IDL");
     }
@@ -139,7 +149,7 @@ export abstract class BaseService {
     return this.idl !== undefined;
   }
 
-  protected ensureIDL(): any {
+  protected ensureIDL(): Idl {
     if (!this.idl) {
       throw new Error(
         "IDL not set. Call client.initialize() first or ensure IDL is properly imported.",

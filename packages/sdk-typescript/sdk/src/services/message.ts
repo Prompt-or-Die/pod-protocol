@@ -1,9 +1,7 @@
 import type { Address } from '@solana/addresses';
 import { address } from '@solana/addresses';
 import type { KeyPairSigner } from '@solana/signers';
-import * as anchor from "@coral-xyz/anchor";
-const { BN, web3 } = anchor;
-// Removed unused anchor import
+// Removed unused anchor import and destructuring
 import { BaseService } from "./base";
 import {
   MessageAccount,
@@ -30,8 +28,6 @@ export class MessageService extends BaseService {
     wallet: KeyPairSigner,
     options: SendMessageOptions,
   ): Promise<string> {
-    const program = this.ensureInitialized();
-
     // Derive sender agent PDA
     const [senderAgentPDA] = await findAgentPDA(wallet.address, this.programId);
 
@@ -56,7 +52,8 @@ export class MessageService extends BaseService {
     );
 
     return retry(async () => {
-      const tx = await (program.methods as any)
+      const methods = this.getProgramMethods();
+      const tx = await methods
         .sendMessage(
           options.recipient,
           Array.from(payloadHash),
@@ -99,8 +96,8 @@ export class MessageService extends BaseService {
     try {
       const account = await this.getAccount("messageAccount").fetch(messagePDA);
       return this.convertMessageAccountFromProgram(account, messagePDA);
-    } catch (error: any) {
-      if (error?.message?.includes("Account does not exist")) {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes("Account does not exist")) {
         return null;
       }
       throw error;
@@ -113,7 +110,7 @@ export class MessageService extends BaseService {
     statusFilter?: MessageStatus,
   ): Promise<MessageAccount[]> {
     try {
-      const filters: any[] = [
+      const filters: Array<{ memcmp: { offset: number; bytes: unknown } }> = [
         {
           memcmp: {
             offset: 8 + 32,
@@ -141,8 +138,8 @@ export class MessageService extends BaseService {
         );
         return this.convertMessageAccountFromProgram(account, acc.pubkey);
       });
-    } catch (error: any) {
-      throw new Error(`Failed to fetch agent messages: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Failed to fetch agent messages: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -153,16 +150,16 @@ export class MessageService extends BaseService {
   private convertMessageType(
     messageType: MessageType,
     customValue?: number,
-  ): any {
+  ): unknown {
     return convertMessageTypeToProgram(messageType, customValue);
   }
 
-  private convertMessageTypeFromProgram(programType: any): MessageType {
+  private convertMessageTypeFromProgram(programType: unknown): MessageType {
     const result = convertMessageTypeFromProgram(programType);
     return result.type;
   }
 
-  private convertMessageStatus(status: MessageStatus): any {
+  private convertMessageStatus(status: MessageStatus): unknown {
     switch (status) {
       case MessageStatus.PENDING:
         return { pending: {} };
@@ -177,7 +174,7 @@ export class MessageService extends BaseService {
     }
   }
 
-  private convertMessageStatusFromProgram(programStatus: any): MessageStatus {
+  private convertMessageStatusFromProgram(programStatus: Record<string, unknown>): MessageStatus {
     if (programStatus.pending) return MessageStatus.PENDING;
     if (programStatus.delivered) return MessageStatus.DELIVERED;
     if (programStatus.read) return MessageStatus.READ;
@@ -186,7 +183,7 @@ export class MessageService extends BaseService {
   }
 
   private convertMessageAccountFromProgram(
-    account: any,
+    account: Record<string, unknown>,
     publicKey: Address,
   ): MessageAccount {
     return {
@@ -237,10 +234,12 @@ export class MessageService extends BaseService {
     recipient: string;
     content: string;
     messageType?: string;
-    metadata?: any;
+    metadata?: unknown;
     expiresIn?: number;
   }): Promise<{ messageId: string; signature: string }> {
     // Mock implementation for MCP compatibility
+    // Using void to acknowledge parameter exists but is not used
+    void options;
     return {
       messageId: `msg_${Date.now()}`,
       signature: `sig_${Date.now()}`
@@ -255,8 +254,10 @@ export class MessageService extends BaseService {
     offset?: number;
     messageType?: string;
     status?: string;
-  }): Promise<{ messages: any[]; totalCount: number; hasMore: boolean }> {
+  }): Promise<{ messages: unknown[]; totalCount: number; hasMore: boolean }> {
     // Mock implementation for MCP compatibility
+    // Using void to acknowledge parameter exists but is not used
+    void options;
     return {
       messages: [],
       totalCount: 0,
@@ -269,6 +270,8 @@ export class MessageService extends BaseService {
    */
   async markAsRead(messageId: string): Promise<{ signature: string }> {
     // Mock implementation for MCP compatibility
+    // Using void to acknowledge parameter exists but is not used
+    void messageId;
     return {
       signature: `read_sig_${Date.now()}`
     };

@@ -1,12 +1,10 @@
 import { address } from '@solana/addresses';
 import type { Address } from '@solana/addresses';
-import type { Rpc } from '@solana/kit';
 import { BaseService } from './base.js';
 import {
   AgentAccount,
   MessageAccount,
   ChannelAccount,
-  EscrowAccount,
   MessageStatus,
   ChannelVisibility,
   AgentMetrics,
@@ -17,11 +15,23 @@ import {
 } from "../types.js";
 import {
   lamportsToSol,
-  formatDuration,
   formatBytes,
   getCapabilityNames,
-  hasCapability,
 } from "../utils.js";
+
+/**
+ * Types for Solana account data structures
+ */
+interface SolanaAccountInfo {
+  pubkey: string;
+  account: {
+    data: Buffer | Uint8Array;
+    executable: boolean;
+    lamports: number;
+    owner: string;
+    rentEpoch?: number;
+  };
+}
 
 /**
  * Analytics and insights for agent activities, message patterns, and channel usage
@@ -95,10 +105,10 @@ export class AnalyticsService extends BaseService {
   /**
    * Get agent ecosystem analytics
    */
-  async getAgentAnalytics(limit: number = 100): Promise<AgentAnalytics> {
+  async getAgentAnalytics(): Promise<AgentAnalytics> {
     try {
       // Use placeholder for getProgramAccounts until v2.0 API is properly implemented
-      const agents: any[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
+      const agents: SolanaAccountInfo[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
 
       const agentData: AgentAccount[] = agents.map((acc) => {
         const account = this.ensureInitialized().coder.accounts.decode(
@@ -152,8 +162,8 @@ export class AnalyticsService extends BaseService {
         topAgentsByReputation,
         recentlyActive,
       };
-    } catch (error: any) {
-      throw new Error(`Failed to get agent analytics: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Failed to get agent analytics: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -163,7 +173,7 @@ export class AnalyticsService extends BaseService {
   async getMessageAnalytics(limit: number = 1000): Promise<MessageAnalytics> {
     try {
       // Use placeholder for getProgramAccounts until v2.0 API is properly implemented
-      const messages: any[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
+      const messages: SolanaAccountInfo[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
 
       const messageData: MessageAccount[] = messages
         .slice(0, limit)
@@ -245,8 +255,8 @@ export class AnalyticsService extends BaseService {
         topSenders,
         recentMessages: messageData.slice(0, 20),
       };
-    } catch (error: any) {
-      throw new Error(`Failed to get message analytics: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Failed to get message analytics: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -256,7 +266,7 @@ export class AnalyticsService extends BaseService {
   async getChannelAnalytics(limit: number = 100): Promise<ChannelAnalytics> {
     try {
       // Use placeholder for getProgramAccounts until v2.0 API is properly implemented
-      const channels: any[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
+      const channels: SolanaAccountInfo[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
 
       const channelData: ChannelAccount[] = channels
         .slice(0, limit)
@@ -334,8 +344,8 @@ export class AnalyticsService extends BaseService {
         totalEscrowValue,
         averageChannelFee,
       };
-    } catch (error: any) {
-      throw new Error(`Failed to get channel analytics: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Failed to get channel analytics: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -345,7 +355,7 @@ export class AnalyticsService extends BaseService {
   async getNetworkAnalytics(): Promise<NetworkAnalytics> {
     try {
       // Use placeholder network analytics until v2.0 API is properly implemented
-      const recentSlots: any[] = []; // TODO: Implement proper v2.0 performance samples
+      const recentSlots: Array<{ numTransactions?: number }> = []; // TODO: Implement proper v2.0 performance samples
 
       const averageTps = 0; // TODO: Calculate from performance samples
 
@@ -358,7 +368,7 @@ export class AnalyticsService extends BaseService {
       }
 
       // Get total value locked (from escrow accounts)
-      const escrows: any[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
+      const escrows: SolanaAccountInfo[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
 
       const totalValueLocked = escrows.reduce((sum, acc) => {
         try {
@@ -388,8 +398,8 @@ export class AnalyticsService extends BaseService {
         networkHealth,
         peakUsageHours,
       };
-    } catch (error: any) {
-      throw new Error(`Failed to get network analytics: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Failed to get network analytics: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -453,7 +463,7 @@ export class AnalyticsService extends BaseService {
     return hash.substring(0, 16); // First 8 bytes as hex
   }
 
-  private convertMessageTypeFromProgram(programType: any): any {
+  private convertMessageTypeFromProgram(programType: Record<string, unknown>): string {
     if (programType.text !== undefined) return "Text";
     if (programType.data !== undefined) return "Data"; 
     if (programType.command !== undefined) return "Command";
@@ -461,7 +471,7 @@ export class AnalyticsService extends BaseService {
     return "Text";
   }
 
-  private convertMessageStatusFromProgram(programStatus: any): MessageStatus {
+  private convertMessageStatusFromProgram(programStatus: Record<string, unknown>): MessageStatus {
     if (programStatus.pending !== undefined) return MessageStatus.PENDING;
     if (programStatus.delivered !== undefined) return MessageStatus.DELIVERED;
     if (programStatus.read !== undefined) return MessageStatus.READ;
@@ -470,7 +480,7 @@ export class AnalyticsService extends BaseService {
   }
 
   private convertChannelVisibilityFromProgram(
-    programVisibility: any,
+    programVisibility: Record<string, unknown>,
   ): ChannelVisibility {
     if (programVisibility.public !== undefined) return ChannelVisibility.Public;
     if (programVisibility.private !== undefined) return ChannelVisibility.Private;
@@ -489,21 +499,24 @@ export class AnalyticsService extends BaseService {
       
       try {
         agentData = await agentAccount.fetch(agentAddress);
-      } catch (error) {
+      } catch {
         throw new Error("Agent not found");
       }
 
       // Get all program accounts using Web3.js v2.0 RPC (mock implementation during migration)
-      const agentAccounts: any[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
+      // TODO: Implement proper v2.0 getProgramAccounts call
 
       // Analyze message activity
       let messagesSent = 0;
       const messagesReceived = 0;
+<<<<<<< Updated upstream
       const averageResponseTime = 0;
+=======
+>>>>>>> Stashed changes
       let totalInteractions = 0;
 
       // Get messages sent by this agent using Web3.js v2.0 RPC (mock implementation during migration)
-      const messageAccounts: any[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
+      const messageAccounts: SolanaAccountInfo[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
 
       messagesSent = messageAccounts.length;
       totalInteractions = messagesSent;
@@ -528,8 +541,8 @@ export class AnalyticsService extends BaseService {
         successRate: 0.95,
         peakActivityHours: [9, 10, 14, 15, 16],
       };
-    } catch (error: any) {
-      throw new Error(`Failed to get agent metrics: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Failed to get agent metrics: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -540,7 +553,7 @@ export class AnalyticsService extends BaseService {
       }
 
       // Get all message accounts using Web3.js v2.0 RPC (mock implementation during migration)
-      const messageAccounts: any[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
+      const messageAccounts: SolanaAccountInfo[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
 
       const now = Date.now();
       const timeframeMs = this.getTimeframeMs(timeframe);
@@ -549,7 +562,10 @@ export class AnalyticsService extends BaseService {
       const totalMessages = messageAccounts.length;
       let deliveredMessages = 0;
       let failedMessages = 0;
+<<<<<<< Updated upstream
       const averageDeliveryTime = 0;
+=======
+>>>>>>> Stashed changes
       let messageVolume = 0;
 
       // Analyze message data from actual accounts
@@ -568,7 +584,7 @@ export class AnalyticsService extends BaseService {
               failedMessages++;
             }
           }
-        } catch (error) {
+        } catch {
           // Skip invalid accounts
         }
       }
@@ -585,8 +601,8 @@ export class AnalyticsService extends BaseService {
         peakHours: [9, 14, 16, 20],
         timeframe
       };
-    } catch (error: any) {
-      throw new Error(`Failed to get message metrics: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Failed to get message metrics: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -615,7 +631,7 @@ export class AnalyticsService extends BaseService {
       }
 
       // Get channel accounts using Web3.js v2.0 RPC (mock implementation during migration)
-      const channelAccounts: any[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
+      const channelAccounts: SolanaAccountInfo[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
 
       const totalChannels = channelAccounts.length;
       let activeChannels = 0;
@@ -632,7 +648,7 @@ export class AnalyticsService extends BaseService {
           
           // Estimate message activity based on member count
           messageActivity += channelData.memberCount.toNumber() * 2;
-        } catch (error) {
+        } catch {
           // Skip invalid accounts
         }
       }
@@ -648,8 +664,8 @@ export class AnalyticsService extends BaseService {
         growthRate: 0.15,
         mostActiveChannels: [],
       };
-    } catch (error: any) {
-      throw new Error(`Failed to get channel metrics: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Failed to get channel metrics: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -659,12 +675,11 @@ export class AnalyticsService extends BaseService {
       const averageTps = 2500; // Mock TPS value
       const blockTime = 400;
       
-      // Mock current slot and epoch info
+      // Mock current slot
       const currentSlot = Date.now();
-      const epochInfo = { epoch: 500, slotIndex: 100000 };
 
       // Get escrow accounts using Web3.js v2.0 RPC (mock implementation during migration)
-      const escrowAccounts: any[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
+      const escrowAccounts: SolanaAccountInfo[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
 
       const totalValueLocked = escrowAccounts.length * 1000000;
       const activeEscrows = escrowAccounts.length;
@@ -678,7 +693,7 @@ export class AnalyticsService extends BaseService {
       });
 
       // Get real historical data from message accounts (mock implementation during migration)
-      const messageAccounts: any[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
+      const messageAccounts: SolanaAccountInfo[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
 
       const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
       let messageVolume24h = 0;
@@ -693,7 +708,7 @@ export class AnalyticsService extends BaseService {
             messageVolume24h++;
             activeAgents24h.add(messageData.sender.toString());
           }
-        } catch (error) {
+        } catch {
           // Skip invalid accounts
         }
       }
@@ -713,12 +728,12 @@ export class AnalyticsService extends BaseService {
         activeAgents24h: activeAgents24h.size,
         peakUsageHours
       };
-    } catch (error: any) {
-      throw new Error(`Failed to get network metrics: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Failed to get network metrics: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
-  async getPerformanceMetrics(address?: Address): Promise<PerformanceMetrics> {
+  async getPerformanceMetrics(): Promise<PerformanceMetrics> {
     try {
       // Mock performance data during Web3.js v2.0 migration
       let avgConfirmationTime = 400;
@@ -749,8 +764,8 @@ export class AnalyticsService extends BaseService {
         resourceUtilization: 0.75,
         queueDepth: 0
       };
-    } catch (error: any) {
-      throw new Error(`Failed to get performance metrics: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Failed to get performance metrics: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -820,7 +835,7 @@ export class AnalyticsService extends BaseService {
   /**
    * Get agent stats method for MCP server compatibility
    */
-  async getAgentStats(agentId: string, timeRange: string = '24h'): Promise<any> {
+  async getAgentStats(agentId: string, timeRange: string = '24h'): Promise<Record<string, unknown>> {
     // Mock implementation for MCP compatibility
     return {
       agentId,
@@ -837,7 +852,7 @@ export class AnalyticsService extends BaseService {
   /**
    * Get network stats method for MCP server compatibility
    */
-  async getNetworkStats(timeRange: string = '24h'): Promise<any> {
+  async getNetworkStats(timeRange: string = '24h'): Promise<Record<string, unknown>> {
     // Mock implementation for MCP compatibility
     return {
       totalAgents: 1247,

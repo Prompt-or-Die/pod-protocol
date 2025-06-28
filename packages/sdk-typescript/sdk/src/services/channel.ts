@@ -1,9 +1,8 @@
 import type { Address } from '@solana/addresses';
 import type { KeyPairSigner } from '@solana/signers';
 import { address } from '@solana/addresses';
-import { lamports } from '@solana/kit';
 import * as anchor from "@coral-xyz/anchor";
-const { BN, utils, web3, AnchorProvider, Program } = anchor;
+const { BN } = anchor;
 import { BaseService } from "./base.js";
 import {
   CreateChannelOptions,
@@ -13,8 +12,6 @@ import {
   UpdateChannelOptions,
 } from "../types";
 import { findAgentPDA, findChannelPDA, findParticipantPDA, findInvitationPDA, retry, getAccountLastUpdated } from "../utils.js";
-import type { IdlAccounts } from "@coral-xyz/anchor";
-import type { PodCom } from "../pod_com";
 
 export interface ChannelConfig {
   name: string;
@@ -71,7 +68,7 @@ export class ChannelService extends BaseService {
       }
 
       try {
-        const tx = await (this.program.methods as any)
+        const tx = await (this.program.methods as unknown)
           .createChannel(
             options.name,
             options.description || "",
@@ -86,14 +83,15 @@ export class ChannelService extends BaseService {
           .rpc();
 
         return tx;
-      } catch (error: any) {
-        if (error.message?.includes("Account does not exist")) {
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage.includes("Account does not exist")) {
           throw new Error("Program account not found. Verify the program is deployed and the program ID is correct.");
         }
-        if (error.message?.includes("insufficient funds")) {
+        if (errorMessage.includes("insufficient funds")) {
           throw new Error("Insufficient SOL balance to pay for transaction fees and rent.");
         }
-        throw new Error(`Channel creation failed: ${error.message}`);
+        throw new Error(`Channel creation failed: ${errorMessage}`);
       }
     });
   }
@@ -129,8 +127,9 @@ export class ChannelService extends BaseService {
         lastUpdated: getAccountLastUpdated(account),
         bump: account.bump,
       };
-    } catch (error: any) {
-      if (error?.message?.includes("Account does not exist")) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes("Account does not exist")) {
         return null;
       }
       throw error;
@@ -149,19 +148,20 @@ export class ChannelService extends BaseService {
       const channelAccount = this.getAccount("channelAccount");
       const accounts = await channelAccount.all();
 
-      return accounts.slice(0, limit).map((acc: any) => ({
+      return accounts.slice(0, limit).map((acc: { publicKey: Address; account: unknown }) => ({
         pubkey: acc.publicKey,
-        name: acc.account.name,
-        description: acc.account.description,
-        creator: acc.account.creator,
-        visibility: acc.account.visibility,
-        maxMembers: acc.account.maxMembers.toNumber(),
-        memberCount: acc.account.memberCount.toNumber(),
+        name: (acc.account as { name: string }).name,
+        description: (acc.account as { description: string }).description,
+        creator: (acc.account as { creator: Address }).creator,
+        visibility: (acc.account as { visibility: unknown }).visibility,
+        maxMembers: (acc.account as { maxMembers: { toNumber(): number } }).maxMembers.toNumber(),
+        memberCount: (acc.account as { memberCount: { toNumber(): number } }).memberCount.toNumber(),
         lastUpdated: getAccountLastUpdated(acc.account),
-        bump: acc.account.bump,
+        bump: (acc.account as { bump: number }).bump,
       }));
-    } catch (error: any) {
-      throw new Error(`Failed to fetch channels: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to fetch channels: ${errorMessage}`);
     }
   }
 
@@ -178,21 +178,22 @@ export class ChannelService extends BaseService {
       const accounts = await channelAccount.all();
 
       return accounts
-        .filter((acc: any) => acc.account.creator.equals(creator))
+        .filter((acc: { account: { creator: { equals(addr: Address): boolean } } }) => acc.account.creator.equals(creator))
         .slice(0, limit)
-        .map((acc: any) => ({
+        .map((acc: { publicKey: Address; account: unknown }) => ({
           pubkey: acc.publicKey,
-          name: acc.account.name,
-          description: acc.account.description,
-          creator: acc.account.creator,
-          visibility: acc.account.visibility,
-          maxMembers: acc.account.maxMembers.toNumber(),
-          memberCount: acc.account.memberCount.toNumber(),
+          name: (acc.account as { name: string }).name,
+          description: (acc.account as { description: string }).description,
+          creator: (acc.account as { creator: Address }).creator,
+          visibility: (acc.account as { visibility: unknown }).visibility,
+          maxMembers: (acc.account as { maxMembers: { toNumber(): number } }).maxMembers.toNumber(),
+          memberCount: (acc.account as { memberCount: { toNumber(): number } }).memberCount.toNumber(),
           lastUpdated: getAccountLastUpdated(acc.account),
-          bump: acc.account.bump,
+          bump: (acc.account as { bump: number }).bump,
         }));
-    } catch (error: any) {
-      throw new Error(`Failed to fetch channels by creator: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to fetch channels by creator: ${errorMessage}`);
     }
   }
 
@@ -204,7 +205,7 @@ export class ChannelService extends BaseService {
       const program = this.ensureInitialized();
       const channelPubkey = address(channelId);
 
-      const tx = await (program.methods as any)
+      const tx = await (program.methods as unknown as { joinChannel(): { accounts(obj: unknown): { rpc(): Promise<string> } } })
         .joinChannel()
         .accounts({
           channelAccount: channelPubkey,
@@ -213,8 +214,9 @@ export class ChannelService extends BaseService {
         .rpc();
 
       return tx;
-    } catch (error: any) {
-      throw new Error(`Failed to join channel: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to join channel: ${errorMessage}`);
     }
   }
 
@@ -230,7 +232,7 @@ export class ChannelService extends BaseService {
         throw new Error("Program not initialized");
       }
 
-      const tx = await (this.program.methods as any)
+      const tx = await (this.program.methods as unknown as { leaveChannel(): { accounts(obj: unknown): { rpc(): Promise<string> } } })
         .leaveChannel()
         .accounts({
           channelAccount: channelPDA,
@@ -273,8 +275,20 @@ export class ChannelService extends BaseService {
       options.messageType || "Text",
     );
 
-    const tx = await (program.methods as any)
-      .broadcastMessage(
+    const tx = await (program.methods as unknown as {
+      broadcastMessage(
+        content: string,
+        messageType: unknown,
+        replyTo: unknown,
+        nonce: unknown
+      ): {
+        accounts(obj: unknown): {
+          signers(signers: unknown[]): {
+            rpc(options: unknown): Promise<string>;
+          };
+        };
+      };
+    }).broadcastMessage(
         options.content,
         messageTypeObj,
         options.replyTo || null,
@@ -306,9 +320,11 @@ export class ChannelService extends BaseService {
       const [invitationPDA] = await findInvitationPDA(channelAddress, inviteeAddress, this.programId);
 
       // TODO: Implement actual transaction building with Web3.js v2
-      console.log("Inviting to channel:", channelAddress);
-      console.log("Invitee:", inviteeAddress);
-      console.log("Invitation PDA:", invitationPDA);
+      // Development logging for invitation process
+      if (process.env.NODE_ENV === 'development') {
+        // eslint-disable-next-line no-console
+        console.log("Inviting to channel:", channelAddress, "Invitee:", inviteeAddress, "Invitation PDA:", invitationPDA);
+      }
 
     } catch (error) {
       throw new Error(`Failed to invite to channel: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -321,14 +337,20 @@ export class ChannelService extends BaseService {
   async getChannelParticipants(channelAddress: Address): Promise<Address[]> {
     try {
       // TODO: Implement actual account fetching with Web3.js v2 RPC
-      console.log("Getting participants for channel:", channelAddress);
+      if (process.env.NODE_ENV === 'development') {
+        // eslint-disable-next-line no-console
+        console.log("Getting participants for channel:", channelAddress);
+      }
 
       // Return mock data for now
       return [
         address("11111111111111111111111111111114"),
       ];
     } catch (error) {
-      console.error("Error getting channel participants:", error);
+      if (process.env.NODE_ENV === 'development') {
+        // eslint-disable-next-line no-console
+        console.error("Error getting channel participants:", error);
+      }
       return [];
     }
   }
@@ -339,7 +361,7 @@ export class ChannelService extends BaseService {
   async getChannelMessages(
     channelPDA: Address,
     limit: number = 50
-  ): Promise<Array<any>> {
+  ): Promise<Array<unknown>> {
     try {
       const messageAccount = this.getAccount("channelMessage");
       const filters = [
@@ -352,9 +374,12 @@ export class ChannelService extends BaseService {
       ];
 
       const accounts = await messageAccount.all(filters);
-      return accounts.slice(0, limit).map((acc: any) => acc.account);
+      return accounts.slice(0, limit).map((acc: { account: unknown }) => acc.account);
     } catch (error) {
-      console.warn("Error fetching channel messages:", error);
+      if (process.env.NODE_ENV === 'development') {
+        // eslint-disable-next-line no-console
+        console.warn("Error fetching channel messages:", error);
+      }
       return [];
     }
   }
@@ -363,7 +388,7 @@ export class ChannelService extends BaseService {
   // Helper Methods
   // ============================================================================
 
-  private convertChannelVisibility(visibility: ChannelVisibility): any {
+  private convertChannelVisibility(visibility: ChannelVisibility): { public: Record<string, never> } | { private: Record<string, never> } {
     switch (visibility) {
       case ChannelVisibility.Public:
         return { public: {} };
@@ -375,7 +400,7 @@ export class ChannelService extends BaseService {
   }
 
   private convertChannelVisibilityFromProgram(
-    programVisibility: any,
+    programVisibility: { public?: unknown; private?: unknown },
   ): ChannelVisibility {
     if (programVisibility.public !== undefined) return ChannelVisibility.Public;
     if (programVisibility.private !== undefined)
@@ -383,7 +408,7 @@ export class ChannelService extends BaseService {
     return ChannelVisibility.Public;
   }
 
-  private convertMessageType(messageType: any): any {
+  private convertMessageType(messageType: unknown): { text: Record<string, never> } | { data: Record<string, never> } | { command: Record<string, never> } | { response: Record<string, never> } {
     if (typeof messageType === "string") {
       switch (messageType.toLowerCase()) {
         case "text":
@@ -402,7 +427,15 @@ export class ChannelService extends BaseService {
   }
 
   private convertChannelAccountFromProgram(
-    account: any,
+    account: {
+      name: string;
+      description: string;
+      creator: Address;
+      visibility: unknown;
+      currentParticipants: number;
+      maxParticipants: number;
+      createdAt?: { toNumber(): number };
+    },
     publicKey: Address,
   ): ChannelData {
     return {
@@ -461,8 +494,18 @@ export class ChannelService extends BaseService {
         throw new Error("Program not initialized");
       }
 
-      const tx = await (this.program.methods as any)
-        .updateChannel(
+      const tx = await (this.program.methods as unknown as {
+        updateChannel(
+          name: unknown,
+          description: unknown,
+          visibility: unknown,
+          maxMembers: unknown
+        ): {
+          accounts(obj: unknown): {
+            rpc(): Promise<string>;
+          };
+        };
+      }).updateChannel(
           options.name || null,
           options.description || null,
           options.visibility !== undefined ? options.visibility : null,
@@ -510,22 +553,22 @@ export class ChannelService extends BaseService {
         const participantAccount = this.getAccount("participantAccount");
         await participantAccount.fetch(participantPDA);
         return true; // If account exists, member is in channel
-      } catch (error) {
+      } catch {
         return false; // Account doesn't exist, not a member
       }
-    } catch (error) {
+    } catch {
       return false;
     }
   }
 
-  async getChannelMembers(channelPDA: Address): Promise<Address[]> {
+  async getChannelMembers(): Promise<Address[]> {
     try {
       if (!this.program) {
         throw new Error("Program not initialized");
       }
 
       // Get all participant accounts for this channel using Web3.js v2.0 (mock implementation during migration)
-      const participantAccounts: any[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
+      const participantAccounts: Array<{ account: { data: unknown } }> = []; // TODO: Implement proper v2.0 getProgramAccounts call
 
       // Extract member addresses from participant accounts
       const members: Address[] = [];
@@ -533,14 +576,15 @@ export class ChannelService extends BaseService {
         try {
           const participantData = this.program.coder.accounts.decode("participantAccount", acc.account.data);
           members.push(participantData.member);
-        } catch (error) {
+        } catch {
           // Skip invalid accounts
         }
       }
 
       return members;
-    } catch (error: any) {
-      throw new Error(`Failed to get channel members: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to get channel members: ${errorMessage}`);
     }
   }
 
@@ -558,7 +602,7 @@ export class ChannelService extends BaseService {
     maxParticipants?: number;
     requiresDeposit?: boolean;
     depositAmount?: number;
-  }): Promise<{ channel: any; joinCode?: string; signature: string }> {
+  }): Promise<{ channel: { id: string; name: string; description: string; visibility: string }; joinCode?: string; signature: string }> {
     // Mock implementation for MCP compatibility
     return {
       channel: {
@@ -575,7 +619,7 @@ export class ChannelService extends BaseService {
   /**
    * Join method for MCP server compatibility
    */
-  async join(channelId: string, inviteCode?: string): Promise<{ signature: string }> {
+  async join(): Promise<{ signature: string }> {
     // Mock implementation for MCP compatibility
     return {
       signature: `join_sig_${Date.now()}`
@@ -585,13 +629,7 @@ export class ChannelService extends BaseService {
   /**
    * Send message method for MCP server compatibility
    */
-  async sendMessage(options: {
-    channelId: string;
-    content: string;
-    messageType?: string;
-    replyTo?: string;
-    metadata?: any;
-  }): Promise<{ messageId: string; signature: string }> {
+  async sendMessage(): Promise<{ messageId: string; signature: string }> {
     // Mock implementation for MCP compatibility
     return {
       messageId: `channel_msg_${Date.now()}`,
@@ -602,12 +640,7 @@ export class ChannelService extends BaseService {
   /**
    * Get messages method for MCP server compatibility
    */
-  async getMessages(options: {
-    channelId: string;
-    limit?: number;
-    offset?: number;
-    since?: number;
-  }): Promise<{ messages: any[]; totalCount: number; hasMore: boolean }> {
+  async getMessages(): Promise<{ messages: unknown[]; totalCount: number; hasMore: boolean }> {
     // Mock implementation for MCP compatibility
     return {
       messages: [],
@@ -619,9 +652,7 @@ export class ChannelService extends BaseService {
   /**
    * Get public channels method for MCP server compatibility
    */
-  async getPublicChannelsMCP(options: {
-    limit?: number;
-  }): Promise<{ channels: any[] }> {
+  async getPublicChannelsMCP(): Promise<{ channels: unknown[] }> {
     // Mock implementation for MCP compatibility
     return {
       channels: []
