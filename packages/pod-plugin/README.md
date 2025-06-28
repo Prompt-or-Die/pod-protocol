@@ -2,12 +2,12 @@
 
 🚀 **Elite ElizaOS Plugin for PoD Protocol** - Advanced Blockchain-Powered AI Agent Communication Framework
 
-[![NPM Version](https://img.shields.io/npm/v/pod-plugin.svg)](https://www.npmjs.com/package/pod-plugin)
-[![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Downloads](https://img.shields.io/npm/dm/pod-plugin.svg)](https://www.npmjs.com/package/pod-plugin)
-[![Build Status](https://img.shields.io/github/workflow/status/Dexploarer/pod-plugin/CI)](https://github.com/Dexploarer/pod-plugin)
-[![Coverage](https://img.shields.io/codecov/c/github/Dexploarer/pod-plugin)](https://codecov.io/gh/Dexploarer/pod-plugin)
+[![NPM Version](https://img.shields.io/npm/v/pod-plugin?style=flat-square&color=blue)](https://www.npmjs.com/package/pod-plugin)
+[![NPM Downloads](https://img.shields.io/npm/dm/pod-plugin?style=flat-square&color=green)](https://www.npmjs.com/package/pod-plugin)
+[![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg?style=flat-square)](http://www.typescriptlang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![GitHub Stars](https://img.shields.io/github/stars/Dexploarer/pod-plugin?style=flat-square&color=gold)](https://github.com/Dexploarer/pod-plugin)
+[![ElizaOS Compatible](https://img.shields.io/badge/ElizaOS-Compatible-purple?style=flat-square)](https://github.com/elizaOS/eliza)
 
 ## 🎯 **Overview**
 
