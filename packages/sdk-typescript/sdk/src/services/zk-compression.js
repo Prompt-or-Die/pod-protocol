@@ -305,7 +305,7 @@ export class ZKCompressionService extends BaseService {
                     channelId,
                     options.limit ?? 50,
                     options.offset ?? 0,
-                    options.sender? || null,
+                    options.sender || null,
                     options.after?.getTime() || null,
                     options.before?.getTime() || null,
                 ],

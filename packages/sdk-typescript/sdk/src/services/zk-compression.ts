@@ -221,7 +221,15 @@ export class ZKCompressionService extends BaseService {
       this.startBatchTimer();
     }
 
-    // Use correct Light Protocol import from Context7 docs
+    // Initialize Light Protocol dependencies asynchronously
+    this.lightProtocol = null;
+    this.initializeLightProtocol();
+  }
+
+  /**
+   * Initialize Light Protocol dependencies asynchronously
+   */
+  private async initializeLightProtocol(): Promise<void> {
     try {
       // Import real Light Protocol dependencies
       const { compress } = await import('@lightprotocol/stateless.js');
@@ -306,92 +314,96 @@ export class ZKCompressionService extends BaseService {
         }
 
         // Return promise that resolves when batch is processed
-        return new Promise(async (resolve, reject) => {
-          try {
-            // Store the message in the batch queue for compression
-            this.batchQueue.push(compressedMessage);
+        return new Promise((resolve, reject) => {
+          const processMessage = async () => {
+            try {
+              // Store the message in the batch queue for compression
+              this.batchQueue.push(compressedMessage);
 
-            // First attempt to store in IPFS
-            const ipfsResult = await this.ipfsService.storeContent(
-              content,
-              'application/json',
-              `${channelId}_${wallet}_${Date.now()}`
-            );
+              // First attempt to store in IPFS
+              const ipfsResult = await this.ipfsService.storeContent(
+                content,
+                'application/json',
+                `${channelId}_${wallet}_${Date.now()}`
+              );
 
-            if (options?.immediate) {
-              // Immediate processing without batching
-              try {
-                const compressionInstruction = await this.createCompressionInstruction(
-                  channelId,
-                  compressedMessage,
-                  String(wallet)
-                );
-
-                const result = await (this.rpc as any).confirmTransaction({
-                  signature: compressionInstruction,
-                  commitment: this.commitment,
-                });
-
-                resolve({
-                  signature: String(result),
-                  ipfsResult,
-                  compressedAccount: {
-                    hash: compressedMessage.contentHash,
-                    data: compressedMessage,
-                    merkleContext: { immediate: true },
-                  },
-                });
-              } catch (compressionError) {
-                console.warn('Light Protocol compression failed, using fallback:', compressionError);
-                
-                const fallbackResult = await this.createDeterministicCompression(compressedMessage, ipfsResult);
-                resolve({
-                  signature: fallbackResult.signature,
-                  ipfsResult,
-                  compressedAccount: {
-                    hash: fallbackResult.hash,
-                    data: compressedMessage,
-                    merkleContext: fallbackResult.merkleContext,
-                  },
-                });
-              }
-            } else {
-              // Attempt to process compressed messages in a batch
-              if (this.config.enableBatching && this.batchQueue.length >= (this.config.maxBatchSize || 10)) {
+              if (options?.immediate) {
+                // Immediate processing without batching
                 try {
-                  const batchResult = await this.processBatch(wallet);
-                  const result = this.lastBatchResult || {
-                    signature: await this.generateDeterministicSignature(`batch_${Date.now()}`),
-                    compressedAccounts: []
-                  };
+                  const compressionInstruction = await this.createCompressionInstruction(
+                    channelId,
+                    compressedMessage,
+                    String(wallet)
+                  );
+
+                  const result = await (this.rpc as any).confirmTransaction({
+                    signature: compressionInstruction,
+                    commitment: this.commitment,
+                  });
+
                   resolve({
-                    signature: result.signature,
+                    signature: String(result),
                     ipfsResult,
-                    compressedAccount: result.compressedAccounts[0] || {
+                    compressedAccount: {
                       hash: compressedMessage.contentHash,
                       data: compressedMessage,
-                      merkleContext: { batched: true },
+                      merkleContext: { immediate: true },
                     },
                   });
-                } catch (error) {
-                  reject(new Error(`Batch processing failed: ${error}`));
+                } catch (compressionError) {
+                  console.warn('Light Protocol compression failed, using fallback:', compressionError);
+                  
+                  const fallbackResult = await this.createDeterministicCompression(compressedMessage, ipfsResult);
+                  resolve({
+                    signature: fallbackResult.signature,
+                    ipfsResult,
+                    compressedAccount: {
+                      hash: fallbackResult.hash,
+                      data: compressedMessage,
+                      merkleContext: fallbackResult.merkleContext,
+                    },
+                  });
                 }
               } else {
-                // Queue for later batch processing
-                resolve({
-                  signature: `queued_${Date.now()}_${compressedMessage.contentHash.slice(0, 8)}`,
-                  ipfsResult,
-                  compressedAccount: {
-                    hash: compressedMessage.contentHash,
-                    data: compressedMessage,
-                    merkleContext: { queued: true },
-                  },
-                });
+                // Attempt to process compressed messages in a batch
+                if (this.config.enableBatching && this.batchQueue.length >= (this.config.maxBatchSize || 10)) {
+                  try {
+                    const batchResult = await this.processBatch(wallet);
+                    const result = this.lastBatchResult || {
+                      signature: await this.generateDeterministicSignature(`batch_${Date.now()}`),
+                      compressedAccounts: []
+                    };
+                    resolve({
+                      signature: result.signature,
+                      ipfsResult,
+                      compressedAccount: result.compressedAccounts[0] || {
+                        hash: compressedMessage.contentHash,
+                        data: compressedMessage,
+                        merkleContext: { batched: true },
+                      },
+                    });
+                  } catch (error) {
+                    reject(new Error(`Batch processing failed: ${error}`));
+                  }
+                } else {
+                  // Queue for later batch processing
+                  resolve({
+                    signature: `queued_${Date.now()}_${compressedMessage.contentHash.slice(0, 8)}`,
+                    ipfsResult,
+                    compressedAccount: {
+                      hash: compressedMessage.contentHash,
+                      data: compressedMessage,
+                      merkleContext: { queued: true },
+                    },
+                  });
+                }
               }
+            } catch (error) {
+              reject(new Error(`Failed to broadcast compressed message: ${error}`));
             }
-          } catch (error) {
-            reject(new Error(`Failed to broadcast compressed message: ${error}`));
-          }
+          };
+          
+          processMessage();
         });
       } else {
         // Execute REAL compression via Light Protocol transaction

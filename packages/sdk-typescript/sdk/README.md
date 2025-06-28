@@ -40,6 +40,21 @@
 
 ---
 
+## 🚨 **CRITICAL SECURITY VULNERABILITY** 🚨
+
+> **Status:** 🔴 **INSECURE - DO NOT USE**
+
+This SDK contains a **critical security vulnerability**. The session key mechanism is **not enforced on-chain** and can be easily bypassed by a malicious user. This means that a session key can be used indefinitely, for any instruction, regardless of the permissions it was created with.
+
+**DO NOT USE THIS SDK IN PRODUCTION UNTIL THIS VULNERABILITY IS FIXED.**
+
+### **Vulnerability Details**
+
+*   The `createSession`, `useSession`, and `revokeSession` instructions are not implemented in the on-chain program.
+*   The `isInstructionAllowed` function in `services/session-keys.ts` does not correctly validate the instruction being executed.
+
+---
+
 ## ✅ **SDK Status** ✅
 
 > **Status:** 🟢 **FUNCTIONAL & PRODUCTION READY**

@@ -441,19 +441,19 @@ export class AccountCache extends LRUCache {
   }
 
   invalidateByType(accountType: string): number {
-    let count = 0;
+    const count = 0;
     // Implementation would scan keys and remove matching patterns
     return count;
   }
 
   invalidateByProgram(programId: string): number {
-    let count = 0;
+    const count = 0;
     // Implementation would scan keys and remove matching patterns
     return count;
   }
 
   invalidate(predicate: (key: string) => boolean): number {
-    let count = 0;
+    const count = 0;
     // Implementation would scan keys and remove matching patterns
     return count;
   }

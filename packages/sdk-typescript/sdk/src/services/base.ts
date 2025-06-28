@@ -370,44 +370,9 @@ export abstract class BaseService {
     }
   }
 
-  /**
-   * Get real performance samples from Solana RPC
-   */
-  async getRecentPerformanceSamples(limit: number = 10): Promise<any[]> {
-    try {
-      if (this.rpc && typeof (this.rpc as any).getRecentPerformanceSamples === 'function') {
-        return await (this.rpc as any).getRecentPerformanceSamples(limit).send();
-      } else {
-        // Fallback performance data
-        return Array.from({ length: limit }, (_, i) => ({
-          numSlots: 432,
-          numTransactions: 2500 + i * 100,
-          samplePeriodSecs: 60,
-          slotIndex: 1000000 + i
-        }));
-      }
-    } catch (error) {
-      console.warn('Failed to get performance samples:', error);
-      return [];
-    }
-  }
 
-  /**
-   * Get current slot
-   */
-  async getCurrentSlot(): Promise<number> {
-    try {
-      if (this.rpc && typeof (this.rpc as any).getSlot === 'function') {
-        return await (this.rpc as any).getSlot({ commitment: this.commitment }).send();
-      } else {
-        // Fallback to estimated slot
-        return Math.floor(Date.now() / 400); // Approximate slot based on 400ms slot time
-      }
-    } catch (error) {
-      console.warn('Failed to get current slot:', error);
-      return Math.floor(Date.now() / 400);
-    }
-  }
+
+
 
   /**
    * Get recent blockhash for transactions

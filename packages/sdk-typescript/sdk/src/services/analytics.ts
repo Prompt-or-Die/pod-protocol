@@ -1,6 +1,6 @@
-import { BaseService } from './base';
-import { address } from '@solana/kit';
-import type { Address } from '@solana/kit';
+import { BaseService } from './base.js';
+import { address } from '@solana/addresses';
+import type { Address } from '@solana/addresses';
 import {
   AgentAccount,
   MessageAccount,
@@ -16,11 +16,12 @@ import {
   lamportsToSol,
   formatBytes,
   getCapabilityNames,
+  getAccountLastUpdated,
 } from "../utils.js";
 import { RetryUtils } from '../utils/retry.js';
 import { AnalyticsCache } from '../utils/cache.js';
 import { ErrorHandler } from '../utils/error-handling.js';
-import { MessageType, ErrorCode } from '../types';
+import { MessageType, MessageStatus, ErrorCode } from '../types';
 
 /**
  * Types for Solana account data structures

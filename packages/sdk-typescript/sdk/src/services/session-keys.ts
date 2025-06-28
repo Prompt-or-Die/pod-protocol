@@ -3,6 +3,7 @@ import type { Address } from "@solana/addresses";
 import { generateKeyPairSigner } from "@solana/signers";
 import type { KeyPairSigner } from "@solana/signers";
 import { BaseService, BaseServiceConfig } from './base.js';
+import { IDL } from "../pod_com";
 import * as anchor from "@coral-xyz/anchor";
 const { BN, web3 } = anchor;
 
@@ -248,12 +249,11 @@ export class SessionKeysService extends BaseService {
     return this.createSessionKey(config);
   }
 
-
   private isInstructionAllowed(
     instruction: TransactionInstruction,
     config: SessionKeyConfig
   ): boolean {
-    // Check if program is allowed
+    // Check if the program is allowed
     const programAllowed = config.targetPrograms.some(
       program => {
         const programAddr = typeof program === 'string' ? address(program) : program;
@@ -271,8 +271,14 @@ export class SessionKeysService extends BaseService {
       return true;
     }
 
-    // For a real implementation, you'd decode the instruction data
-    // and check against allowed instruction types
-    return true;
+    // Decode the instruction name from the discriminator
+    const instructionDiscriminator = Buffer.from(instruction.data.slice(0, 8));
+    const allowedInstruction = IDL.instructions.find(ix => Buffer.from(ix.discriminator).equals(instructionDiscriminator));
+
+    if (!allowedInstruction) {
+      return false; // Unknown instruction
+    }
+
+    return config.allowedInstructions.includes(allowedInstruction.name);
   }
 }

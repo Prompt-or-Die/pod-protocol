@@ -16,7 +16,7 @@
     "test:e2e:smart": "node scripts/smart-test-runner.js",
     "test:e2e:recover": "node scripts/auto-recover-tests.js",
     "fix:ports": "node scripts/fix-ports.js",
-    "fix:deps": "node scripts/fix-deps.js", 
+    "fix:deps": "node scripts/fix-deps.js",
     "fix:builds": "node scripts/fix-builds.js",
     "fix:all": "node scripts/fix-e2e-issues.js",
     "lint": "bun run --filter='*' lint",
@@ -69,15 +69,15 @@
   "packageManager": "bun@1.2.17",
   "preferredPackageManager": "bun",
   "devDependencies": {
-    "@changesets/cli": "^2.29.5",
-    "@types/node": "^24.0.4",
-    "eslint": "^8.57.1",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.1.2",
-    "npm-check-updates": "^18.0.1",
-    "prettier": "^3.6.2",
-    "typescript": "^5.8.3",
-    "typescript-eslint": "^8.35.0"
+    "@changesets/cli": "2.29.5",
+    "@types/node": "24.0.7",
+    "eslint": "8.57.1",
+    "husky": "9.1.7",
+    "lint-staged": "16.1.2",
+    "npm-check-updates": "18.0.1",
+    "prettier": "3.6.2",
+    "typescript": "5.8.3",
+    "typescript-eslint": "8.35.0"
   },
   "lint-staged": {
     "*.{js,ts,json,md}": [
@@ -95,17 +95,17 @@
     }
   },
   "dependencies": {
-    "@helia/json": "^4.0.6",
-    "@helia/unixfs": "^5.0.3",
-    "@lightprotocol/stateless.js": "^0.22.0",
-    "@lightprotocol/compressed-token": "^0.22.0",
-    "@solana-program/compute-budget": "^0.8.0",
-    "@solana-program/system": "^0.7.0",
+    "@helia/json": "4.0.6",
+    "@helia/unixfs": "5.0.3",
+    "@lightprotocol/stateless.js": "0.22.0",
+    "@lightprotocol/compressed-token": "0.22.0",
+    "@solana-program/compute-budget": "0.8.0",
+    "@solana-program/system": "0.7.0",
     "@solana/rpc": "2.1.1",
     "@solana/rpc-subscriptions": "2.1.1",
     "@solana/addresses": "2.1.1",
     "@solana/signers": "2.1.1",
-    "helia": "^5.4.2",
-    "keccak": "^3.0.4"
+    "helia": "5.4.2",
+    "keccak": "3.0.4"
   }
 }

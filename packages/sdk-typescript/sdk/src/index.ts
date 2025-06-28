@@ -59,6 +59,7 @@ export {
   ChannelVisibility,
   AGENT_CAPABILITIES,
   PodComError,
+  ErrorCode,
 } from "./types";
 
 export type {
