@@ -15,31 +15,37 @@ All packages now include comprehensive e2e tests using Bun's test runner instead
 ## Package Test Coverage
 
 ### 📡 API Server (`packages/api-server/`)
+
 - **Location**: `packages/api-server/api-server/tests/e2e/`
 - **Tests**: REST endpoints, WebSocket connections, database operations, security, performance
 - **Features**: Health checks, agent management, channels, messages, escrow, analytics
 
 ### 🔧 CLI (`packages/cli/`)
+
 - **Location**: `packages/cli/tests/e2e/`
 - **Tests**: All CLI commands, configuration, wallet operations, error handling
 - **Features**: Agent management, messaging, channels, security tools, ZK compression
 
 ### 🖥️ Frontend (`packages/frontend/`)
+
 - **Location**: `packages/frontend/tests/e2e/`
 - **Tests**: Application startup, wallet integration, user flows, responsive design
 - **Features**: SSR validation, API integration, error boundaries, accessibility
 
 ### 📦 SDK TypeScript (`packages/sdk-typescript/`)
+
 - **Location**: `packages/sdk-typescript/sdk/tests/e2e/`
 - **Tests**: SDK imports, client initialization, service functionality
 - **Features**: Agent operations, messaging, channels, escrow, utilities
 
 ### 🔌 MCP Server (`packages/mcp-server/`)
+
 - **Location**: `packages/mcp-server/tests/e2e/`
 - **Tests**: MCP protocol compliance, tool calling, resource management
 - **Features**: Protocol methods, sampling, prompts, error handling
 
 ### 🤖 ElizaOS Plugin (`packages/elizaos-plugin-podcom/`)
+
 - **Location**: `packages/elizaos-plugin-podcom/tests/e2e/`
 - **Tests**: Plugin structure, actions, evaluators, providers
 - **Features**: Agent integration, action validation, configuration
@@ -177,6 +183,7 @@ describe("Package E2E Tests", () => {
 ### Test Utilities
 
 Each package includes utilities for:
+
 - **Mock Data Generation** - Creating test data
 - **Server Startup/Teardown** - Managing test servers
 - **Network Mocking** - Handling network requests
@@ -203,6 +210,7 @@ jobs:
 ### Test Results
 
 Tests generate reports in:
+
 - **Coverage**: `coverage/` directory
 - **JUnit**: For CI integration
 - **JSON**: For programmatic analysis
@@ -271,6 +279,7 @@ bun test --no-cache
 ### Support
 
 For e2e testing issues:
+
 1. Check this documentation
 2. Review test logs
 3. Verify environment setup
@@ -279,4 +288,4 @@ For e2e testing issues:
 
 ---
 
-**Note**: E2E tests may require services to be running (databases, RPC endpoints). Some tests include fallback behavior for CI environments where external services may not be available. 
+**Note**: E2E tests may require services to be running (databases, RPC endpoints). Some tests include fallback behavior for CI environments where external services may not be available.
