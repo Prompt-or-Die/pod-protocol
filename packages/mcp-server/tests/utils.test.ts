@@ -49,11 +49,11 @@ describe('Utility Functions', () => {
     });
 
     it('should reject an invalid OAuth token', async () => {
-      (global.fetch as jest.Mock) = mock(() => Promise.resolve({} as Response & {
+      (global.fetch as any) = mock(() => Promise.resolve({
         ok: false,
         status: 401,
         statusText: 'Unauthorized'
-      });
+      } as Response));
 
       await expect(validateOAuthToken('invalid-token'))
         .rejects
