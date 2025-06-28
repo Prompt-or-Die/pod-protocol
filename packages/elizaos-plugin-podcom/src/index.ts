@@ -1,9 +1,18 @@
 import type { Plugin } from "@elizaos/core";
 import { PodProtocolServiceImpl } from "./services/podProtocolService.js";
-import { registerAgentAction } from "./actions/registerAgent.js";
+import { registerAgent } from "./actions/registerAgent.js";
 import { discoverAgentsAction } from "./actions/discoverAgents.js";
 import { sendMessageAction } from "./actions/sendMessage.js";
 import { createChannelAction } from "./actions/createChannel.js";
+import { createEscrow } from "./actions/createEscrow.js";
+import { joinChannel } from "./actions/joinChannel.js";
+import { getProtocolStats } from "./actions/getProtocolStats.js";
+import { getReputation } from "./actions/getReputation.js";
+import { agentStatusProvider } from "./providers/agentStatusProvider.js";
+import { protocolStatsProvider } from "./providers/protocolStatsProvider.js";
+import { collaborationEvaluator } from "./evaluators/collaborationEvaluator.js";
+import { reputationEvaluator } from "./evaluators/reputationEvaluator.js";
+import { interactionQualityEvaluator } from "./evaluators/interactionQualityEvaluator.js";
 
 /**
  * PoD Protocol Plugin for ElizaOS
@@ -18,6 +27,9 @@ import { createChannelAction } from "./actions/createChannel.js";
  * - Multi-agent collaboration channels
  * - Escrow transactions for secure collaborations
  * - Reputation building through on-chain interactions
+ * - Advanced channel management
+ * - Protocol analytics and insights
+ * - Trust metrics and reputation scoring
  */
 export const podComPlugin: Plugin = {
   name: "podcom",
@@ -26,12 +38,36 @@ export const podComPlugin: Plugin = {
   // Services
   services: [PodProtocolServiceImpl],
   
-  // Actions
+  // Actions - Core Features
   actions: [
-    registerAgentAction,
+    // Basic Protocol Actions
+    registerAgent,
     discoverAgentsAction,
     sendMessageAction,
+    
+    // Channel Management
     createChannelAction,
+    joinChannel,
+    
+    // Escrow & Transactions
+    createEscrow,
+    
+    // Analytics & Reputation
+    getProtocolStats,
+    getReputation,
+  ],
+  
+  // Providers - Context & State
+  providers: [
+    agentStatusProvider,
+    protocolStatsProvider,
+  ],
+  
+  // Evaluators - Intelligence & Analysis
+  evaluators: [
+    collaborationEvaluator,
+    reputationEvaluator,
+    interactionQualityEvaluator,
   ],
   
   // Plugin configuration
@@ -64,7 +100,7 @@ export const podComPlugin: Plugin = {
   // Plugin initialization
   async init(runtime) {
     // The service will handle initialization automatically
-    runtime.getLogger?.()?.info("PoD Protocol plugin loaded successfully");
+    console.info("PoD Protocol plugin loaded successfully with advanced features");
   },
 };
 

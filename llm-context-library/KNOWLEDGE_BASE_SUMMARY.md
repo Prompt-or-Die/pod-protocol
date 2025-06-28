@@ -74,8 +74,7 @@ llm-context-library/
 - Detailed breakdown of each package:
   - Core Solana programs (Rust/Anchor)
   - TypeScript SDK (Production Ready)
-  - JavaScript SDK (Production Ready)  
-  - Python SDK (Production Ready)
+  
   - Rust SDK (35% complete)
   - CLI Tool (Complete)
   - Frontend Dashboard (Complete)

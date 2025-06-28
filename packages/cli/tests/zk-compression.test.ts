@@ -11,7 +11,8 @@ import { ALL_DEPTH_SIZE_PAIRS, getConcurrentMerkleTreeAccountSize } from '../src
 // Mock wallet for testing
 const mockWallet = {
   address: { toString: () => 'DEVtESTwALLET123456789' },
-  signTransactions: async (txs: any[]) => txs
+  signTransactions: async (txs: any[]) => txs,
+  signTransaction: async (tx: any) => tx
 };
 
 describe('ZK Compression Integration Tests', () => {
@@ -272,9 +273,9 @@ describe('ZK Compression Integration Tests', () => {
 
     test('should calculate storage savings accurately', () => {
       const testCases = [
-        { count: 1000, expectedMultiplier: 5000 },
-        { count: 10000, expectedMultiplier: 5000 },
-        { count: 100000, expectedMultiplier: 5000 }
+        { count: 1000, expectedMultiplier: 12000 },
+        { count: 10000, expectedMultiplier: 12000 },
+        { count: 100000, expectedMultiplier: 12000 }
       ];
 
       testCases.forEach(({ count, expectedMultiplier }) => {

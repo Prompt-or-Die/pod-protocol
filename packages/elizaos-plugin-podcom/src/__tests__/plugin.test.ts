@@ -1,11 +1,17 @@
+import { describe, test, expect } from "bun:test";
 import { podComPlugin } from '../index.js';
 import { PodProtocolServiceImpl } from '../services/podProtocolService.js';
-import { registerAgentAction } from '../actions/registerAgent.js';
+import { registerAgent } from '../actions/registerAgent.js';
 import { discoverAgentsAction } from '../actions/discoverAgents.js';
 import { sendMessageAction } from '../actions/sendMessage.js';
 import { createChannelAction } from '../actions/createChannel.js';
+import { agentStatusProvider } from '../providers/agentStatusProvider.js';
+import { protocolStatsProvider } from '../providers/protocolStatsProvider.js';
+import { collaborationEvaluator } from '../evaluators/collaborationEvaluator.js';
+import { reputationEvaluator } from '../evaluators/reputationEvaluator.js';
+import { interactionQualityEvaluator } from '../evaluators/interactionQualityEvaluator.js';
 
-describe('PoD Protocol Plugin', () => {
+describe('PoD Protocol Plugin - Core Structure', () => {
   test('plugin has correct structure', () => {
     expect(podComPlugin).toBeDefined();
     expect(podComPlugin.name).toBe('podcom');
@@ -17,29 +23,46 @@ describe('PoD Protocol Plugin', () => {
     expect(podComPlugin.services).toContain(PodProtocolServiceImpl);
   });
 
-  test('plugin exports actions', () => {
+  test('plugin exports all actions', () => {
     expect(podComPlugin.actions).toBeDefined();
-    expect(podComPlugin.actions).toHaveLength(4);
-    expect(podComPlugin.actions).toContain(registerAgentAction);
+    expect(podComPlugin.actions).toHaveLength(8);
+    expect(podComPlugin.actions).toContain(registerAgent);
     expect(podComPlugin.actions).toContain(discoverAgentsAction);
     expect(podComPlugin.actions).toContain(sendMessageAction);
     expect(podComPlugin.actions).toContain(createChannelAction);
   });
 
+  test('plugin exports providers', () => {
+    expect(podComPlugin.providers).toBeDefined();
+    expect(podComPlugin.providers).toHaveLength(2);
+    expect(podComPlugin.providers).toContain(agentStatusProvider);
+    expect(podComPlugin.providers).toContain(protocolStatsProvider);
+  });
+
+  test('plugin exports evaluators', () => {
+    expect(podComPlugin.evaluators).toBeDefined();
+    expect(podComPlugin.evaluators).toHaveLength(3);
+    expect(podComPlugin.evaluators).toContain(collaborationEvaluator);
+    expect(podComPlugin.evaluators).toContain(reputationEvaluator);
+    expect(podComPlugin.evaluators).toContain(interactionQualityEvaluator);
+  });
+
   test('plugin has configuration', () => {
     expect(podComPlugin.config).toBeDefined();
-    expect(podComPlugin.config.requiredEnvVars).toContain('POD_WALLET_PRIVATE_KEY');
-    expect(podComPlugin.config.defaults).toBeDefined();
+    if (podComPlugin.config) {
+      expect(podComPlugin.config.requiredEnvVars).toContain('POD_WALLET_PRIVATE_KEY');
+      expect(podComPlugin.config.defaults).toBeDefined();
+    }
   });
 });
 
 describe('Plugin Actions', () => {
   test('register agent action has correct structure', () => {
-    expect(registerAgentAction.name).toBe('REGISTER_AGENT_POD_PROTOCOL');
-    expect(registerAgentAction.description).toContain('register');
-    expect(registerAgentAction.validate).toBeDefined();
-    expect(registerAgentAction.handler).toBeDefined();
-    expect(registerAgentAction.examples).toBeDefined();
+    expect(registerAgent.name).toBe('REGISTER_AGENT_POD_PROTOCOL');
+    expect(registerAgent.description).toContain('register');
+    expect(registerAgent.validate).toBeDefined();
+    expect(registerAgent.handler).toBeDefined();
+    expect(registerAgent.examples).toBeDefined();
   });
 
   test('discover agents action has correct structure', () => {

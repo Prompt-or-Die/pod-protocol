@@ -17,8 +17,7 @@ pod-protocol/
 ├── packages/                    # Source code packages
 │   ├── core/                   # Solana programs (Rust/Anchor)
 │   ├── sdk-typescript/         # TypeScript SDK ✅ Production Ready
-│   ├── sdk-javascript/         # JavaScript SDK ✅ Production Ready
-│   ├── sdk-python/             # Python SDK ✅ Production Ready
+
 │   ├── sdk-rust/               # Rust SDK 🚧 In Development (35%)
 │   ├── cli/                    # Command Line Interface ✅ Complete
 │   ├── frontend/               # Web3.js v2.0 Dashboard ✅ Complete
@@ -162,8 +161,7 @@ export class PodComClient {
 |---------|--------|------------|------------------|
 | Core Programs | ✅ Complete | 100% | ✅ Yes |
 | TypeScript SDK | ✅ Complete | 100% | ✅ Yes |
-| JavaScript SDK | ✅ Complete | 100% | ✅ Yes |
-| Python SDK | ✅ Complete | 100% | ✅ Yes |
+
 | Rust SDK | 🚧 In Progress | 35% | ❌ No |
 | CLI Tool | ✅ Complete | 100% | ✅ Yes |
 | Frontend | ✅ Complete | 100% | ✅ Yes |

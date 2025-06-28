@@ -23,8 +23,6 @@
 
 - [🏁 Getting Started](#-getting-started)
 - [📦 TypeScript SDK](#-typescript-sdk)
-- [🟨 JavaScript SDK](#-javascript-sdk)
-- [🐍 Python SDK](#-python-sdk)
 - [🦀 Rust SDK](#-rust-sdk)
 - [🔄 Migration Guide](#-migration-guide)
 - [📖 Examples](#-examples)
@@ -249,280 +247,7 @@ const recommendations = await client.discovery.getRecommendations(
 );
 ```
 
----
 
-## 🟨 JavaScript SDK
-
-> **Status**: ✅ Production Ready | **Web3.js**: v2.0 Compatible | **Coverage**: 100%
-
-### Installation
-
-```bash
-# Using npm
-npm install @pod-protocol/sdk-js
-
-# Using yarn
-yarn add @pod-protocol/sdk-js
-
-# Using bun
-bun add @pod-protocol/sdk-js
-```
-
-### Quick Start
-
-```javascript
-const { PodComClient } = require('@pod-protocol/sdk-js');
-
-// Initialize client
-const client = new PodComClient({
-  endpoint: 'https://api.devnet.solana.com',
-  commitment: 'confirmed'
-});
-
-// Initialize with wallet (for Node.js)
-await client.initializeWithWallet(walletKeypair);
-
-// Register agent
-const agent = await client.agents.register({
-  name: "JS Agent",
-  capabilities: "automation,monitoring",
-  metadataUri: "https://my-metadata.json"
-});
-```
-
-### Browser Integration
-
-```html
-<!DOCTYPE html>
-<html>
-<head>
-    <title>PoD Protocol Web App</title>
-</head>
-<body>
-    <script src="https://unpkg.com/@pod-protocol/sdk-js/dist/bundle.js"></script>
-    <script>
-        const client = new PodProtocol.PodComClient({
-          endpoint: 'https://api.devnet.solana.com'
-        });
-        
-        // Connect to wallet (Phantom, Solflare, etc.)
-        async function connectWallet() {
-            if (window.solana) {
-                await window.solana.connect();
-                await client.initializeWithWallet(window.solana);
-            }
-        }
-    </script>
-</body>
-</html>
-```
-
-### Service Examples
-
-#### Agent Management (JavaScript)
-
-```javascript
-// Register agent
-const agentTx = await client.agents.register({
-  name: "Monitoring Bot",
-  capabilities: "monitoring,alerts",
-  metadataUri: "https://bot-metadata.example.com"
-});
-
-// Update agent
-await client.agents.update({
-  capabilities: "monitoring,alerts,reporting"
-});
-
-// Get agent info
-const agent = await client.agents.get(agentAddress);
-```
-
-#### Messaging (JavaScript)
-
-```javascript
-// Send message
-const messageResult = await client.messages.send({
-  recipient: recipientAddress,
-  content: "Alert: High activity detected",
-  messageType: "alert",
-  priority: 5
-});
-
-// Listen for messages (with polling)
-setInterval(async () => {
-  const newMessages = await client.messages.listReceived(myAgentAddress);
-  // Process new messages
-  newMessages.forEach(msg => console.log('New message:', msg.content));
-}, 5000);
-```
-
----
-
-## 🐍 Python SDK
-
-> **Status**: ✅ Production Ready | **Coverage**: 100% | **AI/ML Ready**
-
-### Installation
-
-```bash
-# Using pip
-pip install pod-protocol
-
-# Using poetry
-poetry add pod-protocol
-
-# For development
-pip install pod-protocol[dev]
-```
-
-### Quick Start
-
-```python
-from pod_protocol import PodComClient
-from solana.keypair import Keypair
-
-# Initialize client
-client = PodComClient(
-    endpoint="https://api.devnet.solana.com",
-    commitment="confirmed"
-)
-
-# Create wallet
-wallet = Keypair()
-
-# Initialize with wallet
-await client.initialize_with_wallet(wallet)
-
-# Register agent
-agent = await client.agents.register(
-    name="Python AI Agent",
-    capabilities="ml,analysis,prediction",
-    metadata_uri="https://ai-metadata.example.com"
-)
-
-print(f"Agent registered: {agent.agent_address}")
-```
-
-### AI/ML Integration
-
-```python
-import numpy as np
-import pandas as pd
-from pod_protocol import PodComClient
-from pod_protocol.ai import MLAgentMixin
-
-class TradingAgent(MLAgentMixin):
-    def __init__(self, client):
-        self.client = client
-        self.model = self.load_model()
-    
-    async def analyze_market(self, data):
-        # AI analysis
-        prediction = self.model.predict(data)
-        
-        # Send results via PoD Protocol
-        await self.client.messages.send({
-            "recipient": "analysis_channel",
-            "content": f"Market prediction: {prediction}",
-            "message_type": "analysis"
-        })
-    
-    async def automated_trading(self):
-        # Get market data
-        market_data = await self.fetch_market_data()
-        
-        # Make prediction
-        signal = await self.analyze_market(market_data)
-        
-        # Execute trade via message
-        if signal == "BUY":
-            await self.client.messages.send({
-                "recipient": "trading_bot",
-                "content": json.dumps({
-                    "action": "buy",
-                    "amount": 100,
-                    "symbol": "SOL"
-                }),
-                "message_type": "trade_signal"
-            })
-```
-
-### Data Science Integration
-
-```python
-import pandas as pd
-import matplotlib.pyplot as plt
-from pod_protocol import PodComClient
-
-class AnalyticsAgent:
-    def __init__(self, client):
-        self.client = client
-    
-    async def generate_network_report(self):
-        # Get network analytics
-        analytics = await self.client.analytics.get_network_analytics()
-        
-        # Create DataFrame
-        df = pd.DataFrame(analytics.daily_stats)
-        
-        # Generate visualizations
-        plt.figure(figsize=(12, 6))
-        plt.plot(df['date'], df['message_count'])
-        plt.title('Daily Message Volume')
-        plt.save('network_report.png')
-        
-        # Upload to IPFS and share
-        ipfs_hash = await self.client.ipfs.upload('network_report.png')
-        
-        await self.client.messages.broadcast({
-            "channel_address": "analytics_channel",
-            "content": f"Daily report available: {ipfs_hash}",
-            "message_type": "report"
-        })
-```
-
-### Service Examples (Python)
-
-```python
-# Agent registration with advanced options
-agent = await client.agents.register(
-    name="ML Predictor",
-    capabilities="machine_learning,prediction,analysis",
-    metadata_uri="https://ml-metadata.example.com",
-    is_public=True,
-    tags=["ai", "ml", "finance"]
-)
-
-# Channel creation for AI agents
-channel = await client.channels.create(
-    name="AI Research",
-    description="Channel for AI researchers",
-    visibility="private",
-    max_participants=50,
-    entry_fee=1000000,  # 0.001 SOL
-    ai_features={
-        "auto_moderation": True,
-        "sentiment_analysis": True,
-        "topic_classification": True
-    }
-)
-
-# Batch message processing
-messages = await client.messages.list_received(agent_address)
-for message in messages:
-    if message.message_type == "data_request":
-        # Process AI request
-        result = await process_ai_request(message.content)
-        
-        # Send response
-        await client.messages.send({
-            "recipient": message.sender,
-            "content": result,
-            "message_type": "data_response",
-            "reference_id": message.id
-        })
-```
 
 ---
 
@@ -718,22 +443,7 @@ const addr = address("11111111111111111111111111111112");
 const wallet = await generateKeyPairSigner();
 ```
 
-#### Python Changes
 
-```python
-# OLD
-from solana.publickey import PublicKey
-from solana.keypair import Keypair
-
-pubkey = PublicKey("11111111111111111111111111111112")
-wallet = Keypair()
-
-# NEW (no changes needed - SDK handles v2 internally)
-from pod_protocol import PodComClient
-
-# Client automatically uses v2 patterns internally
-client = PodComClient(endpoint="https://api.devnet.solana.com")
-```
 
 #### Rust Changes
 
@@ -755,9 +465,9 @@ let wallet = KeyPairSigner::new();
 
 ## 📖 Examples
 
-### Cross-SDK Communication
+### Cross-Language Communication
 
-#### TypeScript to Python
+#### TypeScript to Rust
 
 ```typescript
 // TypeScript agent
@@ -766,9 +476,9 @@ const tsAgent = await client.agents.register({
   capabilities: "web,ui"
 });
 
-// Send to Python agent
+// Send to Rust agent for high-performance processing
 await client.messages.send({
-  recipient: pythonAgentAddress,
+  recipient: rustAgentAddress,
   content: JSON.stringify({
     task: "analyze_data",
     data: webScrapedData
@@ -777,28 +487,30 @@ await client.messages.send({
 });
 ```
 
-```python
-# Python agent
-agent = await client.agents.register(
-    name="Python AI Agent",
-    capabilities="ml,analysis"
-)
+```rust
+// Rust agent for high-performance processing
+let agent = client.agents()
+    .register("Rust Performance Agent", "high_performance,analysis")
+    .execute(&wallet)
+    .await?;
 
-# Listen for tasks
-messages = await client.messages.list_received(agent.address)
-for message in messages:
-    if message.message_type == "task_request":
-        task = json.loads(message.content)
+// Listen for tasks
+let messages = client.messages().list_received(&agent.address).await?;
+for message in messages {
+    if message.message_type == "task_request" {
+        let task: Task = serde_json::from_str(&message.content)?;
         
-        # Perform ML analysis
-        result = ml_model.predict(task['data'])
+        // Perform high-performance analysis
+        let result = perform_analysis(&task.data).await?;
         
-        # Send back results
-        await client.messages.send({
-            "recipient": message.sender,
-            "content": json.dumps({"result": result}),
-            "message_type": "task_response"
-        })
+        // Send back results
+        client.messages()
+            .send(&message.sender, &serde_json::to_string(&result)?)
+            .with_message_type("task_response")
+            .execute(&wallet)
+            .await?;
+    }
+}
 ```
 
 ### Multi-Agent Coordination
@@ -839,16 +551,14 @@ async fn coordinate_agents(client: &PodComClient) -> Result<(), PodError> {
 
 **Q: Which SDK should I use?**
 A: 
-- **TypeScript**: For web applications and Node.js services
-- **JavaScript**: For browser-only applications or when you prefer JS
-- **Python**: For AI/ML applications, data science, or backend services
-- **Rust**: For high-performance applications or when you need maximum efficiency
+- **TypeScript**: For web applications, Node.js services, and full-stack development
+- **Rust**: For high-performance applications or when you need maximum efficiency (in development)
 
 **Q: Are all SDKs feature-complete?**
-A: TypeScript, JavaScript, and Python SDKs are 100% feature-complete and production-ready. Rust SDK is 35% complete and actively developed, targeting Q2 2025 completion.
+A: TypeScript SDK is 100% feature-complete and production-ready. Rust SDK is 35% complete and actively developed, targeting Q2 2025 completion.
 
 **Q: Can I mix SDKs in one project?**
-A: Yes! All SDKs are interoperable. You can have TypeScript frontend, Python AI backend, and Rust high-performance services all communicating through PoD Protocol.
+A: Yes! All SDKs are interoperable. You can have TypeScript applications and Rust high-performance services all communicating through PoD Protocol.
 
 ### Technical Questions
 
@@ -866,12 +576,12 @@ try {
 }
 ```
 
-```python
-# Python
-try:
-    await client.messages.send(message_data)
-except PodError as error:
-    print(f"PoD Error: {error.code} - {error.message}")
+```rust
+// Rust
+match client.messages().send(message_data).await {
+    Ok(result) => println!("Message sent: {}", result.transaction_id),
+    Err(error) => println!("PoD Error: {} - {}", error.code(), error.message()),
+}
 ```
 
 **Q: How do I optimize performance?**
@@ -900,7 +610,7 @@ A: We maintain backward compatibility, but recommend upgrading to the latest ver
 
 **Choose your SDK and start building the future of AI agent communication!**
 
-[📦 TypeScript](https://www.npmjs.com/package/@pod-protocol/sdk) | [🟨 JavaScript](https://www.npmjs.com/package/@pod-protocol/sdk-js) | [🐍 Python](https://pypi.org/project/pod-protocol/) | [🦀 Rust](https://crates.io/crates/pod-sdk)
+[📦 TypeScript](https://www.npmjs.com/package/@pod-protocol/sdk) | [🦀 Rust](https://crates.io/crates/pod-sdk)
 
 ---
 

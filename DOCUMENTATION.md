@@ -32,8 +32,7 @@
 |-----------|--------|---------------|--------------|
 | **🔗 Solana Program** | ✅ Production | [Architecture](ARCHITECTURE.md) | ZK compression, escrow, channels |
 | **📦 TypeScript SDK** | ✅ Production | [SDK Guide](SDK_GUIDE.md) | Complete API, Web3.js v2.0 |
-| **🟨 JavaScript SDK** | ✅ Production | [SDK Guide](SDK_GUIDE.md) | Full feature parity |
-| **🐍 Python SDK** | ✅ Production | [Python SDK](sdk-python/README.md) | Advanced features, session management |
+
 | **💻 CLI Tools** | ✅ Production | [CLI Guide](docs/guides/GETTING_STARTED.md) | Complete command set |
 | **🎨 Frontend App** | ✅ Production | [Frontend Guide](frontend/README.md) | Web3.js v2.0, modern UI |
 | **🖥️ API Server** | ✅ Production | [API Docs](api-server/README.md) | Express.js, PostgreSQL, WebSocket |
@@ -88,7 +87,7 @@ Ready for enterprise deployment
 | Document | Description | Status |
 |----------|-------------|---------|
 | **[frontend/FRONTEND_WEB3_V2_MIGRATION_COMPLETE.md](frontend/FRONTEND_WEB3_V2_MIGRATION_COMPLETE.md)** | Web3.js v2.0 migration details | ✅ Complete |
-| **[sdk-python/PYTHON_SDK_COMPLETION_SUMMARY.md](sdk-python/PYTHON_SDK_COMPLETION_SUMMARY.md)** | Python SDK advanced features | ✅ Complete |
+
 | **[mcp-server/ENHANCED_MCP_IMPLEMENTATION_COMPLETE.md](mcp-server/ENHANCED_MCP_IMPLEMENTATION_COMPLETE.md)** | MCP Server v2.0 enterprise features | ✅ Complete |
 | **[api-server/IMPLEMENTATION_COMPLETE.md](api-server/IMPLEMENTATION_COMPLETE.md)** | API server production readiness | ✅ Complete |
 
@@ -168,7 +167,7 @@ graph LR
 - **Troubleshooting** - Common issues and solutions
 
 ### 🔧 Developer Documentation
-- **Multi-Language SDKs** - TypeScript, JavaScript, Python, Rust (in dev)
+- **TypeScript SDK** - Complete SDK for TypeScript/JavaScript applications
 - **API Reference** - Complete REST and WebSocket API documentation
 - **Contributing** - How to contribute to the project
 - **Architecture** - Technical deep dives and system design
@@ -198,8 +197,6 @@ graph LR
 
 ### 🛠️ **Development Tools**
 - ✅ **TypeScript SDK** - Full-featured, Web3.js v2.0 compatible
-- ✅ **JavaScript SDK** - Complete feature parity
-- ✅ **Python SDK** - Advanced enterprise features
 - ✅ **CLI Tools** - Complete command-line interface
 - 🚧 **Rust SDK** - High-performance native SDK (35% complete)
 
@@ -212,7 +209,7 @@ graph LR
 ### 🔐 **Enterprise Features**
 - ✅ **Security Audit** - Professional security assessment completed
 - ✅ **OAuth 2.1** - Modern authentication in MCP server
-- ✅ **Session Management** - Advanced session handling in Python SDK
+
 - ✅ **MEV Protection** - Jito bundles integration
 - ✅ **Real-time Features** - WebSocket subscriptions and live updates
 
@@ -222,7 +219,7 @@ graph LR
 
 ### ✅ **Completed (100%)**
 - Core Solana program with ZK compression
-- TypeScript/JavaScript/Python SDKs
+- TypeScript SDK with Web3.js v2.0
 - Frontend application with Web3.js v2.0
 - API server with PostgreSQL integration
 - Enhanced MCP server v2.0

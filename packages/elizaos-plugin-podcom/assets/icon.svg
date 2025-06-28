@@ -1,0 +1,74 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="30" fill="url(#gradient)" stroke="#1a1a2e" stroke-width="2"/>
+  
+  <!-- Blockchain link elements -->
+  <g transform="translate(12, 20)">
+    <!-- First link -->
+    <rect x="0" y="8" width="12" height="8" rx="2" fill="#ffffff" opacity="0.9"/>
+    <circle cx="6" cy="12" r="2" fill="#4f46e5"/>
+    
+    <!-- Connection line -->
+    <line x1="12" y1="12" x2="16" y2="12" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+    
+    <!-- Second link -->
+    <rect x="16" y="8" width="12" height="8" rx="2" fill="#ffffff" opacity="0.9"/>
+    <circle cx="22" cy="12" r="2" fill="#7c3aed"/>
+    
+    <!-- Connection line -->
+    <line x1="28" y1="12" x2="32" y2="12" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+    
+    <!-- Third link -->
+    <rect x="32" y="8" width="12" height="8" rx="2" fill="#ffffff" opacity="0.9"/>
+    <circle cx="38" cy="12" r="2" fill="#059669"/>
+  </g>
+  
+  <!-- Agent nodes -->
+  <g>
+    <!-- Top agent -->
+    <circle cx="32" cy="12" r="4" fill="#f59e0b" stroke="#ffffff" stroke-width="2"/>
+    <path d="M30 11 L34 11 M30 13 L34 13" stroke="#ffffff" stroke-width="1"/>
+    
+    <!-- Left agent -->
+    <circle cx="16" cy="32" r="4" fill="#ef4444" stroke="#ffffff" stroke-width="2"/>
+    <path d="M14 31 L18 31 M14 33 L18 33" stroke="#ffffff" stroke-width="1"/>
+    
+    <!-- Right agent -->
+    <circle cx="48" cy="32" r="4" fill="#06b6d4" stroke="#ffffff" stroke-width="2"/>
+    <path d="M46 31 L50 31 M46 33 L50 33" stroke="#ffffff" stroke-width="1"/>
+    
+    <!-- Bottom agent -->
+    <circle cx="32" cy="52" r="4" fill="#8b5cf6" stroke="#ffffff" stroke-width="2"/>
+    <path d="M30 51 L34 51 M30 53 L34 53" stroke="#ffffff" stroke-width="1"/>
+  </g>
+  
+  <!-- Communication lines -->
+  <g stroke="#ffffff" stroke-width="1.5" opacity="0.6" stroke-dasharray="2,2">
+    <line x1="32" y1="16" x2="32" y2="24"/>
+    <line x1="20" y1="32" x2="28" y2="32"/>
+    <line x1="36" y1="32" x2="44" y2="32"/>
+    <line x1="32" y1="40" x2="32" y2="48"/>
+    
+    <!-- Diagonal connections -->
+    <line x1="20" y1="20" x2="28" y2="28"/>
+    <line x1="44" y1="20" x2="36" y2="28"/>
+    <line x1="20" y1="44" x2="28" y2="36"/>
+    <line x1="44" y1="44" x2="36" y2="36"/>
+  </g>
+  
+  <!-- Central hub -->
+  <circle cx="32" cy="32" r="6" fill="url(#centerGradient)" stroke="#ffffff" stroke-width="2"/>
+  <text x="32" y="36" font-family="Arial" font-size="8" font-weight="bold" text-anchor="middle" fill="#ffffff">P</text>
+  
+  <!-- Gradients -->
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="centerGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#4f46e5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e1b4b;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+</svg> 

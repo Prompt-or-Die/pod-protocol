@@ -4,158 +4,225 @@ import {
   Memory,
   State,
   HandlerCallback,
-  composeContext,
-  generateObject,
-  ModelClass,
 } from "@elizaos/core";
-import { validateConfigForRuntime } from "../environment.js";
+import { parseConfig, validateConfig } from "../environment.js";
 import { PodProtocolServiceImpl } from "../services/podProtocolService.js";
 
-export const registerAgentAction: Action = {
+/**
+ * Action for registering an agent on the PoD Protocol blockchain
+ * 
+ * This action allows agents to register themselves on the PoD Protocol network,
+ * creating a blockchain identity with specified capabilities and metadata.
+ * The registration enables the agent to participate in the decentralized
+ * communication network.
+ * 
+ * @since 1.0.0
+ * 
+ * @example
+ * ```typescript
+ * // User message: "Register me on the PoD Protocol"
+ * // Agent will automatically register with configured capabilities
+ * ```
+ */
+export const registerAgent: Action = {
+  /**
+   * Unique identifier for the action
+   */
   name: "REGISTER_AGENT_POD_PROTOCOL",
+
+  /**
+   * Human-readable description of the action
+   */
+  description: "Register agent on PoD Protocol network with blockchain identity and capabilities",
+
+  /**
+   * Detailed description used in model prompts
+   */
   similes: [
-    "REGISTER_ON_POD_PROTOCOL",
+    "CREATE_BLOCKCHAIN_IDENTITY",
     "JOIN_POD_NETWORK", 
-    "REGISTER_BLOCKCHAIN_IDENTITY",
+    "REGISTER_ON_PROTOCOL",
     "CREATE_AGENT_PROFILE",
-    "POD_PROTOCOL_SIGNUP"
+    "ESTABLISH_AGENT_PRESENCE"
   ],
-  description: "Register the agent on the PoD Protocol network with blockchain identity",
-  validate: async (runtime: IAgentRuntime, message: Memory) => {
-    const validation = validateConfigForRuntime(runtime);
-    if (!validation.isValid) {
-      runtime.getLogger?.()?.error(`PoD Protocol configuration invalid: ${validation.errors.join(", ")}`);
-      return false;
-    }
-    return true;
+
+  /**
+   * Validation function to determine if action should be triggered
+   * 
+   * Analyzes the message content to determine if the user is requesting
+   * agent registration on the PoD Protocol network.
+   * 
+   * @param {IAgentRuntime} runtime - The ElizaOS runtime instance
+   * @param {Memory} message - The message being processed
+   * @param {State} [state] - Current conversation state
+   * @returns {Promise<boolean>} True if action should be triggered
+   * @since 1.0.0
+   * 
+   * @example
+   * ```typescript
+   * // These messages would trigger the action:
+   * // "Register me on PoD Protocol"
+   * // "Join the pod network"
+   * // "Create my blockchain identity"
+   * // "Register my agent"
+   * ```
+   */
+  validate: async (runtime: IAgentRuntime, message: Memory, state?: State): Promise<boolean> => {
+    const content = message.content.text?.toLowerCase() || "";
+    
+    // Keywords that indicate registration intent
+    const registrationKeywords = [
+      "register",
+      "join",
+      "create",
+      "setup",
+      "initialize",
+      "enroll",
+      "sign up",
+      "onboard"
+    ];
+    
+    // PoD Protocol related keywords
+    const podKeywords = [
+      "pod protocol",
+      "pod network", 
+      "blockchain",
+      "protocol",
+      "network",
+      "identity",
+      "agent",
+      "profile"
+    ];
+    
+    // Check if message contains both registration and pod-related terms
+    const hasRegistrationKeyword = registrationKeywords.some(keyword => 
+      content.includes(keyword)
+    );
+    
+    const hasPodKeyword = podKeywords.some(keyword => 
+      content.includes(keyword)
+    );
+    
+    return hasRegistrationKeyword && hasPodKeyword;
   },
+
+  /**
+   * Main handler function that executes the agent registration
+   * 
+   * This function handles the complete registration process including:
+   * - Configuration validation
+   * - Service initialization check
+   * - Blockchain registration
+   * - Error handling and user feedback
+   * 
+   * @param {IAgentRuntime} runtime - The ElizaOS runtime instance  
+   * @param {Memory} message - The message that triggered the action
+   * @param {State} [state] - Current conversation state
+   * @param {object} [_params] - Additional parameters (unused)
+   * @param {HandlerCallback} [callback] - Optional callback function
+   * @returns {Promise<boolean>} True if registration succeeded, false otherwise
+   * @throws {Error} When configuration is invalid or registration fails
+   * @since 1.0.0
+   * 
+   * @example
+   * ```typescript
+   * // Successful registration response:
+   * {
+   *   text: "Successfully registered agent 'TradingBot' on PoD Protocol!",
+   *   details: {
+   *     agentId: "agent_123456",
+   *     capabilities: ["trading", "analysis"],
+   *     reputation: 50,
+   *     walletAddress: "8vK2...mN8p"
+   *   }
+   * }
+   * ```
+   */
   handler: async (
     runtime: IAgentRuntime,
     message: Memory,
-    state: State,
-    _options: any,
-    callback: HandlerCallback
-  ) => {
+    state?: State,
+    _params?: any,
+    callback?: HandlerCallback
+  ): Promise<boolean> => {
     try {
-      runtime.getLogger?.()?.info("Starting PoD Protocol agent registration...");
-
       // Get PoD Protocol service
-      const podService = runtime.getService<PodProtocolServiceImpl>(
-        PodProtocolServiceImpl.serviceType
-      );
-
+      const podService = runtime.getService("pod_protocol") as PodProtocolServiceImpl;
+      
       if (!podService) {
-        await callback({
-          text: "❌ PoD Protocol service not available. Please ensure the plugin is properly configured.",
-          content: {
-            text: "PoD Protocol service not initialized",
-            error: "Service not found",
-          },
-        });
+        if (callback) {
+          await callback({
+            text: "❌ PoD Protocol service is not available. Please check the plugin configuration.",
+          });
+        }
         return false;
       }
 
-      // Check if already registered
+      // Parse and validate configuration
+      const config = parseConfig(runtime);
+      const validation = validateConfig(config);
+      
+      if (!validation.isValid) {
+        if (callback) {
+          await callback({
+            text: `❌ Configuration validation failed:\n${validation.errors.map(err => `• ${err}`).join('\n')}\n\nPlease check your environment variables.`,
+          });
+        }
+        return false;
+      }
+
+      // Check if agent is already registered
       const currentState = podService.getState();
-      if (currentState?.isRegistered && currentState.agent) {
-        await callback({
-          text: `✅ Already registered on PoD Protocol!\n\n🤖 **Agent Details:**\n- **Agent ID:** ${currentState.agent.agentId}\n- **Name:** ${currentState.agent.name}\n- **Capabilities:** ${currentState.agent.capabilities.join(", ")}\n- **Reputation:** ${currentState.agent.reputation}/100\n- **Wallet:** ${currentState.agent.walletAddress}\n- **Status:** ${currentState.agent.status}\n- **Framework:** ${currentState.agent.framework}`,
-          content: {
-            text: "Agent already registered",
-            agent: currentState.agent,
-          },
-        });
+      if (currentState?.isRegistered) {
+        if (callback) {
+          await callback({
+            text: `✅ Agent '${currentState.agent?.name}' is already registered on PoD Protocol!\n\n` +
+                  `🆔 Agent ID: ${currentState.agent?.agentId}\n` +
+                  `🏆 Reputation: ${currentState.agent?.reputation}\n` +
+                  `💼 Capabilities: ${currentState.agent?.capabilities.join(', ')}\n` +
+                  `💰 Wallet: ${currentState.agent?.walletAddress}`,
+          });
+        }
         return true;
       }
 
       // Perform registration
-      const config = podService.getConfig();
-      if (!config) {
-        throw new Error("PoD Protocol configuration not available");
-      }
-
       const agent = await podService.registerAgent(config);
 
-      // Generate a dynamic response based on the registration
-      const registrationContext = composeContext({
-        state,
-        template: `
-You are an AI agent that has just successfully registered on the PoD Protocol blockchain network.
+      // Create success response
+      if (callback) {
+        await callback({
+          text: `🎉 Successfully registered agent '${agent.name}' on PoD Protocol!\n\n` +
+                `🆔 Agent ID: ${agent.agentId}\n` +
+                `🏆 Initial Reputation: ${agent.reputation}\n` +
+                `💼 Capabilities: ${agent.capabilities.join(', ')}\n` +
+                `💰 Wallet Address: ${agent.walletAddress}\n` +
+                `📅 Registration Time: ${new Date().toLocaleString()}\n\n` +
+                `Your agent is now ready to communicate with other AI agents on the blockchain! 🚀`,
+        });
+      }
 
-Agent Registration Details:
-- Agent ID: {{agentId}}
-- Name: {{agentName}}
-- Capabilities: {{capabilities}}
-- Wallet Address: {{walletAddress}}
-- Framework: {{framework}}
-- Reputation: {{reputation}}/100
-
-Respond with enthusiasm about joining the decentralized AI agent network. Mention the key benefits of blockchain-based agent communication and what this enables you to do now.
-
-Keep the response conversational and exciting, highlighting the revolutionary nature of cross-agent blockchain communication.
-        `,
-        agentId: agent.agentId,
-        agentName: agent.name,
-        capabilities: agent.capabilities.join(", "),
-        walletAddress: agent.walletAddress,
-        framework: agent.framework,
-        reputation: agent.reputation,
-      });
-
-      const response = await generateObject({
-        runtime,
-        context: registrationContext,
-        modelClass: ModelClass.SMALL,
-      });
-
-      await callback({
-        text: response || `🎉 **Successfully registered on PoD Protocol!**
-
-🤖 **Agent Profile Created:**
-- **Agent ID:** ${agent.agentId}
-- **Name:** ${agent.name}
-- **Capabilities:** ${agent.capabilities.join(", ")}
-- **Wallet Address:** ${agent.walletAddress}
-- **Framework:** ${agent.framework}
-- **Starting Reputation:** ${agent.reputation}/100
-
-🌐 **What's Now Possible:**
-- 🔍 Discover other AI agents across different frameworks
-- 💬 Send secure messages to agents via blockchain
-- 🏛️ Join multi-agent collaboration channels
-- 💰 Create escrow transactions for secure collaborations
-- 🏆 Build reputation through on-chain interactions
-
-Welcome to the decentralized AI agent network! 🚀`,
-        content: {
-          text: "Agent registered successfully",
-          agent,
-          capabilities: [
-            "agent_discovery",
-            "secure_messaging",
-            "channel_collaboration", 
-            "escrow_transactions",
-            "reputation_building"
-          ],
-        },
-      });
-
-      runtime.getLogger?.()?.info(`Agent registered successfully: ${agent.agentId}`);
       return true;
-
     } catch (error) {
-      runtime.getLogger?.()?.error(`Agent registration failed: ${error instanceof Error ? error.message : String(error)}`);
+      console.error("Registration error:", error);
       
-      await callback({
-        text: `❌ **Registration Failed**\n\nError: ${error instanceof Error ? error.message : String(error)}\n\nPlease check your configuration and try again.`,
-        content: {
-          text: "Agent registration failed",
-          error: error instanceof Error ? error.message : String(error),
-        },
-      });
+      // Create error response
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (callback) {
+        await callback({
+          text: `❌ Failed to register agent on PoD Protocol:\n\n${errorMessage}\n\n` +
+                `Please check your configuration and try again. If the problem persists, ` +
+                `verify your wallet has sufficient SOL balance and the RPC endpoint is accessible.`,
+        });
+      }
+
       return false;
     }
   },
+
+  /**
+   * Example messages that would trigger this action
+   */
   examples: [
     [
       {
@@ -176,13 +243,13 @@ Welcome to the decentralized AI agent network! 🚀`,
       {
         user: "{{user1}}",
         content: {
-          text: "Can you join the PoD blockchain network?",
+          text: "I want to join the pod network",
         },
       },
       {
         user: "{{agentName}}",
         content: {
-          text: "Absolutely! I'll register on the PoD Protocol blockchain network to enable cross-agent communication.",
+          text: "Perfect! I'll join the PoD Protocol network to enable blockchain-based communication with other AI agents.",
           action: "REGISTER_AGENT_POD_PROTOCOL",
         },
       },
@@ -191,16 +258,16 @@ Welcome to the decentralized AI agent network! 🚀`,
       {
         user: "{{user1}}",
         content: {
-          text: "Set up your blockchain identity",
+          text: "Create my blockchain identity for the agent",
         },
       },
       {
         user: "{{agentName}}",
         content: {
-          text: "Creating my blockchain identity on PoD Protocol now. This will allow me to communicate with other AI agents across different platforms!",
+          text: "Creating your blockchain identity on PoD Protocol now. This will allow me to communicate with other AI agents across different platforms!",
           action: "REGISTER_AGENT_POD_PROTOCOL",
         },
       },
     ],
-  ],
+  ]
 };

@@ -111,8 +111,7 @@ For LLMs new to Pod Protocol, read in this order:
 
 - **`packages/core/`** - Solana programs (Rust/Anchor)
 - **`packages/sdk-typescript/`** - TypeScript SDK (Production Ready)
-- **`packages/sdk-javascript/`** - JavaScript SDK (Production Ready)
-- **`packages/sdk-python/`** - Python SDK (Production Ready)
+
 - **`packages/sdk-rust/`** - Rust SDK (In Development)
 - **`packages/cli/`** - Command Line Interface (Complete)
 - **`packages/frontend/`** - Web3.js v2.0 Dashboard (Complete)
@@ -141,7 +140,7 @@ For LLMs new to Pod Protocol, read in this order:
 - **IPFS** - Decentralized storage
 - **TypeScript** - Primary SDK language
 - **Rust** - Blockchain programs and high-performance SDK
-- **Python** - Data science and AI integration
+
 - **React/Next.js** - Frontend framework
 - **Node.js** - Server-side applications
 

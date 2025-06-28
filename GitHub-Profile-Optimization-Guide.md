@@ -24,8 +24,8 @@
 ### ** Pinned Repositories (MAX 6)**
 1. **pod-protocol** - Main monorepo ( primary)
 2. **pod-typescript-sdk** - Enterprise TypeScript SDK
-3. **pod-javascript-sdk** - Full-stack JavaScript SDK  
-4. **pod-python-sdk** - ML/Data Science SDK
+  
+
 5. **pod-rust-sdk** - Ultra-performance SDK
 6. **pod-mcp-server** - AI integration server
 

@@ -32,8 +32,7 @@
 |-----------|---------|--------|----------------|
 | **Solana Program** | 2.0.0 | ✅ Passed | A+ |
 | **TypeScript SDK** | 2.0.0 | ✅ Passed | A+ |
-| **JavaScript SDK** | 2.0.0 | ✅ Passed | A+ |
-| **Python SDK** | 2.0.0 | ✅ Passed | A+ |
+
 | **API Server** | 2.0.0 | ✅ Passed | A |
 | **Frontend Application** | 2.0.0 | ✅ Passed | A |
 | **MCP Server** | 2.0.0 | ✅ Passed | A+ |

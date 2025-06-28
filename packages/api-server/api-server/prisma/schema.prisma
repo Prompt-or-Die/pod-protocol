@@ -107,7 +107,6 @@ model Message {
   
   // Blockchain data
   transactionSignature String?
-  blockchainData       Json?
   
   // Timestamps
   createdAt   DateTime    @default(now())

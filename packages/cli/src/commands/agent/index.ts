@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import boxen from 'boxen';
 import * as emoji from 'node-emoji';
 import { intro, outro, text, confirm } from '@clack/prompts';
-import { PodComClient, CreateAgentOptions, AgentAccount } from '@pod-protocol/sdk';
+import { PodComClient, CreateAgentOptions, AgentAccount } from '@pod-protocol/sdk/dist/index.js';
 import { loadWalletFromFile } from '../../utils/wallet-adapter.js';
 import { address } from '@solana/addresses';
 

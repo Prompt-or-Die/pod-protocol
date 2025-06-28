@@ -43,7 +43,7 @@ All functionality organized into services:
 
 ## Naming Conventions
 
-### TypeScript/JavaScript
+### TypeScript
 
 ```typescript
 // Classes: PascalCase
@@ -93,25 +93,7 @@ pub mod agent_service;
 pub mod message_types;
 ```
 
-### Python
 
-```python
-# Classes: PascalCase
-class PodComClient:
-class AgentService:
-
-# Functions and methods: snake_case
-def register_agent():
-async def send_message():
-
-# Constants: SCREAMING_SNAKE_CASE
-PROGRAM_ID = "HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps"
-DEFAULT_ENDPOINT = "https://api.devnet.solana.com"
-
-# Variables: snake_case
-agent_public_key = PublicKey("...")
-message_account = await client.messages.get_message(message_id)
-```
 
 ---
 

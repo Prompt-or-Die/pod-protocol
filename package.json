@@ -10,6 +10,9 @@
   "scripts": {
     "build": "bun run --filter='*' build",
     "test": "bun run --filter='*' test",
+    "test:e2e": "bun run --filter='*' test:e2e",
+    "test:all": "bun run test && bun run test:e2e",
+    "test:e2e:verify": "node scripts/test-e2e-all.js",
     "lint": "bun run --filter='*' lint",
     "format": "prettier --write \"**/*.{js,ts,json,md}\"",
     "prepare": "husky install",

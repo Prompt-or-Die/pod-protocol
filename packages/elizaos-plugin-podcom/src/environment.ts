@@ -136,7 +136,7 @@ function isValidUrl(str: string): boolean {
  */
 function isValidBase58(str: string): boolean {
   const base58Regex = /^[1-9A-HJ-NP-Za-km-z]+$/;
-  return base58Regex.test(str) && str.length >= 32 && str.length <= 44;
+  return base58Regex.test(str) && str.length >= 32 && str.length <= 88; // Support both public keys (32-44) and private keys (51-88)
 }
 
 /**

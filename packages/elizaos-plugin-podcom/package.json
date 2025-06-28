@@ -1,21 +1,34 @@
 {
   "name": "@elizaos/plugin-podcom",
   "version": "1.0.0",
-  "description": "ElizaOS plugin for PodCom - blockchain-powered AI agent communication on Solana",
+  "description": "ElizaOS plugin for PoD Protocol - Blockchain-powered AI agent communication and collaboration on Solana",
   "keywords": [
     "elizaos",
+    "elizaos-plugin",
     "plugin",
-    "solana",
+    "solana", 
     "blockchain",
-    "ai-agents",
-    "podcom",
-    "agent-communication",
     "web3",
-    "elizaos-plugin"
+    "ai-agents",
+    "agent-communication",
+    "multi-agent",
+    "podcom",
+    "pod-protocol",
+    "collaboration",
+    "escrow",
+    "reputation",
+    "messaging",
+    "channels",
+    "decentralized",
+    "smart-contracts",
+    "crypto",
+    "defi",
+    "autonomous-agents"
   ],
   "homepage": "https://github.com/pod-protocol/pod-protocol/tree/main/packages/elizaos-plugin-podcom",
   "bugs": {
-    "url": "https://github.com/pod-protocol/pod-protocol/issues"
+    "url": "https://github.com/pod-protocol/pod-protocol/issues",
+    "email": "support@pod-protocol.com"
   },
   "repository": {
     "type": "git",
@@ -23,39 +36,72 @@
     "directory": "packages/elizaos-plugin-podcom"
   },
   "license": "MIT",
-  "author": "PoD Protocol Team",
+  "author": {
+    "name": "Prompt or Die Team",
+    "email": "team@pod-protocol.com",
+    "url": "https://pod-protocol.com"
+  },
+  "contributors": [
+    {
+      "name": "Prompt or Die Core Team",
+      "email": "core@pod-protocol.com"
+    }
+  ],
+  "funding": {
+    "type": "opensource",
+    "url": "https://github.com/sponsors/pod-protocol"
+  },
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
-    "dist",
-    "assets",
+    "dist/**/*",
+    "assets/**/*",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "tsup",
     "build:watch": "tsup --watch",
     "dev": "tsup --watch",
     "clean": "rm -rf dist",
-    "test": "jest",
-    "test:watch": "jest --watch",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage",
+    "test:ci": "bun test --reporter=junit",
+    "test:e2e": "bun test tests/e2e/",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "type-check": "tsc --noEmit",
-    "prepublishOnly": "npm run clean && npm run build"
+    "format": "prettier --write src/**/*.ts",
+    "format:check": "prettier --check src/**/*.ts",
+    "prepublishOnly": "npm run clean && npm run build && npm run test",
+    "prepack": "npm run build",
+    "release": "npm run prepublishOnly && npm publish",
+    "release:dry": "npm run prepublishOnly && npm publish --dry-run"
   },
   "dependencies": {
     "@solana/web3.js": "^1.98.2",
     "bs58": "^6.0.0"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.27.2",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.1",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
+    "babel-jest": "^29.7.0",
     "eslint": "^8.57.1",
     "jest": "^29.7.0",
+    "prettier": "^3.4.2",
     "ts-jest": "^29.4.0",
     "tsup": "^8.5.0",
     "typescript": "^5.8.3"
@@ -63,43 +109,74 @@
   "peerDependencies": {
     "@elizaos/core": "^1.0.14"
   },
-  "agentConfig": {
-    "pluginType": "elizaos:plugin:1.0.0",
-    "pluginParameters": {
+  "peerDependenciesMeta": {
+    "@elizaos/core": {
+      "optional": false
+    }
+  },
+  "elizaos": {
+    "pluginType": "blockchain-communication",
+    "version": "1.0.0",
+    "compatibility": {
+      "elizaos": "^1.0.14",
+      "node": ">=18.0.0"
+    },
+    "features": [
+      "agent-registration",
+      "secure-messaging", 
+      "channel-management",
+      "escrow-transactions",
+      "reputation-system",
+      "agent-discovery",
+      "protocol-analytics",
+      "blockchain-integration"
+    ],
+    "blockchain": {
+      "network": "solana",
+      "programId": "HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps",
+      "supportedNetworks": ["devnet", "mainnet-beta"]
+    },
+    "configuration": {
       "POD_RPC_ENDPOINT": {
         "type": "string",
         "description": "Solana RPC endpoint for PoD Protocol",
         "default": "https://api.devnet.solana.com",
-        "required": true
+        "required": true,
+        "validation": "url"
       },
       "POD_PROGRAM_ID": {
         "type": "string",
         "description": "PoD Protocol program ID on Solana",
         "default": "HEpGLgYsE1kP8aoYKyLFc3JVVrofS7T4zEA6fWBJsZps",
-        "required": true
+        "required": true,
+        "validation": "solana-address"
       },
       "POD_WALLET_PRIVATE_KEY": {
         "type": "string",
         "description": "Base58 encoded private key for agent wallet",
         "required": true,
-        "sensitive": true
+        "sensitive": true,
+        "validation": "base58"
       },
       "POD_AGENT_NAME": {
         "type": "string",
         "description": "Name for the agent on PoD Protocol",
-        "required": false
+        "required": false,
+        "maxLength": 50
       },
       "POD_AGENT_CAPABILITIES": {
         "type": "string",
         "description": "Comma-separated list of agent capabilities",
         "default": "conversation,analysis,collaboration",
-        "required": false
+        "required": false,
+        "enum": ["conversation", "analysis", "trading", "research", "content", "automation", "collaboration", "blockchain"]
       },
       "POD_MCP_ENDPOINT": {
         "type": "string",
         "description": "PoD Protocol MCP server endpoint",
         "default": "http://localhost:3000",
-        "required": false
+        "required": false,
+        "validation": "url"
       },
       "POD_AUTO_REGISTER": {
         "type": "boolean",
@@ -107,13 +184,61 @@
         "default": true,
         "required": false
       }
-    }
+    },
+    "actions": [
+      {
+        "name": "REGISTER_AGENT_POD_PROTOCOL",
+        "description": "Register agent on PoD Protocol blockchain",
+        "category": "registration"
+      },
+      {
+        "name": "DISCOVER_AGENTS_POD_PROTOCOL", 
+        "description": "Discover other agents on the network",
+        "category": "discovery"
+      },
+      {
+        "name": "SEND_MESSAGE_POD_PROTOCOL",
+        "description": "Send secure messages to other agents",
+        "category": "messaging"
+      },
+      {
+        "name": "CREATE_CHANNEL_POD_PROTOCOL",
+        "description": "Create collaboration channels",
+        "category": "channels"
+      },
+      {
+        "name": "JOIN_CHANNEL_POD_PROTOCOL",
+        "description": "Join existing channels",
+        "category": "channels"
+      },
+      {
+        "name": "CREATE_ESCROW_POD_PROTOCOL",
+        "description": "Create secure escrow transactions",
+        "category": "escrow"
+      },
+      {
+        "name": "GET_PROTOCOL_STATS_POD_PROTOCOL",
+        "description": "Get network statistics and analytics",
+        "category": "analytics"
+      },
+      {
+        "name": "GET_REPUTATION_POD_PROTOCOL",
+        "description": "Get agent reputation and trust metrics",
+        "category": "reputation"
+      }
+    ]
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   },
+  "os": ["darwin", "linux", "win32"],
+  "cpu": ["x64", "arm64"],
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
-  }
+  },
+  "browserslist": [
+    "node >= 18"
+  ]
 }

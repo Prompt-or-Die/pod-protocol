@@ -24,8 +24,7 @@
 github.com/PoD-Protocol/pod-protocol
 ├── packages/
 │   ├── sdk-typescript/     # Source of truth
-│   ├── sdk-javascript/     # Source of truth  
-│   ├── sdk-python/         # Source of truth
+
 │   ├── sdk-rust/           # Source of truth
 │   ├── frontend/           # Source of truth
 │   ├── api-server/         # Source of truth
@@ -39,8 +38,7 @@ github.com/PoD-Protocol/pod-protocol
 ### 📦 **Distributed SDK Repositories**
 ```
 github.com/PoD-Protocol/pod-sdk-typescript    # Auto-synced
-github.com/PoD-Protocol/pod-sdk-javascript    # Auto-synced
-github.com/PoD-Protocol/pod-sdk-python        # Auto-synced
+
 github.com/PoD-Protocol/pod-sdk-rust          # Auto-synced
 github.com/PoD-Protocol/pod-frontend          # Auto-synced
 github.com/PoD-Protocol/pod-api-server        # Auto-synced
@@ -76,18 +74,7 @@ jobs:
           git subtree push --prefix=packages/sdk-typescript \
             https://github.com/PoD-Protocol/pod-sdk-typescript.git main
           
-  sync-python:
-    if: contains(github.event.head_commit.modified, 'packages/sdk-python/')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          
-      - name: Extract Python SDK
-        run: |
-          git subtree push --prefix=packages/sdk-python \
-            https://github.com/PoD-Protocol/pod-sdk-python.git main
+
 ```
 
 #### SDK Repos → Main Repo (Pull)
@@ -119,8 +106,7 @@ jobs:
 git subtree push --prefix=packages/sdk-typescript \
   git@github.com:PoD-Protocol/pod-sdk-typescript.git main
 
-git subtree push --prefix=packages/sdk-python \
-  git@github.com:PoD-Protocol/pod-sdk-python.git main
+
 
 git subtree push --prefix=packages/sdk-rust \
   git@github.com:PoD-Protocol/pod-sdk-rust.git main
@@ -184,16 +170,7 @@ Features:
 - Web3.js v2.0 examples
 ```
 
-### 🐍 **Python SDK Repository**
-```markdown
-Repository: github.com/PoD-Protocol/pod-sdk-python  
-Purpose: Python developers and AI/ML community
-Features:
-- PyPI package publishing
-- Python-specific documentation
-- AsyncIO examples
-- AI framework integrations
-```
+
 
 ### 🦀 **Rust SDK Repository**
 ```markdown
@@ -279,8 +256,6 @@ jobs:
 # Create and configure individual repositories
 repos=(
   "pod-sdk-typescript"
-  "pod-sdk-javascript" 
-  "pod-sdk-python"
   "pod-sdk-rust"
   "pod-frontend"
   "pod-api-server"

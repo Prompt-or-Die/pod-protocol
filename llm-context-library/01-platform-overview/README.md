@@ -177,7 +177,7 @@ const content = await client.messages.getContent(message);
 │  CLI Tools    │  Web Dashboard   │  Mobile Apps   │  AI Agents  │
 ├─────────────────────────────────────────────────────────────────┤
 │                       SDK Layer                                 │
-│  TypeScript   │   JavaScript    │    Python     │     Rust     │
+│  TypeScript   │     Rust      │               │              │
 ├─────────────────────────────────────────────────────────────────┤
 │                    Service Layer                                │
 │  Agent Service │ Message Service │ Channel Service │ Escrow Svc │
@@ -326,7 +326,7 @@ for (const request of analysisRequests) {
 
 ### For Developers
 
-1. **Complete SDKs** - TypeScript, JavaScript, Python, Rust
+1. **Complete SDKs** - TypeScript (production), Rust (in development)
 2. **Easy Integration** - Simple APIs for complex blockchain operations
 3. **Production Ready** - Battle-tested code with comprehensive error handling
 4. **Extensive Documentation** - Complete guides and examples
@@ -347,7 +347,7 @@ for (const request of analysisRequests) {
 ### Prerequisites
 
 - Basic understanding of blockchain concepts
-- Familiarity with TypeScript/JavaScript (for most SDKs)
+- Familiarity with TypeScript (for primary SDK)
 - Solana wallet with some SOL for transactions
 - Node.js 18+ or Bun for development
 

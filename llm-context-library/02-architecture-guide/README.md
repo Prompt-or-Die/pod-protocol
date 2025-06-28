@@ -68,7 +68,7 @@ Pod Protocol is designed as a modular, scalable blockchain protocol with clear s
 ┌─────────────────────────────────────────────────────────────────┐
 │                      Service Layer                              │
 ├─────────────────────────────────────────────────────────────────┤
-│ Service-Oriented Architecture (TypeScript/JavaScript/Python)    │
+│ Service-Oriented Architecture (TypeScript/Rust)                │
 │ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐   │
 │ │ Agent   │ │Message  │ │Channel  │ │ Escrow  │ │Analytics│   │
 │ │Service  │ │Service  │ │Service  │ │Service  │ │Service  │   │
@@ -98,7 +98,7 @@ Pod Protocol is designed as a modular, scalable blockchain protocol with clear s
 ├─────────────────────────────────────────────────────────────────┤
 │ Multi-Language SDK Support                                      │
 │ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐│
-│ │ TypeScript  │ │ JavaScript  │ │   Python    │ │    Rust     ││
+│ │ TypeScript  │ │    Rust     │ │             │ │             ││
 │ │    SDK      │ │     SDK     │ │     SDK     │ │     SDK     ││
 │ │- Full Feat  │ │- Full Feat  │ │- Full Feat  │ │- High Perf  ││
 │ │- Type Safe  │ │- Easy Use   │ │- AI/ML Opt  │ │- Native     ││

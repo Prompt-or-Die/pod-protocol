@@ -121,8 +121,7 @@ solana airdrop 2   # get test SOL
 pod-protocol/
 ├── cli/                    # Command-line interface
 ├── sdk/                    # TypeScript SDK
-├── sdk-js/                 # JavaScript SDK
-├── sdk-python/             # Python SDK
+
 ├── sdk-rust/               # Rust SDK (in development)
 ├── frontend/               # Next.js frontend application
 ├── programs/               # Solana programs (Rust/Anchor)

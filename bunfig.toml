@@ -1,0 +1,40 @@
+# Global Bun configuration for PoD Protocol workspace
+# This configuration is used across all packages
+
+[install]
+# Use hardlinks for faster installs
+hardlinks = true
+# Exact versions for better compatibility
+exact = true
+# Auto-install peer dependencies
+auto = true
+# Registry configuration
+registry = "https://registry.npmjs.org"
+
+[test]
+# Test configuration for e2e tests
+timeout = 30000
+coverage = true
+
+# Test patterns
+preload = []
+
+# Environment variables for tests
+[test.env]
+NODE_ENV = "test"
+SOLANA_NETWORK = "devnet"
+ANCHOR_PROVIDER_URL = "https://api.devnet.solana.com"
+
+[run]
+# Environment variables for Solana compatibility
+env.NODE_OPTIONS = "--max-old-space-size=8192"
+env.ANCHOR_PROVIDER_URL = "https://api.devnet.solana.com"
+env.ANCHOR_WALLET = "~/.config/solana/id.json"
+
+# Prefer Bun runtime for scripts
+prefer-offline = true
+
+[dev]
+# Development server configuration
+hot = true
+watch = true 

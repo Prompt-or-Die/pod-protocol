@@ -4,9 +4,6 @@ import {
   Memory,
   State,
   HandlerCallback,
-  composeContext,
-  generateObject,
-  ModelClass,
 } from "@elizaos/core";
 import { validateConfigForRuntime } from "../environment.js";
 import { PodProtocolServiceImpl } from "../services/podProtocolService.js";
@@ -25,7 +22,7 @@ export const sendMessageAction: Action = {
   validate: async (runtime: IAgentRuntime, message: Memory) => {
     const validation = validateConfigForRuntime(runtime);
     if (!validation.isValid) {
-      runtime.getLogger?.()?.error(`PoD Protocol configuration invalid: ${validation.errors.join(", ")}`);
+      console.error(`PoD Protocol configuration invalid: ${validation.errors.join(", ")}`);
       return false;
     }
     return true;
@@ -33,12 +30,12 @@ export const sendMessageAction: Action = {
   handler: async (
     runtime: IAgentRuntime,
     message: Memory,
-    state: State,
-    _options: any,
-    callback: HandlerCallback
+    state?: State,
+    _options?: any,
+    callback?: HandlerCallback
   ) => {
     try {
-      runtime.getLogger?.()?.info("Processing message send request...");
+      console.log("Processing message send request...");
 
       // Get PoD Protocol service
       const podService = runtime.getService<PodProtocolServiceImpl>(
@@ -46,50 +43,56 @@ export const sendMessageAction: Action = {
       );
 
       if (!podService) {
-        await callback({
-          text: "❌ PoD Protocol service not available. Please ensure the plugin is properly configured and registered.",
-          content: {
-            text: "PoD Protocol service not initialized",
-            error: "Service not found",
-          },
-        });
+        if (callback) {
+          await callback({
+            text: "❌ PoD Protocol service not available. Please ensure the plugin is properly configured and registered.",
+            content: {
+              text: "PoD Protocol service not initialized",
+              error: "Service not found",
+            },
+          });
+        }
         return false;
       }
 
       // Check if agent is registered
       const currentState = podService.getState();
       if (!currentState?.isRegistered || !currentState.agent) {
-        await callback({
-          text: "❌ You need to register on PoD Protocol first. Use 'register on PoD Protocol' to get started.",
-          content: {
-            text: "Agent not registered",
-            error: "Registration required",
-          },
-        });
+        if (callback) {
+          await callback({
+            text: "❌ You need to register on PoD Protocol first. Use 'register on PoD Protocol' to get started.",
+            content: {
+              text: "Agent not registered",
+              error: "Registration required",
+            },
+          });
+        }
         return false;
       }
 
       // Extract recipient and message from the user input
-      const messageText = message.content.text;
+      const messageText = message.content.text || "";
       
       // Parse recipient ID - look for patterns like "to agent_id" or "send to agent_id"
       const recipientMatch = messageText.match(/(?:to|send to|message|contact)\s+([a-zA-Z0-9_-]+)/i);
       
       if (!recipientMatch) {
-        await callback({
-          text: "❌ **Missing recipient information**\n\nPlease specify which agent to message. Examples:\n- 'Send message to trading_bot_001'\n- 'Message research_pro_v2 about collaboration'\n- 'Contact content_creator_x'",
-          content: {
-            text: "Missing recipient",
-            error: "No recipient specified",
-          },
-        });
+        if (callback) {
+          await callback({
+            text: "❌ **Missing recipient information**\n\nPlease specify which agent to message. Examples:\n- 'Send message to trading_bot_001'\n- 'Message research_pro_v2 about collaboration'\n- 'Contact content_creator_x'",
+            content: {
+              text: "Missing recipient",
+              error: "No recipient specified",
+            },
+          });
+        }
         return false;
       }
 
       const recipientId = recipientMatch[1];
 
       // Extract the actual message content
-      let messageContent = messageText;
+      let messageContent: string = messageText;
       
       // Remove the command part to get just the message
       const commandPatterns = [
@@ -110,13 +113,15 @@ export const sendMessageAction: Action = {
         .trim();
 
       if (!messageContent || messageContent.length < 10) {
-        await callback({
-          text: "❌ **Message content too short**\n\nPlease provide a meaningful message to send. Example:\n'Send message to trading_bot_001 asking for market analysis'",
-          content: {
-            text: "Message content too short",
-            error: "Insufficient content",
-          },
-        });
+        if (callback) {
+          await callback({
+            text: "❌ **Message content too short**\n\nPlease provide a meaningful message to send. Example:\n'Send message to trading_bot_001 asking for market analysis'",
+            content: {
+              text: "Message content too short",
+              error: "Insufficient content",
+            },
+          });
+        }
         return false;
       }
 
@@ -137,45 +142,25 @@ export const sendMessageAction: Action = {
         messageType = "command";
       }
 
+      // Validate recipientId
+      if (!recipientId) {
+        if (callback) {
+          await callback({
+            text: "❌ **Invalid recipient ID**\n\nPlease provide a valid recipient agent ID.",
+            content: {
+              text: "Invalid recipient",
+              error: "Recipient ID is required",
+            },
+          });
+        }
+        return false;
+      }
+
       // Send the message
       const sentMessage = await podService.sendMessage(recipientId, messageContent, {
         type: messageType,
         priority,
         encrypted: true,
-      });
-
-      // Generate dynamic response based on the sent message
-      const messageContext = composeContext({
-        state,
-        template: `
-You are an AI agent that has just sent a secure blockchain message to another AI agent.
-
-Message Details:
-- Recipient: {{recipientId}}
-- Content: {{messageContent}}
-- Type: {{messageType}}
-- Priority: {{priority}}
-- Message ID: {{messageId}}
-- Status: {{status}}
-- Encrypted: {{encrypted}}
-
-Respond with confirmation of the message being sent. Be enthusiastic about the cross-agent communication capability. Mention that the message is secured by blockchain technology.
-
-Keep the response conversational and highlight the benefits of decentralized agent communication.
-        `,
-        recipientId,
-        messageContent: messageContent.substring(0, 100) + (messageContent.length > 100 ? "..." : ""),
-        messageType: sentMessage.type,
-        priority: sentMessage.priority,
-        messageId: sentMessage.id,
-        status: sentMessage.status,
-        encrypted: sentMessage.encrypted,
-      });
-
-      const response = await generateObject({
-        runtime,
-        context: messageContext,
-        modelClass: ModelClass.SMALL,
       });
 
       const defaultResponse = `📤 **Message sent successfully!**
@@ -196,46 +181,50 @@ ${sentMessage.transactionHash ? `**Transaction Hash:** ${sentMessage.transaction
 
 The message has been delivered to the agent's blockchain inbox. They will receive it when they next check their messages!`;
 
-      await callback({
-        text: response || defaultResponse,
-        content: {
-          text: "Message sent successfully",
-          message: sentMessage,
-          recipient: recipientId,
-          capabilities: [
-            "check_delivery_status",
-            "send_follow_up",
-            "view_conversation_history"
-          ],
-        },
-      });
+      if (callback) {
+        await callback({
+          text: defaultResponse,
+          content: {
+            text: "Message sent successfully",
+            message: sentMessage,
+            recipient: recipientId,
+            capabilities: [
+              "check_delivery_status",
+              "send_follow_up",
+              "view_conversation_history"
+            ],
+          },
+        });
+      }
 
-      runtime.getLogger?.()?.info(`Message sent to ${recipientId}: ${sentMessage.id}`);
+      console.log(`Message sent to ${recipientId}: ${sentMessage.id}`);
       return true;
 
     } catch (error) {
-      runtime.getLogger?.()?.error(`Send message failed: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(`Send message failed: ${error instanceof Error ? error.message : String(error)}`);
       
-      await callback({
-        text: `❌ **Failed to send message**\n\nError: ${error instanceof Error ? error.message : String(error)}\n\nPlease check the recipient ID and try again.`,
-        content: {
-          text: "Send message failed",
-          error: error instanceof Error ? error.message : String(error),
-        },
-      });
+      if (callback) {
+        await callback({
+          text: `❌ **Failed to send message**\n\nError: ${error instanceof Error ? error.message : String(error)}\n\nPlease check the recipient ID and try again.`,
+          content: {
+            text: "Send message failed",
+            error: error instanceof Error ? error.message : String(error),
+          },
+        });
+      }
       return false;
     }
   },
   examples: [
     [
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Send message to trading_bot_001 asking for BTC analysis",
         },
       },
       {
-        user: "{{agentName}}",
+        name: "{{agentName}}",
         content: {
           text: "I'll send a message to trading_bot_001 asking for BTC analysis via the PoD Protocol blockchain network.",
           action: "SEND_MESSAGE_POD_PROTOCOL",
@@ -244,13 +233,13 @@ The message has been delivered to the agent's blockchain inbox. They will receiv
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Message research_pro_v2 about collaboration opportunities",
         },
       },
       {
-        user: "{{agentName}}",
+        name: "{{agentName}}",
         content: {
           text: "Sending a collaboration message to research_pro_v2 through the secure blockchain messaging system.",
           action: "SEND_MESSAGE_POD_PROTOCOL",
@@ -259,13 +248,13 @@ The message has been delivered to the agent's blockchain inbox. They will receiv
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Contact content_creator_x with urgent project proposal",
         },
       },
       {
-        user: "{{agentName}}",
+        name: "{{agentName}}",
         content: {
           text: "I'll send an urgent message to content_creator_x about your project proposal via PoD Protocol.",
           action: "SEND_MESSAGE_POD_PROTOCOL",
