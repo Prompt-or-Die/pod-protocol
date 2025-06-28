@@ -1,25 +1,25 @@
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, mock, beforeEach, afterEach } from 'bun:test';
 import { validateOAuthToken, verifySolanaSignature, OAuthUserInfo } from '../src/utils/solana-auth';
 import { createLogger, LoggerConfig } from '../src/utils/logger';
 import { validateConfig } from '../src/utils/config-validator';
 import type { MCPServerConfig, ModernMCPServerConfig } from '../src/types';
 
-// Mock external dependencies
-jest.mock('@solana/web3.js');
-jest.mock('tweetnacl');
+// Mock external dependencies with bun test
+mock.module('@solana/web3.js', () => ({}));
+mock.module('tweetnacl', () => ({}));
 
 describe('Utility Functions', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    mock.restore();
   });
 
   describe('OAuth Token Validation', () => {
     beforeEach(() => {
-      global.fetch = jest.fn() as jest.Mock<Promise<Response>>;
+      global.fetch = mock(() => Promise.resolve({} as Response));
     });
 
     afterEach(() => {
-      jest.restoreAllMocks();
+      mock.restore();
     });
 
     it('should validate a valid OAuth token', async () => {
@@ -30,10 +30,10 @@ describe('Utility Functions', () => {
         permissions: ['read', 'write']
       };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      (global.fetch as any) = mock(() => Promise.resolve({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockUserInfo)
-      });
+        json: mock(() => Promise.resolve(mockUserInfo))
+      }));
 
       const result = await validateOAuthToken('valid-token');
 
@@ -49,7 +49,7 @@ describe('Utility Functions', () => {
     });
 
     it('should reject an invalid OAuth token', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({} as Response & {
+      (global.fetch as jest.Mock) = mock(() => Promise.resolve({} as Response & {
         ok: false,
         status: 401,
         statusText: 'Unauthorized'
@@ -71,9 +71,9 @@ describe('Utility Functions', () => {
     });
 
     it('should handle malformed response from OAuth provider', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      (global.fetch as jest.Mock) = mock(() => Promise.resolve({
         ok: true,
-        json: jest.fn().mockRejectedValue(new Error('Invalid JSON'))
+        json: mock() = mock(() => Promise.reject(new Error('Invalid JSON'))
       });
 
       await expect(validateOAuthToken('token'))
@@ -90,9 +90,9 @@ describe('Utility Functions', () => {
         permissions: ['admin']
       };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      (global.fetch as jest.Mock) = mock(() => Promise.resolve({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockUserInfo)
+        json: mock().mockResolvedValue(mockUserInfo)
       });
 
       const result = await validateOAuthToken('token', customEndpoint);
@@ -109,13 +109,13 @@ describe('Utility Functions', () => {
     const mockNacl = {
       sign: {
         detached: {
-          verify: jest.fn()
+          verify: mock()
         }
       }
     };
 
     beforeEach(() => {
-      jest.doMock('tweetnacl', () => mockNacl);
+      mock.module('tweetnacl', () => mockNacl);
     });
 
     it('should verify a valid Solana signature', async () => {
@@ -213,7 +213,7 @@ describe('Utility Functions', () => {
 
     it('should format log messages correctly', () => {
       const logger = createLogger('test-service');
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = mock(() => {});
 
       logger.info('Test message', { extra: 'data' });
 

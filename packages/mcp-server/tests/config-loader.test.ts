@@ -1,14 +1,20 @@
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, mock, beforeEach, afterEach } from 'bun:test';
 import { ConfigLoader } from '../src/config-loader';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-// Mock fs module
-jest.mock('fs/promises');
-jest.mock('path');
+// Mock fs module with bun test
+mock.module('fs/promises', () => ({
+  readFile: mock(() => Promise.resolve('')),
+}));
 
-const mockFs = fs as jest.Mocked<typeof fs>;
-const mockPath = path as jest.Mocked<typeof path>;
+mock.module('path', () => ({
+  join: mock((...args) => args.join('/')),
+  resolve: mock((...args) => '/' + args.join('/')),
+}));
+
+const mockFs = fs as any;
+const mockPath = path as any;
 
 describe('ConfigLoader', () => {
   let configLoader: ConfigLoader;
@@ -36,7 +42,7 @@ describe('ConfigLoader', () => {
   afterEach(() => {
     // Restore original environment
     process.env = originalEnv;
-    jest.clearAllMocks();
+    mock.restore();
   });
 
   describe('Configuration Loading', () => {

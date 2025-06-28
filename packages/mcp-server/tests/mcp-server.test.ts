@@ -1,23 +1,27 @@
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, mock, beforeEach, afterEach } from 'bun:test';
 import { PodProtocolMCPServer } from '../src/mcp-server';
 import { ConfigLoader } from '../src/config-loader';
 import { SessionManager } from '../src/session-manager';
 import type { ModernMCPServerConfig } from '../src/modern-mcp-server';
 
-// Mock dependencies
-jest.mock('../src/config-loader');
-jest.mock('../src/session-manager');
-jest.mock('../src/transport-manager');
-jest.mock('../src/registry-integration');
-jest.mock('../src/security-enhancements');
-jest.mock('../src/websocket');
+// Mock dependencies with bun test
+mock.module('../src/config-loader', () => ({
+  ConfigLoader: mock()
+}));
+mock.module('../src/session-manager', () => ({
+  SessionManager: mock()
+}));
+mock.module('../src/transport-manager', () => ({}));
+mock.module('../src/registry-integration', () => ({}));
+mock.module('../src/security-enhancements', () => ({}));
+mock.module('../src/websocket', () => ({}));
 
 describe('PodProtocolMCPServer', () => {
   let server: PodProtocolMCPServer;
   let mockConfig: ModernMCPServerConfig;
   let mockServerMetadata: any;
-  let mockConfigLoader: jest.Mocked<ConfigLoader>;
-  let mockSessionManager: jest.Mocked<SessionManager>;
+  let mockConfigLoader: any;
+  let mockSessionManager: any;
 
   beforeEach(() => {
     // Setup mock configuration
@@ -105,25 +109,25 @@ describe('PodProtocolMCPServer', () => {
 
     // Setup mocks
     mockConfigLoader = {
-      loadConfig: jest.fn().mockResolvedValue(mockConfig)
-    } as any;
+      loadConfig: mock(() => Promise.resolve(mockConfig))
+    };
 
     mockSessionManager = {
-      createSession: jest.fn(),
-      getSession: jest.fn(),
-      deleteSession: jest.fn(),
-      getAllSessions: jest.fn().mockReturnValue(new Map())
-    } as any;
+      createSession: mock(),
+      getSession: mock(),
+      deleteSession: mock(),
+      getAllSessions: mock(() => new Map())
+    };
 
-    (ConfigLoader as jest.MockedClass<typeof ConfigLoader>).mockImplementation(() => mockConfigLoader);
-    (SessionManager as jest.MockedClass<typeof SessionManager>).mockImplementation(() => mockSessionManager);
+    (ConfigLoader as any).mockImplementation(() => mockConfigLoader);
+    (SessionManager as any).mockImplementation(() => mockSessionManager);
   });
 
   afterEach(() => {
     if (server) {
       server.stop();
     }
-    jest.clearAllMocks();
+    mock.restore();
   });
 
   describe('Constructor and Initialization', () => {

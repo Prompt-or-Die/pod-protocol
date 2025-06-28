@@ -1,4 +1,4 @@
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, mock, beforeEach, afterEach } from 'bun:test';
 import { PodProtocolMCPServer } from '../src/mcp-server';
 import { ServerMetadata } from '../src/registry-integration';
 import supertest from 'supertest';
@@ -6,9 +6,9 @@ import WebSocket from 'ws';
 import type { Express } from 'express';
 import type { ModernMCPServerConfig } from '../src/types';
 
-// Mock external dependencies
-jest.mock('@pod-protocol/core');
-jest.mock('../src/utils/solana-auth');
+// Mock external dependencies with bun test
+mock.module('@pod-protocol/core', () => ({}));
+mock.module('../src/utils/solana-auth', () => ({}));
 
 describe('Integration Tests', () => {
   let server: PodProtocolMCPServer;
@@ -108,7 +108,7 @@ describe('Integration Tests', () => {
     };
 
     // Mock OAuth verification
-    (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+    (global.fetch as any) = mock(() => Promise.resolve({
       ok: true,
       status: 200,
       statusText: 'OK',
@@ -116,27 +116,27 @@ describe('Integration Tests', () => {
       redirected: false,
       type: 'basic',
       url: '',
-      clone: jest.fn(),
+      clone: mock(),
       body: null,
       bodyUsed: false,
-      arrayBuffer: jest.fn(),
-      blob: jest.fn(),
-      formData: jest.fn(),
-      text: jest.fn(),
-      json: jest.fn().mockResolvedValue({
+      arrayBuffer: mock(),
+      blob: mock(),
+      formData: mock(),
+      text: mock(),
+      json: mock(() => Promise.resolve({
         id: 'test-user-123',
         email: 'test@example.com',
         name: 'Test User',
         permissions: ['read', 'write']
-      })
-    } as Response);
+      }))
+    } as Response));
   });
 
   afterEach(async () => {
     if (server) {
       await server.stop();
     }
-    jest.clearAllMocks();
+    mock.restore();
   });
 
   describe('Server Startup and Shutdown', () => {
@@ -447,7 +447,7 @@ describe('Integration Tests', () => {
 
     it('should handle OAuth token validation failures', async () => {
       // Mock OAuth failure
-      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+      (global.fetch as any) = mock(() => Promise.resolve({
         ok: false,
         status: 401,
         statusText: 'Unauthorized',
@@ -455,15 +455,15 @@ describe('Integration Tests', () => {
         redirected: false,
         type: 'basic',
         url: '',
-        clone: jest.fn(),
+        clone: mock(),
         body: null,
         bodyUsed: false,
-        arrayBuffer: jest.fn(),
-        blob: jest.fn(),
-        formData: jest.fn(),
-        text: jest.fn(),
-        json: jest.fn()
-      } as Response);
+        arrayBuffer: mock(),
+        blob: mock(),
+        formData: mock(),
+        text: mock(),
+        json: mock()
+      } as Response));
 
       await supertest(httpServer)
         .post('/session')

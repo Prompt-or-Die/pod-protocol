@@ -1,18 +1,18 @@
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, mock, beforeEach, afterEach } from 'bun:test';
 import { SessionManager } from '../src/session-manager';
 import type { SessionConfig, UserSession } from '../src/session-manager';
 
-// Mock PodComClient
-jest.mock('../../sdk-typescript/sdk/dist/index.js', () => ({
-  PodComClient: jest.fn().mockImplementation(() => ({
-    initialize: jest.fn().mockResolvedValue(null)
+// Mock PodComClient with bun test
+mock.module('../../sdk-typescript/sdk/dist/index.js', () => ({
+  PodComClient: mock(() => ({
+    initialize: mock(() => Promise.resolve(null))
   }))
 }));
 
-// Mock SolanaAuthUtils
-jest.mock('../src/utils/solana-auth', () => ({
+// Mock SolanaAuthUtils with bun test
+mock.module('../src/utils/solana-auth', () => ({
   SolanaAuthUtils: {
-    verifySignature: jest.fn().mockResolvedValue(true)
+    verifySignature: mock(() => Promise.resolve(true))
   }
 }));
 
@@ -33,7 +33,7 @@ describe('SessionManager', () => {
 
   afterEach(() => {
     sessionManager.cleanup();
-    jest.clearAllMocks();
+    mock.restore();
   });
 
   describe('Session Creation', () => {
@@ -46,10 +46,10 @@ describe('SessionManager', () => {
       };
 
       // Mock OAuth token verification
-      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+      (global.fetch as any) = mock(() => Promise.resolve({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockUserInfo)
-      } as Response);
+        json: mock(() => Promise.resolve(mockUserInfo))
+      } as Response));
 
       const session = await sessionManager.createSession(mockToken);
 
@@ -74,10 +74,10 @@ describe('SessionManager', () => {
         message: 'auth-message'
       };
 
-      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+      (global.fetch as any) = mock(() => Promise.resolve({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockUserInfo)
-      } as Response);
+        json: mock(() => Promise.resolve(mockUserInfo))
+      } as Response));
 
       const session = await sessionManager.createSession(mockToken, walletData);
 
@@ -88,10 +88,10 @@ describe('SessionManager', () => {
     it('should reject invalid OAuth token', async () => {
       const invalidToken = 'invalid-token';
 
-      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+      (global.fetch as any) = mock(() => Promise.resolve({
         ok: false,
         status: 401
-      } as Response);
+      } as Response));
 
       await expect(sessionManager.createSession(invalidToken))
         .rejects.toThrow('Invalid OAuth token');
@@ -105,10 +105,12 @@ describe('SessionManager', () => {
       sessionManager = new SessionManager(configWithWallet);
 
       const mockToken = 'valid-oauth-token';
-      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+      const mockUserInfo = { id: 'user-123', email: 'test@example.com', name: 'Test User' };
+      
+      (global.fetch as any) = mock(() => Promise.resolve({
         ok: true,
-        json: jest.fn().mockResolvedValue({ id: 'user-123' })
-      } as Response);
+        json: mock(() => Promise.resolve(mockUserInfo))
+      } as Response));
 
       await expect(sessionManager.createSession(mockToken))
         .rejects.toThrow('Wallet authentication required');
@@ -118,10 +120,10 @@ describe('SessionManager', () => {
       const mockToken = 'valid-oauth-token';
       const mockUserInfo = { id: 'user-123', email: 'test@example.com', name: 'Test User' };
 
-      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+      (global.fetch as any) = mock(() => Promise.resolve({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockUserInfo)
-      } as Response);
+        json: mock(() => Promise.resolve(mockUserInfo))
+      } as Response));
 
       // Create maximum allowed sessions
       const sessions = [];
@@ -143,10 +145,10 @@ describe('SessionManager', () => {
       const mockToken = 'valid-oauth-token';
       const mockUserInfo = { id: 'user-123', email: 'test@example.com', name: 'Test User' };
 
-      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+      (global.fetch as any) = mock(() => Promise.resolve({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockUserInfo)
-      } as Response);
+        json: mock(() => Promise.resolve(mockUserInfo))
+      } as Response));
 
       testSession = await sessionManager.createSession(mockToken);
     });
@@ -180,10 +182,10 @@ describe('SessionManager', () => {
       const mockToken = 'valid-oauth-token';
       const mockUserInfo = { id: 'user-123', email: 'test@example.com', name: 'Test User' };
 
-      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+      (global.fetch as any) = mock(() => Promise.resolve({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockUserInfo)
-      } as Response);
+        json: mock(() => Promise.resolve(mockUserInfo))
+      } as Response));
 
       testSession = await sessionManager.createSession(mockToken);
     });
@@ -224,10 +226,10 @@ describe('SessionManager', () => {
       const mockToken = 'valid-oauth-token';
       const mockUserInfo = { id: 'user-123', email: 'test@example.com', name: 'Test User' };
 
-      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+      (global.fetch as any) = mock(() => Promise.resolve({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockUserInfo)
-      } as Response);
+        json: mock(() => Promise.resolve(mockUserInfo))
+      } as Response));
 
       const session = await sessionManager.createSession(mockToken);
       
@@ -245,10 +247,10 @@ describe('SessionManager', () => {
       const mockToken = 'valid-oauth-token';
       const mockUserInfo = { id: 'user-123', email: 'test@example.com', name: 'Test User' };
 
-      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+      (global.fetch as any) = mock(() => Promise.resolve({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockUserInfo)
-      } as Response);
+        json: mock(() => Promise.resolve(mockUserInfo))
+      } as Response));
 
       const session = await sessionManager.createSession(mockToken);
       
@@ -272,10 +274,10 @@ describe('SessionManager', () => {
         permissions: ['read', 'write', 'admin']
       };
 
-      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+      (global.fetch as any) = mock(() => Promise.resolve({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockUserInfo)
-      } as Response);
+        json: mock(() => Promise.resolve(mockUserInfo))
+      } as Response));
 
       testSession = await sessionManager.createSession(mockToken);
     });
@@ -296,10 +298,10 @@ describe('SessionManager', () => {
         // No permissions field
       };
 
-      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+      (global.fetch as any) = mock(() => Promise.resolve({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockUserInfo)
-      } as Response);
+        json: mock(() => Promise.resolve(mockUserInfo))
+      } as Response));
 
       const session = await sessionManager.createSession(mockToken);
       expect(session.hasPermission('read')).toBe(false);
@@ -310,7 +312,7 @@ describe('SessionManager', () => {
     it('should handle network errors during OAuth verification', async () => {
       const mockToken = 'valid-oauth-token';
 
-      (global.fetch as jest.MockedFunction<typeof fetch>).mockRejectedValue(new Error('Network error'));
+      (global.fetch as any) = mock(() => Promise.reject(new Error('Network error')));
 
       await expect(sessionManager.createSession(mockToken))
         .rejects.toThrow('Failed to verify OAuth token');
@@ -320,15 +322,15 @@ describe('SessionManager', () => {
       const mockToken = 'valid-oauth-token';
       const mockUserInfo = { id: 'user-123', email: 'test@example.com', name: 'Test User' };
 
-      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+      (global.fetch as any) = mock(() => Promise.resolve({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockUserInfo)
-      } as Response);
+        json: mock(() => Promise.resolve(mockUserInfo))
+      } as Response));
 
       // Mock PodComClient to fail initialization
       const { PodComClient } = require('../../sdk-typescript/sdk/dist/index.js');
       PodComClient.mockImplementation(() => ({
-        initialize: jest.fn().mockRejectedValue(new Error('Initialization failed'))
+        initialize: mock(() => Promise.reject(new Error('Initialization failed')))
       }));
 
       // The session should still be created even if PodClient initialization fails
@@ -343,10 +345,10 @@ describe('SessionManager', () => {
       const mockToken = 'valid-oauth-token';
       const mockUserInfo = { id: 'user-123', email: 'test@example.com', name: 'Test User' };
 
-      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+      (global.fetch as any) = mock(() => Promise.resolve({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockUserInfo)
-      } as Response);
+        json: mock(() => Promise.resolve(mockUserInfo))
+      } as Response));
 
       expect(sessionManager.getSessionCount()).toBe(0);
 
@@ -364,10 +366,10 @@ describe('SessionManager', () => {
       const mockToken = 'valid-oauth-token';
       const mockUserInfo = { id: 'user-123', email: 'test@example.com', name: 'Test User' };
 
-      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+      (global.fetch as any) = mock(() => Promise.resolve({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockUserInfo)
-      } as Response);
+        json: mock(() => Promise.resolve(mockUserInfo))
+      } as Response));
 
       await sessionManager.createSession(mockToken);
       await sessionManager.createSession(mockToken);
