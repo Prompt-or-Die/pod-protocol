@@ -1,7 +1,7 @@
-import { address } from '@solana/addresses';
-import type { Address } from '@solana/addresses';
+import { BaseService } from './base';
+import { address } from '@solana/kit';
+import type { Address } from '@solana/kit';
 import type { KeyPairSigner } from '@solana/signers';
-import { BaseService } from "./base.js";
 import {
   AgentAccount,
   MessageAccount,
@@ -15,13 +15,14 @@ import {
   ChannelSearchFilters,
 } from "../types";
 import {
-  hasCapability,
-  getCapabilityNames,
+  findAgentPDA,
+  retry,
   formatAddress,
-  isValidAddress,
   getAccountTimestamp,
   getAccountCreatedAt,
   getAccountLastUpdated,
+  getCapabilityNames,
+  hasCapability,
   hashPayload,
 } from "../utils";
 import { AccountFilters } from '../utils/account-sizes.js';
@@ -258,7 +259,7 @@ export class DiscoveryService extends BaseService {
       const agentsWithMetadata = await Promise.all(
         agents.map(async (agent) => {
           try {
-            const metadata = await this.fetchAgentMetadata(agent.metadataUri);
+            const metadata = await this.fetchAgentMetadata(agent.metadataUri, agent.capabilities);
             return { agent, metadata };
           } catch (error) {
             // If metadata fetch fails, use agent data only
@@ -580,40 +581,49 @@ export class DiscoveryService extends BaseService {
         limit: (filters.limit || 50) * 2
       });
 
-      // Process and decode messages
-      let messages: MessageAccount[] = await this.processAccounts<MessageAccount>(
-        accounts,
-        "messageAccount",
-        (decoded, account) => ({
-          pubkey: address(account.pubkey),
-          sender: decoded.sender,
-          recipient: decoded.recipient,
-          payload: decoded.payload || "",
-          payloadHash: decoded.payloadHash ? new Uint8Array(decoded.payloadHash) : await hashPayload(decoded.payload || ""),
-          messageType: this.convertMessageTypeFromProgram(decoded.messageType),
-          status: this.convertMessageStatusFromProgram(decoded.status),
-          timestamp: getAccountTimestamp(decoded),
-          createdAt: getAccountCreatedAt(decoded),
-          expiresAt: decoded.expiresAt?.toNumber() || 0,
-          bump: decoded.bump || 0,
-        })
-      );
+      // Process and decode messages synchronously to avoid async issues
+      const messages: MessageAccount[] = [];
+      for (const account of accounts) {
+        try {
+          const decoded = this.ensureInitialized().coder.accounts.decode("messageAccount", account.account.data);
+          const payload = decoded.payload || "";
+          const payloadHash = decoded.payloadHash ? 
+            new Uint8Array(decoded.payloadHash) : 
+            await hashPayload(payload);
+          
+          messages.push({
+            pubkey: address(account.pubkey),
+            sender: decoded.sender,
+            recipient: decoded.recipient,
+            payload,
+            payloadHash,
+            messageType: this.convertMessageTypeFromProgram(decoded.messageType),
+            status: this.convertMessageStatusFromProgram(decoded.status),
+            timestamp: getAccountTimestamp(decoded),
+            createdAt: getAccountCreatedAt(decoded),
+            expiresAt: decoded.expiresAt?.toNumber() || 0,
+            bump: decoded.bump || 0,
+          });
+        } catch (error) {
+          console.warn('Failed to process message account:', error);
+        }
+      }
 
       // Apply in-memory filters
-      messages = this.applyMessageFilters(messages, filters);
+      const filteredMessages = this.applyMessageFilters(messages, filters);
 
       // Apply sorting
-      messages = this.sortMessages(messages, filters);
+      const sortedMessages = this.sortMessages(filteredMessages, filters);
 
       // Apply pagination
       const offset = filters.offset || 0;
       const limit = filters.limit || 50;
-      const paginatedMessages = messages.slice(offset, offset + limit);
+      const paginatedMessages = sortedMessages.slice(offset, offset + limit);
 
       return {
         items: paginatedMessages,
-        total: messages.length,
-        hasMore: offset + limit < messages.length,
+        total: filteredMessages.length,
+        hasMore: offset + limit < filteredMessages.length,
         searchParams: filters,
         executionTime: Date.now() - startTime,
       };
@@ -695,6 +705,57 @@ export class DiscoveryService extends BaseService {
     }
   }
 
+  /**
+   * Find agents based on capabilities and other filters
+   */
+  async findAgents(filters: {
+    capabilities?: string[];
+    limit?: number;
+    offset?: number;
+  }): Promise<AgentAccount[]> {
+    try {
+      // Get agent accounts from blockchain
+      const additionalFilters: Array<{ memcmp: { offset: number; bytes: string } }> = [];
+      
+      const accounts = await this.getProgramAccounts('agentAccount', additionalFilters, {
+        useCache: true,
+        limit: filters.limit || 50
+      });
+
+      // Process accounts
+      const agents = await this.processAccounts(accounts, "agentAccount");
+      
+      // Apply capability filters if specified
+      if (filters.capabilities && filters.capabilities.length > 0) {
+        return agents.filter(agent => {
+          return filters.capabilities!.some(cap => {
+            const capabilityBit = this.getCapabilityBit(cap);
+            return hasCapability(agent.capabilities, capabilityBit);
+          });
+        });
+      }
+
+      return agents;
+    } catch (error) {
+      console.warn('Failed to find agents:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Convert capability string to bit position
+   */
+  private getCapabilityBit(capability: string): number {
+    const capabilityMap: Record<string, number> = {
+      'messaging': 0,
+      'trading': 1,
+      'analytics': 2,
+      'content': 3,
+      'automation': 4,
+    };
+    return capabilityMap[capability] || 0;
+  }
+
   // Helper methods for data processing
 
   private convertCapabilitiesToBitmask(capabilities: string[]): number {
@@ -703,20 +764,6 @@ export class DiscoveryService extends BaseService {
       bitmask |= this.getCapabilityBit(cap);
     });
     return bitmask;
-  }
-
-  private getCapabilityBit(capability: string): number {
-    const capabilityMap: Record<string, number> = {
-      'TRADING': 1,
-      'ANALYSIS': 2,
-      'DATA_PROCESSING': 4,
-      'CONTENT_GENERATION': 8,
-      'CUSTOM_1': 16,
-      'CUSTOM_2': 32,
-      'CUSTOM_3': 64,
-      'CUSTOM_4': 128,
-    };
-    return capabilityMap[capability.toUpperCase()] || 0;
   }
 
   private getTimeframeMs(timeframe: string): number {
@@ -742,16 +789,19 @@ export class DiscoveryService extends BaseService {
     }
   }
 
-  private async fetchAgentMetadata(metadataUri: string): Promise<{
+  private async fetchAgentMetadata(metadataUri: string, capabilities?: number): Promise<{
     name: string;
     description: string;
     tags: string[];
   }> {
     // Simplified metadata fetching - in production would fetch from IPFS/HTTP
+    const agentAddress = address(metadataUri.slice(0, 44));
+    const agentCapabilities = capabilities !== undefined ? capabilities : this.generateDeterministicCapabilities(agentAddress);
+    
     return {
-      name: formatAddress(address(metadataUri.slice(0, 44))),
+      name: formatAddress(agentAddress),
       description: '',
-      tags: getCapabilityNames(Math.floor(Math.random() * 255))
+      tags: getCapabilityNames(agentCapabilities)
     };
   }
 
@@ -881,9 +931,11 @@ export class DiscoveryService extends BaseService {
       }
 
       // Apply activity filter
-      if (filters.isActive !== undefined) {
-        const isActive = agent.lastUpdated > (Date.now() - 24 * 60 * 60 * 1000);
-        if (isActive !== filters.isActive) return false;
+      if (filters.lastActiveAfter && agent.lastUpdated < filters.lastActiveAfter) {
+        return false;
+      }
+      if (filters.lastActiveBefore && agent.lastUpdated > filters.lastActiveBefore) {
+        return false;
       }
 
       return true;
@@ -896,14 +948,20 @@ export class DiscoveryService extends BaseService {
   ): MessageAccount[] {
     return messages.filter(msg => {
       // Apply date filters
-      if (filters.after && msg.timestamp < filters.after.getTime()) return false;
-      if (filters.before && msg.timestamp > filters.before.getTime()) return false;
+      if (filters.createdAfter && msg.timestamp < filters.createdAfter) return false;
+      if (filters.createdBefore && msg.timestamp > filters.createdBefore) return false;
 
       // Apply message type filter
-      if (filters.messageType && msg.messageType !== filters.messageType) return false;
+      if (filters.messageType) {
+        const messageTypes = Array.isArray(filters.messageType) ? filters.messageType : [filters.messageType];
+        if (!messageTypes.includes(msg.messageType)) return false;
+      }
 
       // Apply status filter  
-      if (filters.status && msg.status !== filters.status) return false;
+      if (filters.status) {
+        const statuses = Array.isArray(filters.status) ? filters.status : [filters.status];
+        if (!statuses.includes(msg.status)) return false;
+      }
 
       return true;
     });
@@ -915,14 +973,22 @@ export class DiscoveryService extends BaseService {
   ): ChannelAccount[] {
     return channels.filter(channel => {
       // Apply visibility filter
-      if (filters.visibility && channel.visibility !== filters.visibility) return false;
+      if (filters.visibility) {
+        const visibilities = Array.isArray(filters.visibility) ? filters.visibility : [filters.visibility];
+        if (!visibilities.includes(channel.visibility)) return false;
+      }
 
       // Apply participant count filters
       if (filters.minParticipants && channel.participantCount < filters.minParticipants) return false;
       if (filters.maxParticipants && channel.participantCount > filters.maxParticipants) return false;
+      
+      // Apply member count filters (alternative naming)
+      if (filters.minMembers && channel.memberCount < filters.minMembers) return false;
+      if (filters.maxMembers && channel.memberCount > filters.maxMembers) return false;
 
-      // Apply activity filter
-      if (filters.isActive !== undefined && channel.isActive !== filters.isActive) return false;
+      // Apply name/description filters
+      if (filters.nameContains && !channel.name.toLowerCase().includes(filters.nameContains.toLowerCase())) return false;
+      if (filters.descriptionContains && !channel.description.toLowerCase().includes(filters.descriptionContains.toLowerCase())) return false;
 
       return true;
     });
@@ -998,5 +1064,20 @@ export class DiscoveryService extends BaseService {
 
       return sortOrder === 'asc' ? comparison : -comparison;
     });
+  }
+
+  /**
+   * Generate deterministic capabilities based on agent address
+   */
+  private generateDeterministicCapabilities(agentAddress: Address): number {
+    // Create deterministic capabilities based on agent address
+    const addressStr = agentAddress.toString();
+    let hash = 0;
+    for (let i = 0; i < addressStr.length; i++) {
+      hash = ((hash << 5) - hash) + addressStr.charCodeAt(i);
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    // Return capabilities between 1-255 (all 8 bits possible)
+    return Math.abs(hash) % 256;
   }
 }

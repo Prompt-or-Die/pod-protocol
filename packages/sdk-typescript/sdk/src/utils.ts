@@ -2,6 +2,19 @@ import { address, getAddressEncoder, getProgramDerivedAddress } from "@solana/ad
 import type { Address } from "@solana/addresses";
 import { PROGRAM_ID, MessageType, AGENT_CAPABILITIES } from "./types";
 
+/**
+ * Deterministic hash function for consistent ID generation
+ */
+function hashStringDeterministic(input: string): string {
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    const char = input.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(36);
+}
+
 // Helper function to convert string to bytes
 function stringToBytes(str: string): Uint8Array {
   if (typeof TextEncoder !== 'undefined') {
@@ -304,10 +317,11 @@ export async function hashPayload(
   }
 
   // Fallback for Node.js environment
-  if (typeof require !== "undefined") {
+  if (typeof process !== "undefined" && process.versions?.node) {
     try {
-      const crypto = require("crypto");
-      const hash = crypto.createHash("sha256");
+      // Dynamic import for Node.js crypto module
+      const { createHash } = await import("crypto");
+      const hash = createHash("sha256");
       hash.update(data);
       return new Uint8Array(hash.digest());
     } catch (e) {
@@ -518,7 +532,22 @@ export function parseMessageTypeFromString(typeStr: string): MessageType {
  * Generate a unique message ID for tracking
  */
 export function generateMessageId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  // Use deterministic approach without calling generateId to avoid circular dependency
+  const timestamp = Date.now().toString(36);
+  const counter = ((globalThis as any).__msgIdCounter = ((globalThis as any).__msgIdCounter || 0) + 1);
+  const counterStr = counter.toString(36);
+  
+  // Use crypto.getRandomValues if available, otherwise use deterministic approach
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const array = new Uint8Array(6);
+    crypto.getRandomValues(array);
+    const randomStr = Array.from(array, byte => byte.toString(36)).join('').slice(0, 6);
+    return `msg_${timestamp}_${counterStr}_${randomStr}`;
+  }
+  
+  // Deterministic fallback using hash of timestamp and counter
+  const deterministic = hashStringDeterministic(`${timestamp}_${counter}`);
+  return `msg_${timestamp}_${counterStr}_${deterministic.slice(0, 6)}`;
 }
 
 /**

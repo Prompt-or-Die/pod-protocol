@@ -3,24 +3,14 @@
  * Provides specific error handling for different failure modes
  */
 
-export enum ErrorCode {
-  NETWORK_ERROR = 'NETWORK_ERROR',
-  RPC_ERROR = 'RPC_ERROR',
-  ACCOUNT_NOT_FOUND = 'ACCOUNT_NOT_FOUND',
-  INVALID_ACCOUNT_DATA = 'INVALID_ACCOUNT_DATA',
-  PROGRAM_ERROR = 'PROGRAM_ERROR',
-  VALIDATION_ERROR = 'VALIDATION_ERROR',
-  CACHE_ERROR = 'CACHE_ERROR',
-  TIMEOUT_ERROR = 'TIMEOUT_ERROR',
-  RATE_LIMIT_ERROR = 'RATE_LIMIT_ERROR',
-  INSUFFICIENT_DATA = 'INSUFFICIENT_DATA'
-}
+import { ErrorCode } from '../types';
 
 export class SDKError extends Error {
   public readonly code: ErrorCode;
   public readonly details?: Record<string, unknown>;
   public readonly retryable: boolean;
   public readonly timestamp: number;
+  public cause?: Error;
 
   constructor(
     message: string,
@@ -93,16 +83,26 @@ export class InvalidAccountDataError extends SDKError {
   }
 }
 
+/**
+ * Transaction-related error
+ */
+export class TransactionError extends SDKError {
+  constructor(message: string, cause?: Error) {
+    super(message, ErrorCode.TRANSACTION_ERROR, { cause, retryable: true });
+    this.name = 'TransactionError';
+  }
+}
+
+/**
+ * Validation-related error
+ */
 export class ValidationError extends SDKError {
-  constructor(field: string, value: unknown, reason: string) {
-    super(
-      `Validation failed for ${field}: ${reason}`,
-      ErrorCode.VALIDATION_ERROR,
-      { 
-        details: { field, value, reason },
-        retryable: false 
-      }
-    );
+  constructor(field: string, value: string, message: string, cause?: Error) {
+    super(message, ErrorCode.VALIDATION_ERROR, { 
+      cause, 
+      retryable: false,
+      details: { field, value }
+    });
     this.name = 'ValidationError';
   }
 }
@@ -154,50 +154,70 @@ export class InsufficientDataError extends SDKError {
  */
 export class ErrorHandler {
   /**
-   * Classify an error and wrap it in appropriate SDK error type
+   * Classify an error into appropriate SDK error type
    */
-  static classify(error: unknown, context?: string): SDKError {
+  static classify(error: unknown, operation?: string): SDKError {
+    // If already an SDKError, return as-is
     if (error instanceof SDKError) {
       return error;
     }
 
-    const message = error instanceof Error ? error.message : String(error);
-    const contextMessage = context ? `${context}: ${message}` : message;
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const lowerMessage = errorMessage.toLowerCase();
+    const contextMessage = operation ? `${operation}: ${errorMessage}` : errorMessage;
 
-    // Network-related errors
-    if (message.includes('network') || message.includes('connection') || message.includes('ENOTFOUND')) {
+    // Network errors
+    if (lowerMessage.includes('network') || 
+        lowerMessage.includes('connection') || 
+        lowerMessage.includes('fetch') ||
+        lowerMessage.includes('timeout') ||
+        lowerMessage.includes('unreachable')) {
       return new NetworkError(contextMessage, error instanceof Error ? error : undefined);
     }
 
-    // RPC-related errors
-    if (message.includes('RPC') || message.includes('request failed') || message.includes('429')) {
-      if (message.includes('429') || message.includes('rate limit')) {
-        return new RateLimitError();
-      }
+    // RPC errors
+    if (lowerMessage.includes('rpc') || 
+        lowerMessage.includes('jsonrpc') || 
+        lowerMessage.includes('method not found') ||
+        lowerMessage.includes('invalid request')) {
       return new RpcError(contextMessage, error instanceof Error ? error : undefined);
     }
 
-    // Account-related errors
-    if (message.includes('Account not found') || message.includes('Invalid account owner')) {
+    // Account errors
+    if (lowerMessage.includes('account') && 
+        (lowerMessage.includes('not found') || lowerMessage.includes('does not exist'))) {
       return new AccountNotFoundError('unknown');
     }
 
-    if (message.includes('Invalid account data') || message.includes('failed to deserialize')) {
-      return new InvalidAccountDataError('unknown', message);
+    // Transaction errors
+    if (lowerMessage.includes('transaction') || 
+        lowerMessage.includes('signature') ||
+        lowerMessage.includes('blockhash')) {
+      return new TransactionError(contextMessage);
     }
 
-    // Timeout errors
-    if (message.includes('timeout') || message.includes('timed out')) {
-      return new TimeoutError(context || 'unknown operation', 30000);
+    // Validation errors
+    if (lowerMessage.includes('invalid') || 
+        lowerMessage.includes('validation') ||
+        lowerMessage.includes('required') ||
+        lowerMessage.includes('missing')) {
+      return new ValidationError('unknown', 'unknown', contextMessage);
     }
 
-    // Default to generic SDK error
+    // Rate limit errors
+    if (lowerMessage.includes('rate limit') || 
+        lowerMessage.includes('too many requests') ||
+        lowerMessage.includes('429')) {
+      return new RateLimitError();
+    }
+
+    // Default to SDKError for unknown errors with PROGRAM_ERROR code
     return new SDKError(
       contextMessage,
       ErrorCode.PROGRAM_ERROR,
-      { 
+      {
         cause: error instanceof Error ? error : undefined,
-        retryable: false 
+        retryable: false
       }
     );
   }

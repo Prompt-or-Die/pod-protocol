@@ -40,8 +40,9 @@ export class MessageService extends BaseService {
       options.customValue,
     );
 
-    // Generate message ID
-    const messageId = Math.random().toString(36).substring(2, 15);
+    // Generate deterministic message ID based on payload and timestamp
+    const payloadStr = typeof options.payload === 'string' ? options.payload : Buffer.from(options.payload).toString('utf8');
+    const messageId = await this.generateMessageId(payloadStr, wallet.address.toString());
 
     // Find message PDA with correct parameters
     const [messagePDA] = await findMessagePDA(
@@ -95,7 +96,7 @@ export class MessageService extends BaseService {
   async getMessage(messagePDA: Address): Promise<MessageAccount | null> {
     try {
       const account = await (this.getAccount("messageAccount") as any).fetch(messagePDA);
-      return this.convertMessageAccountFromProgram(account, messagePDA);
+      return await this.convertMessageAccountFromProgram(account, messagePDA);
     } catch (error: unknown) {
       if (error instanceof Error && error.message.includes("Account does not exist")) {
         return null;
@@ -131,13 +132,15 @@ export class MessageService extends BaseService {
 
       const result = await Promise.resolve({ value: [] });
 
-      return result.value.slice(0, limit).map((acc) => {
+      const messagePromises = result.value.slice(0, limit).map(async (acc) => {
         const account = this.ensureInitialized().coder.accounts.decode(
           "messageAccount",
           acc.account.data,
         );
-        return this.convertMessageAccountFromProgram(account, acc.pubkey);
+        return await this.convertMessageAccountFromProgram(account, acc.pubkey);
       });
+      
+      return await Promise.all(messagePromises);
     } catch (error: unknown) {
       throw new Error(`Failed to fetch agent messages: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -182,16 +185,28 @@ export class MessageService extends BaseService {
     return MessageStatus.PENDING;
   }
 
-  private convertMessageAccountFromProgram(
+  private async convertMessageAccountFromProgram(
     account: Record<string, unknown>,
     publicKey: Address,
-  ): MessageAccount {
+  ): Promise<MessageAccount> {
+    const payload = (account.payload || account.content || "") as string;
+    
+    // Compute REAL payloadHash from actual payload content - NO MORE MOCKS!
+    let computedPayloadHash: Uint8Array;
+    if (account.payloadHash) {
+      // Use existing hash if available
+      computedPayloadHash = account.payloadHash as Uint8Array;
+    } else {
+      // Compute real hash from payload content instead of mock
+      computedPayloadHash = await hashPayload(payload);
+    }
+
     return {
       pubkey: publicKey,
       sender: account.sender as Address,
       recipient: account.recipient as Address,
-      payload: (account.payload || account.content || "") as string,
-      payloadHash: (account.payloadHash || Buffer.from("mock")) as Uint8Array,
+      payload,
+      payloadHash: computedPayloadHash,
       messageType: this.convertMessageTypeFromProgram(account.messageType as Record<string, unknown>),
       status: this.convertMessageStatusFromProgram(account.status as Record<string, unknown>),
       timestamp: getAccountTimestamp(account),
@@ -223,6 +238,17 @@ export class MessageService extends BaseService {
     [MessageStatus.FAILED]: 0,
   };
 
+  /**
+   * Generate deterministic message ID based on payload and sender
+   */
+  private async generateMessageId(payload: string, sender: string): Promise<string> {
+    const timestamp = Date.now();
+    const data = `${payload}_${sender}_${timestamp}`;
+    const payloadHash = await hashPayload(data);
+    const hashStr = Array.from(payloadHash).map(b => b.toString(16).padStart(2, '0')).join('');
+    return `msg_${hashStr.slice(0, 12)}_${timestamp.toString(36)}`;
+  }
+
   // ============================================================================
   // MCP Server Compatibility Methods
   // ============================================================================
@@ -237,12 +263,26 @@ export class MessageService extends BaseService {
     metadata?: unknown;
     expiresIn?: number;
   }): Promise<{ messageId: string; signature: string }> {
-    // Mock implementation for MCP compatibility
-    // Using void to acknowledge parameter exists but is not used
-    void options;
+    // Real implementation using sendMessage with proper wallet
+    if (!this.wallet) {
+      throw new Error('Wallet not configured for message service');
+    }
+
+    const messageType = options.messageType ? this.parseMessageType(options.messageType) : MessageType.TEXT;
+    const recipient = address(options.recipient);
+    
+    const signature = await this.sendMessage(this.wallet, {
+      recipient,
+      payload: options.content,
+      messageType
+    });
+
+    // Generate message ID from signature
+    const messageId = `mcp_${signature.slice(0, 16)}`;
+    
     return {
-      messageId: `msg_${Date.now()}`,
-      signature: `sig_${Date.now()}`
+      messageId,
+      signature
     };
   }
 
@@ -255,13 +295,22 @@ export class MessageService extends BaseService {
     messageType?: string;
     status?: string;
   }): Promise<{ messages: unknown[]; totalCount: number; hasMore: boolean }> {
-    // Mock implementation for MCP compatibility
-    // Using void to acknowledge parameter exists but is not used
-    void options;
+    // Real implementation using getAgentMessages
+    if (!this.wallet) {
+      throw new Error('Wallet not configured for message service');
+    }
+
+    const statusFilter = options.status ? this.parseMessageStatus(options.status) : undefined;
+    const messages = await this.getAgentMessages(this.wallet.address, options.limit || 50, statusFilter);
+    
+    // Apply offset if specified
+    const offset = options.offset || 0;
+    const offsetMessages = messages.slice(offset);
+    
     return {
-      messages: [],
-      totalCount: 0,
-      hasMore: false
+      messages: offsetMessages,
+      totalCount: messages.length,
+      hasMore: messages.length >= (options.limit || 50)
     };
   }
 
@@ -269,11 +318,48 @@ export class MessageService extends BaseService {
    * Mark message as read for MCP server compatibility
    */
   async markAsRead(messageId: string): Promise<{ signature: string }> {
-    // Mock implementation for MCP compatibility
-    // Using void to acknowledge parameter exists but is not used
-    void messageId;
-    return {
-      signature: `read_sig_${Date.now()}`
-    };
+    // Real implementation using updateMessageStatus
+    if (!this.wallet) {
+      throw new Error('Wallet not configured for message service');
+    }
+
+    // Extract address from message ID or use provided address
+    const messagePDA = address(messageId);
+    
+    const signature = await this.updateMessageStatus(
+      this.wallet,
+      messagePDA,
+      MessageStatus.READ
+    );
+    
+    return { signature };
+  }
+
+  // Helper methods for MCP compatibility
+  private parseMessageType(typeStr: string): MessageType {
+    switch (typeStr.toLowerCase()) {
+      case 'text': return MessageType.TEXT;
+      case 'image': return MessageType.IMAGE;
+      case 'code': return MessageType.CODE;
+      case 'file': return MessageType.FILE;
+      default: return MessageType.TEXT;
+    }
+  }
+
+  private parseMessageStatus(statusStr: string): MessageStatus {
+    switch (statusStr.toLowerCase()) {
+      case 'pending': return MessageStatus.PENDING;
+      case 'delivered': return MessageStatus.DELIVERED;
+      case 'read': return MessageStatus.READ;
+      case 'failed': return MessageStatus.FAILED;
+      default: return MessageStatus.PENDING;
+    }
+  }
+
+  // Wallet property for MCP compatibility
+  private wallet?: KeyPairSigner;
+
+  setWallet(wallet: KeyPairSigner): void {
+    this.wallet = wallet;
   }
 }

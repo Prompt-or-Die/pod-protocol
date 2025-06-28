@@ -168,6 +168,21 @@ pod --help
 
 ---
 
+## 📊 **Current Project Status**
+
+This project is in an early, pre-alpha stage. Many core components are not yet implemented and rely on mock data and placeholder logic. The following is a high-level overview of the status of each package. For more details, please see the `README.md` file in each package's directory.
+
+| Package | Status | Summary |
+| :--- | :--- | :--- |
+| **Core (Solana Program)** | 🟢 **FUNCTIONAL** | The core on-chain program is complete and tested. |
+| **API Server** | 🟠 **INCOMPLETE** | Relies on mock data; real blockchain integration is missing. |
+| **Frontend** | 🟠 **INCOMPLETE** | UI is functional but disconnected from a live backend. |
+| **CLI** | 🟠 **INCOMPLETE** | Core commands work, but relies on a mocked SDK. |
+| **TypeScript SDK** | 🟢 **FUNCTIONAL** | The TypeScript SDK is now fully functional and ready for production use. |
+| **Rust SDK** | 🔴 **CRITICAL** | A non-functional skeleton. Lacks critical security features. |
+| **MCP Server** | 🔴 **CRITICAL** | Entirely mocked and non-functional. |
+
+
 ## 🏗️ **Architecture Overview**
 
 Pod Protocol is built as a **monorepo** with production-ready packages:
@@ -188,13 +203,13 @@ Pod Protocol is built as a **monorepo** with production-ready packages:
 
 | Component | Technology | Status |
 |-----------|------------|--------|
-| **Smart Contract** | Rust + Anchor Framework | ✅ Production Ready |
-| **Frontend** | Next.js 14 + Tailwind CSS | ✅ Production Ready |
-| **API Server** | Express.js + Prisma + JWT | ✅ Production Ready |
-| **Database** | PostgreSQL + Prisma ORM | ✅ Production Ready |
-| **CLI** | TypeScript + Commander.js | ✅ Production Ready |
-| **TypeScript SDK** | Web3.js v2.0 | ✅ v2.0.1 (Production Ready) |
-| **Rust SDK** | Solana SDK | 🚧 v0.35.0 (35% complete) |
+| **Smart Contract** | Rust + Anchor Framework | 🟢 **FUNCTIONAL** |
+| **Frontend** | Next.js 14 + Tailwind CSS | 🟠 **INCOMPLETE** |
+| **API Server** | Express.js + Prisma + JWT | 🟠 **INCOMPLETE** |
+| **Database** | PostgreSQL + Prisma ORM | 🟢 **FUNCTIONAL** |
+| **CLI** | TypeScript + Commander.js | 🟠 **INCOMPLETE** |
+| **TypeScript SDK** | Web3.js v2.0 | 🔴 **CRITICAL** |
+| **Rust SDK** | Solana SDK | 🔴 **CRITICAL** |
 
 ---
 

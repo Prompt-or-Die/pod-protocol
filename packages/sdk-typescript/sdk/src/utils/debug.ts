@@ -325,11 +325,55 @@ export class DevUtils {
       environment: this.getEnvironment(),
       memoryUsage: this.getMemoryUsage(),
       logBuffer: this.logger.getLogBuffer().slice(-10), // Last 10 log entries
-      sdkVersion: '1.0.0', // TODO: Get from package.json
+      sdkVersion: this.getSDKVersion(), // Real implementation instead of TODO
       nodeVersion: this.getEnvironment() === 'node' ? (process as any).version : 'N/A'
     };
     
     return JSON.stringify(report, null, 2);
+  }
+
+  /**
+   * Get SDK version from package.json
+   */
+  private static getSDKVersion(): string {
+    // Real implementation to get version from package.json
+    try {
+      if (this.getEnvironment() === 'node') {
+        // Node.js environment - try to read package.json
+        const fs = require('fs');
+        const path = require('path');
+        
+        // Try different paths to find package.json
+        const possiblePaths = [
+          path.join(__dirname, '../../package.json'),
+          path.join(__dirname, '../package.json'),
+          path.join(process.cwd(), 'package.json')
+        ];
+        
+        for (const packagePath of possiblePaths) {
+          try {
+            if (fs.existsSync(packagePath)) {
+              const packageData = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+              if (packageData.version) {
+                return packageData.version;
+              }
+            }
+          } catch {
+            // Continue to next path
+          }
+        }
+      }
+      
+      // Fallback: try to get from global if available
+      if (typeof globalThis !== 'undefined' && (globalThis as any).__SDK_VERSION__) {
+        return (globalThis as any).__SDK_VERSION__;
+      }
+      
+      // Final fallback
+      return '1.0.0';
+    } catch {
+      return '1.0.0';
+    }
   }
 
   async getSDKInfo(): Promise<SDKInfo> {

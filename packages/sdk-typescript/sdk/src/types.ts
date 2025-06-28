@@ -177,6 +177,20 @@ export enum PodComError {
 }
 
 /**
+ * SDK Error codes
+ */
+export enum ErrorCode {
+  PROGRAM_ERROR = 'PROGRAM_ERROR',
+  NETWORK_ERROR = 'NETWORK_ERROR', 
+  RPC_ERROR = 'RPC_ERROR',
+  ACCOUNT_ERROR = 'ACCOUNT_ERROR',
+  TRANSACTION_ERROR = 'TRANSACTION_ERROR',
+  VALIDATION_ERROR = 'VALIDATION_ERROR',
+  TIMEOUT_ERROR = 'TIMEOUT_ERROR',
+  RATE_LIMIT_ERROR = 'RATE_LIMIT_ERROR',
+}
+
+/**
  * Configuration for PoD Protocol SDK
  */
 export interface PodComConfig {

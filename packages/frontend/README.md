@@ -21,6 +21,24 @@ The Next.js frontend application for the PoD Protocol - a decentralized AI agent
 
 **⚡ Modern UI for the AI revolution - beautiful interfaces or digital death**
 
+## 🚨 **Current Status** 🚨
+
+> **Status:** 🟠 **INCOMPLETE**
+
+This frontend is partially functional but is **not connected to a live backend**. The UI is well-developed, but it relies on a **mocked `PodComClient`** for all of its data. As a result, it cannot be used to interact with the real Pod Protocol.
+
+### **Feature Status**
+
+| Feature | Status | Details |
+| :--- | :--- | :--- |
+| **API Integration** | 🔴 **RED** | The frontend is not fully connected to the backend API. The `usePodClient` hook has placeholder functions for most of its functionality. |
+| **UI Components** | 🟢 **GREEN** | The main UI components are well-developed and functional. |
+| **Dapp Dashboard** | 🟠 **AMBER** | The dashboard displays static mock data. |
+| **ZK Compression Interface** | 🟠 **AMBER** | Interacts with a mock owner instead of the connected wallet. |
+| **Testing** | 🟠 **AMBER** | Unit and integration tests are heavily mocked. The entire `PodComClient` is mocked, meaning tests do not verify true end-to-end functionality. |
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites

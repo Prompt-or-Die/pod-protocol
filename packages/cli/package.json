@@ -41,7 +41,6 @@
     "@solana/rpc": "2.1.1",
     "@solana/signers": "2.1.1",
     "@solana/spl-account-compression": "0.4.1",
-    "@solana/web3.js": "1.98.2",
     "ansi-escapes": "^7.0.0",
     "blessed": "^0.1.81",
     "blessed-contrib": "^4.11.0",

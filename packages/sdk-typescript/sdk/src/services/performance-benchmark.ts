@@ -182,10 +182,7 @@ export class PerformanceBenchmarkService {
         },
         {
           name: 'Recommendation Algorithm',
-          operation: () => this.discoveryService!.getRecommendations('test_agent', {
-            type: 'collaboration',
-            limit: 10
-          }),
+          operation: () => this.discoveryService!.getAgentRecommendations(address('test_agent'), 10),
           expectedOps: 20,
           timeout: 2000
         },

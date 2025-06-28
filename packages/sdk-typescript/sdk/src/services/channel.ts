@@ -1,15 +1,17 @@
 import type { Address } from '@solana/addresses';
+import { address, getAddressEncoder, getProgramDerivedAddress } from '@solana/addresses';
 import type { KeyPairSigner } from '@solana/signers';
-import { address } from '@solana/addresses';
+import BN from "bn.js";
 import * as anchor from "@coral-xyz/anchor";
-const { BN } = anchor;
+const { BN: AnchorBN } = anchor;
 import { BaseService } from "./base.js";
 import {
   CreateChannelOptions,
+  UpdateChannelOptions,
+  BroadcastMessageOptions,
   ChannelAccount,
   ChannelVisibility,
-  BroadcastMessageOptions,
-  UpdateChannelOptions,
+  MessageType,
 } from "../types";
 import { findAgentPDA, findChannelPDA, findParticipantPDA, findInvitationPDA, retry, getAccountLastUpdated } from "../utils.js";
 
@@ -265,7 +267,7 @@ export class ChannelService extends BaseService {
     );
 
     // Derive message PDA
-    const [messagePDA] = this.findChannelMessagePDA(
+    const [messagePDA] = await this.findChannelMessagePDA(
       options.channelPDA,
       wallet.address,
       nonce,
@@ -473,18 +475,26 @@ export class ChannelService extends BaseService {
     };
   }
 
-  private findChannelMessagePDA(
+  private async findChannelMessagePDA(
     channelPDA: Address,
     sender: Address,
     nonce: number,
-  ): [Address, number] {
+  ): Promise<[Address, number]> {
+    // Use real PDA derivation instead of mock implementation
     const nonceBuffer = Buffer.alloc(8);
     nonceBuffer.writeBigUInt64LE(BigInt(nonce), 0);
 
-    // Generate PDA deterministically - temporary mock implementation
-    const mockPDA = address(channelPDA + sender + nonce.toString());
-    const bump = 255;
-    return [mockPDA, bump];
+    const addressEncoder = getAddressEncoder();
+    const [pda, bump] = await getProgramDerivedAddress({
+      programAddress: this.programId,
+      seeds: [
+        new TextEncoder().encode("channel_message"),
+        addressEncoder.encode(channelPDA),
+        addressEncoder.encode(sender),
+        nonceBuffer,
+      ],
+    });
+    return [pda, bump];
   }
 
   /**
@@ -625,59 +635,125 @@ export class ChannelService extends BaseService {
     requiresDeposit?: boolean;
     depositAmount?: number;
   }): Promise<{ channel: { id: string; name: string; description: string; visibility: string }; joinCode?: string; signature: string }> {
-    // Mock implementation for MCP compatibility
+    // Real implementation using createChannel
+    if (!this.wallet) {
+      throw new Error('Wallet not configured for channel service');
+    }
+
+    const visibility = options.visibility === 'private' ? ChannelVisibility.Private : ChannelVisibility.Public;
+    
+    const signature = await this.createChannel(this.wallet, {
+      name: options.name,
+      description: options.description || '',
+      visibility,
+      maxMembers: options.maxParticipants || 100,
+      feePerMessage: 0 // Default fee
+    });
+
+    // Extract channel ID from signature or generate based on creator and name
+    const channelId = `ch_${signature.slice(0, 16)}`;
+    
     return {
       channel: {
-        id: `channel_${Date.now()}`,
+        id: channelId,
         name: options.name,
         description: options.description || '',
         visibility: options.visibility || 'public'
       },
-      joinCode: options.visibility === 'private' ? `join_${Date.now()}` : undefined,
-      signature: `sig_${Date.now()}`
+      joinCode: options.visibility === 'private' ? `join_${channelId}` : undefined,
+      signature
     };
   }
 
   /**
    * Join method for MCP server compatibility
    */
-  async join(): Promise<{ signature: string }> {
-    // Mock implementation for MCP compatibility
-    return {
-      signature: `join_sig_${Date.now()}`
-    };
+  async join(channelId: string): Promise<{ signature: string }> {
+    // Real implementation using joinChannel
+    if (!this.wallet) {
+      throw new Error('Wallet not configured for channel service');
+    }
+
+    const signature = await this.joinChannel(channelId, this.wallet);
+    
+    return { signature };
   }
 
   /**
    * Send message method for MCP server compatibility
    */
-  async sendMessage(): Promise<{ messageId: string; signature: string }> {
-    // Mock implementation for MCP compatibility
+  async sendMessage(channelPDA: string, content: string, messageType: string = 'Text'): Promise<{ messageId: string; signature: string }> {
+    // Real implementation using broadcastMessage
+    if (!this.wallet) {
+      throw new Error('Wallet not configured for channel service');
+    }
+
+    const messageTypeEnum = this.parseMessageType(messageType);
+    
+    const signature = await this.broadcastMessage(this.wallet, {
+      channelPDA: address(channelPDA),
+      content,
+      messageType: messageTypeEnum
+    });
+
+    // Generate message ID from signature
+    const messageId = `cmsg_${signature.slice(0, 16)}`;
+    
     return {
-      messageId: `channel_msg_${Date.now()}`,
-      signature: `msg_sig_${Date.now()}`
+      messageId,
+      signature
     };
   }
 
   /**
    * Get messages method for MCP server compatibility
    */
-  async getMessages(): Promise<{ messages: unknown[]; totalCount: number; hasMore: boolean }> {
-    // Mock implementation for MCP compatibility
+  async getMessages(channelPDA: string, limit: number = 50): Promise<{ messages: unknown[]; totalCount: number; hasMore: boolean }> {
+    // Real implementation using getChannelMessages
+    const messages = await this.getChannelMessages(address(channelPDA), limit);
+    
     return {
-      messages: [],
-      totalCount: 0,
-      hasMore: false
+      messages,
+      totalCount: messages.length,
+      hasMore: messages.length >= limit
     };
   }
 
   /**
    * Get public channels method for MCP server compatibility
    */
-  async getPublicChannelsMCP(): Promise<{ channels: unknown[] }> {
-    // Mock implementation for MCP compatibility
+  async getPublicChannelsMCP(limit: number = 100): Promise<{ channels: unknown[] }> {
+    // Real implementation using getPublicChannels
+    const channels = await this.getPublicChannels(limit);
+    
     return {
-      channels: []
+      channels: channels.map(channel => ({
+        id: channel.pubkey.toString(),
+        name: channel.name,
+        description: channel.description,
+        visibility: 'public',
+        participantCount: channel.currentParticipants || 0,
+        maxParticipants: channel.maxParticipants || 100,
+        creator: channel.creator.toString()
+      }))
     };
+  }
+
+  // Helper methods for MCP compatibility
+  private parseMessageType(typeStr: string): MessageType {
+    switch (typeStr.toLowerCase()) {
+      case 'text': return MessageType.TEXT;
+      case 'image': return MessageType.IMAGE;
+      case 'code': return MessageType.CODE;
+      case 'file': return MessageType.FILE;
+      default: return MessageType.TEXT;
+    }
+  }
+
+  // Wallet property for MCP compatibility
+  private wallet?: KeyPairSigner;
+
+  setWallet(wallet: KeyPairSigner): void {
+    this.wallet = wallet;
   }
 }

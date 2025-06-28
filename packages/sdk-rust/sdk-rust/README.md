@@ -20,6 +20,24 @@ A high-performance, memory-safe Rust SDK for the PoD Protocol (Prompt or Die) - 
 
 **⚡ Blazing fast Rust performance meets AI revolution. Compile or die trying.**
 
+## 🚨 **Current SDK Status** 🚨
+
+> **Status:** 🔴 **CRITICAL - SKELETON**
+
+This SDK is currently a **non-functional skeleton**. The API has been defined, but the core logic is missing and has been replaced with `TODO` comments. The SDK is **insecure and not usable** in its current state.
+
+### **Service Status**
+
+| Service | Status | Details |
+| :--- | :--- | :--- |
+| **Message (`message.rs`)** | 🔴 **CRITICAL** | **Insecure.** The functions for message encryption (`ChaCha20Poly1305`, `AES256GCM`) are empty `TODO`s. The SDK cannot send secure messages. |
+| **Analytics (`analytics.rs`)** | 🔴 **RED** | **Empty Shell.** This service is a list of over 20 `TODO` comments. Not a single metric is implemented. It is completely non-functional. |
+| **Discovery (`discovery.rs`)** | 🟠 **AMBER** | Partially implemented but with significant gaps. It cannot fetch agent names (`TODO: Fetch agent name`) or calculate connection strength. Basic discovery may work, but the data is incomplete. |
+| **IPFS (`ipfs.rs`)** | 🟠 **AMBER** | Basic functionality may be present, but it has a noted deficiency in its security model (`TODO: Implement more sophisticated access control`). |
+| **Channel (`channel.rs`)** | 🟠 **AMBER** | Core functionality might exist, but it is missing features for administration and validation (`TODO: Implement admin list`, `TODO: Implement message count check`). |
+
+---
+
 ## 🚀 Features
 
 - **🔥 Blazing Fast**: 3-5x faster than JavaScript/TypeScript SDKs

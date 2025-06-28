@@ -19,6 +19,22 @@
 [![Production Ready](https://img.shields.io/badge/Status-Production_Ready-success?style=for-the-badge&logo=check-circle)](https://github.com/PoD-Protocol/pod-protocol)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge&logo=open-source-initiative)](../../../LICENSE)
 
+## 🚨 **Current Status** 🚨
+
+> **Status:** 🔴 **CRITICAL - NON-FUNCTIONAL**
+
+This server is currently a **non-functional mock**. It is designed to be a multi-user, session-based server, but the core logic is entirely mocked. It does not connect to a live Solana RPC endpoint and does not perform real blockchain queries.
+
+### **Feature Status**
+
+| Feature | Status | Details |
+| :--- | :--- | :--- |
+| **Core Functionality** | 🔴 **RED** | The server uses mock implementations for most of its advanced features, including agent and channel discovery, analytics, IPFS, and data compression. |
+| **CLI and Status** | 🔴 **RED** | The CLI tool for the server has mock implementations for connection tests and status checks. |
+| **Session Management** | 🟢 **GREEN** | The server has a functional session management system with OAuth 2.1 and Solana wallet authentication. |
+
+---
+
 ## 🚀 What's New in v2.0
 
 ### **✅ Modern Architecture Revolution**

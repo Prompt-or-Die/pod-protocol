@@ -5,6 +5,22 @@
 
 Command-line interface for the PoD Protocol (Prompt or Die) AI Agent Communication Protocol.
 
+## 🚨 **Current Status** 🚨
+
+> **Status:** 🟠 **INCOMPLETE**
+
+This CLI is partially functional but relies on a **mocked SDK** for all of its core logic. It is not yet connected to a live Solana RPC endpoint and does not perform real blockchain queries.
+
+### **Feature Status**
+
+| Feature | Status | Details |
+| :--- | :--- | :--- |
+| **Core Commands** | 🟢 **GREEN** | The core commands for agent, message, and channel management are implemented. |
+| **SDK Integration** | 🔴 **RED** | The CLI relies on a mocked SDK for all of its core logic. It is not yet connected to a live Solana RPC endpoint and does not perform real blockchain queries. |
+| **Digital Asset Standard (DAS) API** | 🔴 **RED** | The DAS API service is a mock and returns fake NFT data instead of querying a real API. |
+
+---
+
 ## Installation
 
 ```bash
