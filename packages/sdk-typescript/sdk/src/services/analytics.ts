@@ -498,8 +498,8 @@ export class AnalyticsService extends BaseService {
 
       // Analyze message activity
       let messagesSent = 0;
-      let messagesReceived = 0;
-      let averageResponseTime = 0;
+      const messagesReceived = 0;
+      const averageResponseTime = 0;
       let totalInteractions = 0;
 
       // Get messages sent by this agent using Web3.js v2.0 RPC (mock implementation during migration)
@@ -546,10 +546,10 @@ export class AnalyticsService extends BaseService {
       const timeframeMs = this.getTimeframeMs(timeframe);
       const cutoff = now - timeframeMs;
 
-      let totalMessages = messageAccounts.length;
+      const totalMessages = messageAccounts.length;
       let deliveredMessages = 0;
       let failedMessages = 0;
-      let averageDeliveryTime = 0;
+      const averageDeliveryTime = 0;
       let messageVolume = 0;
 
       // Analyze message data from actual accounts
@@ -596,7 +596,7 @@ export class AnalyticsService extends BaseService {
         throw new Error("Program not initialized");
       }
 
-      let filters = [
+      const filters = [
         {
           memcmp: {
             offset: 0,
@@ -617,7 +617,7 @@ export class AnalyticsService extends BaseService {
       // Get channel accounts using Web3.js v2.0 RPC (mock implementation during migration)
       const channelAccounts: any[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
 
-      let totalChannels = channelAccounts.length;
+      const totalChannels = channelAccounts.length;
       let activeChannels = 0;
       let totalMembers = 0;
       let averageMembers = 0;
@@ -656,8 +656,8 @@ export class AnalyticsService extends BaseService {
   async getNetworkMetrics(): Promise<NetworkMetrics> {
     try {
       // Get real network performance data using Web3.js v2.0 (mock implementation during migration)
-      let averageTps = 2500; // Mock TPS value
-      let blockTime = 400;
+      const averageTps = 2500; // Mock TPS value
+      const blockTime = 400;
       
       // Mock current slot and epoch info
       const currentSlot = Date.now();
@@ -682,7 +682,7 @@ export class AnalyticsService extends BaseService {
 
       const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
       let messageVolume24h = 0;
-      let activeAgents24h = new Set();
+      const activeAgents24h = new Set();
 
       for (const account of messageAccounts) {
         try {
@@ -722,9 +722,9 @@ export class AnalyticsService extends BaseService {
     try {
       // Mock performance data during Web3.js v2.0 migration
       let avgConfirmationTime = 400;
-      let avgTransactionFee = 5000;
-      let successRate = 0.98;
-      let throughput = 2000;
+      const avgTransactionFee = 5000;
+      const successRate = 0.98;
+      const throughput = 2000;
 
       // Mock recent blocks data
       const recentBlocks = [1000, 1001, 1002, 1003, 1004, 1005];
