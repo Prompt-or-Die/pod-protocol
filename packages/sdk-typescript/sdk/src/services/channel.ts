@@ -68,7 +68,7 @@ export class ChannelService extends BaseService {
       }
 
       try {
-        const tx = await (this.program.methods as unknown)
+        const tx = await (this.program.methods as any)
           .createChannel(
             options.name,
             options.description || "",
@@ -106,7 +106,7 @@ export class ChannelService extends BaseService {
       }
 
       const channelAccount = this.getAccount("channelAccount");
-      const account = await channelAccount.fetch(channelPDA);
+      const account = await (channelAccount as any).fetch(channelPDA);
       
       return {
         pubkey: channelPDA,
@@ -146,7 +146,7 @@ export class ChannelService extends BaseService {
       }
 
       const channelAccount = this.getAccount("channelAccount");
-      const accounts = await channelAccount.all();
+      const accounts = await (channelAccount as any).all();
 
       return accounts.slice(0, limit).map((acc: { publicKey: Address; account: unknown }) => ({
         pubkey: acc.publicKey,
@@ -175,7 +175,7 @@ export class ChannelService extends BaseService {
       }
 
       const channelAccount = this.getAccount("channelAccount");
-      const accounts = await channelAccount.all();
+      const accounts = await (channelAccount as any).all();
 
       return accounts
         .filter((acc: { account: { creator: { equals(addr: Address): boolean } } }) => acc.account.creator.equals(creator))
@@ -373,7 +373,7 @@ export class ChannelService extends BaseService {
         },
       ];
 
-      const accounts = await messageAccount.all(filters);
+      const accounts = await (messageAccount as any).all(filters);
       return accounts.slice(0, limit).map((acc: { account: unknown }) => acc.account);
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
@@ -423,7 +423,7 @@ export class ChannelService extends BaseService {
           return { text: {} };
       }
     }
-    return messageType || { text: {} };
+    return messageType as any || { text: {} };
   }
 
   private convertChannelAccountFromProgram(
@@ -551,7 +551,7 @@ export class ChannelService extends BaseService {
       
       try {
         const participantAccount = this.getAccount("participantAccount");
-        await participantAccount.fetch(participantPDA);
+        await (participantAccount as any).fetch(participantPDA);
         return true; // If account exists, member is in channel
       } catch {
         return false; // Account doesn't exist, not a member
@@ -574,7 +574,7 @@ export class ChannelService extends BaseService {
       const members: Address[] = [];
       for (const acc of participantAccounts) {
         try {
-          const participantData = this.program.coder.accounts.decode("participantAccount", acc.account.data);
+          const participantData = this.program.coder.accounts.decode("participantAccount", acc.account.data as Buffer);
           members.push(participantData.member);
         } catch {
           // Skip invalid accounts

@@ -110,13 +110,13 @@ export class AnalyticsService extends BaseService {
       // Use placeholder for getProgramAccounts until v2.0 API is properly implemented
       const agents: SolanaAccountInfo[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
 
-      const agentData: AgentAccount[] = agents.map((acc) => {
+      const agentData = agents.map((acc) => {
         const account = this.ensureInitialized().coder.accounts.decode(
           "agentAccount",
-          acc.account.data,
+          acc.account.data as Buffer,
         );
         return {
-          pubkey: acc.pubkey,
+          pubkey: address(acc.pubkey),
           capabilities: account.capabilities.toNumber(),
           metadataUri: account.metadataUri,
           reputation: account.reputation?.toNumber() || 0,
@@ -175,15 +175,15 @@ export class AnalyticsService extends BaseService {
       // Use placeholder for getProgramAccounts until v2.0 API is properly implemented
       const messages: SolanaAccountInfo[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
 
-      const messageData: MessageAccount[] = messages
+      const messageData = messages
         .slice(0, limit)
         .map((acc) => {
           const account = this.ensureInitialized().coder.accounts.decode(
             "messageAccount",
-            acc.account.data,
+            acc.account.data as Buffer,
           );
           return {
-            pubkey: acc.pubkey,
+            pubkey: address(acc.pubkey),
             sender: account.sender,
             recipient: account.recipient,
             payload: account.payload || "",
@@ -253,7 +253,7 @@ export class AnalyticsService extends BaseService {
         averageMessageSize,
         messagesPerDay,
         topSenders,
-        recentMessages: messageData.slice(0, 20),
+        recentMessages: messageData.slice(0, 20) as unknown as MessageAccount[],
       };
     } catch (error: unknown) {
       throw new Error(`Failed to get message analytics: ${error instanceof Error ? error.message : String(error)}`);
@@ -268,15 +268,15 @@ export class AnalyticsService extends BaseService {
       // Use placeholder for getProgramAccounts until v2.0 API is properly implemented
       const channels: SolanaAccountInfo[] = []; // TODO: Implement proper v2.0 getProgramAccounts call
 
-      const channelData: ChannelAccount[] = channels
+      const channelData = channels
         .slice(0, limit)
         .map((acc) => {
           const account = this.ensureInitialized().coder.accounts.decode(
             "channelAccount",
-            acc.account.data,
+            acc.account.data as Buffer,
           );
           return {
-            pubkey: acc.pubkey,
+            pubkey: address(acc.pubkey),
             creator: account.creator,
             name: account.name,
             description: account.description,
@@ -374,7 +374,7 @@ export class AnalyticsService extends BaseService {
         try {
           const account = this.ensureInitialized().coder.accounts.decode(
             "escrowAccount",
-            acc.account.data,
+            acc.account.data as Buffer,
           );
           return sum + (account.balance?.toNumber() || 0);
         } catch {
@@ -498,7 +498,7 @@ export class AnalyticsService extends BaseService {
       let agentData;
       
       try {
-        agentData = await agentAccount.fetch(agentAddress);
+        agentData = await (agentAccount as any).fetch(agentAddress);
       } catch {
         throw new Error("Agent not found");
       }
@@ -563,7 +563,7 @@ export class AnalyticsService extends BaseService {
       // Analyze message data from actual accounts
       for (const account of messageAccounts) {
         try {
-          const messageData = this.program.coder.accounts.decode("messageAccount", account.account.data);
+          const messageData = this.program.coder.accounts.decode("messageAccount", account.account.data as Buffer);
           const timestamp = messageData.timestamp.toNumber() * 1000;
           
           if (timestamp > cutoff) {
@@ -634,7 +634,7 @@ export class AnalyticsService extends BaseService {
       // Analyze actual channel data
       for (const account of channelAccounts) {
         try {
-          const channelData = this.program.coder.accounts.decode("channelAccount", account.account.data);
+          const channelData = this.program.coder.accounts.decode("channelAccount", account.account.data as Buffer);
           activeChannels++;
           totalMembers += channelData.memberCount.toNumber();
           
@@ -693,7 +693,7 @@ export class AnalyticsService extends BaseService {
 
       for (const account of messageAccounts) {
         try {
-          const messageData = this.program.coder.accounts.decode("messageAccount", account.account.data);
+          const messageData = this.program.coder.accounts.decode("messageAccount", account.account.data as Buffer);
           const timestamp = messageData.timestamp.toNumber() * 1000;
           
           if (timestamp > oneDayAgo) {

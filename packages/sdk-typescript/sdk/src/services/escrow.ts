@@ -93,7 +93,7 @@ export class EscrowService extends BaseService {
     try {
       const [escrowPDA] = await findEscrowPDA(channel, depositor, this.programId);
       const escrowAccount = this.getAccount("escrowAccount");
-      const account = await escrowAccount.fetch(escrowPDA);
+      const account = await (escrowAccount as any).fetch(escrowPDA);
       return this.convertEscrowAccountFromProgram(account);
     } catch (error) {
       console.error("Error fetching escrow details:", error);
@@ -119,7 +119,7 @@ export class EscrowService extends BaseService {
         },
       ];
 
-      const accounts = await escrowAccount.all(filters);
+      const accounts = await (escrowAccount as any).all(filters);
       return accounts
         .slice(0, limit)
         .map((acc: any) => this.convertEscrowAccountFromProgram(acc.account));

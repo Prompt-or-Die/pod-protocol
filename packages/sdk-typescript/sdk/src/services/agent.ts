@@ -91,8 +91,8 @@ export class AgentService extends BaseService {
       } else {
         // Fallback: create a fresh provider with the actual wallet for this transaction
         const provider = new AnchorProvider(
-          this.rpc as anchor.Provider['connection'],
-          wallet as anchor.Wallet,
+          this.rpc as unknown as anchor.Provider['connection'],
+          wallet as unknown as anchor.Wallet,
           {
             commitment: this.commitment,
             skipPreflight: true,
@@ -146,13 +146,14 @@ export class AgentService extends BaseService {
       } else {
         // For read operations, use a read-only provider without wallet
         const tempKeyPairSigner = await generateKeyPairSigner();
-        const readOnlyWallet: anchor.Wallet = {
-          publicKey: tempKeyPairSigner.address,
+        const readOnlyWallet = {
+          publicKey: tempKeyPairSigner.address as unknown as anchor.web3.PublicKey,
           signTransaction: async () => { throw new Error('Read-only wallet'); },
-          signAllTransactions: async () => { throw new Error('Read-only wallet'); }
-        };
+          signAllTransactions: async () => { throw new Error('Read-only wallet'); },
+          payer: {} as any // Add missing payer property
+        } as anchor.Wallet;
         const readOnlyProvider = new AnchorProvider(
-          this.rpc as anchor.Provider['connection'],
+          this.rpc as unknown as anchor.Provider['connection'],
           readOnlyWallet,
           { commitment: 'confirmed' }
         );
@@ -194,13 +195,14 @@ export class AgentService extends BaseService {
     try {
       // For read operations, use a read-only provider without wallet
       const tempKeyPairSigner = await generateKeyPairSigner();
-      const readOnlyWallet: anchor.Wallet = {
-        publicKey: tempKeyPairSigner.address,
+      const readOnlyWallet = {
+        publicKey: tempKeyPairSigner.address as unknown as anchor.web3.PublicKey,
         signTransaction: async () => { throw new Error('Read-only wallet'); },
-        signAllTransactions: async () => { throw new Error('Read-only wallet'); }
-      };
+        signAllTransactions: async () => { throw new Error('Read-only wallet'); },
+        payer: {} as any // Add missing payer property
+      } as anchor.Wallet;
       const readOnlyProvider = new AnchorProvider(
-         this.rpc as anchor.Provider['connection'],
+         this.rpc as unknown as anchor.Provider['connection'],
          readOnlyWallet,
          { commitment: 'confirmed' }
        );

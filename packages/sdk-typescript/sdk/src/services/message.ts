@@ -53,7 +53,7 @@ export class MessageService extends BaseService {
 
     return retry(async () => {
       const methods = this.getProgramMethods();
-      const tx = await methods
+      const tx = await (methods as any)
         .sendMessage(
           options.recipient,
           Array.from(payloadHash),
@@ -79,7 +79,7 @@ export class MessageService extends BaseService {
   ): Promise<string> {
     return retry(async () => {
       const methods = this.getProgramMethods();
-      const tx = await methods
+      const tx = await (methods as any)
         .updateMessageStatus(this.convertMessageStatus(newStatus))
         .accounts({
           messageAccount: messagePDA,
@@ -94,7 +94,7 @@ export class MessageService extends BaseService {
 
   async getMessage(messagePDA: Address): Promise<MessageAccount | null> {
     try {
-      const account = await this.getAccount("messageAccount").fetch(messagePDA);
+      const account = await (this.getAccount("messageAccount") as any).fetch(messagePDA);
       return this.convertMessageAccountFromProgram(account, messagePDA);
     } catch (error: unknown) {
       if (error instanceof Error && error.message.includes("Account does not exist")) {
@@ -190,14 +190,14 @@ export class MessageService extends BaseService {
       pubkey: publicKey,
       sender: account.sender as Address,
       recipient: account.recipient as Address,
-      payload: account.payload || account.content || "",
-      payloadHash: account.payloadHash || Buffer.from("mock").toString("base64"),
-      messageType: this.convertMessageTypeFromProgram(account.messageType),
-      status: this.convertMessageStatusFromProgram(account.status),
+      payload: (account.payload || account.content || "") as string,
+      payloadHash: (account.payloadHash || Buffer.from("mock")) as Uint8Array,
+      messageType: this.convertMessageTypeFromProgram(account.messageType as Record<string, unknown>),
+      status: this.convertMessageStatusFromProgram(account.status as Record<string, unknown>),
       timestamp: getAccountTimestamp(account),
       createdAt: getAccountCreatedAt(account),
-      expiresAt: account.expiresAt?.toNumber() || 0,
-      bump: account.bump,
+      expiresAt: (account.expiresAt as any)?.toNumber() || 0,
+      bump: account.bump as number,
     };
   }
 

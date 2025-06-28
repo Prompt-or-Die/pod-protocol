@@ -174,7 +174,7 @@ export interface BatchSyncOperation {
  */
 export class ZKCompressionService extends BaseService {
   private config: ZKCompressionConfig;
-  protected rpc: unknown; // Override to protected to match base class
+  protected rpc: any; // Override to match base class
   private ipfsService: IPFSService;
   private batchQueue: CompressedChannelMessage[] = [];
   private batchTimer?: NodeJS.Timeout;
@@ -211,7 +211,7 @@ export class ZKCompressionService extends BaseService {
       ...config
     };
 
-    this.rpc = createRpc(
+    this.rpc = (createRpc as any)(
       this.config.lightRpcUrl,
       this.config.compressionRpcUrl, // Use compression endpoint
       this.config.proverUrl  // Use prover endpoint
@@ -290,7 +290,7 @@ export class ZKCompressionService extends BaseService {
         this.batchQueue.push(compressedMessage);
         
         if (this.batchQueue.length >= this.config.maxBatchSize) {
-          return await this.processBatch(wallet);
+          return (await this.processBatch(wallet)) as any;
         }
 
         // Return promise that resolves when batch is processed
@@ -1028,7 +1028,7 @@ export class ZKCompressionService extends BaseService {
 
     const result = await this.joinChannelCompressed(
       options.channelPDA,
-      this.wallet.address || this.wallet.publicKey?.toString() || 'participant',
+      (this.wallet as any).address || (this.wallet as any).publicKey?.toString() || 'participant',
       this.wallet,
       options.displayName,
       options.avatar,

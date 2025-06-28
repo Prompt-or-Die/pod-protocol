@@ -51,7 +51,7 @@ export interface PodClientConfig {
  * Refactored to use service-based architecture for better maintainability
  */
 export class PodComClient {
-  private rpc: Rpc<object>;
+  private rpc: Rpc<any>;
   private programId: Address;
   private commitment: Commitment;
   private program?: ProgramType<typeof IDL>;
@@ -361,9 +361,9 @@ export class PodComClient {
    */
   async getChannelParticipants(
     channelPDA: Address,
-    limit: number = 50
-  ): Promise<Array<unknown>> {
-    return this.channels.getChannelParticipants(channelPDA, limit);
+    _limit: number = 50
+  ): Promise<Address[]> {
+    return this.channels.getChannelParticipants(channelPDA);
   }
 
   /**
