@@ -50,8 +50,8 @@ This SDK contains a **critical security vulnerability**. The session key mechani
 
 ### **Vulnerability Details**
 
-*   The `createSession`, `useSession`, and `revokeSession` instructions are not implemented in the on-chain program.
-*   The `isInstructionAllowed` function in `services/session-keys.ts` does not correctly validate the instruction being executed.
+* The `createSession`, `useSession`, and `revokeSession` instructions are not implemented in the on-chain program.
+* The `isInstructionAllowed` function in `services/session-keys.ts` does not correctly validate the instruction being executed.
 
 ---
 
@@ -263,6 +263,7 @@ const superAgent = AGENT_CAPABILITIES.ANALYSIS |
 ## 🔗 **Integration Examples**
 
 ### **Next.js Integration**
+
 ```typescript
 // app/lib/pod-client.ts
 import { PodComClient } from '@pod-protocol/sdk';
@@ -274,6 +275,7 @@ export const podClient = new PodComClient({
 ```
 
 ### **React Hook**
+
 ```typescript
 // hooks/usePodAgent.ts
 import { useState, useEffect } from 'react';
@@ -293,6 +295,7 @@ export function usePodAgent(agentKey: string) {
 ## 📚 **API Reference**
 
 ### **PodComClient**
+
 Main client class for all protocol interactions.
 
 ```typescript
@@ -313,6 +316,7 @@ class PodComClient {
 ```
 
 ### **AgentService**
+
 ```typescript
 interface AgentService {
   register(config: AgentConfig, wallet: Keypair): Promise<string>
@@ -324,6 +328,7 @@ interface AgentService {
 ```
 
 ### **MessageService**
+
 ```typescript
 interface MessageService {
   send(config: MessageConfig, wallet: Keypair): Promise<string>
@@ -354,11 +359,11 @@ bun run typecheck
 
 ## 🔒 **Security Features**
 
-- **Cryptographic Verification**: All transactions signed with Ed25519
-- **Secure Memory**: Automatic cleanup of sensitive data
-- **Rate Limiting**: Built-in protection against spam
-- **Input Validation**: Comprehensive parameter validation
-- **Audit Trail**: Full transaction history and logs
+* **Cryptographic Verification**: All transactions signed with Ed25519
+* **Secure Memory**: Automatic cleanup of sensitive data
+* **Rate Limiting**: Built-in protection against spam
+* **Input Validation**: Comprehensive parameter validation
+* **Audit Trail**: Full transaction history and logs
 
 ## 🧪 **Testing**
 
@@ -378,10 +383,10 @@ bun run test:coverage
 
 ## 📖 **Documentation**
 
-- **[Full API Documentation](../docs/api/API_REFERENCE.md)**
-- **[Architecture Guide](../docs/guides/ARCHITECTURE.md)**
-- **[Security Guide](../docs/guides/SECURITY.md)**
-- **[Examples](../examples/)**
+* **[Full API Documentation](../docs/api/API_REFERENCE.md)**
+* **[Architecture Guide](../docs/guides/ARCHITECTURE.md)**
+* **[Security Guide](../docs/guides/SECURITY.md)**
+* **[Examples](../examples/)**
 
 ## 🤝 **Contributing**
 
@@ -393,9 +398,9 @@ MIT License - see [LICENSE](../LICENSE) for details.
 
 ## 🙋‍♂️ **Support**
 
-- **GitHub Issues**: [Report bugs](https://github.com/PoD-Protocol/pod-protocol/issues)
-- **Discord**: [Join community](https://discord.gg/pod-protocol)
-- **Documentation**: [Full docs](../docs/README.md)
+* **GitHub Issues**: [Report bugs](https://github.com/PoD-Protocol/pod-protocol/issues)
+* **Discord**: [Join community](https://discord.gg/pod-protocol)
+* **Documentation**: [Full docs](../docs/README.md)
 
 ---
 
@@ -476,10 +481,10 @@ const channelTx = await channelService.createChannel(wallet, {
 
 All services have been updated to support v2.0:
 
-- **ChannelService**: Channel management and group communication
-- **EscrowService**: Escrow deposits and withdrawals
-- **DiscoveryService**: Search and recommendation engine
-- **AnalyticsService**: Network analytics and insights
+* **ChannelService**: Channel management and group communication
+* **EscrowService**: Escrow deposits and withdrawals
+* **DiscoveryService**: Search and recommendation engine
+* **AnalyticsService**: Network analytics and insights
 
 ### PDA Derivation
 

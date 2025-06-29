@@ -5,6 +5,9 @@
 
 import { ErrorCode } from '../types';
 
+// Re-export ErrorCode for convenience
+export { ErrorCode };
+
 export class SDKError extends Error {
   public readonly code: ErrorCode;
   public readonly details?: Record<string, unknown>;

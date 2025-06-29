@@ -69,7 +69,7 @@ export interface SolanaAccountInfo {
 /**
  * Enhanced base service class with Web3.js v2.0 integration, caching, and error handling
  */
-export abstract class BaseService {
+export class BaseService {
   protected programId: Address;
   protected commitment: Commitment;
   protected rpc: SolanaRpc;
@@ -697,24 +697,25 @@ export abstract class BaseService {
   /**
    * Get the RPC connection for direct access
    */
-  async getConnection(): Promise<any> {
+  public async getConnection(): Promise<any> {
     return this.rpc;
   }
 
   /**
    * Get current slot number from blockchain
    */
-  async getCurrentSlot(): Promise<number> {
+  public async getCurrentSlot(): Promise<bigint> {
     try {
       if (this.rpc && typeof (this.rpc as any).getSlot === 'function') {
-        return await (this.rpc as any).getSlot({ commitment: this.commitment }).send();
+        const slot = await (this.rpc as any).getSlot({ commitment: this.commitment }).send();
+        return BigInt(slot);
       } else {
         // Fallback to estimated slot
-        return Math.floor(Date.now() / 400); // Approximate slot based on 400ms slot time
+        return BigInt(Math.floor(Date.now() / 400)); // Approximate slot based on 400ms slot time
       }
     } catch (error) {
       console.warn('Failed to get current slot:', error);
-      return Math.floor(Date.now() / 400);
+      return BigInt(Math.floor(Date.now() / 400));
     }
   }
 

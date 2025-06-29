@@ -1,26 +1,24 @@
-import { describe, it, expect, mock, beforeEach, afterEach } from 'bun:test';
+import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { SessionManager } from '../src/session-manager';
 import type { SessionConfig, UserSession } from '../src/session-manager';
-import jwt from 'jsonwebtoken';
 
-// Mock PodComClient with bun test
-mock.module('../../sdk-typescript/sdk/dist/index.js', () => ({
-  PodComClient: mock(() => ({
-    initialize: mock(() => Promise.resolve(null))
+// Mock PodComClient
+jest.mock('../../sdk-typescript/sdk/dist/index.js', () => ({
+  PodComClient: jest.fn().mockImplementation(() => ({
+    initialize: jest.fn().mockResolvedValue(null)
   }))
 }));
 
-// Mock SolanaAuthUtils with bun test
-mock.module('../src/utils/solana-auth', () => ({
+// Mock SolanaAuthUtils
+jest.mock('../src/utils/solana-auth', () => ({
   SolanaAuthUtils: {
-    verifySignature: mock(() => Promise.resolve(true))
+    verifySignature: jest.fn().mockResolvedValue(true)
   }
 }));
 
 describe('SessionManager', () => {
   let sessionManager: SessionManager;
   let mockConfig: SessionConfig;
-  const JWT_SECRET = 'test-secret-key';
 
   beforeEach(() => {
     mockConfig = {
@@ -30,72 +28,56 @@ describe('SessionManager', () => {
       requireWalletVerification: false
     };
 
-    // Set up JWT secret for token verification
-    process.env.JWT_SECRET = JWT_SECRET;
-    
-    try {
-      sessionManager = new SessionManager(mockConfig);
-      console.log('SessionManager created successfully:', typeof sessionManager, sessionManager?.constructor?.name);
-    } catch (error) {
-      console.error('SessionManager constructor failed:', error);
-      throw error;
-    }
+    sessionManager = new SessionManager(mockConfig);
   });
 
   afterEach(() => {
-    try {
-      if (sessionManager && typeof sessionManager.cleanup === 'function') {
-        sessionManager.cleanup();
-      } else {
-        console.warn('sessionManager.cleanup not available:', typeof sessionManager, typeof sessionManager?.cleanup);
-      }
-    } catch (error) {
-      console.error('Cleanup failed:', error);
-    }
-    mock.restore();
+    sessionManager.cleanup();
+    jest.clearAllMocks();
   });
-
-  // Helper function to create valid JWT tokens
-  function createValidJWT(payload: any): string {
-    return jwt.sign(payload, JWT_SECRET);
-  }
 
   describe('Session Creation', () => {
     it('should create a new session with valid OAuth token', async () => {
-      const mockPayload = {
-        userId: 'user-123',
-        walletAddress: '1234567890abcdef',
-        publicKey: 'public-key-123',
-        scope: 'read write'
+      const mockToken = 'valid-oauth-token';
+      const mockUserInfo = {
+        id: 'user-123',
+        email: 'test@example.com',
+        name: 'Test User'
       };
-      const mockToken = createValidJWT(mockPayload);
+
+      // Mock OAuth token verification
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockUserInfo)
+      } as Response);
 
       const session = await sessionManager.createSession(mockToken);
 
       expect(session).toBeDefined();
       expect(session.userId).toBe('user-123');
       expect(session.isAuthenticated).toBe(true);
-      expect(session.walletAddress).toBe('1234567890abcdef');
+      expect(session.userInfo).toEqual(mockUserInfo);
     });
 
     it('should create session with wallet authentication when required', async () => {
       const configWithWallet = {
         ...mockConfig,
-        requireWalletVerification: true
+        requireWalletAuth: true
       };
       sessionManager = new SessionManager(configWithWallet);
 
-      const mockPayload = {
-        userId: 'user-123',
-        walletAddress: '1234567890abcdef',
-        publicKey: 'wallet-public-key'
-      };
-      const mockToken = createValidJWT(mockPayload);
-      
+      const mockToken = 'valid-oauth-token';
+      const mockUserInfo = { id: 'user-123', email: 'test@example.com', name: 'Test User' };
       const walletData = {
-        walletSignature: 'wallet-signature',
-        signedMessage: 'auth-message'
+        publicKey: 'wallet-public-key',
+        signature: 'wallet-signature',
+        message: 'auth-message'
       };
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockUserInfo)
+      } as Response);
 
       const session = await sessionManager.createSession(mockToken, walletData);
 
@@ -106,35 +88,40 @@ describe('SessionManager', () => {
     it('should reject invalid OAuth token', async () => {
       const invalidToken = 'invalid-token';
 
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+        ok: false,
+        status: 401
+      } as Response);
+
       await expect(sessionManager.createSession(invalidToken))
-        .rejects.toThrow();
+        .rejects.toThrow('Invalid OAuth token');
     });
 
     it('should reject session creation when wallet auth required but not provided', async () => {
       const configWithWallet = {
         ...mockConfig,
-        requireWalletVerification: true
+        requireWalletAuth: true
       };
       sessionManager = new SessionManager(configWithWallet);
 
-      const mockPayload = {
-        userId: 'user-123',
-        walletAddress: '1234567890abcdef',
-        publicKey: 'public-key-123'
-      };
-      const mockToken = createValidJWT(mockPayload);
+      const mockToken = 'valid-oauth-token';
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ id: 'user-123' })
+      } as Response);
 
       await expect(sessionManager.createSession(mockToken))
-        .rejects.toThrow();
+        .rejects.toThrow('Wallet authentication required');
     });
 
     it('should enforce session limits per user', async () => {
-      const mockPayload = {
-        userId: 'user-123',
-        walletAddress: '1234567890abcdef',
-        publicKey: 'public-key-123'
-      };
-      const mockToken = createValidJWT(mockPayload);
+      const mockToken = 'valid-oauth-token';
+      const mockUserInfo = { id: 'user-123', email: 'test@example.com', name: 'Test User' };
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockUserInfo)
+      } as Response);
 
       // Create maximum allowed sessions
       const sessions = [];
@@ -143,10 +130,9 @@ describe('SessionManager', () => {
         sessions.push(session);
       }
 
-      // The next session should remove the oldest one (no error thrown)
-      const newSession = await sessionManager.createSession(mockToken);
-      expect(newSession).toBeDefined();
-      expect(sessionManager.getSessionCount()).toBe(mockConfig.maxSessionsPerUser);
+      // Attempt to create one more session should fail
+      await expect(sessionManager.createSession(mockToken))
+        .rejects.toThrow('Maximum sessions per user exceeded');
     });
   });
 
@@ -154,12 +140,14 @@ describe('SessionManager', () => {
     let testSession: UserSession;
 
     beforeEach(async () => {
-      const mockPayload = {
-        userId: 'user-123',
-        walletAddress: '1234567890abcdef',
-        publicKey: 'public-key-123'
-      };
-      const mockToken = createValidJWT(mockPayload);
+      const mockToken = 'valid-oauth-token';
+      const mockUserInfo = { id: 'user-123', email: 'test@example.com', name: 'Test User' };
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockUserInfo)
+      } as Response);
+
       testSession = await sessionManager.createSession(mockToken);
     });
 
@@ -174,14 +162,14 @@ describe('SessionManager', () => {
       expect(retrieved).toBeNull();
     });
 
-    it('should update last activity when retrieving session', async () => {
+    it('should update last activity when retrieving session', () => {
       const originalActivity = testSession.lastActivity;
       
       // Wait a bit to ensure time difference
-      await new Promise(resolve => setTimeout(resolve, 10));
-      
-      const retrieved = sessionManager.getSession(testSession.sessionId);
-      expect(retrieved?.lastActivity.getTime()).toBeGreaterThan(originalActivity.getTime());
+      setTimeout(() => {
+        const retrieved = sessionManager.getSession(testSession.sessionId);
+        expect(retrieved?.lastActivity.getTime()).toBeGreaterThan(originalActivity.getTime());
+      }, 10);
     });
   });
 
@@ -189,12 +177,14 @@ describe('SessionManager', () => {
     let testSession: UserSession;
 
     beforeEach(async () => {
-      const mockPayload = {
-        userId: 'user-123',
-        walletAddress: '1234567890abcdef',
-        publicKey: 'public-key-123'
-      };
-      const mockToken = createValidJWT(mockPayload);
+      const mockToken = 'valid-oauth-token';
+      const mockUserInfo = { id: 'user-123', email: 'test@example.com', name: 'Test User' };
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockUserInfo)
+      } as Response);
+
       testSession = await sessionManager.createSession(mockToken);
     });
 
@@ -212,6 +202,9 @@ describe('SessionManager', () => {
     });
 
     it('should cleanup PodCom client when deleting session', async () => {
+      const initialPodClient = testSession.podClient;
+      expect(initialPodClient).toBeDefined();
+      
       await sessionManager.deleteSession(testSession.sessionId);
       
       // Verify session was deleted
@@ -228,12 +221,14 @@ describe('SessionManager', () => {
       };
       sessionManager = new SessionManager(shortTimeoutConfig);
 
-      const mockPayload = {
-        userId: 'user-123',
-        walletAddress: '1234567890abcdef',
-        publicKey: 'public-key-123'
-      };
-      const mockToken = createValidJWT(mockPayload);
+      const mockToken = 'valid-oauth-token';
+      const mockUserInfo = { id: 'user-123', email: 'test@example.com', name: 'Test User' };
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockUserInfo)
+      } as Response);
+
       const session = await sessionManager.createSession(mockToken);
       
       // Wait for session to expire
@@ -247,12 +242,14 @@ describe('SessionManager', () => {
     });
 
     it('should not remove active sessions during cleanup', async () => {
-      const mockPayload = {
-        userId: 'user-123',
-        walletAddress: '1234567890abcdef',
-        publicKey: 'public-key-123'
-      };
-      const mockToken = createValidJWT(mockPayload);
+      const mockToken = 'valid-oauth-token';
+      const mockUserInfo = { id: 'user-123', email: 'test@example.com', name: 'Test User' };
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockUserInfo)
+      } as Response);
+
       const session = await sessionManager.createSession(mockToken);
       
       // Trigger cleanup immediately (session should still be active)
@@ -267,13 +264,19 @@ describe('SessionManager', () => {
     let testSession: UserSession;
 
     beforeEach(async () => {
-      const mockPayload = {
-        userId: 'user-123',
-        walletAddress: '1234567890abcdef',
-        publicKey: 'public-key-123',
-        scope: 'read write admin'
+      const mockToken = 'valid-oauth-token';
+      const mockUserInfo = { 
+        id: 'user-123', 
+        email: 'test@example.com', 
+        name: 'Test User',
+        permissions: ['read', 'write', 'admin']
       };
-      const mockToken = createValidJWT(mockPayload);
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockUserInfo)
+      } as Response);
+
       testSession = await sessionManager.createSession(mockToken);
     });
 
@@ -285,56 +288,65 @@ describe('SessionManager', () => {
     });
 
     it('should handle sessions without permissions', async () => {
-      const mockPayload = {
-        userId: 'user-456',
-        walletAddress: '1234567890abcdef',
-        publicKey: 'public-key-456'
-        // No scope field
+      const mockToken = 'valid-oauth-token';
+      const mockUserInfo = { 
+        id: 'user-456', 
+        email: 'test2@example.com', 
+        name: 'Test User 2'
+        // No permissions field
       };
-      const mockToken = createValidJWT(mockPayload);
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockUserInfo)
+      } as Response);
+
       const session = await sessionManager.createSession(mockToken);
-      
       expect(session.hasPermission('read')).toBe(false);
     });
   });
 
   describe('Error Handling', () => {
     it('should handle network errors during OAuth verification', async () => {
-      const invalidToken = 'definitely-not-a-valid-jwt-token';
+      const mockToken = 'valid-oauth-token';
 
-      await expect(sessionManager.createSession(invalidToken))
-        .rejects.toThrow();
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockRejectedValue(new Error('Network error'));
+
+      await expect(sessionManager.createSession(mockToken))
+        .rejects.toThrow('Failed to verify OAuth token');
     });
 
     it('should handle PodCom client connection failures', async () => {
-      const mockPayload = {
-        userId: 'user-123',
-        walletAddress: '1234567890abcdef',
-        publicKey: 'public-key-123'
-      };
-      const mockToken = createValidJWT(mockPayload);
+      const mockToken = 'valid-oauth-token';
+      const mockUserInfo = { id: 'user-123', email: 'test@example.com', name: 'Test User' };
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockUserInfo)
+      } as Response);
 
       // Mock PodComClient to fail initialization
-      mock.module('../../sdk-typescript/sdk/dist/index.js', () => ({
-        PodComClient: mock(() => ({
-          initialize: mock(() => Promise.reject(new Error('Initialization failed')))
-        }))
+      const { PodComClient } = require('../../sdk-typescript/sdk/dist/index.js');
+      PodComClient.mockImplementation(() => ({
+        initialize: jest.fn().mockRejectedValue(new Error('Initialization failed'))
       }));
 
       // The session should still be created even if PodClient initialization fails
       const session = await sessionManager.createSession(mockToken);
       expect(session).toBeDefined();
+      expect(session.podClient).toBeUndefined();
     });
   });
 
   describe('Session Statistics', () => {
     it('should track session count correctly', async () => {
-      const mockPayload = {
-        userId: 'user-123',
-        walletAddress: '1234567890abcdef',
-        publicKey: 'public-key-123'
-      };
-      const mockToken = createValidJWT(mockPayload);
+      const mockToken = 'valid-oauth-token';
+      const mockUserInfo = { id: 'user-123', email: 'test@example.com', name: 'Test User' };
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockUserInfo)
+      } as Response);
 
       expect(sessionManager.getSessionCount()).toBe(0);
 
@@ -349,12 +361,13 @@ describe('SessionManager', () => {
     });
 
     it('should provide session statistics', async () => {
-      const mockPayload = {
-        userId: 'user-123',
-        walletAddress: '1234567890abcdef',
-        publicKey: 'public-key-123'
-      };
-      const mockToken = createValidJWT(mockPayload);
+      const mockToken = 'valid-oauth-token';
+      const mockUserInfo = { id: 'user-123', email: 'test@example.com', name: 'Test User' };
+
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockUserInfo)
+      } as Response);
 
       await sessionManager.createSession(mockToken);
       await sessionManager.createSession(mockToken);

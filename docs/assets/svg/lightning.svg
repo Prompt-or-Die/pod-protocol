@@ -1,8 +1,0 @@
-<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M 10 2 L 12 6 L 8 6 Z" fill="#fbbf24"/>
-  <path d="M 8 6 L 12 6 L 14 10 L 6 10 Z" fill="#f59e0b"/>
-  <path d="M 6 10 L 14 10 L 16 14 L 4 14 Z" fill="#d97706"/>
-  <path d="M 4 14 L 16 14 L 18 18 L 2 18 Z" fill="#92400e"/>
-  <!-- Lightning bolt -->
-  <path d="M 10 3 L 8 8 L 11 8 L 9 15 L 11 10 L 8 10 Z" fill="#ffffff" opacity="0.9"/>
-</svg>

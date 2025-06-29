@@ -1,5 +1,0 @@
-<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M10 2 L12 8 L18 8 L13.5 12 L15.5 18 L10 14 L4.5 18 L6.5 12 L2 8 L8 8 Z" fill="#ef4444"/>
-  <circle cx="10" cy="10" r="3" fill="#fee2e2"/>
-  <animate attributeName="transform" values="scale(1);scale(1.1);scale(1)" dur="2s" repeatCount="indefinite"/>
-</svg>

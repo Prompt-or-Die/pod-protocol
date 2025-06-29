@@ -1,0 +1,25 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="podGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c3aed;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Pod shape -->
+  <ellipse cx="100" cy="100" rx="80" ry="60" fill="url(#podGradient)" opacity="0.9"/>
+  
+  <!-- Connection nodes -->
+  <circle cx="60" cy="80" r="12" fill="#60a5fa"/>
+  <circle cx="140" cy="80" r="12" fill="#60a5fa"/>
+  <circle cx="100" cy="140" r="12" fill="#60a5fa"/>
+  
+  <!-- Connection lines -->
+  <line x1="60" y1="80" x2="140" y2="80" stroke="#93c5fd" stroke-width="3"/>
+  <line x1="60" y1="80" x2="100" y2="140" stroke="#93c5fd" stroke-width="3"/>
+  <line x1="140" y1="80" x2="100" y2="140" stroke="#93c5fd" stroke-width="3"/>
+  
+  <!-- Center hub -->
+  <circle cx="100" cy="100" r="20" fill="#ffffff" opacity="0.9"/>
+  <text x="100" y="107" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#2563eb">P</text>
+</svg> 

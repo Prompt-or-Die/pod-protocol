@@ -1,4 +1,4 @@
-import { describe, it, expect, mock, beforeEach, afterEach } from 'bun:test';
+import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { PodProtocolMCPServer } from '../src/mcp-server';
 import { SessionManager } from '../src/session-manager';
 import { ServerMetadata } from '../src/registry-integration';
@@ -6,9 +6,9 @@ import supertest from 'supertest';
 import { performance } from 'perf_hooks';
 import type { ModernMCPServerConfig } from '../src/types';
 
-// Mock external dependencies with bun test
-mock.module('@pod-protocol/core', () => ({}));
-mock.module('../src/utils/solana-auth', () => ({}));
+// Mock external dependencies
+jest.mock('@pod-protocol/core');
+jest.mock('../src/utils/solana-auth');
 
 describe('Performance Tests', () => {
   let server: PodProtocolMCPServer;
@@ -58,15 +58,15 @@ describe('Performance Tests', () => {
     };
 
     // Mock OAuth verification
-    (global.fetch as any) = mock(() => Promise.resolve({
+    (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
       ok: true,
-      json: mock(() => Promise.resolve({
+      json: jest.fn().mockResolvedValue({
         id: 'test-user-123',
         email: 'test@example.com',
         name: 'Test User',
         permissions: ['read', 'write']
-      }))
-    } as Response));
+      })
+    } as Response);
 
     server = new PodProtocolMCPServer(testConfig, testServerMetadata);
     await server.start();
@@ -77,7 +77,7 @@ describe('Performance Tests', () => {
     if (server) {
       await server.stop();
     }
-    mock.restore();
+    jest.clearAllMocks();
   });
 
   describe('Response Time Benchmarks', () => {

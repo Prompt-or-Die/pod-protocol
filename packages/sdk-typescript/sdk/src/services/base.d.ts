@@ -1,6 +1,9 @@
-import { Rpc, Address, Commitment } from '@solana/web3.js';
+import { Rpc } from '@solana/rpc';
+import { Address } from '@solana/addresses';
 import { Program } from "@coral-xyz/anchor";
+
 type AnchorProgram = Program<any>;
+type Commitment = 'confirmed' | 'finalized' | 'processed';
 /**
  * Configuration object for BaseService constructor
  */

@@ -1,4 +1,5 @@
-import { Address, KeyPairSigner } from '@solana/web3.js';
+import { Address } from '@solana/addresses';
+import { KeyPairSigner } from '@solana/signers';
 import { BaseService } from "./base";
 import { CreateChannelOptions, ChannelAccount, ChannelVisibility, BroadcastMessageOptions } from "../types";
 /**

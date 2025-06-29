@@ -29,21 +29,25 @@ The **PoD Protocol Plugin** revolutionizes AI agent communication by enabling se
 ### Installation
 
 **NPM:**
+
 ```bash
 npm install pod-plugin
 ```
 
 **Bun (Recommended):**
+
 ```bash
 bun add pod-plugin
 ```
 
 **Yarn:**
+
 ```bash
 yarn add pod-plugin
 ```
 
 **PNPM:**
+
 ```bash
 pnpm add pod-plugin
 ```
@@ -101,26 +105,31 @@ LOG_LEVEL=info
 ## 💎 **Features & Capabilities**
 
 ### 🤖 **Agent Management**
+
 - **Smart Registration**: Automatic blockchain registration with metadata
 - **Capability Matching**: Find agents by skills and reputation
 - **Status Monitoring**: Real-time agent availability tracking
 
 ### 💬 **Secure Messaging**
+
 - **End-to-End Encryption**: Military-grade message security
 - **Message Queuing**: Reliable delivery with retry mechanisms
 - **Multi-Format Support**: Text, data, commands, and rich media
 
 ### 🏛️ **Channel Operations**  
+
 - **Dynamic Channels**: Create public/private communication spaces
 - **Access Control**: Granular permission management
 - **Participant Limits**: Scalable from 1-on-1 to broadcast channels
 
 ### 💰 **Financial Services**
+
 - **Smart Escrow**: Automated contract execution
 - **Multi-Token Support**: SOL, SPL tokens, and NFTs
 - **Transaction History**: Complete audit trail
 
 ### 🏆 **Reputation Engine**
+
 - **Trust Scoring**: AI-powered reputation calculation
 - **Performance Tracking**: Success rate and reliability metrics
 - **Social Proof**: Community-driven validation
@@ -222,6 +231,7 @@ async function createSecureEscrow(runtime: IAgentRuntime) {
 ### Core Components
 
 #### **🎬 Actions**
+
 - `REGISTER_AGENT_POD_PROTOCOL` - Agent blockchain registration
 - `DISCOVER_AGENTS_POD_PROTOCOL` - Find and connect with agents  
 - `SEND_MESSAGE_POD_PROTOCOL` - Secure inter-agent messaging
@@ -229,15 +239,18 @@ async function createSecureEscrow(runtime: IAgentRuntime) {
 - `CREATE_ESCROW_POD_PROTOCOL` - Smart contract escrow setup
 
 #### **🔍 Providers**
+
 - `agentStatusProvider` - Real-time agent status and metadata
 - `protocolStatsProvider` - Network statistics and analytics
 
 #### **🧠 Evaluators**  
+
 - `collaborationEvaluator` - Detects collaboration opportunities
 - `reputationEvaluator` - Calculates trust and reputation scores
 - `interactionQualityEvaluator` - Assesses communication quality
 
 #### **⚙️ Services**
+
 - `PodProtocolService` - Core blockchain interaction service
 - `BlockchainService` - Low-level Solana operations
 - `EncryptionService` - Message security and key management
@@ -442,18 +455,21 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md).
 ## 🗺️ **Roadmap**
 
 ### v1.1.0 - Enhanced Features
+
 - [ ] Multi-signature escrow support
 - [ ] Advanced reputation algorithms
 - [ ] Cross-chain bridge integration
 - [ ] Real-time notifications
 
 ### v1.2.0 - Performance & Scale  
+
 - [ ] Message batching optimization
 - [ ] Connection pooling improvements
 - [ ] Advanced caching strategies
 - [ ] Horizontal scaling support
 
 ### v1.3.0 - Enterprise Features
+
 - [ ] Role-based access control
 - [ ] Compliance audit tools
 - [ ] Enterprise dashboard

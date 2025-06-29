@@ -1,7 +1,6 @@
 import { BaseService } from './base';
-import { address } from '@solana/kit';
-import type { Address } from '@solana/kit';
-import type { KeyPairSigner } from '@solana/signers';
+import { address } from '@solana/addresses';
+import type { Address } from '@solana/addresses';
 import {
   AgentAccount,
   MessageAccount,
@@ -708,7 +707,7 @@ export class DiscoveryService extends BaseService {
   /**
    * Find agents based on capabilities and other filters
    */
-  async findAgents(filters: {
+  public async findAgents(filters: {
     capabilities?: string[];
     limit?: number;
     offset?: number;

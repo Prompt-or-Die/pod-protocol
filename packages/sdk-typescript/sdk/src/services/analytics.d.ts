@@ -1,4 +1,4 @@
-import { Address } from '@solana/web3.js';
+import { Address } from '@solana/addresses';
 import { BaseService } from "./base";
 import { AgentAccount, MessageAccount, ChannelAccount, MessageStatus, ChannelVisibility } from "../types";
 /**

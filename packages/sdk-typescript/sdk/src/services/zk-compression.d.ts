@@ -1,6 +1,6 @@
 import { BaseService, BaseServiceConfig } from './base.js';
 import { IPFSService, IPFSStorageResult } from './ipfs.js';
-import { Address } from '@solana/web3.js';
+import { Address } from '@solana/addresses';
 /**
  * Compressed account information returned by Light Protocol
  */
@@ -116,7 +116,7 @@ export interface BatchSyncOperation {
 export declare class ZKCompressionService extends BaseService {
     private wallet?;
     private config;
-    private rpc;
+    protected rpc;
     private ipfsService;
     private batchQueue;
     private batchTimer?;

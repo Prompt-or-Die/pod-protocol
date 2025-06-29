@@ -1,0 +1,188 @@
+/**
+ * Pod Protocol Documentation Site - Custom CSS
+ * Modern, clean styling for 2025 documentation experience
+ */
+
+/* CSS Custom Properties */
+:root {
+  --ifm-color-primary: #2563eb;
+  --ifm-color-primary-dark: #1d4ed8;
+  --ifm-color-primary-darker: #1e40af;
+  --ifm-color-primary-darkest: #1e3a8a;
+  --ifm-color-primary-light: #3b82f6;
+  --ifm-color-primary-lighter: #60a5fa;
+  --ifm-color-primary-lightest: #93c5fd;
+  
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  
+  /* Pod Protocol brand colors */
+  --pod-purple: #7c3aed;
+  --pod-blue: #2563eb;
+  --pod-green: #059669;
+  --pod-orange: #ea580c;
+  
+  /* Modern spacing */
+  --ifm-spacing-horizontal: 1.5rem;
+  --ifm-navbar-padding-horizontal: 1.5rem;
+}
+
+/* Dark theme adjustments */
+[data-theme='dark'] {
+  --ifm-color-primary: #60a5fa;
+  --ifm-color-primary-dark: #3b82f6;
+  --ifm-color-primary-darker: #2563eb;
+  --ifm-color-primary-darkest: #1d4ed8;
+  --ifm-color-primary-light: #93c5fd;
+  --ifm-color-primary-lighter: #bfdbfe;
+  --ifm-color-primary-lightest: #dbeafe;
+  
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}
+
+/* Custom homepage styling */
+.hero__title {
+  background: linear-gradient(135deg, var(--pod-purple), var(--pod-blue));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800;
+  font-size: 3.5rem;
+}
+
+.hero__subtitle {
+  font-size: 1.25rem;
+  color: var(--ifm-color-secondary);
+  margin-bottom: 2rem;
+}
+
+/* Feature cards */
+.features {
+  padding: 4rem 0;
+  background: linear-gradient(135deg, 
+    rgba(124, 58, 237, 0.05) 0%, 
+    rgba(37, 99, 235, 0.05) 100%);
+}
+
+.feature {
+  padding: 2rem;
+  text-align: center;
+}
+
+.featureSvg {
+  height: 200px;
+  width: 200px;
+  margin-bottom: 1rem;
+}
+
+/* Code blocks */
+.prism-code {
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Navigation */
+.navbar {
+  border-bottom: 1px solid var(--ifm-toc-border-color);
+  backdrop-filter: blur(10px);
+}
+
+/* Sidebar */
+.theme-doc-sidebar-container {
+  border-right: 1px solid var(--ifm-toc-border-color);
+}
+
+/* Table of contents */
+.table-of-contents {
+  border-left: 2px solid var(--ifm-toc-border-color);
+}
+
+/* Admonitions */
+.alert {
+  border-radius: 8px;
+  border-left: 4px solid;
+}
+
+.alert--tip {
+  border-left-color: var(--pod-green);
+}
+
+.alert--info {
+  border-left-color: var(--pod-blue);
+}
+
+.alert--warning {
+  border-left-color: var(--pod-orange);
+}
+
+.alert--danger {
+  border-left-color: #dc2626;
+}
+
+/* Buttons */
+.button {
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+}
+
+/* Custom utility classes */
+.text-center {
+  text-align: center;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--pod-purple), var(--pod-blue));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .hero__title {
+    font-size: 2.5rem;
+  }
+  
+  .featureSvg {
+    height: 150px;
+    width: 150px;
+  }
+}
+
+/* Dark mode specific styles */
+[data-theme='dark'] .features {
+  background: linear-gradient(135deg, 
+    rgba(124, 58, 237, 0.1) 0%, 
+    rgba(37, 99, 235, 0.1) 100%);
+}
+
+/* Footer */
+.footer {
+  background: linear-gradient(135deg, 
+    var(--ifm-background-color) 0%, 
+    rgba(124, 58, 237, 0.05) 100%);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--ifm-scrollbar-track-background-color);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ifm-scrollbar-thumb-background-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ifm-scrollbar-thumb-hover-background-color);
+} 

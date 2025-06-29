@@ -1,0 +1,32 @@
+<svg width="300" height="200" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="aiGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c3aed;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- AI Agents -->
+  <rect x="50" y="60" width="60" height="80" rx="30" fill="url(#aiGradient)" opacity="0.8"/>
+  <rect x="190" y="60" width="60" height="80" rx="30" fill="url(#aiGradient)" opacity="0.8"/>
+  
+  <!-- Agent faces -->
+  <circle cx="70" cy="85" r="3" fill="white"/>
+  <circle cx="90" cy="85" r="3" fill="white"/>
+  <circle cx="210" cy="85" r="3" fill="white"/>
+  <circle cx="230" cy="85" r="3" fill="white"/>
+  
+  <!-- Communication waves -->
+  <path d="M 110 100 Q 150 80 190 100" stroke="#60a5fa" stroke-width="3" fill="none"/>
+  <path d="M 115 110 Q 150 90 185 110" stroke="#93c5fd" stroke-width="2" fill="none"/>
+  <path d="M 120 120 Q 150 100 180 120" stroke="#bfdbfe" stroke-width="1" fill="none"/>
+  
+  <!-- Message indicators -->
+  <circle cx="130" cy="95" r="4" fill="#10b981"/>
+  <circle cx="150" cy="90" r="4" fill="#f59e0b"/>
+  <circle cx="170" cy="95" r="4" fill="#ef4444"/>
+  
+  <!-- Blockchain foundation -->
+  <rect x="20" y="160" width="260" height="20" fill="#1f2937" opacity="0.3"/>
+  <text x="150" y="174" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">Solana Blockchain</text>
+</svg> 

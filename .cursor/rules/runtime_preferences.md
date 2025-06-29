@@ -12,24 +12,29 @@
 ## Specific Usage Guidelines
 
 ### Package Management
+
 - Use `bun install` instead of `npm install`, `yarn install`, or `pnpm install`
 - Use `bun add` instead of `npm install <package>`
 - Use `bun remove` instead of `npm uninstall <package>`
 
 ### Script Execution
+
 - Use `bun run <script>` instead of `npm run <script>`
 - Use `bun <file>` instead of `node <file>`
 
 ### Testing
+
 - Use `bun test` instead of `jest`, `npm test`, or other test runners
 - Configure tests to work with bun's built-in test runner
 - Do NOT use Jest unless bun test is absolutely incompatible
 
 ### Development Server
+
 - Use `bun --watch` instead of `nodemon` or other watchers
 - Use `bun dev` for development servers
 
 ### Build Tools
+
 - Prefer bun's built-in bundler when possible
 - Use `bun build` instead of webpack, rollup, or other bundlers when appropriate
 
