@@ -11,6 +11,7 @@ package-lock.json
 pnpm-lock.yaml
 # yarn.lock - keep this for Anchor compatibility
 
+llm-context/
 # Bun
 .bun/
 
