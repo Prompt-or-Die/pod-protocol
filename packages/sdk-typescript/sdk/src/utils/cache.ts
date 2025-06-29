@@ -424,7 +424,7 @@ export class AccountCache extends LRUCache {
   }
 
   getProgramAccounts(accountType: string, filters: any[]): any[] | undefined {
-    return this.get(AccountCache.keys.programAccounts(accountType, filters));
+    return this.get(AccountCache.keys.programAccounts(accountType, filters)) as any[] | undefined;
   }
 
   // Add methods expected by BaseService

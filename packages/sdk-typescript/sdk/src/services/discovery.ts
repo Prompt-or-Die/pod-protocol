@@ -584,7 +584,7 @@ export class DiscoveryService extends BaseService {
       const messages: MessageAccount[] = [];
       for (const account of accounts) {
         try {
-          const decoded = this.ensureInitialized().coder.accounts.decode("messageAccount", account.account.data);
+          const decoded = this.ensureInitialized().coder.accounts.decode("messageAccount", Buffer.from(account.account.data));
           const payload = decoded.payload || "";
           const payloadHash = decoded.payloadHash ? 
             new Uint8Array(decoded.payloadHash) : 
@@ -722,12 +722,28 @@ export class DiscoveryService extends BaseService {
       });
 
       // Process accounts
-      const agents = await this.processAccounts(accounts, "agentAccount");
+      const agents: AgentAccount[] = await this.processAccounts<AgentAccount>(
+        accounts,
+        "agentAccount",
+        (decoded, account) => ({
+          pubkey: address(account.pubkey),
+          capabilities: decoded.capabilities?.toNumber() || 0,
+          metadataUri: decoded.metadataUri || '',
+          reputation: decoded.reputation?.toNumber() || 0,
+          totalMessages: decoded.totalMessages?.toNumber() || 0,
+          lastUpdated: decoded.lastUpdated?.toNumber() || Date.now(),
+          createdAt: decoded.createdAt?.toNumber() || Date.now(),
+          invitesSent: decoded.invitesSent?.toNumber() || 0,
+          lastInviteAt: decoded.lastInviteAt?.toNumber() || 0,
+          isActive: true,
+          bump: decoded.bump || 0,
+        })
+      );
       
       // Apply capability filters if specified
       if (filters.capabilities && filters.capabilities.length > 0) {
         return agents.filter(agent => {
-          return filters.capabilities!.some(cap => {
+          return filters.capabilities!.some((cap: string) => {
             const capabilityBit = this.getCapabilityBit(cap);
             return hasCapability(agent.capabilities, capabilityBit);
           });
@@ -917,9 +933,9 @@ export class DiscoveryService extends BaseService {
     return agents.filter(agent => {
       // Apply capability filters
       if (filters.capabilities && filters.capabilities.length > 0) {
-        const hasRequiredCaps = filters.capabilities.some(cap => {
-          const capBit = this.getCapabilityBit(cap);
-          return hasCapability(agent.capabilities, capBit);
+        const hasRequiredCaps = filters.capabilities.some((cap: number) => {
+          // cap is already a capability bit number, no need to convert
+          return hasCapability(agent.capabilities, cap);
         });
         if (!hasRequiredCaps) return false;
       }

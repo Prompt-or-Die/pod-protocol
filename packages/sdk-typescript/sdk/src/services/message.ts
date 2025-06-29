@@ -20,6 +20,35 @@ import {
   getAccountCreatedAt,
 } from "../utils";
 
+// Type-safe interfaces for blockchain data structures
+interface ProgramMessageStatus {
+  pending?: object;
+  delivered?: object;
+  read?: object;
+  failed?: object;
+}
+
+interface ProgramMessageType {
+  text?: object;
+  image?: object;
+  code?: object;
+  file?: object;
+}
+
+interface DecodedMessageAccount {
+  sender: Address;
+  recipient: Address;
+  payload?: string;
+  content?: string;
+  payloadHash?: Uint8Array;
+  messageType: ProgramMessageType;
+  status: ProgramMessageStatus;
+  timestamp?: { toNumber(): number } | number;
+  createdAt?: { toNumber(): number } | number;
+  expiresAt?: { toNumber(): number } | number;
+  bump: number;
+}
+
 /**
  * Message-related operations service
  */
@@ -177,7 +206,7 @@ export class MessageService extends BaseService {
     }
   }
 
-  private convertMessageStatusFromProgram(programStatus: Record<string, unknown>): MessageStatus {
+  private convertMessageStatusFromProgram(programStatus: ProgramMessageStatus): MessageStatus {
     if (programStatus.pending) return MessageStatus.PENDING;
     if (programStatus.delivered) return MessageStatus.DELIVERED;
     if (programStatus.read) return MessageStatus.READ;
@@ -186,7 +215,7 @@ export class MessageService extends BaseService {
   }
 
   private async convertMessageAccountFromProgram(
-    account: Record<string, unknown>,
+    account: DecodedMessageAccount,
     publicKey: Address,
   ): Promise<MessageAccount> {
     const payload = (account.payload || account.content || "") as string;
@@ -207,8 +236,8 @@ export class MessageService extends BaseService {
       recipient: account.recipient as Address,
       payload,
       payloadHash: computedPayloadHash,
-      messageType: this.convertMessageTypeFromProgram(account.messageType as Record<string, unknown>),
-      status: this.convertMessageStatusFromProgram(account.status as Record<string, unknown>),
+      messageType: this.convertMessageTypeFromProgram(account.messageType),
+      status: this.convertMessageStatusFromProgram(account.status),
       timestamp: getAccountTimestamp(account),
       createdAt: getAccountCreatedAt(account),
       expiresAt: (account.expiresAt as any)?.toNumber() || 0,

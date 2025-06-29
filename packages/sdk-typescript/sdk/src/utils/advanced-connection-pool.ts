@@ -437,9 +437,9 @@ export class AdvancedConnectionPool {
       try {
         const connection = await this.getConnectionForEndpoint(endpoint);
         
-        // Simple health check - get slot
+        // Simple health check - get slot  
         await Promise.race([
-          connection.rpc.getSlot().send(),
+          (connection.rpc as any).getSlot().send(),
           new Promise((_, reject) => 
             setTimeout(() => reject(new Error('Health check timeout')), 5000)
           )

@@ -264,7 +264,8 @@ export class ZKCompressionService extends BaseService {
     messageType: string = 'Text',
     attachments: string[] = [],
     metadata: Record<string, unknown> = {},
-    replyTo?: string
+    replyTo?: string,
+    options: { immediate?: boolean } = {}
   ): Promise<{
     signature: string;
     ipfsResult: IPFSStorageResult;
@@ -321,10 +322,10 @@ export class ZKCompressionService extends BaseService {
               this.batchQueue.push(compressedMessage);
 
               // First attempt to store in IPFS
-              const ipfsResult = await this.ipfsService.storeContent(
+              const ipfsResult = await this.ipfsService.storeMessageContent(
                 content,
-                'application/json',
-                `${channelId}_${wallet}_${Date.now()}`
+                [], // attachments as empty array
+                { channelId, wallet: wallet.toString(), timestamp: Date.now() } // metadata object
               );
 
               if (options?.immediate) {
@@ -376,11 +377,11 @@ export class ZKCompressionService extends BaseService {
                     resolve({
                       signature: result.signature,
                       ipfsResult,
-                      compressedAccount: result.compressedAccounts[0] || {
+                      compressedAccount: result.compressedAccounts[0] || ({
                         hash: compressedMessage.contentHash,
                         data: compressedMessage,
                         merkleContext: { batched: true },
-                      },
+                      } as CompressedAccount),
                     });
                   } catch (error) {
                     reject(new Error(`Batch processing failed: ${error}`));
@@ -1373,7 +1374,12 @@ export class ZKCompressionService extends BaseService {
   }> {
     try {
       // Try Light Protocol batch processing first
-      return await this.processBatch(wallet);
+      const result = await this.processBatch(wallet);
+      // Ensure proper return type structure
+      if (typeof result === 'object' && result !== null && 'signature' in result) {
+        return result as { signature: string; compressedAccounts: CompressedAccount[]; merkleRoot: string; };
+      }
+      throw new Error('Invalid processBatch result structure');
     } catch (error) {
       console.warn('Light Protocol batch failed, using deterministic batch processing:', error);
       
@@ -1585,7 +1591,7 @@ export class ZKCompressionService extends BaseService {
       // Use enhanced deterministic fallback
       const fallbackResult = await this.createDeterministicCompression(
         data as CompressedChannelMessage,
-        { hash: 'fallback', url: '', size: 0 }
+        { hash: 'fallback', cid: 'fallback' as any, url: '', size: 0 }
       );
 
       return {
@@ -1674,9 +1680,9 @@ export class ZKCompressionService extends BaseService {
    */
   private async generateDeterministicSignature(baseString: string): Promise<string> {
     // Use the secure hasher to create deterministic signatures
-    const hasher = new SecureHasher();
-    hasher.update(Buffer.from(baseString + this.commitment));
-    const hash = hasher.digest('hex');
+    const dataToHash = Buffer.from(baseString + this.commitment);
+    const hashArray = await SecureHasher.hashSensitiveData(dataToHash);
+    const hash = Array.from(hashArray, byte => byte.toString(16).padStart(2, '0')).join('');
     return `${baseString}_${hash.slice(0, 12)}`;
   }
 }

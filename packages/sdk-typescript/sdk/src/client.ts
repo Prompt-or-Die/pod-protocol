@@ -568,7 +568,6 @@ export class PodComClient {
       agents,
       totalCount: searchResult.total,
       hasMore: searchResult.hasMore,
-      filters: agentFilters,
     };
   }
 

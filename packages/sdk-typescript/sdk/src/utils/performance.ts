@@ -5,6 +5,20 @@
 
 import { ErrorHandler } from './error-handling.js';
 
+// Type-safe interfaces for performance context data
+interface PerformanceContext {
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+interface OperationContext extends PerformanceContext {
+  operationType?: string;
+  dataSize?: number;
+  connectionId?: string;
+  retry?: number;
+  timeout?: number;
+  endpoint?: string;
+}
+
 export interface PerformanceMetrics {
   /** Operation name */
   operation: string;
@@ -37,7 +51,7 @@ export interface ConnectionPoolStats {
   utilization: number;
 }
 
-export interface PerformanceBenchmark {
+export interface BenchmarkResult {
   /** Benchmark name */
   name: string;
   /** Operations per second */
@@ -409,7 +423,7 @@ export class PerformanceBenchmark {
     operation: () => Promise<T>,
     iterations: number = 100,
     warmupIterations: number = 10
-  ): Promise<PerformanceBenchmark> {
+  ): Promise<BenchmarkResult> {
     // Warmup
     for (let i = 0; i < warmupIterations; i++) {
       try {
@@ -491,7 +505,7 @@ export class PerformanceBenchmark {
   /**
    * Compare two benchmark results
    */
-  static compare(benchmark1: PerformanceBenchmark, benchmark2: PerformanceBenchmark): {
+  static compare(benchmark1: BenchmarkResult, benchmark2: BenchmarkResult): {
     speedImprovement: number;
     memoryImprovement: number;
     winner: string;

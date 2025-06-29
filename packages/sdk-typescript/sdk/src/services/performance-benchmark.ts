@@ -3,13 +3,14 @@
  * Measures and optimizes performance across all services
  */
 
-import { PerformanceBenchmark, PerformanceMonitor, globalPerformanceMonitor } from '../utils/performance.js';
+import { PerformanceBenchmark, PerformanceMonitor, globalPerformanceMonitor, BenchmarkResult } from '../utils/performance.js';
 import { AnalyticsService } from './analytics.js';
 import { DiscoveryService } from './discovery.js';
 import { ChannelService } from './channel.js';
 import { ZKCompressionService } from './zk-compression.js';
 import { ErrorHandler } from '../utils/error-handling.js';
 import { RetryUtils } from '../utils/retry.js';
+import { address } from '@solana/addresses';
 
 export interface BenchmarkSuite {
   name: string;
@@ -27,7 +28,7 @@ export interface PerformanceReport {
     suiteName: string;
     benchmarks: Array<{
       name: string;
-      result: PerformanceBenchmark;
+      result: BenchmarkResult;
       passed: boolean;
       score: number;
     }>;
@@ -174,7 +175,7 @@ export class PerformanceBenchmarkService {
         {
           name: 'Agent Search Performance',
           operation: () => this.discoveryService!.searchAgents({
-            capabilities: ['trading', 'analytics'],
+            capabilities: [1, 2], // 1=trading, 2=analytics as numbers
             limit: 50
           }),
           expectedOps: 15,
@@ -189,7 +190,7 @@ export class PerformanceBenchmarkService {
         {
           name: 'Channel Discovery',
           operation: () => this.discoveryService!.searchChannels({
-            query: 'trading',
+            nameContains: 'trading',
             limit: 20
           }),
           expectedOps: 12,
@@ -200,7 +201,7 @@ export class PerformanceBenchmarkService {
           operation: async () => {
             // Test relevance scoring algorithm
             const agents = await this.discoveryService!.searchAgents({ limit: 100 });
-            return agents.slice(0, 10); // Top 10 most relevant
+            return agents.items.slice(0, 10); // Top 10 most relevant
           },
           expectedOps: 25,
           timeout: 2000
@@ -430,7 +431,7 @@ export class PerformanceBenchmarkService {
             standardDeviation: 0,
             totalOperations: 0,
             memoryStats: { initial: 0, peak: 0, final: 0, growth: 0 }
-          },
+          } as BenchmarkResult,
           passed: false,
           score: 0
         });
@@ -449,7 +450,7 @@ export class PerformanceBenchmarkService {
   /**
    * Calculate score for individual benchmark
    */
-  private calculateBenchmarkScore(result: PerformanceBenchmark, expectedOps?: number): number {
+  private calculateBenchmarkScore(result: BenchmarkResult, expectedOps?: number): number {
     if (!expectedOps) {
       // Score based on relative performance metrics
       const baseScore = Math.min(100, Math.max(0, 100 - result.averageTime));

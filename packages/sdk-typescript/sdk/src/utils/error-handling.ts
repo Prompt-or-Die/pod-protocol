@@ -8,9 +8,39 @@ import { ErrorCode } from '../types';
 // Re-export ErrorCode for convenience
 export { ErrorCode };
 
+// Type-safe interfaces for error details
+interface ErrorDetails {
+  [key: string]: string | number | boolean | undefined | null;
+}
+
+interface AccountErrorDetails extends ErrorDetails {
+  address: string;
+  accountType?: string;
+  reason?: string;
+}
+
+interface ValidationErrorDetails extends ErrorDetails {
+  field: string;
+  value: string;
+}
+
+interface TimeoutErrorDetails extends ErrorDetails {
+  operation: string;
+  timeoutMs: number;
+}
+
+interface RateLimitErrorDetails extends ErrorDetails {
+  retryAfterMs?: number;
+}
+
+interface OperationErrorDetails extends ErrorDetails {
+  operation: string;
+  required: string;
+}
+
 export class SDKError extends Error {
   public readonly code: ErrorCode;
-  public readonly details?: Record<string, unknown>;
+  public readonly details?: ErrorDetails;
   public readonly retryable: boolean;
   public readonly timestamp: number;
   public cause?: Error;
@@ -20,7 +50,7 @@ export class SDKError extends Error {
     code: ErrorCode,
     options: {
       cause?: Error;
-      details?: Record<string, unknown>;
+      details?: ErrorDetails;
       retryable?: boolean;
     } = {}
   ) {
@@ -48,7 +78,7 @@ export class NetworkError extends SDKError {
 }
 
 export class RpcError extends SDKError {
-  constructor(message: string, cause?: Error, details?: Record<string, unknown>) {
+  constructor(message: string, cause?: Error, details?: ErrorDetails) {
     super(message, ErrorCode.RPC_ERROR, { 
       cause, 
       details,
@@ -60,11 +90,12 @@ export class RpcError extends SDKError {
 
 export class AccountNotFoundError extends SDKError {
   constructor(address: string, accountType?: string) {
+    const details: AccountErrorDetails = { address, accountType };
     super(
       `Account not found: ${address}${accountType ? ` (${accountType})` : ''}`,
       ErrorCode.ACCOUNT_NOT_FOUND,
       { 
-        details: { address, accountType },
+        details,
         retryable: false 
       }
     );
@@ -74,11 +105,12 @@ export class AccountNotFoundError extends SDKError {
 
 export class InvalidAccountDataError extends SDKError {
   constructor(address: string, reason: string) {
+    const details: AccountErrorDetails = { address, reason };
     super(
       `Invalid account data for ${address}: ${reason}`,
       ErrorCode.INVALID_ACCOUNT_DATA,
       { 
-        details: { address, reason },
+        details,
         retryable: false 
       }
     );

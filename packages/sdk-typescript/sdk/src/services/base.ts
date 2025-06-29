@@ -23,6 +23,38 @@ type SolanaRpcSubscriptions = RpcSubscriptions<any>;
 // Use string literal types for commitment in Web3.js v2.0
 type Commitment = 'confirmed' | 'finalized' | 'processed';
 
+// Type-safe interfaces for Anchor program structures
+interface AnchorProgramAccount {
+  fetch(address: Address): Promise<any>;
+  fetchMultiple(addresses: Address[]): Promise<any[]>;
+  all(filters?: any[]): Promise<any[]>;
+}
+
+interface AnchorProgramAccounts {
+  agentAccount?: AnchorProgramAccount;
+  messageAccount?: AnchorProgramAccount;
+  channelAccount?: AnchorProgramAccount;
+  escrowAccount?: AnchorProgramAccount;
+  [accountName: string]: AnchorProgramAccount | undefined;
+}
+
+interface AnchorProgramMethod {
+  (...args: any[]): {
+    accounts(accounts: Record<string, Address | string>): any;
+    signers(signers: any[]): any;
+    rpc(options?: any): Promise<string>;
+    instruction(): Promise<any>;
+  };
+}
+
+interface AnchorProgramMethods {
+  registerAgent?: AnchorProgramMethod;
+  sendMessage?: AnchorProgramMethod;
+  createChannel?: AnchorProgramMethod;
+  updateMessageStatus?: AnchorProgramMethod;
+  [methodName: string]: AnchorProgramMethod | undefined;
+}
+
 /**
  * Configuration object for BaseService constructor
  */
@@ -189,7 +221,7 @@ export class BaseService {
 
     // Try cache first if enabled
     if (useCache) {
-      const cached = this.accountCache.get(cacheKey);
+      const cached = this.accountCache.get(cacheKey) as SolanaAccountInfo[] | undefined;
       if (cached) {
         return cached;
       }
@@ -232,7 +264,7 @@ export class BaseService {
 
       // Cache the results
       if (useCache) {
-        this.accountCache.set(cacheKey, limitedAccounts, cacheTtl);
+        this.accountCache.set(cacheKey, limitedAccounts);
       }
 
       return limitedAccounts;
@@ -276,12 +308,12 @@ export class BaseService {
         let batchResults: Array<SolanaAccountInfo | null>;
         
         if (useCache) {
-          const cached = this.accountCache.get(batchCacheKey);
+          const cached = this.accountCache.get(batchCacheKey) as Array<SolanaAccountInfo | null> | undefined;
           if (cached) {
             batchResults = cached;
           } else {
             batchResults = await this.fetchAccountsBatch(batch);
-            this.accountCache.set(batchCacheKey, batchResults, cacheTtl);
+            this.accountCache.set(batchCacheKey, batchResults);
           }
         } else {
           batchResults = await this.fetchAccountsBatch(batch);
@@ -316,7 +348,7 @@ export class BaseService {
 
     // Try cache first
     if (useCache) {
-      const cached = this.accountCache.get(cacheKey);
+      const cached = this.accountCache.get(cacheKey) as SolanaAccountInfo | null | undefined;
       if (cached) {
         return cached;
       }
@@ -353,7 +385,7 @@ export class BaseService {
 
       // Cache the result
       if (useCache) {
-        this.accountCache.set(cacheKey, accountInfo, cacheTtl);
+        this.accountCache.set(cacheKey, accountInfo);
       }
 
       return accountInfo;
@@ -523,25 +555,26 @@ export class BaseService {
     return this.program;
   }
 
-  protected getAccount(accountName: string): unknown {
+  protected getAccount(accountName: string): AnchorProgramAccount {
     const program = this.ensureInitialized();
-    const accounts = program.account as Record<string, unknown>;
-    if (!accounts || !accounts[accountName]) {
+    const accounts = program.account as AnchorProgramAccounts;
+    const account = accounts[accountName];
+    if (!accounts || !account) {
       throw new Error(
         `Account type '${accountName}' not found in program. Verify IDL is correct.`,
       );
     }
-    return accounts[accountName];
+    return account;
   }
 
-  protected getProgramMethods(): Record<string, unknown> {
+  protected getProgramMethods(): AnchorProgramMethods {
     const program = this.ensureInitialized();
     if (!program.methods) {
       throw new Error(
         "Program methods not available. Verify IDL is correct and program is initialized.",
       );
     }
-    return program.methods as Record<string, unknown>;
+    return program.methods as AnchorProgramMethods;
   }
 
   setProgram(program: AnchorProgram) {

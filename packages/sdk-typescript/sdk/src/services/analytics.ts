@@ -37,6 +37,49 @@ interface SolanaAccountInfo {
   };
 }
 
+interface DecodedMessageAccount {
+  sender: Address;
+  recipient: Address;
+  payload: string;
+  payloadHash: Uint8Array;
+  messageType: Record<string, unknown>;
+  status: Record<string, unknown>;
+  timestamp: { toNumber(): number } | number;
+  createdAt: { toNumber(): number } | number;
+  expiresAt: { toNumber(): number } | number;
+  bump: number;
+}
+
+interface DecodedAgentAccount {
+  capabilities: { toNumber(): number } | number;
+  metadataUri: string;
+  reputation: { toNumber(): number } | number;
+  lastUpdated: { toNumber(): number } | number;
+  invitesSent: { toNumber(): number } | number;
+  lastInviteAt: { toNumber(): number } | number;
+  bump: number;
+}
+
+interface DecodedChannelAccount {
+  creator: Address;
+  name: string;
+  description: string;
+  visibility: Record<string, unknown>;
+  maxParticipants?: { toNumber(): number } | number;
+  maxMembers?: { toNumber(): number } | number;
+  currentParticipants?: { toNumber(): number } | number;
+  memberCount?: { toNumber(): number } | number;
+  feePerMessage: { toNumber(): number } | number;
+  escrowBalance: { toNumber(): number } | number;
+  createdAt: { toNumber(): number } | number;
+  lastUpdated: { toNumber(): number } | number;
+  bump: number;
+}
+
+interface DecodedEscrowAccount {
+  balance: { toNumber(): number } | number;
+}
+
 /**
  * Analytics and insights for agent activities, message patterns, and channel usage
  */
@@ -107,9 +150,7 @@ export class AnalyticsService extends BaseService {
           network,
           generatedAt: Date.now(),
         };
-      },
-      undefined,
-      this.analyticsCache
+      }
     );
   }
 
@@ -177,8 +218,7 @@ export class AnalyticsService extends BaseService {
         } catch (error: unknown) {
           throw ErrorHandler.classify(error, 'getAgentAnalytics');
         }
-      },
-      this.analyticsCache
+      }
     );
   }
 
@@ -193,7 +233,29 @@ export class AnalyticsService extends BaseService {
 
       // Get all message accounts using Web3.js v2.0 RPC with real implementation
       const messageAccounts = await this.getProgramAccounts('messageAccount', [], { limit: Math.min(limit, 1000) });
-      const messageData = await this.processAccounts(messageAccounts, "messageAccount");
+      const messageData = await this.processAccounts<MessageAccount>(
+        messageAccounts,
+        "messageAccount",
+        (decoded: DecodedMessageAccount, account) => ({
+          pubkey: address(account.pubkey),
+          sender: decoded.sender,
+          recipient: decoded.recipient,
+          payload: decoded.payload,
+          payloadHash: decoded.payloadHash,
+          messageType: this.convertMessageTypeFromProgram(decoded.messageType),
+          status: this.convertMessageStatusFromProgram(decoded.status),
+          timestamp: typeof decoded.timestamp === 'number' 
+            ? decoded.timestamp 
+            : decoded.timestamp.toNumber(),
+          createdAt: typeof decoded.createdAt === 'number'
+            ? decoded.createdAt
+            : decoded.createdAt.toNumber(),
+          expiresAt: typeof decoded.expiresAt === 'number'
+            ? decoded.expiresAt
+            : decoded.expiresAt.toNumber(),
+          bump: decoded.bump,
+        })
+      );
 
       const totalMessages = messageData.length;
       let deliveredMessages = 0;
@@ -212,7 +274,10 @@ export class AnalyticsService extends BaseService {
       // Process message data from actual accounts
       for (const message of messageData) {
         try {
-          const messageStatus = this.convertMessageStatusFromProgram(message.status || {});
+          // Type-safe status conversion
+          const messageStatus = typeof message.status === 'object' && message.status !== null && !Object.values(MessageStatus).includes(message.status as MessageStatus)
+            ? this.convertMessageStatusFromProgram(message.status as Record<string, unknown>)
+            : (message.status as MessageStatus) || MessageStatus.PENDING;
           messagesByStatus[messageStatus]++;
 
           if (messageStatus === MessageStatus.DELIVERED) {
@@ -221,7 +286,10 @@ export class AnalyticsService extends BaseService {
             failedMessages++;
           }
 
-          const messageTypeEnum = this.convertMessageTypeFromProgram(message.messageType || {});
+          // Type-safe message type conversion
+          const messageTypeEnum = typeof message.messageType === 'object' && message.messageType !== null && !Object.values(MessageType).includes(message.messageType as MessageType)
+            ? this.convertMessageTypeFromProgram(message.messageType as Record<string, unknown>)
+            : (message.messageType as MessageType) || MessageType.TEXT;
           const messageTypeStr = this.getMessageTypeName(messageTypeEnum);
           messagesByType[messageTypeStr] = (messagesByType[messageTypeStr] || 0) + 1;
 
@@ -242,7 +310,16 @@ export class AnalyticsService extends BaseService {
         messagesPerDay,
         topSenders,
         recentMessages: messageData.slice(0, 10).map(msg => {
-          const messageType = this.convertMessageTypeFromProgram(msg.messageType || {});
+          // Type-safe message type conversion
+          const messageType = typeof msg.messageType === 'object' && msg.messageType !== null && !Object.values(MessageType).includes(msg.messageType as MessageType)
+            ? this.convertMessageTypeFromProgram(msg.messageType as Record<string, unknown>)
+            : (msg.messageType as MessageType) || MessageType.TEXT;
+          
+          // Type-safe status conversion
+          const status = typeof msg.status === 'object' && msg.status !== null && !Object.values(MessageStatus).includes(msg.status as MessageStatus)
+            ? this.convertMessageStatusFromProgram(msg.status as Record<string, unknown>)
+            : (msg.status as MessageStatus) || MessageStatus.PENDING;
+          
           return {
             pubkey: address(msg.pubkey?.toString() || '11111111111111111111111111111112'),
             sender: msg.sender || address('11111111111111111111111111111112'),
@@ -250,10 +327,10 @@ export class AnalyticsService extends BaseService {
             payload: msg.payload || '',
             payloadHash: new Uint8Array(32),
             messageType: messageType,
-            status: this.convertMessageStatusFromProgram(msg.status || {}),
-            timestamp: msg.timestamp?.toNumber() || Date.now(),
-            createdAt: msg.createdAt?.toNumber() || Date.now(),
-            expiresAt: msg.expiresAt?.toNumber() || 0,
+            status: status,
+            timestamp: this.extractNumber(msg.timestamp) || Date.now(),
+            createdAt: this.extractNumber(msg.createdAt) || Date.now(),
+            expiresAt: this.extractNumber(msg.expiresAt) || 0,
             bump: msg.bump || 0,
           };
         })
@@ -368,8 +445,7 @@ export class AnalyticsService extends BaseService {
         } catch (error: unknown) {
           throw ErrorHandler.classify(error, 'getChannelAnalytics');
         }
-      },
-      this.analyticsCache
+      }
     );
   }
 
@@ -402,8 +478,8 @@ export class AnalyticsService extends BaseService {
 
           // Calculate total value locked from real escrow accounts
           const escrowAccounts = await this.processAccounts(escrowData, "escrowAccount");
-          const totalValueLocked = escrowAccounts.reduce((sum, acc: any) => {
-            return sum + (acc.balance?.toNumber?.() || acc.balance || 0);
+          const totalValueLocked: number = escrowAccounts.reduce((sum: number, acc: any): number => {
+            return sum + this.extractNumber(acc.balance);
           }, 0);
 
           // Calculate real 24h metrics from message and agent data
@@ -433,8 +509,7 @@ export class AnalyticsService extends BaseService {
         } catch (error: unknown) {
           throw ErrorHandler.classify(error, 'getNetworkAnalytics');
         }
-      },
-      this.analyticsCache
+      }
     );
   }
 
@@ -572,12 +647,29 @@ export class AnalyticsService extends BaseService {
     return hash.substring(0, 16); // First 8 bytes as hex
   }
 
-  private convertMessageTypeFromProgram(programType: Record<string, unknown>): string {
-    if (programType.text !== undefined) return "Text";
-    if (programType.data !== undefined) return "Data"; 
-    if (programType.command !== undefined) return "Command";
-    if (programType.response !== undefined) return "Response";
-    return "Text";
+  /**
+   * Type-safe number extraction from BN objects or numbers
+   * Fixes TypeScript violations by properly handling both types
+   */
+  private extractNumber(value: { toNumber(): number } | number | undefined | null): number {
+    if (value === undefined || value === null) {
+      return 0;
+    }
+    if (typeof value === 'number') {
+      return value;
+    }
+    if (typeof value === 'object' && value !== null && 'toNumber' in value && typeof value.toNumber === 'function') {
+      return value.toNumber();
+    }
+    return 0;
+  }
+
+  private convertMessageTypeFromProgram(programType: Record<string, unknown>): MessageType {
+    if (programType.text !== undefined) return MessageType.TEXT;
+    if (programType.image !== undefined) return MessageType.IMAGE;
+    if (programType.code !== undefined) return MessageType.CODE;
+    if (programType.file !== undefined) return MessageType.FILE;
+    return MessageType.TEXT;
   }
 
   private convertMessageStatusFromProgram(programStatus: Record<string, unknown>): MessageStatus {

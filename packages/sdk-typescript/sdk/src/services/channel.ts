@@ -51,6 +51,56 @@ export interface ParticipantData {
   };
 }
 
+// Type-safe interfaces for Channel program account structures
+interface ChannelAccountData {
+  name: string;
+  description: string;
+  creator: Address;
+  visibility: { public?: object; private?: object };
+  maxMembers: { toNumber(): number };
+  memberCount: { toNumber(): number };
+  bump: number;
+}
+
+interface ChannelVisibilityObject {
+  public?: object;
+  private?: object;
+}
+
+interface MessageTypeObject {
+  text?: object;
+  data?: object;
+  command?: object;
+  response?: object;
+}
+
+interface ChannelAccountWrapper {
+  publicKey: Address;
+  account: ChannelAccountData;
+}
+
+interface BroadcastMessageAccounts {
+  channelAccount: Address;
+  participantAccount: Address;
+  agentAccount: Address;
+  messageAccount: Address;
+  user: Address;
+  systemProgram: Address;
+}
+
+interface UpdateChannelAccounts {
+  channelAccount: Address;
+  creator: Address;
+}
+
+interface ChannelMessageData {
+  sender: Address;
+  content: string;
+  messageType: MessageTypeObject;
+  timestamp: { toNumber(): number } | number;
+  replyTo?: Address;
+}
+
 /**
  * Channel service for managing group communication
  */
@@ -150,16 +200,16 @@ export class ChannelService extends BaseService {
       const channelAccount = this.getAccount("channelAccount");
       const accounts = await (channelAccount as any).all();
 
-      return accounts.slice(0, limit).map((acc: { publicKey: Address; account: unknown }) => ({
+      return accounts.slice(0, limit).map((acc: ChannelAccountWrapper) => ({
         pubkey: acc.publicKey,
-        name: (acc.account as { name: string }).name,
-        description: (acc.account as { description: string }).description,
-        creator: (acc.account as { creator: Address }).creator,
-        visibility: (acc.account as { visibility: unknown }).visibility,
-        maxMembers: (acc.account as { maxMembers: { toNumber(): number } }).maxMembers.toNumber(),
-        memberCount: (acc.account as { memberCount: { toNumber(): number } }).memberCount.toNumber(),
+        name: acc.account.name,
+        description: acc.account.description,
+        creator: acc.account.creator,
+        visibility: this.convertChannelVisibilityFromProgram(acc.account.visibility),
+        maxMembers: acc.account.maxMembers.toNumber(),
+        memberCount: acc.account.memberCount.toNumber(),
         lastUpdated: getAccountLastUpdated(acc.account),
-        bump: (acc.account as { bump: number }).bump,
+        bump: acc.account.bump,
       }));
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -182,16 +232,16 @@ export class ChannelService extends BaseService {
       return accounts
         .filter((acc: { account: { creator: { equals(addr: Address): boolean } } }) => acc.account.creator.equals(creator))
         .slice(0, limit)
-        .map((acc: { publicKey: Address; account: unknown }) => ({
+        .map((acc: ChannelAccountWrapper) => ({
           pubkey: acc.publicKey,
-          name: (acc.account as { name: string }).name,
-          description: (acc.account as { description: string }).description,
-          creator: (acc.account as { creator: Address }).creator,
-          visibility: (acc.account as { visibility: unknown }).visibility,
-          maxMembers: (acc.account as { maxMembers: { toNumber(): number } }).maxMembers.toNumber(),
-          memberCount: (acc.account as { memberCount: { toNumber(): number } }).memberCount.toNumber(),
+          name: acc.account.name,
+          description: acc.account.description,
+          creator: acc.account.creator,
+          visibility: this.convertChannelVisibilityFromProgram(acc.account.visibility),
+          maxMembers: acc.account.maxMembers.toNumber(),
+          memberCount: acc.account.memberCount.toNumber(),
           lastUpdated: getAccountLastUpdated(acc.account),
-          bump: (acc.account as { bump: number }).bump,
+          bump: acc.account.bump,
         }));
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -420,7 +470,7 @@ export class ChannelService extends BaseService {
   }
 
   private convertChannelVisibilityFromProgram(
-    programVisibility: { public?: unknown; private?: unknown },
+    programVisibility: ChannelVisibilityObject,
   ): ChannelVisibility {
     if (programVisibility.public !== undefined) return ChannelVisibility.Public;
     if (programVisibility.private !== undefined)
@@ -428,7 +478,7 @@ export class ChannelService extends BaseService {
     return ChannelVisibility.Public;
   }
 
-  private convertMessageType(messageType: unknown): { text: Record<string, never> } | { data: Record<string, never> } | { command: Record<string, never> } | { response: Record<string, never> } {
+  private convertMessageType(messageType: string | MessageType | MessageTypeObject): MessageTypeObject {
     if (typeof messageType === "string") {
       switch (messageType.toLowerCase()) {
         case "text":
@@ -443,7 +493,24 @@ export class ChannelService extends BaseService {
           return { text: {} };
       }
     }
-    return messageType as any || { text: {} };
+    
+    // Handle MessageType enum values
+    if (typeof messageType === "number") {
+      switch (messageType) {
+        case MessageType.TEXT:
+          return { text: {} };
+        case MessageType.IMAGE:
+          return { data: {} };
+        case MessageType.CODE:
+          return { command: {} };
+        case MessageType.FILE:
+          return { data: {} };
+        default:
+          return { text: {} };
+      }
+    }
+    
+    return messageType as MessageTypeObject || { text: {} };
   }
 
   private convertChannelAccountFromProgram(
