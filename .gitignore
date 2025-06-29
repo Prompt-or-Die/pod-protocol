@@ -12,6 +12,9 @@ pnpm-lock.yaml
 # yarn.lock - keep this for Anchor compatibility
 
 llm-context/
+tools/
+docs_site/
+
 # Bun
 .bun/
 
