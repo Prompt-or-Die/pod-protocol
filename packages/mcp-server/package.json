@@ -83,7 +83,7 @@
     "commander": "^14.0.0",
     "compression": "^1.8.0",
     "cors": "^2.8.5",
-    "dotenv": "^16.6.0",
+    "dotenv": "^17.0.0",
     "express": "5.0.1",
     "express-rate-limit": "^7.5.1",
     "figlet": "^1.8.1",
